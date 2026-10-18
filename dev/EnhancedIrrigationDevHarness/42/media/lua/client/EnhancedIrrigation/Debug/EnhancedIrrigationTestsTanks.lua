@@ -285,7 +285,7 @@ T.test("irrigation_tanks_plumb_refused_without_the_knowledge", {
         end, false)
         T.batch(function()
             T.read(self, "tanks.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB,
-                with = Links.encode(T.at(self.high)) }), "forced")
+                with = Links.encode(T.at(self.high), "iron") }), "forced")
             T.count(self, "left", { "Base.MetalPipe" })
         end)
     end,
@@ -318,7 +318,7 @@ T.test("irrigation_tanks_plumb_to_tank_up_to_max_tiles", {
         -- Iron needs no joint.
         T.give(self, "tools", { { type = "Base.PipeWrench" },
             { type = "Base.MetalPipe", count = self.lengths * Pipes.KINDS.iron.perLength } })
-        local with, past = Links.encode(T.at(self.high)), Links.encode(T.at(self.far))
+        local with, past = Links.encode(T.at(self.high), "iron"), Links.encode(T.at(self.far), "iron")
         useMenu(self, self.low, "one tile past", job("link", LinkJobs.PLUMB, past), false)
         T.read(self, "tanks.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB, with = past }), "forced")
         local low = function() return T.tankCopy(self.low) end
@@ -326,7 +326,7 @@ T.test("irrigation_tanks_plumb_to_tank_up_to_max_tiles", {
         T.readUntil(self, "tanks.links", T.at(self.low), "links", function(reply) return #reply.links > 0 end)
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
         T.waitFor(self, function() return #T.clientLinks(self.low) > 0 end, "this client's copy of the link")
-        T.useOption(self, low, "unplumb", job("link", LinkJobs.UNPLUMB, with), false)
+        T.useOption(self, low, "unplumb", job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.high))), false)
         T.useOption(self, low, "plumb again", job("link", LinkJobs.PLUMB, with), false)
     end,
     validate = function(self)
@@ -384,7 +384,7 @@ T.test("irrigation_tanks_unplumb_gives_back_the_pipe", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", items)
         local with = Links.encode(T.at(self.b))
-        useMenu(self, self.a, "plumb", job("link", LinkJobs.PLUMB, with), true)
+        useMenu(self, self.a, "plumb", job("link", LinkJobs.PLUMB, Links.encode(T.at(self.b), "iron")), true)
         T.waitFor(self, function() return #T.clientLinks(self.a) > 0 and #ironConditions() == 0 end,
             "this client's copy of the link, the pipe gone into it")
         T.useOption(self, function() return T.tankCopy(self.a) end, "unplumb", job("link", LinkJobs.UNPLUMB, with), true)
@@ -402,6 +402,48 @@ T.test("irrigation_tanks_unplumb_gives_back_the_pipe", {
             expect(back[i] == condition, "length " .. i .. " came back at condition " .. tostring(back[i])
                 .. ", laid at " .. condition)
         end
+    end,
+})
+
+-- Plumb to Tank lays the pipe the player picks from what they carry, each kind listed under the
+-- tank with what the run takes: carrying iron and lead, the lead chosen goes in and the iron stays;
+-- plastic without glue is greyed out for its joints. Catches pipe picked for the player.
+T.test("irrigation_tanks_plumb_lays_the_pipe_chosen", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
+        if not spots then return end
+        T.batch(function()
+            self.a = T.placeTank(self, spots[1], "lidded")
+            self.b = T.placeTank(self, spots[2], "lidded")
+        end)
+        local lengths = Links.lengthsFor(Links.distance(T.at(self.a), T.at(self.b)))
+        local iron, lead, plastic = Pipes.KINDS.iron, Pipes.KINDS.lead, Pipes.KINDS.plastic
+        self.ironCount = lengths * iron.perLength
+        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = iron.item, count = self.ironCount },
+            { type = lead.item, count = lengths * lead.perLength }, { type = plastic.item, count = lengths * plastic.perLength } })
+        local function plumb(kind)
+            return job("link", LinkJobs.PLUMB, Links.encode(T.at(self.b), kind))
+        end
+        local a = function() return T.tankCopy(self.a) end
+        useMenu(self, self.a, "iron", plumb("iron"), false)
+        T.useOption(self, a, "plastic", plumb("plastic"), false)
+        T.useOption(self, a, "lead", plumb("lead"), true)
+        T.readUntil(self, "tanks.links", T.at(self.a), "links", function(reply) return #reply.links > 0 end)
+        T.count(self, "left", { iron.item, lead.item })
+    end,
+    validate = function(self)
+        T.expectOffered(self, "iron")
+        T.expectRefused(self, "plastic")
+        T.expectOffered(self, "lead")
+        local links = self.reads.links.links
+        if expect(#links == 1, "the server has " .. #links .. " links at the tank") then
+            expect(links[1].kind == "lead", "the link is " .. tostring(links[1].kind) .. " pipe, not the lead chosen")
+        end
+        local iron, lead = Pipes.KINDS.iron.item, Pipes.KINDS.lead.item
+        expect(counted(self, lead) == 0, "plumbing left " .. counted(self, lead) .. " lead pipe")
+        expect(counted(self, iron) == self.ironCount, "plumbing with lead took iron pipe: " .. counted(self, iron) .. " left")
     end,
 })
 
@@ -500,9 +542,12 @@ T.test("irrigation_tanks_buried_pipe_stays_and_reconnects", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
         useMenu(self, self.a, "unplumb the bare end", job("link", LinkJobs.UNPLUMB, with), false)
         self.again = T.placeTank(self, spots[2], "lidded")
-        T.useOption(self, function() return T.tankCopy(self.a) end, "plumb again", job("link", LinkJobs.PLUMB, with), false)
+        local plumbWith = Links.encode(T.at(self.b), "iron")
+        T.useOption(self, function() return T.tankCopy(self.a) end, "plumb again", job("link", LinkJobs.PLUMB, plumbWith),
+            false)
         T.batch(function()
-            T.read(self, "tanks.perform", T.at(self.a, { feature = "link", job = LinkJobs.PLUMB, with = with }), "forced")
+            T.read(self, "tanks.perform", T.at(self.a, { feature = "link", job = LinkJobs.PLUMB, with = plumbWith }),
+                "forced")
             T.read(self, "tanks.pass", T.at(self.a, { litres = PASS_LITRES, other = T.at(self.again) }), "joined")
         end)
     end,

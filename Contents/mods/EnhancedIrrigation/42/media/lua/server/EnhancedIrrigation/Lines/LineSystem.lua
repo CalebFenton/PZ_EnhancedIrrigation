@@ -110,7 +110,7 @@ local DO = {
     [LineJobs.TAP] = function(character, object, with, materials)
         local record = Lines.recordOf(object)
         record.tap = true
-        record.tapMaterial = Pipes.kindFor(character, 1)
+        record.tapMaterial = record.material
         record.tapConditions = Materials.conditions(character, materials)
         return true
     end,

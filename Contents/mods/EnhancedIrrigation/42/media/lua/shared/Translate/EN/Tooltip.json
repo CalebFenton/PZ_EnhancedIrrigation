@@ -8,6 +8,7 @@
     "Tooltip_EnhancedIrrigation_OutOfReach": "That tank is too far away to plumb to.",
     "Tooltip_EnhancedIrrigation_AlreadyPlumbed": "These tanks are already plumbed together.",
     "Tooltip_EnhancedIrrigation_NotPlumbed": "These tanks are not plumbed together.",
+    "Tooltip_EnhancedIrrigation_NoPipe": "Needs pipe to lay: plastic, iron or lead pipe, or clay pipe segments.",
     "Tooltip_EnhancedIrrigation_Short": "Missing something the job needs.",
     "Tooltip_EnhancedIrrigation_UnknownJob": "That can't be done here.",
     "Tooltip_EnhancedIrrigation_CantLayHere": "A line can't be laid here: it needs open, dry ground or floor.",

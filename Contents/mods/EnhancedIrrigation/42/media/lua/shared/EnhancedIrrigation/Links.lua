@@ -49,21 +49,25 @@ function Links.minutesFor(distance)
     return Links.BASE_MINUTES + Links.MINUTES_PER_TILE * distance
 end
 
---- `at` as a job's `with` (EnhancedIrrigation.squareKey).
-function Links.encode(at)
-    return EnhancedIrrigation.squareKey(at.x, at.y, at.z)
+--- The square `at`, and for Plumb the pipe `kind` chosen, as a job's `with`: a string, which a
+--- multiplayer action's arguments can carry.
+function Links.encode(at, kind)
+    local key = EnhancedIrrigation.squareKey(at.x, at.y, at.z)
+    return kind and key .. "," .. kind or key
 end
 
---- The square { x, y, z } a job's `with` names, or nil.
+--- The square { x, y, z } and the pipe kind, or nil without one, that a job's `with` names; nil
+--- when it names no square.
 function Links.decode(with)
     if type(with) ~= "string" then
         return nil
     end
-    local x, y, z = with:match("^(-?%d+),(-?%d+),(-?%d+)$")
-    if not x then
+    local x, y, z, rest = with:match("^(-?%d+),(-?%d+),(-?%d+)(.*)$")
+    local kind = rest and rest:match("^,(%a+)$")
+    if not x or (rest ~= "" and not kind) then
         return nil
     end
-    return { x = tonumber(x), y = tonumber(y), z = tonumber(z) }
+    return { x = tonumber(x), y = tonumber(y), z = tonumber(z) }, kind
 end
 
 --- Every link as this side knows it: on the authority its own list, which a job may have changed

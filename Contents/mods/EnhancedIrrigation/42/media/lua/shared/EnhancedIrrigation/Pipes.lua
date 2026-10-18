@@ -6,13 +6,10 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Materials"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Pipes = {}
 EnhancedIrrigation.Pipes = Pipes
-
-local Materials = EnhancedIrrigation.Materials
 
 Pipes.WRENCH = { tool = "PIPE_WRENCH", item = "Base.PipeWrench" }
 -- What holds plastic: one use patches a crack in any pipe, and each length's joint takes one
@@ -59,25 +56,16 @@ function Pipes.materials(kind, lengths)
     return list
 end
 
---- The kind a job of `lengths` lengths would use for `character`: the first, in menu order, of
---- which they carry enough with its joints, else, for the menu to list what is short, the one they
---- carry most pipe of. Returns the kind and whether they carry enough.
-function Pipes.kindFor(character, lengths)
+--- The kinds `character` carries any pipe of, in menu order: what Lay Line and Plumb to Tank offer
+--- to lay.
+function Pipes.kindsCarried(character)
+    local kinds = {}
     for _, kind in ipairs(Pipes.ORDER) do
-        if not EnhancedIrrigation.firstUnmet(Materials.needs(character, Pipes.materials(kind, lengths))) then
-            return kind, true
+        if character:getInventory():getCountTypeRecurse(Pipes.KINDS[kind].item) > 0 then
+            table.insert(kinds, kind)
         end
     end
-    local best, most = Pipes.ORDER[1], 0
-    local inventory = character:getInventory()
-    for _, kind in ipairs(Pipes.ORDER) do
-        local spec = Pipes.KINDS[kind]
-        local have = inventory:getCountTypeRecurse(spec.item) / spec.perLength
-        if have > most then
-            best, most = kind, have
-        end
-    end
-    return best, false
+    return kinds
 end
 
 --- Gives `character` back `lengths` lengths of `kind`'s pipe taken out: every item they took, the

@@ -8,6 +8,7 @@ require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/UI/Needs"
+require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Stands"
 require "EnhancedIrrigation/StandJobs"
@@ -21,7 +22,7 @@ EnhancedIrrigation.TankMenu = TankMenu
 
 local Needs, Tanks, Stands = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Stands
 local StandJobs, Links, LinkJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
-local Action = EnhancedIrrigationAction
+local Pipes, Action = EnhancedIrrigation.Pipes, EnhancedIrrigationAction
 
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
@@ -87,6 +88,8 @@ local function showLink(option, character, job, tank, with)
     Needs.show(option, LinkJobs.needs(character, job, tank, with), LinkJobs.blocker(character, job, tank, with))
 end
 
+-- Plumb to Tank: a submenu of the tanks in reach, each with a submenu of the pipe the character
+-- carries to lay to it, as Lay Line lists it, greyed out with what the run takes.
 local function addPlumbOptions(context, playerNum, character, tank)
     local here = EnhancedIrrigation.squareOf(tank)
     local name = getText("ContextMenu_EnhancedIrrigation_PlumbToTank")
@@ -96,13 +99,22 @@ local function addPlumbOptions(context, playerNum, character, tank)
         return
     end
     local submenu = Needs.addSubMenu(context, name)
+    local kinds = Pipes.kindsCarried(character)
     local listed = 0
     for _, entry in ipairs(Links.tanksInReach(tank)) do
         if not Links.find(here, entry.at) then
-            local with = Links.encode(entry.at)
-            local option = submenu:addOption(TankMenu.tankLabel(here, entry.at), playerNum, Action.queue, "link",
-                LinkJobs.PLUMB, tank, with)
-            showLink(option, character, LinkJobs.PLUMB, tank, with)
+            local label = TankMenu.tankLabel(here, entry.at)
+            if #kinds == 0 then
+                Needs.refuse(submenu:addOption(label), "Tooltip_EnhancedIrrigation_NoPipe")
+            else
+                local pipes = Needs.addSubMenu(submenu, label)
+                for _, kind in ipairs(kinds) do
+                    local with = Links.encode(entry.at, kind)
+                    local option = pipes:addOption(getItemNameFromFullType(Pipes.KINDS[kind].item), playerNum,
+                        Action.queue, "link", LinkJobs.PLUMB, tank, with)
+                    showLink(option, character, LinkJobs.PLUMB, tank, with)
+                end
+            end
             listed = listed + 1
         end
     end

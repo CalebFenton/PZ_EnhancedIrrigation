@@ -87,11 +87,12 @@ end
 
 -- Jobs -----------------------------------------------------------------------------------------
 
--- What each job does at `tank` toward the square `with` names. Returns whether it was done.
+-- What each job does at `object` toward the square `with` names. Returns whether it was done.
 local DO = {
     [LinkJobs.PLUMB] = function(character, tank, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(character, tank, with)
-        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank), Links.decode(with), kind, lengths,
+        local kind, lengths = LinkJobs.pipeFor(tank, with)
+        local other = Links.decode(with)
+        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank), other, kind, lengths,
             Materials.conditions(character, materials))
         return true
     end,

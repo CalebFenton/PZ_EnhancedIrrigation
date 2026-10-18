@@ -146,8 +146,8 @@ local function pushing(x, y, z)
     return found
 end
 
--- Lay's `with` is the pipe kind; the others' is nil. Fit Tap picks its kind on each side
--- (Pipes.kindFor), and Drill Holes its tool (LineJobs.holeTool).
+-- Lay's `with` is the pipe kind; the others' is nil. Fit Tap takes a length of the tile's own
+-- pipe, and Drill Holes picks its tool (LineJobs.holeTool).
 LineJobs.JOBS = {
     [LineJobs.LAY] = {
         minutes = 3,
@@ -187,9 +187,10 @@ LineJobs.JOBS = {
             end
             return #pushing(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
         end),
-        materials = function(character)
+        materials = function(character, object)
             local list = { Pipes.WRENCH }
-            for _, material in ipairs(Pipes.materials(Pipes.kindFor(character, 1), 1)) do
+            local state = Lines.stateOf(object)
+            for _, material in ipairs(state and Pipes.materials(state.material, 1) or {}) do
                 table.insert(list, material)
             end
             return list

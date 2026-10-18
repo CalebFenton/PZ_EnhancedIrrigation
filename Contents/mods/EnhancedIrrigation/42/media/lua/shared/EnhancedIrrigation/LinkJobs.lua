@@ -1,7 +1,8 @@
 -- The jobs that plumb one tank to another and take the pipe out again, done on the authority by
 -- server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square of the link's
--- other end (Links.encode). Plumb works at a tank; Unplumb at a tank on one end, or at the floor
--- of an end whose tank is gone, as the buried pipe stays (Links.lua).
+-- other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb works at a tank;
+-- Unplumb at a tank on one end, or at the floor of an end whose tank is gone, as the buried pipe
+-- stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
@@ -34,11 +35,11 @@ local function runTiles(tank, with)
     return other and Links.distance(EnhancedIrrigation.squareOf(tank), other) or 0
 end
 
---- The pipe `character` would plumb `tank` to the square `with` names with: its kind
---- (Pipes.kindFor) and lengths.
-function LinkJobs.pipeFor(character, tank, with)
-    local lengths = Links.lengthsFor(runTiles(tank, with))
-    return Pipes.kindFor(character, lengths), lengths
+--- The pipe Plumb lays from `tank` to the square `with` names: the kind `with` names, or nil, and
+--- the lengths the run takes.
+function LinkJobs.pipeFor(tank, with)
+    local _, kind = Links.decode(with)
+    return Pipes.KINDS[kind] and kind or nil, Links.lengthsFor(runTiles(tank, with))
 end
 
 -- The square `object` stands on and the square `with` names, or nil when `with` names no other
@@ -67,14 +68,19 @@ LinkJobs.JOBS = {
             if Links.distance(here, other) > Links.MAX_TILES then
                 return "Tooltip_EnhancedIrrigation_OutOfReach"
             end
-            return Links.find(here, other) and "Tooltip_EnhancedIrrigation_AlreadyPlumbed" or nil
+            if Links.find(here, other) then
+                return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
+            end
+            -- Only a client that made up a job asks for pipe no kind has.
+            return not LinkJobs.pipeFor(tank, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
         end,
         materials = function(character, tank, with)
             local list = {}
             for _, material in ipairs(LinkJobs.PLUMB_TOOLS) do
                 table.insert(list, material)
             end
-            for _, material in ipairs(Pipes.materials(LinkJobs.pipeFor(character, tank, with))) do
+            local kind, lengths = LinkJobs.pipeFor(tank, with)
+            for _, material in ipairs(kind and Pipes.materials(kind, lengths) or {}) do
                 table.insert(list, material)
             end
             return list

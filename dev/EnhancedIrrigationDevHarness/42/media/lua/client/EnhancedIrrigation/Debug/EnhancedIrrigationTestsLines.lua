@@ -445,17 +445,18 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
 -- Taps ---------------------------------------------------------------------------------------------
 
 -- Fit Tap wants a tank reaching the tile a storey above the line: beside a barrel on the ground
--- it's refused, saying so; beside a barrel on a stand it fits, with a length of pipe, and shows the
--- riser on both sides.
+-- it's refused, saying so; beside a barrel on a stand it fits with a length of the tile's own pipe,
+-- whatever else is carried, and shows the riser on both sides.
 T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
     instant = true,
     run = function(self)
         local rows = T.row(self, 3)
         if not rows then return end
         local west, tile, east = rows[1][1], rows[1][2], rows[1][3]
-        T.placeLine(self, { tile }, "iron")
+        T.placeLine(self, { tile }, "lead")
         T.placeTank(self, west, "ground", 100)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = Pipes.KINDS.iron.item },
+            { type = Pipes.KINDS.lead.item } })
         T.goNextTo(self, tile.square)
         useJob(self, tile, LineJobs.TAP, nil, "beside a ground barrel", false)
         T.placeTank(self, east, "raised", 0)
@@ -471,14 +472,18 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
             end
             return false
         end, "this client's copy of the tap's riser")
-        T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
+        T.count(self, "left", { Pipes.KINDS.iron.item, Pipes.KINDS.lead.item, "Base.PipeWrench" })
     end,
     validate = function(self)
         expectRefused(self, "beside a ground barrel", "Tooltip_EnhancedIrrigation_NoPressure")
         expectOffered(self, "beside a raised barrel")
-        expect(recordOf(self, "tapped", 1).tap, "no tap fitted")
+        local record = recordOf(self, "tapped", 1)
+        expect(record.tap and record.tapMaterial == "lead", "the tap fitted: " .. tostring(record.tap) .. ", of "
+            .. tostring(record.tapMaterial) .. " pipe, not the lead tile's own")
         expect(hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
-        expect(self.counts.left["Base.MetalPipe"] == 0, "the tap took no pipe")
+        local iron, lead = Pipes.KINDS.iron.item, Pipes.KINDS.lead.item
+        expect(self.counts.left[lead] == 0, "the tap took no lead pipe")
+        expect(self.counts.left[iron] == 1, "the tap on lead pipe took iron pipe")
         expect(self.counts.left["Base.PipeWrench"] == 1, "the tap took the pipe wrench")
     end,
 })

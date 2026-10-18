@@ -84,17 +84,6 @@ local function addLineOptions(context, playerNum, character, line, state)
     addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeUpPipe", LineJobs.TAKE_UP, line)
 end
 
--- The pipe kinds `character` carries any of.
-local function kindsCarried(character)
-    local kinds = {}
-    for _, kind in ipairs(Pipes.ORDER) do
-        if character:getInventory():getCountTypeRecurse(Pipes.KINDS[kind].item) > 0 then
-            table.insert(kinds, kind)
-        end
-    end
-    return kinds
-end
-
 -- The cursor lives with the server's Lua, which loads after this file, so it's looked up here.
 local function addLay(context, playerNum, character, kinds)
     local menu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_LayLine"))
@@ -123,7 +112,7 @@ function LineMenu.onFill(playerNum, context, worldobjects, test)
     end
     local line = Needs.findClicked(worldobjects, Lines.isLine)
     local state = line and Lines.stateOf(line)
-    local kinds = kindsCarried(character)
+    local kinds = Pipes.kindsCarried(character)
     local square = clickedFloorSquare(worldobjects)
     if not state and not (square and #kinds > 0) then
         return
