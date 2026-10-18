@@ -39,7 +39,6 @@ function Links.distance(a, b)
     return math.ceil(math.sqrt(dx * dx + dy * dy)) + Links.TILES_PER_STOREY * math.abs(b.z - a.z)
 end
 
---- The lengths of pipe a run of `distance` tiles takes.
 function Links.lengthsFor(distance)
     return math.ceil(distance / Links.TILES_PER_LENGTH)
 end

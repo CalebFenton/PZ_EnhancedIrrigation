@@ -89,7 +89,7 @@ function EnhancedIrrigation.now()
 end
 
 -- A pass longer than this (a save loaded after the clock jumped) counts as this long. Line records
--- run while unloaded, so a week away is a week of drying and frost; tanks settle long before.
+-- run while unloaded, so it is long enough for drying and frost to catch up; tanks settle sooner.
 EnhancedIrrigation.LONGEST_PASS = 24 * 7
 
 --- The game hours since `holder.lastHour`, at most LONGEST_PASS, and none the first time; stamps

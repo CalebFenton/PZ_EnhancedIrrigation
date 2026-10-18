@@ -38,7 +38,6 @@ function Tanks.isTank(isoObject)
     return specOf(isoObject) ~= nil and isoObject:getFluidContainer() ~= nil
 end
 
---- The level `tank`'s water stands at: its floor, plus one on a Tank Stand.
 function Tanks.levelOf(tank)
     return tank:getZ() + (specOf(tank).raised and 1 or 0)
 end
@@ -70,8 +69,7 @@ function Tanks.tanksReaching(x, y, z)
     return found
 end
 
---- Whether water from `tank` comes out of an outlet (a tap, a hole, a fixture) on floor `z`: its
---- level stands at least a storey above.
+--- Whether water from `tank` comes out of an outlet (a tap, a hole, a fixture) on floor `z`.
 function Tanks.hasPressureFor(tank, z)
     return Tanks.levelOf(tank) >= z + 1
 end

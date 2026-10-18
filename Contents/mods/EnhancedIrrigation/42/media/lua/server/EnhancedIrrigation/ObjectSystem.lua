@@ -30,7 +30,6 @@ function Object:elapsedHours()
     return EnhancedIrrigation.catchUp(self)
 end
 
---- Brings the record up to now, then shows and tells what changed.
 function Object:update()
     self:advance(self:elapsedHours())
     self:afterChange()

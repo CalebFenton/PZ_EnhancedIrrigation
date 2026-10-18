@@ -26,8 +26,7 @@ local Links, LinkJobs, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigati
 local Materials = EnhancedIrrigation.Materials
 
 -- Litres an hour a link carries at most: a pipe under a barrel's head passes a few litres a
--- minute, so a full raised barrel fills an empty one beside it in under two hours, and two
--- barrels on one floor level out in under one.
+-- minute.
 LinkSystem.LINK_RATE = 360
 -- A flow smaller than this isn't worth a sync to every client.
 local LEAST_LITRES = 0.01
