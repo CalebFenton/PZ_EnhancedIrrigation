@@ -36,12 +36,9 @@ local function deliver(record, litres)
     record:addSoak(points - toPlant)
 end
 
---- Runs the line tapped at `tapRecord` from `tank` for `hours` game hours: every outlet asks its
---- rate, pushed by the square root of the tank's head over the line, and the tank gives what it
---- holds of the sum, each outlet the same fraction of what it asked. Holes water their square; a
---- crack's water runs into the ground beside the pipe, wetting the tile and feeding nothing.
---- Callers check the tap first (LineJobs.tapTank). Authority only. Returns the litres drawn from
---- the tank.
+--- Runs the line tapped at `tapRecord` from `tank` for `hours` game hours. A tank holding less than
+--- its outlets ask gives each the same fraction of what it asked. Callers check the tap first
+--- (LineJobs.tapTank). Authority only. Returns the litres drawn from the tank.
 function Flow.run(tapRecord, tank, hours)
     local tiles = Lines.component(tapRecord.x, tapRecord.y, tapRecord.z)
     local push = math.sqrt(Tanks.levelOf(tank) - tapRecord.z)

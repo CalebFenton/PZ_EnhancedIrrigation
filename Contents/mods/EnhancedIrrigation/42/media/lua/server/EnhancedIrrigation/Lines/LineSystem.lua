@@ -115,7 +115,6 @@ local DO = {
         record.tapConditions = Materials.conditions(character, materials)
         return true
     end,
-    -- A patch makes the tile whole again.
     [LineJobs.PATCH] = function(character, object)
         Lines.recordOf(object).cracked = false
         return true

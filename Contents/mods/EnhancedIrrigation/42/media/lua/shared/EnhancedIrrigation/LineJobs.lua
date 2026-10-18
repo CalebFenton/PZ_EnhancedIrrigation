@@ -39,9 +39,8 @@ local function firstOfType(fullType)
 end
 
 -- What makes a hole, in the order Drill Holes picks among those carried: the tools that cut before
--- the ones that punch. `reach`: the hardest pipe it gets into (Pipes.KINDS hardness); a hand
--- drill's metal bit is the only one for iron, and an awl only pierces soft pipe. `punches`: it may
--- split brittle pipe (LineJobs.mayCrack). `materials`: what it takes, the tool itself first.
+-- the ones that punch. `reach`: the hardest pipe it gets into (Pipes.KINDS hardness). `punches`: it
+-- may split brittle pipe (LineJobs.mayCrack). `materials`: what it takes, the tool itself first.
 -- `hold`: the item held while drilling.
 LineJobs.HOLE_TOOLS = {
     { reach = 3, hold = firstTagged("DRILL_METAL"), materials = { { tool = "DRILL_METAL", item = "Base.HandDrill" } } },
@@ -146,8 +145,7 @@ local function pushing(x, y, z)
     return found
 end
 
--- Lay's `with` is the pipe kind; the others' is nil. Fit Tap takes a length of the tile's own
--- pipe, and Drill Holes picks its tool (LineJobs.holeTool).
+-- Lay's `with` is the pipe kind; the others' is nil.
 LineJobs.JOBS = {
     [LineJobs.LAY] = {
         minutes = 3,

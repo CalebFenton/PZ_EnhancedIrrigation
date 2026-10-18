@@ -1,6 +1,5 @@
--- The Lay Line cursor: a ghost of the pipe tile the click would lay, joined to its neighbours, in
--- the good or bad highlight colour; each valid click queues one Lay job, and the cursor stays for
--- the next, as vanilla's ISShovelGroundCursor does. Squares already queued count as line, so a run
+-- The Lay Line cursor: each valid click queues one Lay job, and the cursor stays for the next, as
+-- vanilla's ISShovelGroundCursor does. Squares already queued count as line, so a run
 -- can be clicked out tile by tile before the first is laid. It lives with the server's Lua, as
 -- vanilla's cursors do, because its base class does: client files load first and couldn't derive
 -- from it. Every side loads it; only a client uses it.

@@ -1,9 +1,8 @@
 -- Garden lines: pipe laid on the ground, one tile a square, joined to its same-floor neighbours
 -- where no wall stands between, holed over the beds and tapped at a tank. The authority keeps a
--- record of every tile in the Global Object System `enhanced_irrigation_line`
--- (server/EnhancedIrrigation/Lines), saved with the world and run every ten minutes loaded or
--- not; every client gets each tile's summary, which carries the same field names as the record,
--- so the menu and the authority read a line the same way (Lines.stateAt).
+-- record of every tile in a Global Object System, saved with the world and run loaded or not;
+-- every client gets each tile's summary, whose fields carry the record's names, so the menu and
+-- the authority read a line the same way (Lines.stateAt).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -19,12 +18,13 @@ Lines.SYSTEM_NAME = "enhanced_irrigation_line"
 
 -- Flow ---------------------------------------------------------------------------------------------
 
--- Litres an hour out of a hole under one storey of head: a holed tile keeps a plant level on six
--- minutes a day. A higher tank pushes harder, by the square root of its head (Torricelli).
+-- Litres an hour out of a hole under one storey of head: a few minutes at the tap a day keeps a
+-- holed tile's plant watered. A higher tank pushes harder, by the square root of its head
+-- (Torricelli).
 Lines.HOLE_RATE = 1
 -- Litres an hour out of a crack under one storey of head, while the tap runs: a split runs freer
--- than a drilled hole, and its water spills along the outside of the pipe into the path, wetting
--- the tile but reaching no roots.
+-- than a drilled hole, and its water spills along the outside of the pipe, wetting the tile but
+-- reaching no roots.
 Lines.CRACK_RATE = 3
 -- Vanilla's watering: one use of 200 mL adds 10 water points (SPlantGlobalObject.water).
 Lines.POINTS_PER_LITRE = 50
@@ -36,14 +36,14 @@ Lines.WET_HOURS = 4
 
 -- Soak and root rot --------------------------------------------------------------------------------
 
--- Points of soak, the water an outlet gives past what its plant takes, as plant points.
+-- The most soak a tile holds: the water an outlet gives past what its plant takes, in plant points.
 Lines.SOAK_MAX = 100
 -- Thresholds of the plant info's soil line: damp, soaked, and waterlogged (strictly above), where
 -- the roots rot.
 Lines.DAMP = 1
 Lines.SOAKED = 15
 Lines.WATERLOGGED = 30
--- Soak lost a day: sun and wind dry a bed outdoors twice as fast as one under a roof.
+-- Soak lost a day: sun and wind dry a bed outdoors faster than one under a roof.
 Lines.SOAK_DRY_OUT = 10
 Lines.SOAK_DRY_IN = 5
 -- Health a plant loses an hour while its soil stays waterlogged, so drowned roots weigh on it as
@@ -91,15 +91,14 @@ local function wallOn(square, north)
 end
 
 --- Whether line on x, y, z and on its neighbour one `step` (of Lines.STEPS) away join: no wall
---- stands between their squares. Laying, the shapes and the flow all ask this. An edge on a square
---- this side hasn't loaded, such as a long line's far end, joins: its walls can't be read there,
---- and every edge a player works at is loaded.
+--- stands between their squares. An edge on a square this side hasn't loaded, such as a long
+--- line's far end, joins: its walls can't be read there, and every edge a player works at is
+--- loaded.
 function Lines.joins(x, y, z, step)
     local square = getCell():getGridSquare(x + step.edgeDx, y + step.edgeDy, z)
     return square == nil or not wallOn(square, step.dy ~= 0)
 end
 
---- Whether `isoObject` is a garden line tile: drawn as one of the pipe tiles.
 function Lines.isLine(isoObject)
     local sprite = isoObject and isoObject:getSprite()
     return sprite ~= nil and Sprites.pipeOf(sprite:getName()) ~= nil
@@ -114,8 +113,6 @@ function Lines.lineAt(x, y, z)
     return Lines.lineOn(getCell():getGridSquare(x, y, z))
 end
 
---- Whether a line tile may go on `square`: a floor to lie on, not water, nothing solid, no line
---- there already.
 function Lines.canTakeLine(square)
     if not square or not square:isFree(false) or square:getFloor() == nil then
         return false
@@ -134,8 +131,7 @@ local function receivedAt(x, y, z)
 end
 
 --- The tile at x, y, z as this side knows it: its record on the authority, loaded or not, else the
---- summary this client has; nil where there is no line tile. Read only: both carry material,
---- holed, cracked, full, tap and heldBy.
+--- summary this client has; nil where there is no line tile. Read only.
 function Lines.stateAt(x, y, z)
     return Lines.recordAt(x, y, z) or receivedAt(x, y, z)
 end
@@ -145,8 +141,7 @@ function Lines.stateOf(isoObject)
 end
 
 --- The tiles of the line through x, y, z, the start first and the rest in the order water reaches
---- them from it (breadth first, same floor, orthogonal, never through a wall: Lines.joins): a list
---- of { x, y, z, state }. Empty when x, y, z holds no line tile.
+--- them from it: a list of { x, y, z, state }. Empty when x, y, z holds no line tile.
 function Lines.component(x, y, z)
     local list, seen = {}, {}
     local start = Lines.stateAt(x, y, z)

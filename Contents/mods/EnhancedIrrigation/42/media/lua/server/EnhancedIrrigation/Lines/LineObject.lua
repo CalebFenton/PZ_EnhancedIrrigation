@@ -56,7 +56,6 @@ function LineObject:stateToIsoObject(isoObject)
     self:show()
 end
 
---- Whether the soil under the tile shows wet.
 function LineObject:isWet()
     return self.soak >= Lines.DAMP or EnhancedIrrigation.now() < (self.wetUntil or 0)
 end

@@ -1,8 +1,7 @@
--- The pipe the mod lays and plumbs with: Plastic, Iron and Lead Pipe, and fired Clay Pipe Segments,
--- two to a length. Plastic, lead and clay are pipe vanilla's recipes hardly want; iron is
--- contested, an input to about 25 vanilla recipes and a weapon besides. Each length is joined to the
--- next with what holds that material: glue, epoxy or tape for plastic, cement for clay, the pipe
--- wrench alone for threaded iron and soft lead.
+-- The pipe the mod lays and plumbs with. Plastic, lead and clay are pipe vanilla's recipes hardly
+-- want; iron is contested, an input to about 25 vanilla recipes and a weapon besides. Each length
+-- is joined to the next with what holds that material; threaded iron and soft lead need only the
+-- pipe wrench.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -12,8 +11,7 @@ local Pipes = {}
 EnhancedIrrigation.Pipes = Pipes
 
 Pipes.WRENCH = { tool = "PIPE_WRENCH", item = "Base.PipeWrench" }
--- What holds plastic: one use patches a crack in any pipe, and each length's joint takes one
--- (Pipes.materials).
+-- What holds plastic, which also patches a crack in any pipe.
 Pipes.GLUE = { tags = { "GLUE", "EPOXY", "TAPE" }, uses = 1, labelKey = "IGUI_EnhancedIrrigation_GlueOrTape" }
 
 -- Each material's frostPerHour is the cracks a winter a 24-tile line left full outdoors should
@@ -56,8 +54,7 @@ function Pipes.materials(kind, lengths)
     return list
 end
 
---- The kinds `character` carries any pipe of, in menu order: what Lay Line and Plumb to Tank offer
---- to lay.
+--- The kinds `character` carries any pipe of, in menu order.
 function Pipes.kindsCarried(character)
     local kinds = {}
     for _, kind in ipairs(Pipes.ORDER) do

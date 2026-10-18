@@ -24,7 +24,6 @@ local Materials = EnhancedIrrigation.Materials
 
 -- What a tile is ------------------------------------------------------------------------------------
 
---- The tile `state` as one line of text: its pipe, its holes and its wear.
 function LineMenu.describe(state)
     local holes = state.holed and "IGUI_EnhancedIrrigation_Holed" or "IGUI_EnhancedIrrigation_NoHoles"
     local parts = { getText(holes) }
@@ -88,7 +87,6 @@ local function addLay(context, playerNum, character, kinds)
     end
 end
 
--- The first right-clicked square with a floor, or nil.
 local function clickedFloorSquare(worldobjects)
     for _, clicked in ipairs(worldobjects) do
         local square = clicked:getSquare()
