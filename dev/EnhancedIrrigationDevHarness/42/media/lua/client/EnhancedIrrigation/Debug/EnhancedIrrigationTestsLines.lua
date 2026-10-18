@@ -200,14 +200,16 @@ T.test("irrigation_lines_first_tile_needs_a_tank", {
 })
 
 -- A tile between two tapped lines would make one line with two taps: the cursor refuses it and so
--- does the authority on its own, laying nothing. Between a tapped and an untapped line it just
--- joins them. Catches the refusal only on the client, or a join refused for one tap.
+-- does the authority on its own, laying nothing. Between a tapped and an untapped line the same lay
+-- joins them, so the authority refused for the taps. Catches the refusal only on the client, or a
+-- join refused for one tap.
 T.test("irrigation_lines_merging_two_tapped_lines_refused", {
     instant = true,
     run = function(self)
         local rows = T.row(self, 3)
         if not rows then return end
         local tiles = rows[1]
+        self.size = #tiles
         T.trackLines(self, tiles)
         tiles[1].fields = T.tapped()
         tiles[3].fields = T.tapped()
@@ -218,17 +220,21 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
             self.cursor = layCursor(self, "iron")
             self.twoTaps = self.cursor:refusal(tiles[2].square)
         end)
-        T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
-            "forced")
+        local lay = T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) })
+        T.read(self, "lines.perform", lay, "two taps")
         T.server(self, "lines.set", { tiles = { T.at(tiles[3], { fields = { tap = false } }) } })
         T.waitForLines(self, { tiles[3] }, "this client's copy of the untapped line", function(summary) return not summary.tap end)
         T.step(function() self.oneTap = self.cursor:refusal(tiles[2].square) end)
+        T.read(self, "lines.perform", lay, "one tap")
     end,
     validate = function(self)
         expect(self.twoTaps == "Tooltip_EnhancedIrrigation_JoinsTwoTaps", "between two taps: " .. tostring(self.twoTaps))
-        local forced = self.reads.forced
-        expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile between two taps")
+        local twoTaps, oneTap = self.reads["two taps"], self.reads["one tap"]
+        expect(twoTaps.done == false and twoTaps.tiles[2].record == nil, "the server laid a tile between two taps")
         expect(self.oneTap == nil, "between a tapped and an untapped line: " .. tostring(self.oneTap))
+        local joined = oneTap.tiles[2].record
+        expect(oneTap.done and joined and joined.tiles == self.size,
+            "the server didn't lay the tile joining a tapped and an untapped line")
     end,
 })
 

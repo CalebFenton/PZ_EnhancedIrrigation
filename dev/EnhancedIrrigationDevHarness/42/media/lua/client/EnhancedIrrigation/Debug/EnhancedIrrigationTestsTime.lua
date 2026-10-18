@@ -166,8 +166,8 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
         expect(back.sprite == Sprites.pipe("iron", false, 0), "the server shows the dried tile as " .. tostring(back.sprite))
         local summary = T.lineSummary(self.tile)
         expect(summary.cracked, "this client's summary of the tile isn't cracked")
-        expect(summary.soil == Lines.soilKey(back.record.soak), "this client's soil word " .. tostring(summary.soil)
-            .. " for the server's soak " .. tostring(back.record.soak))
+        expect(summary.soil == nil, "this client still names the dried soil " .. tostring(summary.soil)
+            .. " at the server's soak " .. tostring(back.record.soak))
         expect(T.lineSprite(self.tile) == Sprites.pipe("iron", false, 0),
             "this client shows the dried tile as " .. tostring(T.lineSprite(self.tile)))
     end,
