@@ -99,15 +99,19 @@ end
 -- Tanks ---------------------------------------------------------------------------------------------
 
 -- Builds the object of the tile `sprite` on `square` as the build menu builds one
--- (ISBuildIsoEntity:setInfo): a thumpable with the entity that owns the tile. Sends it to the
--- clients. Returns it, or nil and what is missing.
-local function build(square, sprite)
+-- (ISBuildIsoEntity:setInfo): a thumpable with the entity that owns the tile, holding `litres` of
+-- water (tainted when `tainted`). Sends it to the clients with its water: a sync sent after can
+-- reach a client before the object does, which drops it. Returns it, or nil and what is missing.
+local function build(square, sprite, litres, tainted)
     local script = mod().tileEntity(sprite)
     if not script then
         return nil, "the entity of the tile " .. tostring(sprite)
     end
     local thumpable = IsoThumpable.new(getCell(), square, sprite, false, nil)
     GameEntityFactory.CreateIsoObjectEntity(thumpable, script, true)
+    if (litres or 0) > 0 then
+        thumpable:getFluidContainer():addFluid(tainted and FluidType.TaintedWater or FluidType.Water, litres)
+    end
     square:AddSpecialObject(thumpable)
     thumpable:transmitCompleteItemToClients()
     return thumpable
@@ -131,15 +135,11 @@ handler("tanks.place", function(_, args, defer)
             getCell():checkHaveRoof(args.x, args.y)
         end)
     end
-    local object, missing = build(square, args.sprite)
+    local object, missing = build(square, args.sprite, args.litres, args.tainted)
     if not object then
         return nil, missing
     end
     Server.removeWhenDone(args, defer)
-    if (args.litres or 0) > 0 then
-        object:getFluidContainer():addFluid(args.tainted and FluidType.TaintedWater or FluidType.Water, args.litres)
-        object:sync()
-    end
     return Server.stateAt(args)
 end)
 
