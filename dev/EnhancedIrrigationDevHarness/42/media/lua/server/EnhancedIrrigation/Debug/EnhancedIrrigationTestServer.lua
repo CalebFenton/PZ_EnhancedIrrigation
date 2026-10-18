@@ -2,11 +2,11 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua: the tanks
--- and the recipe knowledge every feature's tests use, and what the other handler files
--- (EnhancedIrrigationTestServer*.lua) share, which this file returns. Server Lua loads after
--- shared, and the mod's server modules exist only on the authority, so the handlers look them up
--- when they run. Named to sort before the handler files, so that a --stay rerun loads it again
--- (RELOAD_FILES) before the files that require it; it only registers handlers.
+-- and the recipe knowledge every system's tests use, the jobs the stand and link tests share, and
+-- what the other handler files (EnhancedIrrigationTestServer*.lua) share, which this file returns.
+-- Server Lua loads after shared, and the mod's server modules exist only on the authority, so the
+-- handlers look them up when they run. Named to sort before the handler files, so that a --stay
+-- rerun loads it again (RELOAD_FILES) before the files that require it; it only registers handlers.
 --
 -- What these place is removed by its square when the test ends, not by the object: the jobs under
 -- test replace a stand's object with a barrel's and back, and the vanilla lid swaps it again.
@@ -145,6 +145,43 @@ end)
 
 handler("tanks.read", function(_, args)
     return Server.stateAt(args)
+end)
+
+-- Removes, when the test ends, whatever stand or tank stands at x, y, z then, and its links: for
+-- what the test builds through the game.
+handler("tanks.track", function(_, args, defer)
+    Server.removeWhenDone(args, defer)
+    return {}
+end)
+
+handler("tanks.remove", function(_, args)
+    Server.removeAt(args.x, args.y, args.z)
+    return Server.stateAt(args)
+end)
+
+-- The system whose perform does each action feature's jobs.
+local SYSTEMS = { stand = "StandSystem", link = "LinkSystem" }
+
+-- Runs the job `args.job` of the action feature `args.feature` at the object at x, y, z through the
+-- authority's own perform (what the action's complete() calls), with `args.with`, or with the first
+-- barrel moveable carried when `args.barrel`. Answers whether it was done and the object's state
+-- after, so a test sees the server refuse what its menu would have greyed out.
+handler("tanks.perform", function(player, args)
+    local EI = mod()
+    local square = Server.squareAt(args)
+    local object = square and EI.findObjectOn(square, Server.isPlaced)
+    if not object then
+        return nil, "the server's object at " .. tostring(args.x) .. "," .. tostring(args.y)
+    end
+    local with = args.with
+    if args.barrel then
+        local carried = EI.Stands.barrelsCarried(player)[1]
+        with = carried and carried.item
+    end
+    local done = EI[SYSTEMS[args.feature]].perform(player, args.job, object, with)
+    local state = Server.stateAt(args)
+    state.done = done == true
+    return state
 end)
 
 -- Recipes -------------------------------------------------------------------------------------------

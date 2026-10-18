@@ -1,9 +1,10 @@
 require "PZHarness/ServerHandlers"
 
--- Development only, not published. The authority's half of the garden line tests
--- (EnhancedIrrigationTestsLines.lua) and of the line and crop fixtures in
+-- Development only, not published. The authority's half of every line test file
+-- (EnhancedIrrigationTestsLines, Water, Time and PlantInfo) and of the line and crop fixtures in
 -- EnhancedIrrigationTestLib.lua: line tiles and crops placed the way the authority places them,
--- line records read, aged and run, and the frost; the tanks are EnhancedIrrigationTestServer.lua's.
+-- line jobs performed, line records read, aged and run, and the frost; the tanks are
+-- EnhancedIrrigationTestServer.lua's.
 -- Only registers handlers, so a --stay rerun loads it again (RELOAD_FILES). Everything a handler
 -- places goes when its test ends, by its square, so a stale copy left by a reload is no matter. A
 -- tile is { x, y, z }; `args.tiles` lists them.
@@ -58,8 +59,7 @@ local function plantAt(at)
     if not plant then
         return nil
     end
-    return { state = plant.state, water = plant.waterLvl, health = plant.health, mildew = plant.mildewLvl,
-        alive = plant:isAlive() }
+    return { state = plant.state, water = plant.waterLvl, health = plant.health, alive = plant:isAlive() }
 end
 
 -- What the server has at the tile `at`: `record` (its saved fields, wet, the line's size and who
@@ -167,6 +167,27 @@ handler("lines.flow", function(player, args)
     return reply
 end)
 
+-- Runs the line job `args.job` with `args.with` at x, y, z through the authority's own perform (what
+-- the action's complete() calls): on the square's floor for Lay, else on the line tile. Answers
+-- whether it was `done` and `args.tiles` after, so a test sees the server refuse on its own.
+handler("lines.perform", function(player, args)
+    local LineJobs = EnhancedIrrigation.LineJobs
+    local square = squareAt(args)
+    local object
+    if args.job == LineJobs.LAY then
+        object = square and square:getFloor()
+    else
+        object = EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z)
+    end
+    if not object then
+        return nil, "the server's object for " .. tostring(args.job) .. " at " .. args.x .. "," .. args.y
+    end
+    local done = lineSystem().perform(player, args.job, object, args.with)
+    local reply = readTiles(args.tiles or { { x = args.x, y = args.y, z = args.z } })
+    reply.done = done == true
+    return reply
+end)
+
 -- Holds the tap at x, y, z for a stand-in for another player named `args.as`, as their Water from
 -- Tank holds it once open, and leaves it silent from then on, as a client's action goes that
 -- disconnects mid-run: it never runs the tap again nor lets go. Answers whether it held the tap.
@@ -204,7 +225,7 @@ end)
 -- Crops ---------------------------------------------------------------------------------------------
 
 -- A sown crop on x, y, z, plowed and seeded as the farming system does them, at `args.water` water
--- points and no mildew.
+-- points.
 handler("lines.plant", function(player, args, defer)
     local square = squareAt(args)
     if not square then
@@ -229,7 +250,6 @@ handler("lines.plant", function(player, args, defer)
     end
     plant:seed(args.seed or "Carrots")
     plant.waterLvl = args.water
-    plant.mildewLvl = 0
     plant:saveData()
     return plantAt(args)
 end)
