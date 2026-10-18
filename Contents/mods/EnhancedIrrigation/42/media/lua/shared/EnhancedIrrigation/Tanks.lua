@@ -74,6 +74,18 @@ function Tanks.hasPressureFor(tank, z)
     return Tanks.levelOf(tank) >= z + 1
 end
 
+--- The tanks reaching an outlet at x, y, z (Tanks.tanksReaching) that stand high enough to push
+--- water out of it.
+function Tanks.pushingAt(x, y, z)
+    local found = {}
+    for _, tank in ipairs(Tanks.tanksReaching(x, y, z)) do
+        if Tanks.hasPressureFor(tank, z) then
+            table.insert(found, tank)
+        end
+    end
+    return found
+end
+
 function Tanks.litres(tank)
     return tank:getFluidContainer():getAmount()
 end
