@@ -3,8 +3,8 @@
 -- can see or hurt, who carries anything, has every skill the mod reads and knows its recipes, and
 -- carries an empty rain barrel, on an open lot between a farmhouse and its field. Laid out on the
 -- lot from north to south, a group to a few rows: beds of growing crops, each beside a tank to
--- lay a line from (a barrel on a Tank Stand, a barrel on a deck a storey up, a barrel on the
--- ground); a row of tanks to set up and plumb (an empty stand, an empty barrel, two barrels to
+-- lay a line from (a barrel on a Tank Stand, a barrel on a deck a storey up, up Log Stairs, a
+-- barrel on the ground); a row of tanks to set up and plumb (an empty stand, an empty barrel, two barrels to
 -- plumb together); and on the ground, a row to each group of items: the pipe, the joints, the
 -- tools, the Tank Stand's materials, and the pamphlet and a watering can.
 -- Single player only: it sows through the authority's SFarmingSystem.
@@ -22,26 +22,35 @@ QA.START = { x = 10458, y = 10062, z = 0 }
 local MARK = "EIQA"
 -- The lot, in squares east and south of its north-west corner, and the margin round it cleared of
 -- ground cover too.
-local AREA = { w = 11, h = 20 }
+local AREA = { w = 12, h = 20 }
 local MARGIN = 1
 -- Where the character is put: between the first two beds, beside their tanks.
-local ARRIVE = { x = 1, y = 2 }
+local ARRIVE = { x = 2, y = 2 }
 -- Every perk the mod reads (the tests' `perks` setting) goes to this level.
 local SKILL = 10
 
 -- Vanilla's open round rain barrel, the one a Tank Stand takes, as it stands on the ground.
 local BARREL = "carpentry_02_122"
--- The floor of the deck the upper tank stands on.
-local DECK_FLOOR = "carpentry_02_58"
+-- The deck the upper tank stands on, built as a player builds one: vanilla's Log Stairs up the
+-- lot's west column, climbing north to the landing they lay a storey up, and wooden floor joined to
+-- the landing, the deck two squares by two with the bed's tank square among them. Each is the tile
+-- of its build-menu entity and the cursor's rotation (ISBuildIsoEntity.nSprite: 1 is west), the
+-- stairs given by their top step.
+local STAIRS = { sprite = "crafted_02_98", nSprite = 1, x = 0, y = 5 }
+local DECK_FLOOR = { sprite = "carpentry_02_58", nSprite = 1 }
+-- In build order, each beside one built: the landing is at the stairs' x, a square north of them.
+local DECK = { { x = 1, y = 4 }, { x = 0, y = 3 }, { x = 1, y = 3 } }
 
 -- Water points of a crop just watered, and of one gone dry.
 local WATERED, DRY = 100, 15
 -- A crop stage still growing, short of harvest.
 local GROWING = 4
+-- The column of the beds' tanks, whose crops run east of them.
+local TANK_X = 1
 -- Each bed: a row of crops east of a tank full of water at its west end, on which a line laid
--- from beside the tank waters them. `up` floors above the ground; `dry`, how many of the crops,
--- from the west, have gone dry, the rest just watered. The raised barrel and the deck's give a
--- line on the ground a storey of head; the ground barrel gives none.
+-- from beside the tank waters them. `up` floors above the ground, on the deck; `dry`, how many of
+-- the crops, from the west, have gone dry, the rest just watered. The raised barrel and the deck's
+-- give a line on the ground a storey of head; the ground barrel gives none.
 local BEDS = {
     { y = 1, tank = Sprites.RAISED_BARREL, seed = "Tomato", dry = 10 },
     { y = 3, tank = BARREL, up = 1, seed = "Carrots", dry = 0 },
@@ -53,10 +62,10 @@ local BED_CROPS = 10
 -- and two barrels at one level close enough to plumb together, one full and one empty.
 local TANK_ROW = 8
 local TANKS = {
-    { x = 0, sprite = Sprites.STAND },
-    { x = 2, sprite = BARREL },
-    { x = 5, sprite = BARREL, full = true },
-    { x = 8, sprite = BARREL },
+    { x = 1, sprite = Sprites.STAND },
+    { x = 3, sprite = BARREL },
+    { x = 6, sprite = BARREL, full = true },
+    { x = 9, sprite = BARREL },
 }
 
 -- The items, a row to each group from FIRST_ITEM_ROW, with an empty row between, a square to each
@@ -172,18 +181,47 @@ local function layItems(lot, groups, summary)
     end
 end
 
--- The tile `sprite` built at the lot's x, y, `up` floors above it on a deck laid for it, `full`
--- of water if asked. Returns what is missing, or nil.
+-- The vanilla build-menu entity of the tile `sprite` built at the lot's x, y, `up` floors above
+-- it, turned as the cursor's rotation `nSprite` turns it, by `player` as the build menu builds it
+-- (ISBuildIsoEntity:create, which ISBuildAction runs at the end of the job), the build cheat
+-- standing in for the materials and the job. Returns what is missing, or nil.
+local function buildAsPlayer(player, lot, sprite, nSprite, x, y, up)
+    local info = SpriteConfigManager.getObjectInfoFromSprite(sprite)
+    if not info then
+        return "the build-menu entity of the tile " .. sprite
+    end
+    local build = ISBuildIsoEntity:new(player, info, nSprite, ISInventoryPaneContextMenu.getContainers(player))
+    -- What the cursor sets before it builds: the player number, the squares it covers, and the
+    -- facing from its rotation.
+    build.player = player:getPlayerNum()
+    local wx, wy, wz = lot.x + x, lot.y + y, lot.z + (up or 0)
+    build:ensureSquaresExist(wx, wy, wz)
+    local chosen = build:getSprite()
+    local cheat = player:isBuildCheat()
+    player:setBuildCheat(true)
+    build.buildPanelLogic:startCraftAction(nil)
+    build:create(wx, wy, wz, build.north, chosen)
+    player:setBuildCheat(cheat)
+    if not PZHarness.Fixtures.objectWithSprite(getCell():getGridSquare(wx, wy, wz), sprite) then
+        return "the " .. info:getName() .. " built at " .. wx .. "," .. wy .. "," .. wz
+    end
+end
+
+-- The stairs and the deck at their top. Returns what is missing, or nil.
+local function buildDeck(player, lot)
+    local missing = buildAsPlayer(player, lot, STAIRS.sprite, STAIRS.nSprite, STAIRS.x, STAIRS.y)
+    for _, at in ipairs(DECK) do
+        missing = missing or buildAsPlayer(player, lot, DECK_FLOOR.sprite, DECK_FLOOR.nSprite, at.x, at.y, 1)
+    end
+    return missing
+end
+
+-- The tile `sprite` built at the lot's x, y, `up` floors above it, `full` of water if asked.
+-- Returns what is missing, or nil.
 local function placeTank(lot, x, y, sprite, up, full)
     local square = Stage.lotSquare(lot, x, y, up)
-    if up and not square then
-        square = getCell():createNewGridSquare(lot.x + x, lot.y + y, lot.z + up, true)
-    end
     if not square then
-        return "a square for " .. sprite .. " at " .. (lot.x + x) .. "," .. (lot.y + y)
-    end
-    if not square:getFloor() then
-        square:addFloor(DECK_FLOOR)
+        return "a square for " .. sprite .. " at " .. (lot.x + x) .. "," .. (lot.y + y) .. "," .. (lot.z + (up or 0))
     end
     local object, missing = Stage.build(square, sprite)
     if not object then
@@ -196,15 +234,20 @@ local function placeTank(lot, x, y, sprite, up, full)
     square:RecalcAllWithNeighbours(true)
 end
 
--- Builds the beds and the tank row. Returns what is missing, or nil.
-local function placeBeds(lot)
+-- Builds the deck, the beds and the tank row. Returns what is missing, or nil.
+local function placeBeds(player, lot)
+    local missing = buildDeck(player, lot)
+    if missing then
+        return missing
+    end
     for _, bed in ipairs(BEDS) do
-        local missing = placeTank(lot, 0, bed.y, bed.tank, bed.up, true)
+        missing = placeTank(lot, TANK_X, bed.y, bed.tank, bed.up, true)
         if missing then
             return missing
         end
         for i = 1, BED_CROPS do
-            missing = Stage.plant(Stage.lotSquare(lot, i, bed.y), bed.seed, GROWING, i <= bed.dry and DRY or WATERED)
+            local water = i <= bed.dry and DRY or WATERED
+            missing = Stage.plant(Stage.lotSquare(lot, TANK_X + i, bed.y), bed.seed, GROWING, water)
             if missing then
                 return missing
             end
@@ -259,7 +302,7 @@ function QA.setup(player)
     end
     summary.lot = lot
     Stage.clearLot(lot, AREA.w, AREA.h, MARGIN)
-    summary.missing = placeBeds(lot)
+    summary.missing = placeBeds(player, lot)
     layItems(lot, itemGroups(recipes), summary)
     PZHarness.Fixtures.teleportToMiddle(player, lot.x + ARRIVE.x, lot.y + ARRIVE.y, lot.z)
     print(string.format("%s laid out %d beds, %d tanks and %d items of %d types on the lot at %d,%d", MARK, #BEDS,
