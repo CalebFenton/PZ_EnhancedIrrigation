@@ -1,6 +1,6 @@
 -- What the mod counts as a tank, and how high its water stands. A tank is a fixed store of water
--- the game already has (a rain collector or barrel, an amphora, a well) or a barrel on a Tank Stand.
--- Its level is the floor it stands on, plus one on a stand: water runs out of a tap, a hole or a
+-- the game already has (a rain collector or barrel, an amphora) or a barrel on a Tank Stand. Its
+-- level is the floor it stands on, plus one on a stand: water runs out of a tap, a hole or a
 -- fixture only from a level at least one above it, and into another tank only from a level no lower
 -- than that tank's.
 
@@ -10,7 +10,9 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Tanks = {}
 EnhancedIrrigation.Tanks = Tanks
 
--- Each tank's entity script name; `raised` for the barrels on a Tank Stand.
+-- Each tank's entity script name; `raised` for the barrels on a Tank Stand. A well isn't one: its
+-- water stands underground, below any line or tank it could feed by gravity, so only a pump
+-- (docs/design.md, Pumps) draws from it.
 Tanks.ENTITIES = {
     RainCollector = {},
     RainCollector_Tarp = {},
@@ -20,7 +22,6 @@ Tanks.ENTITIES = {
     RainCollectorRound_TarpClosed = {},
     Amphora = {},
     AmphoraClosed = {},
-    Well = {},
     EnhancedIrrigation_RaisedBarrel = { raised = true },
     EnhancedIrrigation_RaisedBarrelClosed = { raised = true },
     EnhancedIrrigation_RaisedBarrel_Tarp = { raised = true },

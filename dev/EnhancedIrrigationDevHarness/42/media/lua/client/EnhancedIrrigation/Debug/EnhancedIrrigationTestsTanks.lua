@@ -1,6 +1,7 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLibTanks"
 require "EnhancedIrrigation/StandJobs"
 require "EnhancedIrrigation/LinkJobs"
+require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Links/LinkView"
 
@@ -14,7 +15,7 @@ require "EnhancedIrrigation/Links/LinkView"
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Stands, Links = EnhancedIrrigation.Sprites, EnhancedIrrigation.Stands, EnhancedIrrigation.Links
-local StandJobs, LinkJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.LinkJobs
+local StandJobs, LinkJobs, LineJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.LineJobs
 local Pipes = EnhancedIrrigation.Pipes
 
 -- The barrel the tests lift: vanilla's lidded rain barrel, which no rain fills meanwhile, so an
@@ -220,6 +221,46 @@ T.test("irrigation_tanks_take_down_gives_vanillas_barrel_and_the_stand", {
         expectNear("a carried barrel's weight", barrel.weight, vanilla[1].weight, LITRES)
         expectNear("a carried barrel's capacity", barrel.capacity, vanilla[1].capacity, LITRES)
         expectNear("a carried barrel's water", barrel.litres, 0, LITRES)
+    end,
+})
+
+-- Wells -------------------------------------------------------------------------------------------
+
+-- Whether `option` queues the link job `id`, toward any square, with any pipe.
+local function linkJob(id)
+    return function(context)
+        return T.findOption(context, context, function(option)
+            return option.onSelect == EnhancedIrrigationAction.queue and option.param1 == "link" and option.param2 == id
+        end)
+    end
+end
+
+-- A well's water stands underground, so nothing draws on it by gravity: a well on the floor over a
+-- line tile gives Fit Tap no tank a storey up, and Plumb to Tank at a barrel near a well lists no
+-- tank. Catches a well counted as a tank.
+T.test("irrigation_tanks_well_feeds_nothing_by_gravity", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
+        if not spots then return end
+        local tile = spots[1]
+        T.placeTank(self, tile, "wellAbove")
+        self.barrel = T.placeTank(self, spots[2], "raisedLidded")
+        T.placeLine(self, { tile }, "iron")
+        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
+        T.goNextTo(self, tile.square)
+        T.useOption(self, function() return T.lineObject(tile) end, "fit tap", job("line", LineJobs.TAP), false)
+        T.useOption(self, function() return T.tankCopy(self.barrel) end, "plumb to the well", linkJob(LinkJobs.PLUMB),
+            false)
+        T.useOption(self, function() return T.tankCopy(self.barrel) end, "no tank in reach", function(context)
+            return T.findNamed(context, context, getText("ContextMenu_EnhancedIrrigation_NoTankInReach"))
+        end, false)
+    end,
+    validate = function(self)
+        T.expectRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_NoTankForTap")
+        expect(not self.menu["plumb to the well"].found, "Plumb to Tank lists a well")
+        expect(self.menu["no tank in reach"].found, "Plumb to Tank doesn't say no other tank is in reach")
     end,
 })
 

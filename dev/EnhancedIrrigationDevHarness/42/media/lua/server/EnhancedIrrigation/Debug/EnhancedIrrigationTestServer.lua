@@ -26,10 +26,11 @@ function Server.squareAt(args)
 end
 
 --- Whether `object` is one of the things the tank tests place: a stand, with or without its barrel,
---- or a tank.
+--- a tank, or a well, which isn't one.
 function Server.isPlaced(object)
     local EI = mod()
     return EI.Stands.isStand(object) or EI.Stands.isRaised(object) or EI.Tanks.isTank(object)
+        or EI.entityName(object) == "Well"
 end
 
 --- Removes the stand or tank at x, y, z the way the game removes an object.

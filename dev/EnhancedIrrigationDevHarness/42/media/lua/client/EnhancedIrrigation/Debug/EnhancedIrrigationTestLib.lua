@@ -414,6 +414,8 @@ T.TANKS = {
     -- A rain barrel on a Tank Stand, open and lidded.
     raised = { sprite = Sprites.RAISED_BARREL },
     raisedLidded = { sprite = Sprites.RAISED_BARREL_CLOSED },
+    -- Vanilla's well, on the floor above: never a tank, whatever water it holds.
+    wellAbove = { sprite = "camping_01_16", up = 1 },
 }
 
 --- Queues placing a T.TANKS `kind` at `handle`, holding `litres` of water (tainted when
