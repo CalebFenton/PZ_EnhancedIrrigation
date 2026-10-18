@@ -3,8 +3,9 @@
 # dev/EnhancedIrrigationDevHarness and the shared harness mod (dev/harness, see its README.md).
 #
 #   dev/run-debug-client.sh          play by hand: main menu > Scenarios > Enhanced Irrigation
-#                                    starts a test world, and Debug menu > Dev > Unit Tests >
-#                                    Timed Actions runs the irrigation_* tests
+#                                    starts a test world, Enhanced Irrigation QA a farm with crops,
+#                                    tanks and everything of the mod laid out, and Debug menu >
+#                                    Dev > Unit Tests > Timed Actions runs the irrigation_* tests
 #   dev/run-debug-client.sh --test   starts the scenario, runs every irrigation_* test and quits
 #                                    the game. Runs unattended. Prints the results and exits 1 if
 #                                    a test failed or any Lua error was logged.
