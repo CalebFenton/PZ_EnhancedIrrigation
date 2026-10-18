@@ -7,11 +7,10 @@ require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
 
--- Every hands-on job of fixed length at one of the mod's objects: laying, drilling and patching
--- pipe, fitting a tap, plumbing tanks, setting a barrel on a stand. In multiplayer the client runs
--- start() and perform() and the server rebuilds the action from new()'s parameters and runs
--- complete(), which does the job; single player runs both. A global, as the server finds the class
--- by its Type (NetTimedAction.parse).
+-- Every hands-on job of fixed length at one of the mod's objects (StandJobs, LinkJobs, LineJobs).
+-- In multiplayer the client runs start() and perform() and the server rebuilds the action from
+-- new()'s parameters and runs complete(), which does the job; single player runs both. A global,
+-- as the server finds the class by its Type (NetTimedAction.parse).
 EnhancedIrrigationAction = EnhancedIrrigationAction or ISBaseTimedAction:derive("EnhancedIrrigationAction")
 
 local Action = EnhancedIrrigationAction

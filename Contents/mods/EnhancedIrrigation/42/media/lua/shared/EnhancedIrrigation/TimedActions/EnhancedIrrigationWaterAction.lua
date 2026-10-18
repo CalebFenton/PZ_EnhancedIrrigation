@@ -49,8 +49,7 @@ function Action:run()
     end
 end
 
--- Opens the tap for the character, if they stand at it, water can run and no one else holds it,
--- and holds it; the flow counts from here. Returns whether it opened. Authority only.
+-- Opens and holds the tap; the flow counts from here. Returns whether it opened. Authority only.
 function Action:open()
     local _, refusal = LineJobs.tapTank(self.tap)
     if not (self:atTap() and not refusal and EnhancedIrrigation.LineSystem.holdTap(self.tap, self)) then
