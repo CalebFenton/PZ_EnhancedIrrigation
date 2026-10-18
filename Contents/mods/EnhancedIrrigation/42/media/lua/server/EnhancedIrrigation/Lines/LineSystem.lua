@@ -114,10 +114,9 @@ local DO = {
         record.tapConditions = Materials.conditions(character, materials)
         return true
     end,
+    -- A patch makes the tile whole again.
     [LineJobs.PATCH] = function(character, object)
-        local record = Lines.recordOf(object)
-        record.cracked = false
-        record.patches = record.patches + 1
+        Lines.recordOf(object).cracked = false
         return true
     end,
     -- The water runs out over the ground where the line is opened, wetting it, not into a bed's
@@ -136,11 +135,11 @@ local DO = {
         record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
         return true
     end,
-    -- Each item comes back as it went in. A cracked or patched length is scrap: a patch only mends
-    -- the pipe in place, and a new length replaces it. The tap's length comes back with its tile.
+    -- Each item comes back as it went in. A length still cracked is scrap. The tap's length comes
+    -- back with its tile.
     [LineJobs.TAKE_UP] = function(character, object)
         local record = Lines.recordOf(object)
-        if not record.cracked and record.patches == 0 then
+        if not record.cracked then
             Pipes.giveBack(character, record.material, 1, record.conditions)
         end
         if record.tap and record.tapMaterial then

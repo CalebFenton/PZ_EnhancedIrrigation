@@ -14,17 +14,10 @@ EnhancedIrrigation.Flow = Flow
 local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 
--- Litres an hour out of the tile `record` under one storey of head: its holes, a crack and every
--- patch, which weep wherever they are. 0 where no water leaves.
-local function rateOf(record)
-    local rate = Lines.PATCH_RATE * record.patches
-    if record.holed then
-        rate = rate + Lines.HOLE_RATE
-    end
-    if record.cracked then
-        rate = rate + Lines.CRACK_RATE
-    end
-    return rate
+-- Litres an hour out of the tile `record` under one storey of head: what its holes give its
+-- square, and what a crack lets out. 0 for each where none.
+local function ratesOf(record)
+    return record.holed and Lines.HOLE_RATE or 0, record.cracked and Lines.CRACK_RATE or 0
 end
 
 -- Gives `litres` to the plant on `record`'s square up to full, the rest to the soil.
@@ -45,20 +38,21 @@ end
 
 --- Runs the line tapped at `tapRecord` from `tank` for `hours` game hours: every outlet asks its
 --- rate, pushed by the square root of the tank's head over the line, and the tank gives what it
---- holds of the sum, each outlet the same fraction of what it asked. Callers check the tap first
---- (LineJobs.tapTank). Authority only. Returns the litres drawn from the tank.
+--- holds of the sum, each outlet the same fraction of what it asked. Holes water their square; a
+--- crack's water runs into the ground beside the pipe, wetting the tile and feeding nothing.
+--- Callers check the tap first (LineJobs.tapTank). Authority only. Returns the litres drawn from
+--- the tank.
 function Flow.run(tapRecord, tank, hours)
     local tiles = Lines.component(tapRecord.x, tapRecord.y, tapRecord.z)
     local push = math.sqrt(Tanks.levelOf(tank) - tapRecord.z)
-    local outlets, rates, demand = {}, {}, 0
+    local outlets, demand = {}, 0
     for _, tile in ipairs(tiles) do
         local record = tile.state
         record:advance(record:elapsedHours())
-        local rate = rateOf(record) * push
-        if rate > 0 then
-            table.insert(outlets, record)
-            table.insert(rates, rate)
-            demand = demand + rate * math.max(0, hours)
+        local holes, crack = ratesOf(record)
+        if holes + crack > 0 then
+            table.insert(outlets, { record = record, holes = holes * push, crack = crack * push })
+            demand = demand + (holes + crack) * push * math.max(0, hours)
         end
     end
     local drawn = demand > 0 and Tanks.take(tank, demand) or 0
@@ -67,11 +61,10 @@ function Flow.run(tapRecord, tank, hours)
     if drawn > 0 then
         local share = drawn / demand
         local wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
-        for i, record in ipairs(outlets) do
-            local litres = rates[i] * hours * share
-            deliver(record, litres)
-            if litres > 0 then
-                record.wetUntil = wetUntil
+        for _, outlet in ipairs(outlets) do
+            deliver(outlet.record, outlet.holes * hours * share)
+            if (outlet.holes + outlet.crack) * hours * share > 0 then
+                outlet.record.wetUntil = wetUntil
             end
         end
         Tanks.sync(tank)

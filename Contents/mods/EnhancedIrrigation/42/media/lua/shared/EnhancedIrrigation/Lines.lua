@@ -22,9 +22,10 @@ Lines.SYSTEM_NAME = "enhanced_irrigation_line"
 -- Litres an hour out of a hole under one storey of head: a holed tile keeps a plant level on six
 -- minutes a day. A higher tank pushes harder, by the square root of its head (Torricelli).
 Lines.HOLE_RATE = 1
--- A crack runs freely, a patch weeps a little; each patch holds less than the pipe it mends.
+-- Litres an hour out of a crack under one storey of head, while the tap runs: a split runs freer
+-- than a drilled hole, and its water spills along the outside of the pipe into the path, wetting
+-- the tile but reaching no roots.
 Lines.CRACK_RATE = 3
-Lines.PATCH_RATE = 0.25
 -- Vanilla's watering: one use of 200 mL adds 10 water points (SPlantGlobalObject.water).
 Lines.POINTS_PER_LITRE = 50
 -- The most water and mildew vanilla lets a plant hold (SPlantGlobalObject).
@@ -132,7 +133,7 @@ end
 
 --- The tile at x, y, z as this side knows it: its record on the authority, loaded or not, else the
 --- summary this client has; nil where there is no line tile. Read only: both carry material,
---- holed, cracked, patches, full, soak, tap.
+--- holed, cracked, full, soak, tap.
 function Lines.stateAt(x, y, z)
     return Lines.recordAt(x, y, z) or receivedAt(x, y, z)
 end

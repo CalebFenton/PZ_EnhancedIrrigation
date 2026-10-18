@@ -24,18 +24,12 @@ local Materials = EnhancedIrrigation.Materials
 
 -- What a tile is ------------------------------------------------------------------------------------
 
-local PATCHED = { "IGUI_EnhancedIrrigation_PatchedOnce", "IGUI_EnhancedIrrigation_PatchedTwice" }
-
 --- The tile `state` as one line of text: its pipe, its holes and its wear.
 function LineMenu.describe(state)
     local holes = state.holed and "IGUI_EnhancedIrrigation_Holed" or "IGUI_EnhancedIrrigation_NoHoles"
     local parts = { getText(holes) }
     if state.cracked then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_Cracked"))
-    end
-    if state.patches > 0 then
-        table.insert(parts, PATCHED[state.patches] and getText(PATCHED[state.patches])
-            or getText("IGUI_EnhancedIrrigation_PatchedTimes", state.patches))
     end
     if state.full then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_Full"))

@@ -38,7 +38,7 @@ local DOOR_FRAME_WEST = "walls_exterior_house_01_10"
 local AWAY_SQUARES = 8
 -- What the tank holds when the tap is let go of early: far more than a few runs draw.
 local TANK_LITRES = 100
--- What a tank the tap runs dry holds: a game minute's flow out of a crack, which a thirsty crop
+-- What a tank the tap runs dry holds: a few game minutes' flow out of a hole, which a thirsty crop
 -- takes all of.
 local SMALL_TANK_LITRES = 0.05
 
@@ -543,8 +543,8 @@ T.test("irrigation_lines_water_needs_pressure", {
 })
 
 -- The tap held open at a barrel on a Tank Stand runs the line until the barrel is dry: the crop on
--- the cracked tile gets all of it, and the soil shows it. Catches the real verb losing water
--- between tank and crop, or the tap not closing on an empty tank.
+-- the holed tile gets all of it, and the soil shows it. Catches the real verb losing water between
+-- tank and crop, or the tap not closing on an empty tank.
 T.test("irrigation_lines_water_from_a_raised_tank", {
     instant = true,
     timeoutSeconds = 90,
@@ -554,7 +554,7 @@ T.test("irrigation_lines_water_from_a_raised_tank", {
         local tile, beside = rows[1][1], rows[1][2]
         self.tile = tile
         self.tank = T.placeTank(self, beside, "raised", SMALL_TANK_LITRES)
-        tile.fields = copyField(tapOn(), { cracked = true })
+        tile.fields = copyField(tapOn(), { holed = true })
         T.placeLine(self, { tile }, "plastic")
         T.plant(self, tile, 0)
         T.goNextTo(self, tile.square)
@@ -576,7 +576,7 @@ T.test("irrigation_lines_water_from_a_raised_tank", {
         local read = self.reads.watered.tiles[1]
         expectNear("the crop's water", read.plant.water, SMALL_TANK_LITRES * Lines.POINTS_PER_LITRE, CROP_POINTS)
         expect(read.record.full, "the line isn't full")
-        expect(read.record.wet, "the crack's soil isn't wet")
+        expect(read.record.wet, "the hole's soil isn't wet")
     end,
 })
 
@@ -701,6 +701,43 @@ T.test("irrigation_lines_higher_tank_waters_faster", {
         local high = TANK_LITRES - self.reads["high tank"].litres
         expectNear("the litres a storey of head gives in an hour", low, Lines.HOLE_RATE, LITRES)
         expectNear("the litres two storeys of head give in an hour", high, Lines.HOLE_RATE * math.sqrt(2), LITRES)
+    end,
+})
+
+-- A crack leaks while the tap runs, faster than a hole, into the ground beside the pipe: the tank
+-- loses it and the tile shows wet, but its crop gets none and its soil doesn't soak; the holed tile
+-- beside it waters its crop as ever. Catches a crack that waters, or one that loses nothing.
+T.test("irrigation_lines_crack_leaks_to_waste", {
+    run = function(self)
+        local rows = T.row(self, 2, { indoors = true })
+        if not rows then return end
+        local cracked, holed = rows[1][1], rows[1][2]
+        self.cracked = cracked
+        self.tank = T.placeTank(self, cracked, "above", TANK_LITRES)
+        cracked.fields = copyField(tapOn(), { cracked = true })
+        holed.fields = { holed = true }
+        T.placeLine(self, { cracked, holed }, "plastic")
+        T.plant(self, cracked, 0)
+        T.plant(self, holed, 0)
+        T.batch(function()
+            flow(self, cracked, 1, { cracked, holed }, "hour")
+            T.read(self, "tanks.read", T.at(self.tank), "tank")
+        end)
+        T.waitFor(self, function() return clientSprite(cracked) == Sprites.pipe("plastic", true, Sprites.EAST) end,
+            "this client's copy of the cracked tile, wet")
+    end,
+    validate = function(self)
+        local hour = self.reads.hour
+        if not expect(hour.drawn, "the line didn't run: " .. tostring(hour.stopped)) then return end
+        -- The tank stands a storey over the line: one storey of head.
+        local drawn = Lines.CRACK_RATE + Lines.HOLE_RATE
+        expectNear("litres drawn", hour.drawn, drawn, LITRES)
+        expectNear("the tank's water", self.reads.tank.litres, TANK_LITRES - drawn, LITRES)
+        local cracked, holed = hour.tiles[1], hour.tiles[2]
+        expectNear("the crop on the crack's water", cracked.plant.water, 0, CROP_POINTS)
+        expectNear("the soak under the crack", cracked.record.soak, 0, POINTS)
+        expect(cracked.record.wet, "the cracked tile doesn't show wet")
+        expectNear("the crop on the hole's water", holed.plant.water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, CROP_POINTS)
     end,
 })
 
@@ -857,7 +894,8 @@ T.test("irrigation_lines_dry_and_freeze_while_unloaded", {
 
 -- Upkeep --------------------------------------------------------------------------------------------
 
--- Tape over a crack mends it, and the tile remembers the patch.
+-- Tape over a crack makes the tile whole: it no longer says cracked, and taken up it gives back its
+-- pipe like any other. Catches a patch that leaves the tile cracked, or scrap.
 T.test("irrigation_lines_patch_crack", {
     instant = true,
     run = function(self)
@@ -873,17 +911,22 @@ T.test("irrigation_lines_patch_crack", {
         useJob(self, tile, LineJobs.PATCH, nil, "patch", true)
         readUntil(self, { tile }, "patched", function(tiles) return not tiles[1].record.cracked end)
         T.waitFor(self, function() return self.items.tape[1]:getCurrentUses() < self.usesBefore end, "this client's tape, used")
-        T.waitForLines(self, { tile }, "this client's summary of the patch", function(summary) return summary.patches == 1 end)
+        T.waitForLines(self, { tile }, "this client's summary of the patch", function(summary) return not summary.cracked end)
+        T.step(function() self.described = LineMenu.describe(T.lineSummary(tile)) end)
+        useJob(self, tile, LineJobs.TAKE_UP, nil, "take up", true)
+        T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose the taken-up tile")
+        T.count(self, "back", { Pipes.KINDS.plastic.item })
     end,
     validate = function(self)
         expectOffered(self, "patch")
-        local record = recordOf(self, "patched", 1)
-        expect(not record.cracked and record.patches == 1, "the patch left cracked " .. tostring(record.cracked)
-            .. ", patches " .. tostring(record.patches))
+        expect(not recordOf(self, "patched", 1).cracked, "the patch left the tile cracked")
         expect(self.items.tape[1]:getCurrentUses() == self.usesBefore - 1, "the patch didn't take one use of tape")
-        local described = LineMenu.describe(T.lineSummary(self.tile))
-        expect(described:find(getText("IGUI_EnhancedIrrigation_PatchedOnce"), 1, true) ~= nil,
-            "the menu doesn't say patched once: " .. described)
+        expect(self.described:find(getText("IGUI_EnhancedIrrigation_Cracked"), 1, true) == nil,
+            "the menu still says the patched tile is cracked: " .. self.described)
+        expectOffered(self, "take up")
+        local plastic = Pipes.KINDS.plastic
+        expect(self.counts.back[plastic.item] == plastic.perLength, "the patched tile gave back "
+            .. tostring(self.counts.back[plastic.item]) .. " plastic pipe, not " .. plastic.perLength)
     end,
 })
 
@@ -928,9 +971,9 @@ T.test("irrigation_lines_drain_from_the_middle", {
     end,
 })
 
--- Taking up gives back what the tile took unless it is scrap: a patched tap tile gives the tap's
--- length alone, a cracked tile nothing, a whole one its length, a clay tile both its segments.
--- What's left reshapes. Catches scrap given back, the tap's pipe lost, or a clay segment kept.
+-- Taking up gives back what the tile took unless it is scrap: the tap tile its length and the tap's,
+-- a cracked tile nothing, a whole one its length, a clay tile both its segments. What's left
+-- reshapes. Catches scrap given back, the tap's pipe lost, or a clay segment kept.
 T.test("irrigation_lines_take_up_returns_items", {
     instant = true,
     run = function(self)
@@ -938,7 +981,7 @@ T.test("irrigation_lines_take_up_returns_items", {
         if not rows then return end
         local tapTile, cracked, clay, whole = rows[1][1], rows[1][2], rows[1][3], rows[1][4]
         self.tiles = rows[1]
-        tapTile.fields = copyField(tapOn("iron"), { patches = 1 })
+        tapTile.fields = tapOn("iron")
         cracked.fields = { cracked = true }
         tapTile.material, cracked.material, clay.material, whole.material = "iron", "iron", "clay", "iron"
         T.placeLine(self, self.tiles)
@@ -958,8 +1001,8 @@ T.test("irrigation_lines_take_up_returns_items", {
     validate = function(self)
         expectOffered(self, "take up the tap")
         local iron, clay = Pipes.KINDS.iron, Pipes.KINDS.clay
-        -- The tap's length and the whole tile's.
-        local ironWanted = 2 * iron.perLength
+        -- The tap tile's length, its tap's and the whole tile's.
+        local ironWanted = 3 * iron.perLength
         expect(self.counts.back[iron.item] == ironWanted, "the iron tiles gave back "
             .. tostring(self.counts.back[iron.item]) .. " iron pipe, not " .. ironWanted)
         expect(self.counts.back[clay.item] == clay.perLength, "the clay tile gave back "
