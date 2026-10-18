@@ -38,11 +38,15 @@ handler("learning.forgetLiterature", function(player, args)
     return {}
 end)
 
--- Sets the levels `args.levels` (perk id -> level), each at the XP that starts it, then awards the
--- XP that takes `args.perk` one level up, as the authority awards a timed action's XP: the game
--- levels the perk up and fires LevelPerk. The perks setting puts the levels back when the test
--- ends. Answers the level before and after, and whether the character then knows `args.names`.
+-- Forgets `args.forget`, if given, sets the levels `args.levels` (perk id -> level), each at the XP
+-- that starts it, then awards the XP that takes `args.perk` one level up, as the authority awards a
+-- timed action's XP: the game levels the perk up and fires LevelPerk. The perks setting puts the
+-- levels back when the test ends, recipes.know the recipes. Answers the level before and after, and
+-- whether the character then knows `args.names`.
 handler("learning.levelUp", function(player, args)
+    if args.forget then
+        Fixtures.forgetRecipes(player, args.forget)
+    end
     Fixtures.setPerkLevels(player, args.levels)
     local perk = Perks.FromString(args.perk)
     local before = player:getPerkLevel(perk)

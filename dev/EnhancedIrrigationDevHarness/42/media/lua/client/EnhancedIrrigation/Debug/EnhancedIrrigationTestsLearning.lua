@@ -85,55 +85,135 @@ test("irrigation_learning_reading_the_pamphlet_teaches_both_recipes", {
     end,
 })
 
--- A character who knows neither recipe levels `perk` from `from` to the next level, the other
--- perk at `others`, and then knows exactly `expected`: Plumb to Tank from Woodwork 4 or
--- MetalWelding 3 (vanilla's AutoLearn of its craftRecipe), the stand from Woodwork 5 (the mod's
--- LevelPerk hook, since vanilla's AutoLearn skips build recipes).
-local LEVEL_UPS = {
-    { "woodwork_4_teaches_plumb_to_tank_not_the_stand", "Woodwork", 3, { MetalWelding = 0 }, { [PLUMB] = true } },
-    { "woodwork_5_teaches_the_stand", "Woodwork", 4, { MetalWelding = 0 }, { [PLUMB] = true, [STAND] = true } },
-    { "metal_welding_3_alone_teaches_plumb_to_tank", "MetalWelding", 2, { Woodwork = 0 }, { [PLUMB] = true } },
-}
-for _, row in ipairs(LEVEL_UPS) do
-    local behavior, perk, from, others, expected = row[1], row[2], row[3], row[4], row[5]
-    test("irrigation_learning_level_up_" .. behavior, {
-        run = function(self)
-            T.knowRecipes(self, BOTH, false)
-            local levels = { [perk] = from }
-            for id, level in pairs(others) do
-                levels[id] = level
-            end
-            T.server(self, "learning.levelUp", { perk = perk, levels = levels, names = BOTH })
-            awaitKnown(self, expected)
-        end,
-        validate = function(self)
-            local up = self.server["learning.levelUp"] or {}
-            expect(up.before == from and up.after == from + 1,
-                perk .. " went from " .. tostring(up.before) .. " to " .. tostring(up.after) .. ", expected " .. from .. " to " .. from + 1)
-            expectKnown(self, perk .. " " .. from + 1, expected)
-        end,
-    })
+-- The AutoLearn skills of the recipe `name` as { perk = perk id, level }, in `any` and `all`.
+local function autoLearnOf(name)
+    local recipe = getScriptManager():getCraftRecipe(name)
+    local skills = { any = {}, all = {} }
+    if not recipe then return skills end
+    for i = 0, recipe:getAutoLearnAnySkillCount() - 1 do
+        local skill = recipe:getAutoLearnAnySkill(i)
+        table.insert(skills.any, { perk = skill:getPerk():getId(), level = skill:getLevel() })
+    end
+    for i = 0, recipe:getAutoLearnAllSkillCount() - 1 do
+        local skill = recipe:getAutoLearnAllSkill(i)
+        table.insert(skills.all, { perk = skill:getPerk():getId(), level = skill:getLevel() })
+    end
+    return skills
 end
 
--- A character who reached Woodwork 5 before the mod was added joins a server: the client asks the
--- server to catch up as it enters the world (Recipes.lua's OnCreatePlayer), and the server, which
--- runs no check of its own on a join, teaches both and tells the client.
+-- Which of BOTH a character with `perk` at `level` and every other perk at 0 has the AutoLearn
+-- skills of, as their scripts state them.
+local function earnedAt(perk, level)
+    local function meets(skill)
+        return skill.level <= (skill.perk == perk and level or 0)
+    end
+    local earned = {}
+    for _, name in ipairs(BOTH) do
+        local skills = autoLearnOf(name)
+        for _, skill in ipairs(skills.any) do
+            earned[name] = earned[name] or meets(skill)
+        end
+        if #skills.all > 0 then
+            local all = true
+            for _, skill in ipairs(skills.all) do
+                all = all and meets(skill)
+            end
+            earned[name] = earned[name] or all
+        end
+    end
+    return earned
+end
+
+-- Every perk and level BOTH name in their AutoLearn skills, once each, and the highest.
+local function autoLearnLevels()
+    local rows, seen, highest = {}, {}, nil
+    for _, name in ipairs(BOTH) do
+        local skills = autoLearnOf(name)
+        for _, list in ipairs({ skills.any, skills.all }) do
+            for _, skill in ipairs(list) do
+                local key = skill.perk .. skill.level
+                if not seen[key] then
+                    seen[key] = true
+                    table.insert(rows, skill)
+                    if not highest or skill.level > highest.level then
+                        highest = skill
+                    end
+                end
+            end
+        end
+    end
+    return rows, highest
+end
+
+-- Each perk at 0 but `perk`, which is at `level`.
+local function levelsWith(rows, perk, level)
+    local levels = {}
+    for _, row in ipairs(rows) do
+        levels[row.perk] = 0
+    end
+    levels[perk] = level
+    return levels
+end
+
+-- For each perk and level the recipes' AutoLearn skills name, a character who knows neither recipe
+-- levels that perk up to that level, every other at 0, and then knows exactly the recipes whose
+-- AutoLearn it meets, on both sides: vanilla's AutoLearn teaches Plumb to Tank, a craftRecipe, and
+-- the mod's LevelPerk hook the stand, since vanilla's skips build recipes. Catches a recipe taught
+-- a level early or never, or taught on one side only.
+test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
+    timeoutSeconds = 90,
+    run = function(self)
+        local rows = autoLearnLevels()
+        if not T.need(self, #rows > 0, "an AutoLearn skill on " .. table.concat(BOTH, " or ")) then return end
+        self.rows, self.results = rows, {}
+        T.knowRecipes(self, BOTH, false)
+        for i, row in ipairs(rows) do
+            -- Each row starts knowing neither; knowRecipes puts back what was known before the test.
+            T.step(function() PZHarness.Fixtures.forgetRecipes(T.player(), BOTH) end)
+            T.server(self, "learning.levelUp", { perk = row.perk, levels = levelsWith(rows, row.perk, row.level - 1),
+                names = BOTH, forget = BOTH })
+            awaitKnown(self, earnedAt(row.perk, row.level))
+            T.step(function()
+                self.results[i] = { up = self.server["learning.levelUp"] or {}, known = self.known }
+            end)
+        end
+    end,
+    validate = function(self)
+        for i, row in ipairs(self.rows or {}) do
+            local result = self.results[i] or {}
+            local up, what = result.up or {}, row.perk .. " " .. row.level
+            expect(up.before == row.level - 1 and up.after == row.level, row.perk .. " went from " .. tostring(up.before)
+                .. " to " .. tostring(up.after) .. ", expected " .. (row.level - 1) .. " to " .. row.level)
+            self.known = result.known
+            expectKnown(self, what, earnedAt(row.perk, row.level))
+        end
+    end,
+})
+
+-- A character who reached the highest AutoLearn level before the mod was added joins a server: the
+-- client asks the server to catch up as it enters the world (Recipes.lua's OnCreatePlayer), and the
+-- server, which runs no check of its own on a join, teaches what that level earns and tells the
+-- client. Catches a joining character left without recipes the server then refuses to use.
 test("irrigation_learning_joining_server_catches_up_earned_recipes", {
     mpOnly = "single player has one copy of the character, which IsoWorld.init's own check covers",
     run = function(self)
+        local rows, highest = autoLearnLevels()
+        if not T.need(self, highest, "an AutoLearn skill on " .. table.concat(BOTH, " or ")) then return end
+        self.highest = highest
         T.knowRecipes(self, BOTH, false)
-        T.server(self, "learning.setLevels", { levels = { Woodwork = 5, MetalWelding = 0 }, names = BOTH })
+        T.server(self, "learning.setLevels", { levels = levelsWith(rows, highest.perk, highest.level), names = BOTH })
         T.step(function()
             local Recipes = EnhancedIrrigation.Recipes
             sendClientCommand(T.player(), Recipes.COMMAND_MODULE, Recipes.CATCH_UP, {})
         end)
-        awaitKnown(self, { [STAND] = true, [PLUMB] = true })
+        awaitKnown(self, earnedAt(highest.perk, highest.level))
     end,
     validate = function(self)
         local before = self.server["learning.setLevels"] or {}
         expect(before.known and not before.known[STAND] and not before.known[PLUMB],
             "setting the levels alone taught the server a recipe, so the catch-up is untested")
-        expectKnown(self, "joining at Woodwork 5", { [STAND] = true, [PLUMB] = true })
+        local highest = self.highest
+        expectKnown(self, "joining at " .. highest.perk .. " " .. highest.level, earnedAt(highest.perk, highest.level))
     end,
 })
 
