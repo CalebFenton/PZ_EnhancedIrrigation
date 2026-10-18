@@ -247,8 +247,13 @@ function LineJobs.tapTank(object)
     return best
 end
 
---- Why water can't run from the tap tile `object`, a Tooltip key, or nil.
-function LineJobs.waterBlocker(object)
+--- Why `character` can't run water from the tap tile `object`, a Tooltip key, or nil: someone
+--- else holds the tap (LineSystem.holdTap), or no tank can feed it.
+function LineJobs.waterBlocker(object, character)
+    local state = Lines.stateOf(object)
+    if state and state.heldBy and state.heldBy ~= character:getUsername() then
+        return "Tooltip_EnhancedIrrigation_TapInUse"
+    end
     local _, refusal = LineJobs.tapTank(object)
     return refusal
 end

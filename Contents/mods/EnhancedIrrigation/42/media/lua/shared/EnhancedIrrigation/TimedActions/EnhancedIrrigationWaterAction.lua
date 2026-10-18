@@ -7,8 +7,9 @@ require "EnhancedIrrigation/LineJobs"
 -- they stand there, until they stop or the tank gives out. Modelled on vanilla's open-ended
 -- ISAddWaterToTrough: the action has no end of its own; the authority runs the flow for the world
 -- time gone by, on a timed event the multiplayer server raises itself (emulateAnimEvent), or from
--- update() in single player, and once more when it stops. A global, as the server finds the class
--- by its Type (NetTimedAction.parse).
+-- update() in single player, and once more when it stops. One person at a time holds a tap
+-- (LineSystem.holdTap): it frees itself however the action ends. A global, as the server finds the
+-- class by its Type (NetTimedAction.parse).
 EnhancedIrrigationWaterAction = EnhancedIrrigationWaterAction or ISBaseTimedAction:derive("EnhancedIrrigationWaterAction")
 
 local Action = EnhancedIrrigationWaterAction
@@ -41,10 +42,32 @@ function Action:run()
     if self.finished then
         return
     end
+    EnhancedIrrigation.LineSystem.renewTap(self)
     if EnhancedIrrigation.LineSystem.runTap(self.tap, hours) then
         self.finished = true
         self:finish()
     end
+end
+
+-- Opens the tap for the character, if they stand at it, water can run and no one else holds it,
+-- and holds it; the flow counts from here. Returns whether it opened. Authority only.
+function Action:open()
+    local _, refusal = LineJobs.tapTank(self.tap)
+    if not (self:atTap() and not refusal and EnhancedIrrigation.LineSystem.holdTap(self.tap, self)) then
+        return false
+    end
+    self.lastHour = EnhancedIrrigation.now()
+    return true
+end
+
+-- The character let go of the tap, whatever ended the action: the last stretch runs, and the tap is
+-- free for the next. Authority only.
+function Action:letGo()
+    if self.lastHour then
+        self:run()
+    end
+    self.finished = true
+    EnhancedIrrigation.LineSystem.releaseTap(self)
 end
 
 -- Whether the character still stands at the tap: what isValid() checks, which the server never
@@ -94,12 +117,9 @@ function Action:update()
 end
 
 function Action:start()
-    if not isClient() then
-        if LineJobs.waterBlocker(self.tap) or not self:atTap() then
-            self:forceStop()
-            return
-        end
-        self.lastHour = EnhancedIrrigation.now()
+    if not isClient() and not self:open() then
+        self:forceStop()
+        return
     end
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "Low")
@@ -109,8 +129,7 @@ end
 -- The server never calls isValid() or start(), so it checks the tap and the character itself
 -- before it opens it.
 function Action:serverStart()
-    self.lastHour = EnhancedIrrigation.now()
-    if LineJobs.waterBlocker(self.tap) or not self:atTap() then
+    if not self:open() then
         self.finished = true
         self.netAction:forceComplete()
         return
@@ -131,15 +150,14 @@ function Action:stopSound()
     self.sound = nil
 end
 
--- The character let go: the last stretch runs too.
 function Action:serverStop()
-    self:run()
+    self:letGo()
 end
 
 function Action:stop()
     self:stopSound()
-    if not isClient() and self.lastHour then
-        self:run()
+    if not isClient() then
+        self:letGo()
     end
     ISBaseTimedAction.stop(self)
 end
@@ -150,9 +168,7 @@ function Action:perform()
 end
 
 function Action:complete()
-    if self.lastHour then
-        self:run()
-    end
+    self:letGo()
     return true
 end
 

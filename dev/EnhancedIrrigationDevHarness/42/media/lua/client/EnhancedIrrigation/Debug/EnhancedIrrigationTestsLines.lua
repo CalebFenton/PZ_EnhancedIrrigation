@@ -640,6 +640,72 @@ T.test("irrigation_lines_water_refused_out_of_reach", {
     end,
 })
 
+-- Who holds the tap in the one-person test, standing in for another player.
+local OTHER = "EnhancedIrrigationTestOther"
+
+-- The authority runs a tap for one Water from Tank at a time. While another player holds it, the
+-- menu greys Water from Tank out saying so, and the authority won't open it for this character,
+-- whose client doesn't check. Once that player's action falls silent, as a client's does that
+-- disconnects mid-run, the tap frees itself and this character's water runs, holding it in turn,
+-- until they walk off and let go. Catches two players doubling a tap's draw, or a tap left held
+-- after its holder is gone.
+T.test("irrigation_lines_one_person_per_tap", {
+    instant = true,
+    mpOnly = "a player holding a tap from another client needs a multiplayer server",
+    timeoutSeconds = 120,
+    run = function(self)
+        local rows = T.row(self, 1)
+        local away = T.row(self, 1, { minDistance = AWAY_SQUARES })
+        if not (rows and away) then return end
+        local tile, there = rows[1][1], away[1][1]
+        self.tank = T.placeTank(self, tile, "above", TANK_LITRES)
+        tile.fields = copyField(tapOn(), { holed = true })
+        T.placeLine(self, { tile }, "plastic")
+        T.read(self, "lines.holdTap", T.at(tile, { as = OTHER }), "other")
+        T.waitForLines(self, { tile }, "this client's summary of the tap another player holds",
+            function(summary) return summary.heldBy == OTHER end)
+        T.goNextTo(self, tile.square)
+        useWater(self, tile, "while held", false)
+        waterUnchecked(self, tile)
+        T.read(self, "tanks.read", T.at(self.tank), "refused")
+        T.setMultiplier(self, WATER_SPEED)
+        T.waitFor(self, function()
+            local summary = T.lineSummary(tile)
+            return summary ~= nil and summary.heldBy == nil
+        end, "this client's summary of the tap, freed", WATER_MS)
+        useWater(self, tile, "freed", false)
+        -- Walks off once the water runs, which this client's copy of the tank shows, noting whether
+        -- the tap is held for this character then.
+        T.step(function()
+            local name = T.player():getUsername()
+            T.onTick(self, function()
+                local copy = not self.walkedOff and Tanks.tankAt(self.tank.x, self.tank.y, self.tank.z)
+                if copy and Tanks.litres(copy) < TANK_LITRES - LITRES then
+                    local summary = T.lineSummary(tile)
+                    self.heldByMe = summary ~= nil and summary.heldBy == name
+                    self.walkedOff = true
+                    PZHarness.Fixtures.teleportToMiddle(T.player(), there.x, there.y, there.z)
+                end
+            end)
+        end)
+        -- An open tap the authority never closes holds the queue until the test runs out of time.
+        waterUnchecked(self, tile)
+        T.readLines(self, { tile }, "let go")
+    end,
+    validate = function(self)
+        expect(self.reads.other.held, "the other player couldn't hold the free tap")
+        expectRefused(self, "while held", "Tooltip_EnhancedIrrigation_TapInUse")
+        expectNear("the tank's water while another player held the tap", self.reads.refused.litres, TANK_LITRES,
+            LITRES)
+        expectOffered(self, "freed")
+        expect(self.walkedOff, "no water ran for this character once the tap was free")
+        expect(self.heldByMe, "the tap wasn't held for this character while its water ran")
+        local record = self.reads["let go"].tiles[1].record
+        expect(record and record.heldBy == nil, "the tap is still held by " .. tostring(record and record.heldBy)
+            .. " after this character walked off")
+    end,
+})
+
 -- Flow ---------------------------------------------------------------------------------------------
 
 -- An hour through two holes under a storey of head: each draws Lines.HOLE_RATE from the tank; the

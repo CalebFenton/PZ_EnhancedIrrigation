@@ -169,6 +169,7 @@ function LineObject:buildSummary()
         full = self.full,
         soak = EnhancedIrrigation.round(self.soak),
         tap = self.tap,
+        heldBy = self.heldBy,
     }
 end
 

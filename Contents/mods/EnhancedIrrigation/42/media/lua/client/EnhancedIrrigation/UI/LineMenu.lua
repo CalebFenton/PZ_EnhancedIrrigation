@@ -64,7 +64,7 @@ local function addLineOptions(context, playerNum, character, line, state)
     if state.tap then
         local water = menu:addOption(getText("ContextMenu_EnhancedIrrigation_WaterFromTank"), playerNum,
             EnhancedIrrigationWaterAction.queue, line)
-        Needs.refuse(water, LineJobs.waterBlocker(line))
+        Needs.refuse(water, LineJobs.waterBlocker(line, character))
     else
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_FitTap", LineJobs.TAP, line)
     end

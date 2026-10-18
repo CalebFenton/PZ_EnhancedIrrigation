@@ -62,8 +62,8 @@ local function plantAt(at)
         alive = plant:isAlive() }
 end
 
--- What the server has at the tile `at`: `record` (its saved fields, wet and the line's size) or
--- nil, `sprite` and `overlays` of its loaded tile, `plant`.
+-- What the server has at the tile `at`: `record` (its saved fields, wet, the line's size and who
+-- holds its tap) or nil, `sprite` and `overlays` of its loaded tile, `plant`.
 local function readTile(at)
     local Lines = EnhancedIrrigation.Lines
     local record = Lines.recordAt(at.x, at.y, at.z)
@@ -73,6 +73,7 @@ local function readTile(at)
         reply.record = fieldsOf(record)
         reply.record.wet = record:isWet()
         reply.record.tiles = #Lines.component(at.x, at.y, at.z)
+        reply.record.heldBy = record.heldBy
     end
     if line then
         reply.sprite = line:getSprite():getName()
@@ -164,6 +165,18 @@ handler("lines.flow", function(player, args)
     local reply = readTiles(args.tiles or {})
     reply.drawn, reply.stopped = drawn, stopped
     return reply
+end)
+
+-- Holds the tap at x, y, z for a stand-in for another player named `args.as`, as their Water from
+-- Tank holds it once open, and leaves it silent from then on, as a client's action goes that
+-- disconnects mid-run: it never runs the tap again nor lets go. Answers whether it held the tap.
+handler("lines.holdTap", function(player, args)
+    local tap = EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z)
+    if not tap then
+        return nil, "the tap tile at " .. args.x .. "," .. args.y
+    end
+    local standIn = { character = { getUsername = function() return args.as end } }
+    return { held = EnhancedIrrigation.LineSystem.holdTap(tap, standIn) }
 end)
 
 -- Makes every line's air `args.celsius` until the test ends.
