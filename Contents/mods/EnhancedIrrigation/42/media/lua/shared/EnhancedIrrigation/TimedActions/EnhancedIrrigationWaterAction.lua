@@ -1,20 +1,20 @@
 require "TimedActions/ISBaseTimedAction"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/LineJobs"
+require "EnhancedIrrigation/Taps"
 
 -- Water from Tank: the character holds a garden line's tap open, and the line runs for as long as
 -- they stand there, until they stop or the tank gives out. Modelled on vanilla's open-ended
 -- ISAddWaterToTrough: the action has no end of its own; the authority runs the flow for the world
 -- time gone by, on a timed event the multiplayer server raises itself (emulateAnimEvent), or from
 -- update() in single player, and once more when it stops. One person at a time holds a tap
--- (LineSystem.holdTap): it frees itself however the action ends. A global, as the server finds the
+-- (TapSystem.hold): it frees itself however the action ends. A global, as the server finds the
 -- class by its Type (NetTimedAction.parse).
 EnhancedIrrigationWaterAction = EnhancedIrrigationWaterAction or ISBaseTimedAction:derive("EnhancedIrrigationWaterAction")
 
 local Action = EnhancedIrrigationWaterAction
 local Lines = EnhancedIrrigation.Lines
-local LineJobs = EnhancedIrrigation.LineJobs
+local Taps = EnhancedIrrigation.Taps
 
 -- How often, in real milliseconds, the multiplayer server runs the flow while the tap is open: often
 -- enough that the tank stops the action soon after it runs dry.
@@ -42,8 +42,8 @@ function Action:run()
     if self.finished then
         return
     end
-    EnhancedIrrigation.LineSystem.renewTap(self)
-    if EnhancedIrrigation.LineSystem.runTap(self.tap, hours) then
+    EnhancedIrrigation.TapSystem.renew(self)
+    if EnhancedIrrigation.TapSystem.run(self.tap, hours) then
         self.finished = true
         self:finish()
     end
@@ -51,8 +51,8 @@ end
 
 -- Opens and holds the tap; the flow counts from here. Returns whether it opened. Authority only.
 function Action:open()
-    local _, refusal = LineJobs.tapTank(self.tap)
-    if not (self:atTap() and not refusal and EnhancedIrrigation.LineSystem.holdTap(self.tap, self)) then
+    local _, refusal = Taps.tankFor(self.tap)
+    if not (self:atTap() and not refusal and EnhancedIrrigation.TapSystem.hold(self.tap, self)) then
         return false
     end
     self.lastHour = EnhancedIrrigation.now()
@@ -66,7 +66,7 @@ function Action:letGo()
         self:run()
     end
     self.finished = true
-    EnhancedIrrigation.LineSystem.releaseTap(self)
+    EnhancedIrrigation.TapSystem.release(self)
 end
 
 -- Whether the character still stands at the tap: what isValid() checks, which the server never

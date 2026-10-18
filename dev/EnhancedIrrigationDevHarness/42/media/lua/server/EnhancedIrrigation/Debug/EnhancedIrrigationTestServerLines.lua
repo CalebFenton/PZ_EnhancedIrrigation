@@ -155,12 +155,12 @@ handler("lines.age", function(player, args)
 end)
 
 -- Runs the line tapped at x, y, z for `args.hours` (Flow.run) from the tank its tap draws on
--- (LineJobs.tapTank), then reads `args.tiles`. Answers the litres `drawn`, or `stopped`, why no
+-- (Taps.tankFor), then reads `args.tiles`. Answers the litres `drawn`, or `stopped`, why no
 -- water could run.
 handler("lines.flow", function(player, args)
     local record, missing = recordOrMissing(args)
     if not record then return nil, missing end
-    local tank, stopped = EnhancedIrrigation.LineJobs.tapTank(EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z))
+    local tank, stopped = EnhancedIrrigation.Taps.tankFor(EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z))
     local drawn = tank and EnhancedIrrigation.Flow.run(record, tank, args.hours) or nil
     local reply = readTiles(args.tiles or {})
     reply.drawn, reply.stopped = drawn, stopped
@@ -197,7 +197,7 @@ handler("lines.holdTap", function(player, args)
         return nil, "the tap tile at " .. args.x .. "," .. args.y
     end
     local standIn = { character = { getUsername = function() return args.as end } }
-    return { held = EnhancedIrrigation.LineSystem.holdTap(tap, standIn) }
+    return { held = EnhancedIrrigation.TapSystem.hold(tap, standIn) }
 end)
 
 -- Makes every line's air `args.celsius` until the test ends.

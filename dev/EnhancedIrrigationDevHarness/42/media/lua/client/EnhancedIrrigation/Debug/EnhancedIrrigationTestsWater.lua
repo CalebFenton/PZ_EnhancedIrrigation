@@ -1,10 +1,10 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/LineJobs"
+require "EnhancedIrrigation/Tanks"
 
--- Water from Tank (TimedActions/EnhancedIrrigationWaterAction.lua, LineSystem's tap holding,
--- LineJobs.tapTank and waterBlocker, and Flow.lua): opening a tap from its menu, who may hold it,
+-- Water from Tank (Taps.lua, Lines/TapSystem.lua, Lines/Flow.lua and
+-- TimedActions/EnhancedIrrigationWaterAction.lua): opening a tap from its menu, who may hold it,
 -- which tank it draws on and what an hour's water gives the crops. The verb runs at a raised clock
 -- speed; the flow's sums are run for set hours on the server (lines.flow), so the clock doesn't
 -- decide them.

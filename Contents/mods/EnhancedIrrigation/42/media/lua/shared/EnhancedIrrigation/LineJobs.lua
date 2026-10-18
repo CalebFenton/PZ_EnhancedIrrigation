@@ -1,7 +1,6 @@
 -- The hands-on jobs at a garden line: laying a tile, drilling holes, fitting the tap, patching a
 -- crack, draining and taking the pipe up, done on the authority by
--- server/EnhancedIrrigation/Lines/LineSystem.lua. Watering from the tap is its own open-ended
--- action (EnhancedIrrigationWaterAction), refused by LineJobs.waterBlocker.
+-- server/EnhancedIrrigation/Lines/LineSystem.lua. Running water from the tap is Taps.lua's.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -134,17 +133,6 @@ local function atLine(check)
     end
 end
 
--- The tanks reaching a tap at x, y, z that stand high enough to push water out of it.
-local function pushing(x, y, z)
-    local found = {}
-    for _, tank in ipairs(Tanks.tanksReaching(x, y, z)) do
-        if Tanks.hasPressureFor(tank, z) then
-            table.insert(found, tank)
-        end
-    end
-    return found
-end
-
 -- Lay's `with` is the pipe kind; the others' is nil.
 LineJobs.JOBS = {
     [LineJobs.LAY] = {
@@ -183,7 +171,7 @@ LineJobs.JOBS = {
             if Lines.tapIn(Lines.component(x, y, z)) then
                 return "Tooltip_EnhancedIrrigation_LineHasTap"
             end
-            return #pushing(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
+            return #Tanks.pushingAt(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
         end),
         materials = function(character, object)
             local list = { Pipes.WRENCH }
@@ -219,41 +207,5 @@ LineJobs.JOBS = {
 }
 
 EnhancedIrrigation.Jobs.define(LineJobs)
-
---- The tank the water runs from at the tap tile `object`, asked each time it runs: of the tanks
---- reaching the tile a storey or more above the line, the highest holding water, then the fullest.
---- Or nil and why none, a Tooltip key.
-function LineJobs.tapTank(object)
-    local state = Lines.stateOf(object)
-    if not (state and state.tap) then
-        return nil, "Tooltip_EnhancedIrrigation_NoTap"
-    end
-    local tanks = pushing(object:getX(), object:getY(), object:getZ())
-    if #tanks == 0 then
-        return nil, "Tooltip_EnhancedIrrigation_NoPressure"
-    end
-    local best
-    for _, tank in ipairs(tanks) do
-        if Tanks.litres(tank) > 0 and (not best or Tanks.levelOf(tank) > Tanks.levelOf(best)
-                or (Tanks.levelOf(tank) == Tanks.levelOf(best) and Tanks.litres(tank) > Tanks.litres(best))) then
-            best = tank
-        end
-    end
-    if not best then
-        return nil, "Tooltip_EnhancedIrrigation_TankEmpty"
-    end
-    return best
-end
-
---- Why `character` can't run water from the tap tile `object`, a Tooltip key, or nil: someone
---- else holds the tap (LineSystem.holdTap), or no tank can feed it.
-function LineJobs.waterBlocker(object, character)
-    local state = Lines.stateOf(object)
-    if state and state.heldBy and state.heldBy ~= character:getUsername() then
-        return "Tooltip_EnhancedIrrigation_TapInUse"
-    end
-    local _, refusal = LineJobs.tapTank(object)
-    return refusal
-end
 
 return LineJobs

@@ -38,7 +38,7 @@ end
 
 --- Runs the line tapped at `tapRecord` from `tank` for `hours` game hours. A tank holding less than
 --- its outlets ask gives each the same fraction of what it asked. Callers check the tap first
---- (LineJobs.tapTank). Authority only. Returns the litres drawn from the tank.
+--- (Taps.tankFor). Authority only. Returns the litres drawn from the tank.
 function Flow.run(tapRecord, tank, hours)
     local tiles = Lines.component(tapRecord.x, tapRecord.y, tapRecord.z)
     local push = math.sqrt(Tanks.levelOf(tank) - tapRecord.z)
