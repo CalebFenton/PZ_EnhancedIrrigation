@@ -8,7 +8,7 @@ require "EnhancedIrrigation/Tanks"
 -- menu helpers and fixtures the mod's tests share. Fixtures are placed by the server handlers of
 -- EnhancedIrrigationTestServer.lua and EnhancedIrrigationTestServerLines.lua, the way the
 -- authority places them, and each waits for this client's copy. A tile handle is { x, y, z,
--- square }. Feature libraries (such as EnhancedIrrigationTestLibTanks.lua) add to the same table.
+-- square }. A fixture only one test file uses is that file's own.
 
 EnhancedIrrigationTest = EnhancedIrrigationTest or setmetatable({}, { __index = PZHarness.Test })
 local T = EnhancedIrrigationTest
@@ -360,6 +360,21 @@ function T.lineSummary(handle)
     return line and Lines.summaryOf(line) or nil
 end
 
+--- The name of this client's sprite of the line tile at `handle`, or nil.
+function T.lineSprite(handle)
+    local line = T.lineObject(handle)
+    return line and line:getSprite():getName() or nil
+end
+
+--- The saved fields of a tapped tile: { tap = true } with `extra`'s fields.
+function T.tapped(extra)
+    local fields = { tap = true }
+    for key, value in pairs(extra or {}) do
+        fields[key] = value
+    end
+    return fields
+end
+
 --- Queues a wait until this client has the line tile at every one of `handles` with its summary,
 --- and `check(summary, handle)`, if given, holds for each.
 function T.waitForLines(self, handles, what, check)
@@ -395,6 +410,12 @@ end
 --- Queues taking away, when the test ends, any line tile on `handles`, such as those its jobs lay.
 function T.trackLines(self, handles)
     T.server(self, "lines.track", { tiles = T.tiles(handles) })
+end
+
+--- Queues running the line tapped at `tap` for `hours` on the server; the reply, the litres
+--- `drawn` or the refusal `stopped`, and `handles`' tiles, lands in self.reads[label].
+function T.flow(self, tap, hours, handles, label)
+    T.read(self, "lines.flow", T.at(tap, { hours = hours, tiles = T.tiles(handles) }), label)
 end
 
 -- Tanks and crops -----------------------------------------------------------------------------------
@@ -434,6 +455,18 @@ function T.placeTank(self, handle, kind, litres, tainted)
         return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < LITRES)
     end, "this client's copy of the " .. kind)
     return tank
+end
+
+--- This client's copy of the object drawn as `sprite` (the handle's own unless given) on the
+--- handle's square, or nil.
+function T.tankCopy(handle, sprite)
+    return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), sprite or handle.sprite)
+end
+
+--- This client's level of the tank on the handle's square, or nil without one.
+function T.clientLevel(handle)
+    local tank = Tanks.tankOn(getSquare(handle.x, handle.y, handle.z))
+    return tank and Tanks.levelOf(tank) or nil
 end
 
 --- Queues a sown crop on `handle` at `water` water points, and a wait for this client's copy.
