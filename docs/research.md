@@ -17,6 +17,7 @@ Facts from Build 42.21.0 (`~/Zomboid/version.txt`), read from the vanilla Lua an
 - Health every 2 h (`changeHealth`): +0.4 watered, −0.2 / −0.5 short.
 - Death: `checkStat`: a plant past its first growth dies at `waterLvl <= 0`.
 - Sprite: `getSpriteName` uses `min(health, waterLvl)`, so a thirsty plant looks sick before it is.
+- Health is never shown as a number to a player: `ISFarmingInfo` prints it only under `ISFarmingMenu.cheat`. The sprite turns sickly below 50 and dying below 25; each 10 above or below 50 adds or takes one from the harvest.
 
 **No over-watering.** Every `waterLvlMax` line in the crop props is commented out, so `waterNeededMax` is nil and the over-water branch of `calcWater` returns 0. The hooks exist (`grow`, `changeHealth`) but can't fire. Topping a plant to 100 costs nothing.
 

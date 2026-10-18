@@ -30,9 +30,9 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 
 **Every watering is something the player does, or something they set up to do it for them.** Nothing stays on until you remember it. You hold a valve open in a timed action and watch the beds darken, the way you chop. A wind-up valve shuts itself after the minutes you give it, like the oven's timer. An alarm clock wired to a salvaged water valve opens it every morning, if it has power. Each step up buys back time and costs parts, skill and power.
 
-**Too much water costs something you can see.** Water the mod delivers to a full plant soaks the soil, and soaked soil grows mildew. Rain alone never soaks, so vanilla play is unchanged. A timer that runs through a wet week rots a bed.
+**Too much water costs something you can see.** Water the mod delivers to a full plant soaks the soil, and waterlogged soil rots the roots. Rain alone never soaks, so vanilla play is unchanged. A timer that runs through a wet week rots a bed.
 
-**What you see is the world, not a panel.** Wet soil darkens under the pipe. Running water sounds while a valve is open. Plants show thirst and mildew in vanilla's sprites and info window, at vanilla's Agriculture levels. Tanks, filter outlets and fixtures show litres and "Tainted" the way vanilla already does. There is no network screen.
+**What you see is the world, not a panel.** Wet soil darkens under the pipe. Running water sounds while a valve is open. Plants show thirst and sickness in vanilla's sprites and info window, at vanilla's Agriculture levels. Tanks, filter outlets and fixtures show litres and "Tainted" the way vanilla already does. There is no network screen.
 
 **Clean water costs something, and stays clean only if you keep it apart.** Water through this mod's pipes keeps whatever taint it had. Cleaning is slow, or burns fuel, so survivors run two tanks: a big raw one for the garden, the animals and the toilet, and a small clean one, filled only through a filter or a boiler, for the kitchen. One careless bucket taints the clean tank, and it has to be emptied.
 
@@ -44,7 +44,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 
 **Commitment is the price of the big payoffs.** A barrel and a short line move with you. A tank stand, a pump on a well and a plumbed kitchen tie you to that place.
 
-**Feel like the base game.** A pipe wrench fits things to water, as in vanilla plumbing. Timed actions with endurance cost, as in chopping. A timer knob like the oven's. A boiler fuelled and lit like a vanilla fire. Vanilla's exchange rate of water to plants, its all-or-nothing taint, its "Tainted" tooltip and Empty action, its milk spray for mildew. Build in the build menu. Learn from a pamphlet, a skill level, or research, the three ways vanilla teaches.
+**Feel like the base game.** A pipe wrench fits things to water, as in vanilla plumbing. Timed actions with endurance cost, as in chopping. A timer knob like the oven's. A boiler fuelled and lit like a vanilla fire. Vanilla's exchange rate of water to plants, its plant health, its all-or-nothing taint, its "Tainted" tooltip and Empty action. Build in the build menu. Learn from a pamphlet, a skill level, or research, the three ways vanilla teaches.
 
 **Grounded in 1993 Kentucky.** Cisterns, rain barrels, slow sand filters, sump and utility pumps, oscillating lawn sprinklers and plug-in sprinkler timers were all on sale or in the extension leaflets that year. Rain sensors, moisture sensors and float switches existed too. They are left out on purpose: the system stays dumb.
 
@@ -52,7 +52,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 
 ### Tanks and height
 
-- **A tank** is any fixed store that holds water in a vanilla fluid container: a rain barrel or collector, an amphora, a well, or a barrel on a Tank Stand. Feeding troughs keep their water in their own system rather than a fluid container, so they aren't tanks yet; the trough float valve under "Later" is where they join.
+- **A tank** is any fixed store that holds water in a vanilla fluid container above ground: a rain barrel or collector, an amphora, or a barrel on a Tank Stand. A well's water stands underground, so only a pump draws on it. Feeding troughs keep their water in their own system rather than a fluid container, so they aren't tanks yet; the trough float valve under "Later" is where they join.
 - **A tank's level** is the floor it stands on (z), plus one if it's on a Tank Stand.
 - **Two rules decide every flow:**
   - **Pressure (taps, holes, sprinklers, fixtures):** the tank's level must be at least one above the outlet's floor. A barrel on the ground waters nothing by gravity. A barrel on a stand, a platform or an upstairs floor waters the ground floor.
@@ -67,8 +67,8 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 1. **Plumb** (point to point). With a Pipe Wrench, connect one thing to one tank: a fixture, a filter's inlet, a boiler's inlet, a filter's or boiler's outlet into a tank, a pump's outlet, or another tank.
    - Reach: up to 10 tiles across, between vanilla plumbing's 1 and a generator's 20. Height follows the two rules above.
    - Cost: one pipe of any kind for every 3 tiles of distance, plus a joint per pipe: Glue, Epoxy or Duct Tape for plastic; the wrench alone for iron and lead.
-   - Time grows with distance. The pipe runs out of sight, through walls and under floors, as vanilla's plumbing does. Buried like that, it doesn't freeze or wear.
-   - "Unplumb" gives back every length of pipe as it went in; the joints are spent.
+   - Time grows with distance. The pipe runs out of sight, through walls and under floors, as vanilla's plumbing does. Buried like that, it doesn't freeze or wear. The player picks which pipe to bury, as when laying a line.
+   - The pipe stays in the ground when a tank leaves its end, and carries water again once a tank stands there. You find it by knowing where it was: the other tank's Unplumb lists it, and so does the bare floor at either end. "Unplumb" gives back every length of pipe as it went in; the joints are spent.
    - Each fixture is plumbed on its own and picks its own tank. So the toilet and the washing machine can run off the raw tank while the kitchen sink runs off the clean one. There's no "house" to wire.
 2. **Lay line** (tile by tile, for gardens). Pipe laid on the ground, one length a tile, each click of a cursor that stays up between clicks, as vanilla's build cursors do (vanilla has no drag-to-lay). The first tile must sit under or beside the tank's tile, the way vanilla's plumbing reaches 3×3 below. Lines are visible because their holes have to be where the plants are.
 
@@ -82,16 +82,16 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 
 - **Holes.** "Drill Holes" on a laid pipe. A hole is a hole: about a litre an hour at a storey of head. The tool only decides what it can get into: an awl only soft pipe (plastic, lead), an Auger Drill, Stone Drill or hammer and nail anything but iron, a Hand Drill everything. Punching (hammer and nail, Stone Drill) may crack plastic or clay as it goes in.
 - **Flow.** Every hole on the line runs while the tap is open. A higher tank pushes harder (rate × √storeys of head, as water falls). Water reaches plants at vanilla's rate (1 L = 50 points). A hole over bare ground wastes its share.
-- **The tap.** "Fit Tap" (Pipe Wrench, one short pipe, a joint) at the line's head. Three ways to run it:
+- **The tap.** "Fit Tap" (Pipe Wrench, one length of the line's own pipe, its joint) on a tile beside a tank a storey up. Each time it runs it draws from the highest tank beside it that holds water. One person at a tap at a time. Three ways to run it:
   1. **Hold it.** "Water from Tank" is a timed action at the tap. While you stand there, every hole on the line runs, the beds darken and the water sounds. Stop when you judge it's enough, or when the tank gives out.
   2. **Wind-up Valve.** Wind it with the oven's timer knob. It opens, runs, and shuts when it runs down. You start it each time.
   3. **Timer Valve** or a found **Sprinkler Timer.** It opens at one hour every day for the minutes you set, while its square has power. If the power fails, it shuts.
-- **Sprinklers.** A Lawn Sprinkler set on a line tile throws water over a wide rectangle. It needs a pump driving the line, since a storey of head is about 3.5 psi and a sprinkler wants several times that. It's fast and wasteful: about half goes to air and paths. It wets leaves, so mildew grows faster under it.
+- **Sprinklers.** A Lawn Sprinkler set on a line tile throws water over a wide rectangle. It needs a pump driving the line, since a storey of head is about 3.5 psi and a sprinkler wants several times that. It's fast and wasteful: about half goes to air and paths, and it soaks soil faster.
 - **Too much water.**
   - Each outlet tile keeps a `soak` value. Water delivered to a plant already at 100 raises it, and it dries a little each day.
-  - Above a threshold the plant's `mildewLvl` rises each hour; sprinklers soak harder. Rain never adds soak.
-  - Seen as darker soil. Vanilla's plant info shows "damp / soaked / waterlogged" from Agriculture 2.
-- **Frost.** A full outdoor pipe can split in a hard freeze, rarely or now and then by material: a line left full all winter loses a length or two of iron, a few of clay, and seldom one of lead or plastic. Real burst pipes come from trapped water under pressure; a low-pressure line with open holes mostly gets away with it. "Drain Line" from any tile empties it. "Patch Crack" mends a split with glue, epoxy or duct tape, and a cracked length is scrap when taken up, patched or not.
+  - While the soil is waterlogged the plant's roots rot: it loses health at vanilla's own drought rate, which stops when the soil dries. Health is vanilla's hidden 0-100 score: it falls when a plant is thirsty, cold or sick, sets the harvest, and at 0 the plant dies; the plant's sprite turns sickly below half and dying below a quarter. Rain never adds soak.
+  - Seen as darker soil. The plant info shows "damp / soaked / waterlogged" from Agriculture 2.
+- **Frost.** A full outdoor pipe can split in a hard freeze, rarely or now and then by material: a line left full all winter loses a length or two of iron, a few of clay, and seldom one of lead or plastic. Real burst pipes come from trapped water under pressure; a low-pressure line with open holes mostly gets away with it. "Drain Line" from any tile empties it. A split wastes water onto the ground while the tap runs (the soil shows wet); "Patch Crack" with glue, epoxy or duct tape makes the length whole again. A length still cracked is scrap when taken up.
 - **Ollas.** An unglazed Clay Jar buried in a bed. Fill it by hand; it seeps into the eight tiles around it for days. It needs no line and no height.
 
 ### Pumps
@@ -104,7 +104,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 | Pump House + Utility Pump | the same | 2 storeys | 20 L a game minute | the same |
 
 - **Sources.** A pump draws from the source it stands on or beside: a well, a barrel or trough, or water tiles reached by its Rubber Hose intake. It delivers through "Plumb" to a tank (filling rule ignored up to its lift), or straight into a garden line (which is how a sprinkler gets its push).
-- **Hand pump seals**, best first: Leather Strips, Tire Piece, Tarp Piece, a Plunger cup. Each lasts fewer litres than the one before. A worn seal moves less per stroke, so the pump slows before it fails.
+- **Hand pump seals**, best first: Leather Strips, Tire Piece, Tarp Piece, a Plunger cup. Each lasts fewer litres than the one before; when it's done the pump squeals and lifts nothing until you replace it.
 - **Power** for the Pump House: grid until shutoff, a running generator, or a Renewable Energy bank. On a generator the mod burns fuel for the pump's draw at vanilla's rate.
 - **Endgame:** a Timer Valve on the Pump House fills the raw tank from the river every morning, and a Timer Valve on the tap waters the beds every evening. Neither knows if it rained, if the river is low, or if the tank is already full. A full tank overflows and wastes the work. A dry source burns the pump.
 - **Left out:**
@@ -115,7 +115,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 
 Every method turns Tainted Water into Water completely or not at all; the game has no "mostly clean". What separates them is speed, cost and upkeep.
 
-- **Two tanks.** The raw tank is big and high; it feeds the garden, the animals and the filter. The clean tank is small and closed (its vanilla lid shut, so nothing gets in), filled only from a filter's or boiler's outlet or a well, and it feeds the kitchen. One bucket of raw water in the clean tank taints it; vanilla's Empty action pours it out. Rain comes in tainted, so an open clean tank is a raw tank by the next shower: the lid matters.
+- **Two tanks.** The raw tank is big and high; it feeds the garden, the animals and the filter. The clean tank is small and closed (its vanilla lid shut, so nothing gets in), filled only from a filter's or boiler's outlet or a pumped well, and it feeds the kitchen. One bucket of raw water in the clean tank taints it; vanilla's Empty action pours it out. Rain comes in tainted, so an open clean tank is a raw tank by the next shower: the lid matters.
 - **The height chain.** Raw tank on a platform, filter beside it on the same level, clean tank beside that, sinks below. A single-storey platform or an upstairs room does it all; a pump can stand in for any step.
 - **Slow sand filter: the living filter.**
   - The part that cleans is the mat of algae and bacteria that grows on the sand (the schmutzdecke). That's the "plants that clean water" idea, and it's real. It also means you keep it alive.
@@ -129,8 +129,8 @@ Every method turns Tainted Water into Water completely or not at all; the game h
   - It's a fire, under vanilla's fire rules: outdoors, away from walls, and never on a wooden platform you care about. Run it with the raw tank empty and the drum scorches.
 - **Filter Crock: clean water without plumbing.**
   - A porous fired clay pot set in a bucket. "Pour In" raw water from any container; clean water seeps into the vessel below at about 10 L a day. Drink or fill from it with vanilla's actions.
-  - Scrub it when it slows. It cracks if frozen full.
-- **Also:** boiling and tablets as in vanilla; a well is clean and practically endless.
+  - It clogs after so many litres, in one visible step; scrub it by hand. It cracks if frozen full.
+- **Also:** boiling and tablets as in vanilla; a well is clean and practically endless, once something pumps it.
 - **Left out:**
   - **Bleach.** In real life it's the EPA's emergency advice (8 drops a gallon, 30 minutes). In this game any trace of Bleach fluid is deadly, so a dose would fight the engine.
   - **Reed beds and aquariums.** They clean water for plants and fish, not for drinking.
@@ -186,7 +186,7 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | **Plumb to Tank** (up to 10 tiles) | none | Pipe Wrench; 1 pipe per 3 tiles; a joint per pipe | Pamphlet; auto at Woodwork 4 or MetalWelding 3 |
 | **Lay Line** | none | 1 Plastic, Iron or Lead Pipe, or 2 Clay Pipe Segments, per tile; joints as above (clay: 1 use of clay cement per tile) | everyone |
 | **Drill Holes** | none | a tool that pierces the pipe: Hand Drill (any), Auger or Stone Drill or hammer and a nail (not iron), awl (plastic or lead) | everyone |
-| **Fit Tap** | none | Pipe Wrench, 1 pipe, a joint | everyone |
+| **Fit Tap** | none | Pipe Wrench, 1 length of the line's pipe, a joint | everyone |
 | **Water from Tank** | none | standing at the tap | everyone |
 | **Drain Line** | none | standing at any tile of the line | everyone |
 | **Salvage Pump** (washing machine or dishwasher) | Electricity 2 | screwdriver, pliers; the appliance stays but won't run again | auto at Electricity 2 |
@@ -267,7 +267,7 @@ The mod stands alone. With Renewable Energy:
   - A tank's water lives in its chunk. A link with an end unloaded waits; the hand-held tap needs the player there, so phase 2 moves no water while unloaded.
   - Rain catchers keep collecting while unloaded (vanilla's meta simulation), so a tank's water can only be under-counted by the mod, never over.
   - Pumps and timers (phases 5 and 6) will need the snapshot-and-owe scheme: on unload a link snapshots its tank; flows draw on the snapshot and record what they owe; on load, the owed litres come out of the real container.
-- **Plants.** `SFarmingSystem.instance:getLuaObjectOnSquare`; set `waterLvl` and `mildewLvl`, then `saveData()`. A plant's record is saved by its own system even while unloaded, and goes back onto the plant when it loads. Vanilla farming files are never replaced.
+- **Plants.** `SFarmingSystem.instance:getLuaObjectOnSquare`; set `waterLvl` and `health`, then `saveData()`. A plant's record is saved by its own system even while unloaded, and goes back onto the plant when it loads. Vanilla farming files are never replaced.
 - **Tank Stand.** Stand and barrel are one tile and entity, swapped in and out the way vanilla's lid swaps a barrel. A raised offset on vanilla's own barrel was the alternative; the lid swap drops it, and a barrel is only half the picture of a stand.
 - **Fixtures.**
   - Each plumbed fixture gets its own `FluidContainer` component (vanilla's own `addWaterContainer` command does this) and `modData.canBeWaterPiped = true`. That turns off vanilla's infinite and reserve water, so the container is its only water, and the engine keeps taint through drink, fill, wash and tooltips.
@@ -297,7 +297,7 @@ The mod stands alone. With Renewable Energy:
 Each phase is playable on its own:
 
 1. **Prove the risk.** Done: a throwaway test of fixture buffers (save, reload, multiplayer, vanilla menus, taint) and of plumbed-fixture conversion, in the dev mod. Its tests go when phase 3's replace them.
-2. **Gravity garden.** Done: tanks and height, Tank Stand, Plumb to Tank between tanks, Lay Line, Drill Holes, Fit Tap, Water from Tank, soak and mildew, frost, patching and draining, the pamphlet, its loot and learning, each with in-game tests in single player and multiplayer. Not yet played through: the summer-and-frost playtest under Starting numbers.
+2. **Gravity garden.** Done: tanks and height, Tank Stand, Plumb to Tank between tanks, Lay Line, Drill Holes, Fit Tap, Water from Tank, soak and root rot, frost, patching and draining, the pamphlet, its loot and learning, each with in-game tests in single player and multiplayer. Not yet played through: the summer-and-frost playtest under Starting numbers.
 3. **Fixtures.** Plumb to Tank on fixtures, the vanilla Plumb override and conversion, two tanks.
 4. **Safe water.** Barrel and Brick Filters, the Boiler, the Filter Crock.
 5. **Pumps.** Hand pumps and seals, Salvage Pump, Pump House, Utility Pump, sprinklers.
@@ -315,7 +315,7 @@ Vanilla's yardsticks: 1 L = 50 plant points; a plant drains about 4.8 points a d
 | Hand pumps | 6 / 8 L a game minute | a 600 L barrel in about 75-100 minutes of sweat |
 | Appliance / Utility Pump | 6 / 20 L a game minute | a barrel in under two hours / half an hour |
 | Lawn sprinkler | 600 L/h over about 15 tiles, half lost | ten minutes soaks a bed; an hour empties a barrel |
-| Soak | dries 10 a day out, 5 in; waterlogged above 30; +1 mildew per 5 h (×1.5 under sprinklers) | an hour too long slows a plant; a forgotten night kills it |
+| Soak | dries 10 a day out, 5 in; waterlogged above 30; roots lose health at vanilla's drought rate while waterlogged | an hour too long sets a plant back; a forgotten night can kill a bed, sooner indoors |
 | Barrel / Brick Filter | about 4 / 16 L an hour; ripens in 3 days, 1 after a cleaning; dies after 2 dry days | a household's daily water from one barrel |
 | Boiler | about 30 L an hour once hot; heats in an hour; a log keeps it hot about an hour | fast clean water that costs a woodpile |
 | Filter Crock | about 10 L a day | one person's drinking and cooking |
