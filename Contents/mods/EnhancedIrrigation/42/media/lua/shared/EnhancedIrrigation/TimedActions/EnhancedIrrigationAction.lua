@@ -31,13 +31,14 @@ local FEATURES = {
         jobs = EnhancedIrrigation.StandJobs,
         perform = function(...) return EnhancedIrrigation.StandSystem.perform(...) end,
     },
+    -- Unplumb also works at the floor of a link's end whose tank is gone.
     link = {
-        isTarget = EnhancedIrrigation.Tanks.isTank,
+        isTarget = function(object) return EnhancedIrrigation.Tanks.isTank(object) or EnhancedIrrigation.isFloor(object) end,
         jobs = EnhancedIrrigation.LinkJobs,
         perform = function(...) return EnhancedIrrigation.LinkSystem.perform(...) end,
     },
     line = {
-        isTarget = function(object) return EnhancedIrrigation.Lines.isLine(object) or LineJobs.isFloor(object) end,
+        isTarget = function(object) return EnhancedIrrigation.Lines.isLine(object) or EnhancedIrrigation.isFloor(object) end,
         jobs = LineJobs,
         perform = function(...) return EnhancedIrrigation.LineSystem.perform(...) end,
     },

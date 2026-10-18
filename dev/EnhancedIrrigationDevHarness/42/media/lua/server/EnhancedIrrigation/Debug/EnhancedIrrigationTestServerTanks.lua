@@ -171,8 +171,12 @@ handler("tanks.flow", function(_, args, defer)
     return { passes = passes }
 end)
 
--- One link pass of an hour (LinkSystem:pass). Answers the state at x, y, z after.
+-- One link pass (LinkSystem:pass), as long as a link takes to carry `args.litres` at its full rate.
+-- Answers the state at x, y, z after, and at `args.other` ({ x, y, z }) if given.
 handler("tanks.pass", function(_, args)
-    mod().LinkSystem.instance:pass(1)
-    return Server.stateAt(args)
+    local LinkSystem = mod().LinkSystem
+    LinkSystem.instance:pass(args.litres / LinkSystem.LINK_RATE)
+    local state = Server.stateAt(args)
+    state.other = args.other and Server.stateAt(args.other) or nil
+    return state
 end)

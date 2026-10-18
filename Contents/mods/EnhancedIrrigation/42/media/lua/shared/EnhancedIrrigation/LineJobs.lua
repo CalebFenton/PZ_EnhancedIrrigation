@@ -86,12 +86,6 @@ local function drainMinutes(object)
     return DRAIN_MINUTES + #Lines.component(object:getX(), object:getY(), object:getZ()) / DRAIN_TILES_A_MINUTE
 end
 
---- Whether `object` is a floor a line tile could be laid on: the target of the lay job.
-function LineJobs.isFloor(object)
-    local square = object and object:getSquare()
-    return square ~= nil and square:getFloor() == object
-end
-
 --- Why a line tile can't go on `square`, a Tooltip key, or nil. `pending(x, y, z)`, if given, says
 --- which squares already have a tile queued to be laid, which count as line for adjacency. Line
 --- behind a wall (Lines.joins) neither touches nor joins it.

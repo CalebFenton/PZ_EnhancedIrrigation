@@ -123,8 +123,8 @@ function T.face(square)
 end
 
 --- Queues opening the world menu of `getObject()`, looked up when the step runs, and noting in
---- self.menu[label] what the option `find(context)` finds: { found, offered, tooltip, submenu }.
---- When `choose` and it is offered, the character faces the object's square and chooses it.
+--- self.menu[label] what the option `find(context)` finds: { found, offered, tooltip, submenu,
+--- name }. When `choose` and it is offered, the character faces the object's square and chooses it.
 function T.useOption(self, getObject, label, find, choose)
     self.menu = self.menu or {}
     T.step(function()
@@ -133,7 +133,7 @@ function T.useOption(self, getObject, label, find, choose)
         if not context then return end
         local option = find(context)
         self.menu[label] = { found = option ~= nil, offered = T.offered(option), tooltip = T.tooltipOf(option),
-            submenu = option ~= nil and option.subOption ~= nil }
+            submenu = option ~= nil and option.subOption ~= nil, name = option and option.name }
         if choose and T.offered(option) then
             T.face(object:getSquare())
             T.choose(option)

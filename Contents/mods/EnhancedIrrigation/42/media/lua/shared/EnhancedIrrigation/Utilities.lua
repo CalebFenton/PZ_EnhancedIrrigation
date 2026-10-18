@@ -119,6 +119,13 @@ function EnhancedIrrigation.onSquare(object)
     return object ~= nil and object:getObjectIndex() ~= -1
 end
 
+--- Whether `object` is its square's floor: what a job on the ground works at, such as laying a
+--- line tile or taking up buried pipe whose tank is gone.
+function EnhancedIrrigation.isFloor(object)
+    local square = object and object:getSquare()
+    return square ~= nil and square:getFloor() == object
+end
+
 --- Whether `character` stands within `reach` squares on each axis of the middle of `target`'s
 --- square, on its level: where the menu walked them for a job there (luautils.walkAdj), with room
 --- for drift and a client's lag. The authority checks it before doing a job.

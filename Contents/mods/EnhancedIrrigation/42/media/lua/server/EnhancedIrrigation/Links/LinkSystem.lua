@@ -1,9 +1,10 @@
 -- The authority's side of the tank links (shared/EnhancedIrrigation/Links.lua): a Global Object
 -- System with no objects, used for what it saves with the world (its own modData keys) and sends
 -- the clients (its initial state on connect, then a command on each change). Every ten minutes
--- water finds its level through each link whose two ends are loaded. A link is buried pipe, run
--- through walls and under floors as vanilla's plumbing is, so it never freezes or wears: unlike a
--- garden line it has nothing to age.
+-- water finds its level through each link with a tank loaded at both ends. A link is buried pipe,
+-- run through walls and under floors as vanilla's plumbing is, so it never freezes or wears: unlike
+-- a garden line it has nothing to age. Nor does it go with a tank: taken down, picked up or
+-- smashed, the tank leaves the pipe in the ground, and one set on that square again is on it.
 
 if isClient() then return end
 
@@ -95,31 +96,21 @@ local DO = {
         return true
     end,
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
-    [LinkJobs.UNPLUMB] = function(character, tank, with)
-        local link = Links.find(EnhancedIrrigation.squareOf(tank), Links.decode(with))
+    [LinkJobs.UNPLUMB] = function(character, object, with)
+        local link = Links.find(EnhancedIrrigation.squareOf(object), Links.decode(with))
         LinkSystem.instance:removeLink(link)
         Pipes.giveBack(character, link.kind, link.lengths, link.conditions)
         return true
     end,
 }
 
---- Does `job` at `tank` toward the square `with` names for `character` on the authority
---- (Jobs.perform). Returns whether it was done.
-function LinkSystem.perform(character, job, tank, with)
-    return EnhancedIrrigation.Jobs.perform(LinkJobs, DO, character, job, tank, with)
+--- Does `job` at `object` (a tank, or for Unplumb the floor of a bare end) toward the square `with`
+--- names for `character` on the authority (Jobs.perform). Returns whether it was done.
+function LinkSystem.perform(character, job, object, with)
+    return EnhancedIrrigation.Jobs.perform(LinkJobs, DO, character, job, object, with)
 end
 
 -- Flow ------------------------------------------------------------------------------------------
-
--- The tank at the square `at`: the tank, or false when the square is loaded with no tank on it,
--- or nil when it isn't loaded.
-local function endAt(at)
-    local square = getCell():getGridSquare(at.x, at.y, at.z)
-    if not square then
-        return nil
-    end
-    return Tanks.tankOn(square) or false
-end
 
 -- Litres to move from `from` to `to` (FluidContainers) toward equal fill, the two on one level.
 local function levelling(from, to)
@@ -158,27 +149,18 @@ local function flow(tankA, tankB, hours)
     return true
 end
 
---- Moves water through every link whose two ends are loaded, as `hours` of flow, and drops each
---- link whose end is loaded with no tank on it any more: the pipe went with the tank.
+--- Moves water through every link with a tank at both ends, as `hours` of flow. A link with an end
+--- unloaded, or whose tank has gone from it, waits.
 function LinkSystem:pass(hours)
-    local changed, kept, dropped = {}, {}, false
+    local changed = {}
     for _, link in ipairs(self.links) do
-        local tankA, tankB = endAt(link.a), endAt(link.b)
-        if tankA == false or tankB == false then
-            dropped = true
-        else
-            table.insert(kept, link)
-            if tankA and tankB and flow(tankA, tankB, hours) then
-                changed[tankA], changed[tankB] = true, true
-            end
+        local tankA, tankB = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
+        if tankA and tankB and flow(tankA, tankB, hours) then
+            changed[tankA], changed[tankB] = true, true
         end
     end
     for tank in pairs(changed) do
         Tanks.sync(tank)
-    end
-    if dropped then
-        self.links = kept
-        self:sendLinks()
     end
 end
 

@@ -4,6 +4,7 @@ require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Links/LinkView"
+require "EnhancedIrrigation/UI/TankMenu"
 
 -- Tanks and the Tank Stand (docs/design.md, "Tanks and height", "Connections"): building a stand,
 -- setting a barrel on it and taking it down, the raised barrel as a tank a level up through the
@@ -16,7 +17,7 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Stands, Links = EnhancedIrrigation.Sprites, EnhancedIrrigation.Stands, EnhancedIrrigation.Links
 local StandJobs, LinkJobs, LineJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.LineJobs
-local Pipes = EnhancedIrrigation.Pipes
+local Pipes, TankMenu = EnhancedIrrigation.Pipes, EnhancedIrrigation.TankMenu
 
 -- The barrel the tests lift: vanilla's lidded rain barrel, which no rain fills meanwhile, so an
 -- empty one stays empty and a filled one holds what the test put in.
@@ -474,24 +475,95 @@ T.test("irrigation_tanks_link_fills_downhill_never_uphill", {
     end,
 })
 
--- A link whose tank is gone from its loaded square goes at the next pass, on this client too.
-T.test("irrigation_tanks_link_dropped_when_its_tank_goes", {
+-- A tank taken off a plumbed square leaves its pipe buried: the link outlives a pass, moving no
+-- water, and the tank left names it under Unplumb as pipe to an empty spot. A tank set on that
+-- square again is on the link at once, and Plumb to Tank lays no second pipe to it. Catches a link
+-- dropped with its tank, one that needs plumbing again, or two links between the same squares.
+T.test("irrigation_tanks_buried_pipe_stays_and_reconnects", {
+    instant = true,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
         if not spots then return end
-        -- Not in a T.batch: the removal would go out across these waits for this client's copies.
-        self.a = T.placeTank(self, spots[1], "lidded")
+        self.start = 100
+        -- Not in a T.batch: the link and the removal would go out across these waits for this
+        -- client's copies.
+        self.a = T.placeTank(self, spots[1], "lidded", self.start)
         self.b = T.placeTank(self, spots[2], "lidded")
+        local with = Links.encode(T.at(self.b))
         T.batch(function()
             T.read(self, "tanks.link", T.at(self.a, { to = T.at(self.b), kind = "iron", lengths = 1 }), "linked")
             T.server(self, "tanks.remove", T.at(self.b))
-            T.read(self, "tanks.pass", T.at(self.a), "after")
+            T.read(self, "tanks.pass", T.at(self.a, { litres = PASS_LITRES }), "bare")
         end)
-        T.waitFor(self, function() return #T.clientLinks(self.a) == 0 end, "this client to drop the link")
+        T.waitFor(self, function() return T.tankCopy(self.b) == nil end, "this client to lose the tank taken away")
+        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
+        useMenu(self, self.a, "unplumb the bare end", job("link", LinkJobs.UNPLUMB, with), false)
+        self.again = T.placeTank(self, spots[2], "lidded")
+        T.useOption(self, function() return T.tankCopy(self.a) end, "plumb again", job("link", LinkJobs.PLUMB, with), false)
+        T.batch(function()
+            T.read(self, "tanks.perform", T.at(self.a, { feature = "link", job = LinkJobs.PLUMB, with = with }), "forced")
+            T.read(self, "tanks.pass", T.at(self.a, { litres = PASS_LITRES, other = T.at(self.again) }), "joined")
+        end)
     end,
     validate = function(self)
         expect(self.reads.linked.links == 1, "the link wasn't made")
-        expect(self.reads.after.links == 0, "a link whose tank is gone outlived the pass")
+        local bare = self.reads.bare
+        expect(bare.links == 1, "the link went with its tank")
+        expectNear("the tank left, after a pass with no tank at the other end", bare.litres, self.start, LITRES)
+        T.expectOffered(self, "unplumb the bare end")
+        local a, b = T.at(self.a), T.at(self.b)
+        local want = getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", Links.distance(a, b),
+            TankMenu.direction(a, b))
+        local named = self.menu["unplumb the bare end"].name
+        expect(named == want, "Unplumb names the bare end " .. tostring(named) .. ", not " .. want)
+        expect(not self.menu["plumb again"].found, "Plumb to Tank lists the tank set back on the plumbed square")
+        local forced = self.reads.forced
+        expect(forced.done == false and forced.links == 1, "the server laid a second pipe between the same squares: "
+            .. tostring(forced.links) .. " links")
+        local joined, moved = self.reads.joined, math.min(PASS_LITRES, self.start / 2)
+        expectNear("the tank left, once a tank stands at the other end again", joined.litres, self.start - moved, LITRES)
+        expectNear("the tank set on the bare end", joined.other.litres, moved, LITRES)
+    end,
+})
+
+-- With both tanks gone the buried pipe is still found by the floor where one stood: Unplumb there
+-- names the far end as an empty spot and gives back every length. Catches pipe only a tank reaches.
+T.test("irrigation_tanks_unplumb_from_the_bare_floor", {
+    instant = true,
+    run = function(self)
+        -- Far enough apart for more than one length.
+        local spots = T.layout(self, { { 0, 0 }, { 2 * Links.TILES_PER_LENGTH + 1, 0 } }, { bare = true })
+        if not spots then return end
+        self.a = T.placeTank(self, spots[1], "lidded")
+        self.b = T.placeTank(self, spots[2], "lidded")
+        self.lengths = Links.lengthsFor(Links.distance(T.at(self.a), T.at(self.b)))
+        T.batch(function()
+            T.read(self, "tanks.link", T.at(self.a, { to = T.at(self.b), kind = "iron", lengths = self.lengths }), "linked")
+            T.server(self, "tanks.remove", T.at(self.a))
+            T.server(self, "tanks.remove", T.at(self.b))
+        end)
+        T.waitFor(self, function() return T.tankCopy(self.a) == nil and T.tankCopy(self.b) == nil end,
+            "this client to lose both tanks")
+        T.give(self, "tools", { { type = "Base.PipeWrench" } })
+        T.goNextTo(self, self.a.square)
+        T.useOption(self, function() return self.a.square:getFloor() end, "unplumb",
+            job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
+        T.readUntil(self, "tanks.links", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
+        self.count = self.lengths * Pipes.KINDS.iron.perLength
+        T.waitFor(self, function() return #ironConditions() == self.count end, "this client's copy of the pipe given back")
+    end,
+    validate = function(self)
+        expect(self.reads.linked.links == 1, "the link wasn't made")
+        T.expectOffered(self, "unplumb")
+        local a, b = T.at(self.a), T.at(self.b)
+        local want = getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", Links.distance(a, b),
+            TankMenu.direction(a, b))
+        local named = self.menu.unplumb.name
+        expect(named == want, "the bare floor's Unplumb names the pipe " .. tostring(named) .. ", not " .. want)
+        expect(#self.reads.links.links == 0, "the server still has the link after Unplumb from the floor")
+        expect(#ironConditions() == self.count, "Unplumb from the floor gave back " .. #ironConditions() .. " iron pipe, not "
+            .. self.count)
     end,
 })
 

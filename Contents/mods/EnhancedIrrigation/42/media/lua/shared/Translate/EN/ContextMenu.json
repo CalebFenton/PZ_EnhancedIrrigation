@@ -4,6 +4,7 @@
     "ContextMenu_EnhancedIrrigation_PlumbToTank": "Plumb to Tank",
     "ContextMenu_EnhancedIrrigation_Unplumb": "Unplumb",
     "ContextMenu_EnhancedIrrigation_PlumbedTo": "Plumbed to %1",
+    "ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty": "Buried pipe to an empty spot %1 tiles %2",
     "ContextMenu_EnhancedIrrigation_TankThere": "%1, %2 tiles %3, level %4",
     "ContextMenu_EnhancedIrrigation_TankOutOfSight": "A tank %1 tiles %2, out of sight",
     "ContextMenu_EnhancedIrrigation_NoTankInReach": "No other tank within reach",

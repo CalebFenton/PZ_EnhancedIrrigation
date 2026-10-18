@@ -1,7 +1,8 @@
 -- The right-click options of tanks and Tank Stands: Set Barrel on Stand and Take Barrel Down on a
 -- stand, and on any tank Plumb to Tank, with a submenu of the tanks in reach, and Unplumb, with a
--- submenu of the tanks it is plumbed to. Each option is greyed out saying why when its job would
--- be refused (StandJobs, LinkJobs).
+-- submenu of the pipe buried from it. The floor where a plumbed tank stood also offers Unplumb, so
+-- pipe whose tanks are both gone is found where it was laid. Each option is greyed out saying why
+-- when its job would be refused (StandJobs, LinkJobs).
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -45,6 +46,17 @@ function TankMenu.tankLabel(here, there)
     end
     return getText("ContextMenu_EnhancedIrrigation_TankThere", tank:getFluidContainer():getTranslatedContainerName(),
         distance, direction, Tanks.levelOf(tank))
+end
+
+--- How Unplumb names the buried pipe from the square `here` to the square `there`: by the tank at
+--- its far end, or as pipe to an empty spot when that square is loaded with no tank on it.
+function TankMenu.linkLabel(here, there)
+    local square = getCell():getGridSquare(there.x, there.y, there.z)
+    if square and not Tanks.tankOn(square) then
+        return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", Links.distance(here, there),
+            TankMenu.direction(here, there))
+    end
+    return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", TankMenu.tankLabel(here, there))
 end
 
 local function addStandOptions(context, playerNum, character, object)
@@ -99,18 +111,32 @@ local function addPlumbOptions(context, playerNum, character, tank)
     end
 end
 
-local function addUnplumbOptions(context, playerNum, character, tank)
-    local here = EnhancedIrrigation.squareOf(tank)
+-- Unplumb at `object`, a tank or the floor of a square a tank stood on: a submenu of the pipe buried
+-- from its square.
+local function addUnplumbOptions(context, playerNum, character, object)
+    local here = EnhancedIrrigation.squareOf(object)
     local links = Links.linksAt(here)
     if #links == 0 then return end
     local submenu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_Unplumb"))
     for _, link in ipairs(links) do
         local there = Links.otherEnd(link, here)
         local with = Links.encode(there)
-        local option = submenu:addOption(getText("ContextMenu_EnhancedIrrigation_PlumbedTo", TankMenu.tankLabel(here, there)),
-            playerNum, Action.queue, "link", LinkJobs.UNPLUMB, tank, with)
-        showLink(option, character, LinkJobs.UNPLUMB, tank, with)
+        local option = submenu:addOption(TankMenu.linkLabel(here, there), playerNum, Action.queue, "link",
+            LinkJobs.UNPLUMB, object, with)
+        showLink(option, character, LinkJobs.UNPLUMB, object, with)
     end
+end
+
+-- The floor of the first right-clicked square with no tank on it that buried pipe runs from, or nil.
+local function bareEnd(worldobjects)
+    for _, clicked in ipairs(worldobjects) do
+        local square = clicked:getSquare()
+        local floor = square and square:getFloor()
+        if floor and not Tanks.tankOn(square) and #Links.linksAt(EnhancedIrrigation.squareOf(floor)) > 0 then
+            return floor
+        end
+    end
+    return nil
 end
 
 function TankMenu.onFill(playerNum, context, worldobjects, test)
@@ -120,7 +146,8 @@ function TankMenu.onFill(playerNum, context, worldobjects, test)
         return Stands.isStand(object) or Stands.isRaised(object)
     end)
     local tank = Needs.findClicked(worldobjects, Tanks.isTank)
-    if not (stand or tank) then return end
+    local floor = not tank and bareEnd(worldobjects)
+    if not (stand or tank or floor) then return end
     if test then return ISWorldObjectContextMenu.setTest() end
     if stand then
         addStandOptions(context, playerNum, character, stand)
@@ -128,6 +155,8 @@ function TankMenu.onFill(playerNum, context, worldobjects, test)
     if tank then
         addPlumbOptions(context, playerNum, character, tank)
         addUnplumbOptions(context, playerNum, character, tank)
+    elseif floor then
+        addUnplumbOptions(context, playerNum, character, floor)
     end
 end
 

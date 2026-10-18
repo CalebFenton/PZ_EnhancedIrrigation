@@ -1,6 +1,7 @@
 -- The jobs that plumb one tank to another and take the pipe out again, done on the authority by
--- server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the other tank's square
--- (Links.encode).
+-- server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square of the link's
+-- other end (Links.encode). Plumb works at a tank; Unplumb at a tank on one end, or at the floor
+-- of an end whose tank is gone, as the buried pipe stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
@@ -40,14 +41,14 @@ function LinkJobs.pipeFor(character, tank, with)
     return Pipes.kindFor(character, lengths), lengths
 end
 
--- The squares of `tank` and of the other tank `with` names, or nil when the tank is gone or `with`
--- names no other square.
-local function endsOf(tank, with)
+-- The square `object` stands on and the square `with` names, or nil when `with` names no other
+-- square.
+local function endsOf(object, with)
     local other = Links.decode(with)
-    if not (other and Tanks.isTank(tank)) then
+    if not other then
         return nil
     end
-    local here = EnhancedIrrigation.squareOf(tank)
+    local here = EnhancedIrrigation.squareOf(object)
     if EnhancedIrrigation.sameSquare(here, other) then
         return nil
     end
@@ -60,7 +61,7 @@ LinkJobs.JOBS = {
         position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
         blocker = function(character, tank, with)
             local here, other = endsOf(tank, with)
-            if not (here and Tanks.tankAt(other.x, other.y, other.z)) then
+            if not (here and Tanks.isTank(tank) and Tanks.tankAt(other.x, other.y, other.z)) then
                 return "Tooltip_EnhancedIrrigation_TankGone"
             end
             if Links.distance(here, other) > Links.MAX_TILES then
@@ -81,12 +82,9 @@ LinkJobs.JOBS = {
     },
     [LinkJobs.UNPLUMB] = {
         minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
-        blocker = function(character, tank, with)
-            local here, other = endsOf(tank, with)
-            if not here then
-                return "Tooltip_EnhancedIrrigation_TankGone"
-            end
-            return not Links.find(here, other) and "Tooltip_EnhancedIrrigation_NotPlumbed" or nil
+        blocker = function(character, object, with)
+            local here, other = endsOf(object, with)
+            return not (here and Links.find(here, other)) and "Tooltip_EnhancedIrrigation_NotPlumbed" or nil
         end,
         materials = { Pipes.WRENCH },
     },
