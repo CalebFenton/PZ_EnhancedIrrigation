@@ -5,9 +5,9 @@
 -- links in its system (server/EnhancedIrrigation/Links/LinkSystem.lua), which sends every client
 -- the list (client/EnhancedIrrigation/Links/LinkView.lua).
 --
--- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, condition }: its ends, the pipe in
--- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), half of which, rounded up,
--- Unplumb gives back, and the lowest condition of that pipe as it went in, nil for older links.
+-- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, conditions }: its ends, the pipe in
+-- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), all of which Unplumb gives
+-- back, and the condition of each item of that pipe as it went in (Materials.conditions).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"

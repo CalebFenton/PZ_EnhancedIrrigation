@@ -136,12 +136,13 @@ handler("lines.set", function(player, args)
 end)
 
 -- Runs each tile's record as though `args.hours` had passed since its last pass, as the ten-minute
--- pass does, loaded or not.
+-- pass does, loaded or not; the hours pass for its soil's wet spell too.
 handler("lines.age", function(player, args)
     for _, at in ipairs(args.tiles) do
         local record, missing = recordOrMissing(at)
         if not record then return nil, missing end
         record.lastHour = EnhancedIrrigation.now() - args.hours
+        record.wetUntil = (record.wetUntil or 0) - args.hours
         record:update()
     end
     return readTiles(args.tiles)

@@ -82,20 +82,19 @@ function Materials.needs(character, list)
     return needs
 end
 
---- The lowest condition of the items `list` would take of `character`, or nil when it takes none:
---- what laid pipe keeps, so taking it out gives it back as worn as it went in.
-function Materials.lowestCondition(character, list)
-    local inventory, lowest = character:getInventory(), nil
+--- The conditions of the items `list` would take of `character`, one each in the order taken:
+--- what laid pipe keeps, so taking it out gives each item back as worn as it went in.
+function Materials.conditions(character, list)
+    local inventory, conditions = character:getInventory(), {}
     for _, material in ipairs(list) do
         if takes(material) then
             local items = itemsTaken(inventory, material)
             for i = 0, items:size() - 1 do
-                local condition = items:get(i):getCondition()
-                lowest = lowest and math.min(lowest, condition) or condition
+                table.insert(conditions, items:get(i):getCondition())
             end
         end
     end
-    return lowest
+    return conditions
 end
 
 local function useTagged(character, tags, count)

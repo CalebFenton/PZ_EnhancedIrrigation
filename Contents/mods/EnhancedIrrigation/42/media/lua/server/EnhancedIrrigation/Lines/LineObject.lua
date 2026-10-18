@@ -20,14 +20,14 @@ local LineObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrriga
 EnhancedIrrigation.LineObject = LineObject
 
 -- The world's save format: renaming one loses it from saves. material: the pipe's kind; holed;
--- cracked, patches; condition: the condition of the pipe it was laid with (nil: as new); full:
--- water stands in it; soak: plant points of water in the soil under it; tap, tapMaterial and
--- tapCondition (the pipe it took), tapX, tapY, tapZ (its tank's square); wetUntil: the hour its
--- soil stops showing wet; exterior: whether it lies outdoors, as last seen loaded; lastHour: when
--- time last reached it.
+-- cracked, patches; conditions: the condition of each item of pipe it was laid with, in order (none
+-- listed: as new); full: water stands in it; soak: plant points of water in the soil under it; tap,
+-- tapMaterial and tapConditions (the pipe it took), tapX, tapY, tapZ (its tank's square); wetUntil:
+-- the hour its soil stops showing wet; exterior: whether it lies outdoors, as last seen loaded;
+-- lastHour: when time last reached it.
 LineObject.SAVED_FIELDS = {
-    "material", "holed", "cracked", "patches", "condition", "full", "soak",
-    "tap", "tapMaterial", "tapCondition", "tapX", "tapY", "tapZ", "wetUntil", "exterior", "lastHour",
+    "material", "holed", "cracked", "patches", "conditions", "full", "soak",
+    "tap", "tapMaterial", "tapConditions", "tapX", "tapY", "tapZ", "wetUntil", "exterior", "lastHour",
 }
 
 function LineObject:initNew()
@@ -116,15 +116,15 @@ function LineObject.temperatureAt(record)
     return getClimateManager():getTemperature()
 end
 
--- Water standing in the pipe freezes and may split it; each patch is a weak point more.
+-- Water standing in the pipe may split it in a hard freeze.
 function LineObject:freeze(hours)
     if not self.full or self.cracked then
         return
     end
-    if LineObject.temperatureAt(self) > Lines.FROST_CELSIUS then
+    if LineObject.temperatureAt(self) > Lines.HARD_FREEZE_CELSIUS then
         return
     end
-    local perHour = math.min(1, Pipes.KINDS[self.material].frostPerHour * (1 + self.patches))
+    local perHour = Pipes.KINDS[self.material].frostPerHour
     local chance = 1 - (1 - perHour) ^ hours
     if ZombRandFloat(0, 1) < chance then
         self.cracked = true

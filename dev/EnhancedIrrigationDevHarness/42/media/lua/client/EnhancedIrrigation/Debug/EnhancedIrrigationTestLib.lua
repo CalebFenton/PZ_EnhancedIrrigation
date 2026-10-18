@@ -296,6 +296,57 @@ function T.row(self, count, opts)
     return found
 end
 
+-- Chunks --------------------------------------------------------------------------------------------
+
+-- Tiles the character goes away for a reload, as Renewable Energy's chunk reload tests go: well
+-- past this client's chunk map, so it saves the chunk and lets it go.
+local AWAY = 600
+-- How long a chunk may take to unload behind the character, or load again in front of it.
+T.LOAD_MS = 60000
+-- A test with a reload outlasts the runner's 30 s.
+T.RELOAD_SECONDS = 150
+
+--- Queues a trip AWAY tiles east and back, so this client saves the chunk of `at` ({ x, y, z }),
+--- lets it go and loads it again; `whileAway()`, if given, queues what happens while it is gone.
+--- In single player the server is the same game and its chunk goes too; a multiplayer server keeps
+--- chunks loaded long after the character leaves, so there the trip reloads only this client's
+--- copy, sent again by the server. Sets self.chunkLoads, the LoadChunk events for the chunk: none
+--- would mean it came back from a cache with its state.
+function T.reload(self, at, whileAway)
+    local p = T.player()
+    -- A teleport from inside a timed action doesn't stick, so OnTick makes it.
+    local target, home
+    T.onTick(self, function()
+        if target then
+            p:teleportTo(target[1], target[2], target[3])
+            target = nil
+        end
+    end)
+    local loads = 0
+    local function onLoadChunk(chunk)
+        local origin = chunk:getGridSquare(0, 0, 0)
+        local dx, dy = origin and at.x - origin:getX(), origin and at.y - origin:getY()
+        if origin and dx >= 0 and dx < 8 and dy >= 0 and dy < 8 then
+            loads = loads + 1
+        end
+    end
+    Events.LoadChunk.Add(onLoadChunk)
+    T.defer(self, function() Events.LoadChunk.Remove(onLoadChunk) end)
+    T.step(function()
+        home = { p:getX(), p:getY(), p:getZ() }
+        target = { at.x + AWAY + 0.5, at.y + 0.5, 0 }
+    end)
+    T.waitFor(self, function() return getSquare(at.x, at.y, at.z) == nil end, "this client to unload the chunk",
+        T.LOAD_MS)
+    if whileAway then
+        whileAway()
+    end
+    T.step(function() target = home end)
+    T.waitFor(self, function() return getSquare(at.x, at.y, at.z) ~= nil end, "this client to load the chunk again",
+        T.LOAD_MS)
+    T.step(function() self.chunkLoads = loads end)
+end
+
 -- Line tiles ----------------------------------------------------------------------------------------
 
 --- This client's copy of the line tile at `handle`, or nil.

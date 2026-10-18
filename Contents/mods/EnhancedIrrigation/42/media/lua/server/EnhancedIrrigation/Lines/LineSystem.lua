@@ -109,7 +109,7 @@ end
 -- LineSystem.perform brought up to now. Returns whether it was done.
 local DO = {
     [LineJobs.LAY] = function(character, floor, kind, materials)
-        LineSystem.place(floor:getSquare(), kind, { condition = Materials.lowestCondition(character, materials) })
+        LineSystem.place(floor:getSquare(), kind, { conditions = Materials.conditions(character, materials) })
         return true
     end,
     [LineJobs.DRILL] = function(character, object)
@@ -129,7 +129,7 @@ local DO = {
         end
         record.tap = true
         record.tapMaterial = Pipes.kindFor(character, 1)
-        record.tapCondition = Materials.lowestCondition(character, materials)
+        record.tapConditions = Materials.conditions(character, materials)
         record.tapX, record.tapY, record.tapZ = tank:getX(), tank:getY(), tank:getZ()
         return true
     end,
@@ -155,15 +155,15 @@ local DO = {
         record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
         return true
     end,
-    -- A cracked or patched length is scrap: a patch only mends the pipe in place, and a new length
-    -- replaces it. The tap's length comes back with its tile.
+    -- Each item comes back as it went in. A cracked or patched length is scrap: a patch only mends
+    -- the pipe in place, and a new length replaces it. The tap's length comes back with its tile.
     [LineJobs.TAKE_UP] = function(character, object)
         local record = Lines.recordOf(object)
         if not record.cracked and record.patches == 0 then
-            Pipes.giveBack(character, record.material, 1, record.condition)
+            Pipes.giveBack(character, record.material, 1, record.conditions)
         end
         if record.tap and record.tapMaterial then
-            Pipes.giveBack(character, record.tapMaterial, 1, record.tapCondition)
+            Pipes.giveBack(character, record.tapMaterial, 1, record.tapConditions)
         end
         LineSystem.remove(object)
         return true

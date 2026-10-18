@@ -66,10 +66,10 @@ function LinkSystem:sendLinks()
     self:sendCommand("links", { links = self.links, version = self.version })
 end
 
-function LinkSystem:addLink(a, b, kind, lengths, condition)
+function LinkSystem:addLink(a, b, kind, lengths, conditions)
     table.insert(self.links, {
         a = { x = a.x, y = a.y, z = a.z }, b = { x = b.x, y = b.y, z = b.z }, kind = kind, lengths = lengths,
-        condition = condition,
+        conditions = conditions,
     })
     self:sendLinks()
 end
@@ -91,14 +91,14 @@ local DO = {
     [LinkJobs.PLUMB] = function(character, tank, with, materials)
         local kind, lengths = LinkJobs.pipeFor(character, tank, with)
         LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank), Links.decode(with), kind, lengths,
-            Materials.lowestCondition(character, materials))
+            Materials.conditions(character, materials))
         return true
     end,
-    -- Half the pipe comes back, rounded up; the rest stays in the walls.
+    -- Every length comes back as it went in; the joints and the time are what plumbing cost.
     [LinkJobs.UNPLUMB] = function(character, tank, with)
         local link = Links.find(EnhancedIrrigation.squareOf(tank), Links.decode(with))
         LinkSystem.instance:removeLink(link)
-        Pipes.giveBack(character, link.kind, math.ceil(link.lengths / 2), link.condition)
+        Pipes.giveBack(character, link.kind, link.lengths, link.conditions)
         return true
     end,
 }

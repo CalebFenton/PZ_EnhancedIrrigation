@@ -306,35 +306,60 @@ T.test("irrigation_tanks_plumb_to_tank_up_to_max_tiles", {
     end,
 })
 
--- Unplumb gives back half the link's pipe, rounded up, and this client drops the link.
-T.test("irrigation_tanks_unplumb_gives_back_half_the_pipe", {
+-- The conditions of the iron pipe this client's character carries, lowest first.
+local function ironConditions()
+    local items = T.player():getInventory():getAllTypeRecurse(Pipes.KINDS.iron.item)
+    local conditions = {}
+    for i = 0, items:size() - 1 do
+        table.insert(conditions, items:get(i):getCondition())
+    end
+    table.sort(conditions)
+    return conditions
+end
+
+-- Unplumb gives back every length Plumb to Tank took, each as worn as it went in, and this client
+-- drops the link. Catches pipe kept in the walls, or every length back at one condition.
+T.test("irrigation_tanks_unplumb_gives_back_the_pipe", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
+        -- Far enough apart for more than one length.
+        local spots = T.layout(self, { { 0, 0 }, { 2 * Links.TILES_PER_LENGTH + 1, 0 } }, { bare = true })
         if not spots then return end
         T.batch(function()
             self.a = T.placeTank(self, spots[1], "lidded")
             self.b = T.placeTank(self, spots[2], "lidded")
         end)
-        -- Odd, so the half has a fraction to round.
-        self.lengths = 3
-        T.batch(function()
-            T.server(self, "tanks.link", T.at(self.a, { to = T.at(self.b), kind = "plastic", lengths = self.lengths }))
-            T.give(self, "tools", { { type = "Base.PipeWrench" } })
-        end)
-        T.waitFor(self, function() return #T.clientLinks(self.a) > 0 end, "this client's copy of the link")
-        useMenu(self, self.a, "unplumb", job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
+        local iron = Pipes.KINDS.iron
+        local count = Links.lengthsFor(Links.distance(T.at(self.a), T.at(self.b))) * iron.perLength
+        local most = instanceItem(iron.item):getConditionMax()
+        -- Each length worn differently, so one condition for all would show. Iron needs no joint.
+        self.laid = {}
+        local items = { { type = "Base.PipeWrench" } }
+        for i = 1, count do
+            self.laid[i] = math.floor(most * i / (count + 1))
+            table.insert(items, { type = iron.item, condition = self.laid[i] })
+        end
+        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
+        T.give(self, "tools", items)
+        local with = Links.encode(T.at(self.b))
+        useMenu(self, self.a, "plumb", job("link", LinkJobs.PLUMB, with), true)
+        T.waitFor(self, function() return #T.clientLinks(self.a) > 0 and #ironConditions() == 0 end,
+            "this client's copy of the link, the pipe gone into it")
+        T.useOption(self, function() return T.tankCopy(self.a) end, "unplumb", job("link", LinkJobs.UNPLUMB, with), true)
         T.readUntil(self, "tanks.links", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
-        T.count(self, "left", { "Base.Pipe" })
+        T.waitFor(self, function() return #ironConditions() == count end, "this client's copy of the pipe given back")
         T.waitFor(self, function() return #T.clientLinks(self.a) == 0 end, "this client to drop the link")
     end,
     validate = function(self)
+        T.expectOffered(self, "plumb")
         T.expectOffered(self, "unplumb")
         local links = self.reads.links.links
         expect(#links == 0, "the server still has " .. #links .. " links after Unplumb")
-        local plastic = Pipes.KINDS.plastic
-        local want = math.ceil(self.lengths / 2) * (plastic.salvage or plastic.perLength)
-        expect(counted(self, "Base.Pipe") == want, "Unplumb gave back " .. counted(self, "Base.Pipe") .. " plastic pipe, not " .. want)
+        local back = ironConditions()
+        for i, condition in ipairs(self.laid) do
+            expect(back[i] == condition, "length " .. i .. " came back at condition " .. tostring(back[i])
+                .. ", laid at " .. condition)
+        end
     end,
 })
 

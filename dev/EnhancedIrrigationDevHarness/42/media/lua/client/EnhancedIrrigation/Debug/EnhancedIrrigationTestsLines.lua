@@ -750,32 +750,91 @@ T.test("irrigation_lines_soak_dries", {
     end,
 })
 
--- A frost splits a full pipe and leaves an empty one whole; no frost splits nothing.
+-- A hard freeze may split a full pipe and leaves an empty one whole; a frost short of a hard freeze
+-- splits nothing. Each roll is pinned to a sure split, so only the cold and the water decide.
+-- Catches the threshold back at freezing, or an empty pipe that splits.
 T.test("irrigation_lines_frost_cracks_full_lines", {
     run = function(self)
         local rows = T.row(self, 3)
         if not rows then return end
-        local full, empty, warm = rows[1][1], rows[1][2], rows[1][3]
+        local full, empty, mild = rows[1][1], rows[1][2], rows[1][3]
         full.fields = { full = true }
         empty.fields = { full = false }
-        -- Filled only once the air is warm, so no frost can reach it before.
-        warm.fields = { full = false }
-        T.placeLine(self, { full, empty, warm }, "clay")
+        -- Filled only once the air is above a hard freeze, so no hard freeze can reach it before.
+        mild.fields = { full = false }
+        T.placeLine(self, { full, empty, mild }, "clay")
         T.batch(function()
-            T.server(self, "lines.temperature", { celsius = -10 })
-            -- A week of frost: a full clay pipe is all but sure to split.
-            T.read(self, "lines.age", { tiles = T.tiles({ full, empty }), hours = 24 * 7 }, "frozen")
-            T.server(self, "lines.temperature", { celsius = 10 })
-            T.server(self, "lines.set", { tiles = { T.at(warm, { fields = { full = true } }) } })
-            T.read(self, "lines.age", { tiles = T.tiles({ warm }), hours = 24 * 7 }, "thawed")
+            T.server(self, "lines.temperature", { celsius = Lines.HARD_FREEZE_CELSIUS - 1 })
+            T.server(self, "lines.pinRoll", {})
+            T.read(self, "lines.age", { tiles = T.tiles({ full, empty }), hours = 1 }, "frozen")
+            -- Below freezing, short of a hard freeze.
+            T.server(self, "lines.temperature", { celsius = Lines.HARD_FREEZE_CELSIUS / 2 })
+            T.server(self, "lines.set", { tiles = { T.at(mild, { fields = { full = true } }) } })
+            T.server(self, "lines.pinRoll", {})
+            T.read(self, "lines.age", { tiles = T.tiles({ mild }), hours = 1 }, "mild")
         end)
         T.waitForLines(self, { full }, "this client's summary of the split pipe", function(summary) return summary.cracked end)
     end,
     validate = function(self)
-        local frozen, thawed = self.reads.frozen.tiles, self.reads.thawed.tiles
-        expect(frozen[1].record.cracked, "a full clay pipe came through a week of frost whole")
-        expect(not frozen[2].record.cracked, "an empty pipe split in the frost")
-        expect(not thawed[1].record.cracked, "a full pipe split above freezing")
+        local frozen, mild = self.reads.frozen.tiles, self.reads.mild.tiles
+        expect(frozen[1].record.cracked, "a full pipe came through a hard freeze whole")
+        expect(not frozen[2].record.cracked, "an empty pipe split in a hard freeze")
+        expect(not mild[1].record.cracked, "a full pipe split in a frost short of a hard freeze")
+    end,
+})
+
+-- A line runs on while its chunk is unloaded: a soaked tile dries for the hours away, as outdoors,
+-- and its full pipe splits in a hard freeze, which both sides show once the chunk loads again. The
+-- tap tile is holed, so an hour's flow fills the line and soaks the soil under it; the hours away
+-- are those that leave it just short of damp, so it loads dry. Catches a record that stops while
+-- unloaded, or a tile that loads showing what it was before.
+T.test("irrigation_lines_dry_and_freeze_while_unloaded", {
+    spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
+    timeoutSeconds = T.RELOAD_SECONDS,
+    run = function(self)
+        local rows = T.row(self, 2)
+        if not rows then return end
+        local tile, beside = rows[1][1], rows[1][2]
+        self.tile = tile
+        -- Beside the tile, not over it: a floor above would roof it.
+        local tank = T.placeTank(self, beside, "raised", TANK_LITRES)
+        tile.fields = copyField(tapOn(tank), { holed = true })
+        T.placeLine(self, { tile }, "iron")
+        flow(self, tile, 1, { tile }, "watered")
+        T.waitFor(self, function() return clientSprite(tile) == Sprites.pipe("iron", true, 0) end,
+            "this client's copy of the watered tile, wet")
+        self.dryPerHour = Lines.SOAK_DRY_OUT / 24
+        self.hours = (Lines.HOLE_RATE * Lines.POINTS_PER_LITRE - Lines.DAMP / 2) / self.dryPerHour
+        T.reload(self, tile, function()
+            T.batch(function()
+                -- Caught up to now first, so the soak dries for exactly the hours away.
+                T.read(self, "lines.age", { tiles = T.tiles({ tile }), hours = 0 }, "left")
+                T.server(self, "lines.temperature", { celsius = Lines.HARD_FREEZE_CELSIUS - 1 })
+                T.server(self, "lines.pinRoll", {})
+                T.read(self, "lines.age", { tiles = T.tiles({ tile }), hours = self.hours }, "away")
+            end)
+        end)
+        T.waitForLines(self, { tile }, "this client's copy of the tile, loaded again")
+        T.readLines(self, { tile }, "back")
+    end,
+    validate = function(self)
+        local watered, left = self.reads.watered.tiles[1].record, self.reads.left.tiles[1]
+        local away, back = self.reads.away.tiles[1], self.reads.back.tiles[1]
+        expect((self.chunkLoads or 0) > 0, "the tile's chunk came back without LoadChunk, from a cache")
+        expect(watered.full and left.record.soak >= Lines.DAMP, "the hour's flow left the tile full "
+            .. tostring(watered.full) .. ", soak " .. tostring(left.record.soak))
+        expect(left.sprite == nil, "the server kept the tile's chunk loaded")
+        expectNear("the soak after the hours away", away.record.soak,
+            left.record.soak - self.hours * self.dryPerHour, POINTS)
+        expect(away.record.cracked, "the full pipe came through the hard freeze whole")
+        expect(back.record.cracked and not back.record.wet, "the server's record, loaded again: cracked "
+            .. tostring(back.record.cracked) .. ", wet " .. tostring(back.record.wet))
+        expect(back.sprite == Sprites.pipe("iron", false, 0), "the server shows the dried tile as " .. tostring(back.sprite))
+        local summary = T.lineSummary(self.tile)
+        expect(summary.cracked, "this client's summary of the tile isn't cracked")
+        expectNear("this client's soak", summary.soak, back.record.soak, 1)
+        expect(clientSprite(self.tile) == Sprites.pipe("iron", false, 0),
+            "this client shows the dried tile as " .. tostring(clientSprite(self.tile)))
     end,
 })
 
@@ -852,9 +911,9 @@ T.test("irrigation_lines_drain_from_the_middle", {
     end,
 })
 
--- Taking up gives the pipe back unless it is scrap: a patched tap tile gives the tap's length
--- alone, a cracked tile nothing, a whole one its length, a clay tile what a length salvages. What's
--- left reshapes. Catches scrap given back, the tap's pipe lost, or clay's broken segment returned.
+-- Taking up gives back what the tile took unless it is scrap: a patched tap tile gives the tap's
+-- length alone, a cracked tile nothing, a whole one its length, a clay tile both its segments.
+-- What's left reshapes. Catches scrap given back, the tap's pipe lost, or a clay segment kept.
 T.test("irrigation_lines_take_up_returns_items", {
     instant = true,
     run = function(self)
@@ -887,8 +946,8 @@ T.test("irrigation_lines_take_up_returns_items", {
         local ironWanted = 2 * iron.perLength
         expect(self.counts.back[iron.item] == ironWanted, "the iron tiles gave back "
             .. tostring(self.counts.back[iron.item]) .. " iron pipe, not " .. ironWanted)
-        expect(self.counts.back[clay.item] == clay.salvage, "the clay tile gave back "
-            .. tostring(self.counts.back[clay.item]) .. " segments, not " .. clay.salvage)
+        expect(self.counts.back[clay.item] == clay.perLength, "the clay tile gave back "
+            .. tostring(self.counts.back[clay.item]) .. " segments, not " .. clay.perLength)
         for i, tile in ipairs(self.reads.gone.tiles) do
             expect(tile.record == nil and tile.sprite == nil, "tile " .. i .. " is still there")
         end

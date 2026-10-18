@@ -1,6 +1,7 @@
 require "PZHarness/TestLib"
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Debug/EnhancedIrrigationProbe"
+require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 
 -- Phase 1 of docs/design.md, the throwaway proof that a plumbed fixture can carry its tank's water
 -- in a FluidContainer of its own (EnhancedIrrigationProbe.lua). Each test places a sink the way
@@ -9,18 +10,13 @@ require "EnhancedIrrigation/Debug/EnhancedIrrigationProbe"
 -- The real fixture code and its tests replace these once they pass in single player and --mp.
 
 local T = PZHarness.Test
-local player, expect, expectNear = T.player, T.expect, T.expectNear
+local expect, expectNear = T.expect, T.expectNear
 local Probe = EnhancedIrrigationProbe
+local Lib = EnhancedIrrigationTest
 
 -- How long this client may take to show what the server changed.
 local SYNC_MS = 5000
--- How long a chunk may take to unload behind the character, or load again in front of it.
-local LOAD_MS = 60000
--- Tiles the character goes away for a reload, as Renewable Energy's chunk reload tests go: well
--- past this client's chunk map, so it saves the sink's chunk and lets it go.
-local AWAY = 600
--- A test with a reload outlasts the runner's 30 s.
-local RELOAD_SECONDS = 150
+local LOAD_MS = Lib.LOAD_MS
 local LITRES = 0.05
 
 -- Queues a wait until `condition()` holds or `ms` pass; validate checks what it waited for.
@@ -101,49 +97,17 @@ local function offered(option)
     return option ~= nil and not option.notAvailable
 end
 
--- Queues a trip `AWAY` tiles east and back, so this client saves the chunk at `args`, lets it go
--- and loads it again. Sets self.clientUnloaded, self.serverUnloaded (in single player the same
--- game; a multiplayer server keeps chunks loaded long after the character leaves, so there the
--- trip reloads only this client's copy, sent again by the server) and self.chunkLoads, the
--- LoadChunk events for the sink's chunk: none would mean it came back from a cache with its state.
+-- Queues a reload of the sink's chunk (EnhancedIrrigationTest.reload) and a wait for this client's
+-- copy of the sink again. Sets self.serverUnloaded and self.chunkLoads.
 local function reload(self, args)
-    local p = player()
-    -- A teleport from inside a timed action doesn't stick, so OnTick makes it.
-    local target, home
-    T.onTick(self, function()
-        if target then
-            p:teleportTo(target[1], target[2], target[3])
-            target = nil
-        end
-    end)
-    local loads = 0
-    local function onLoadChunk(chunk)
-        local origin = chunk:getGridSquare(0, 0, 0)
-        local dx, dy = origin and args.x - origin:getX(), origin and args.y - origin:getY()
-        if origin and dx >= 0 and dx < 8 and dy >= 0 and dy < 8 then
-            loads = loads + 1
-        end
-    end
-    Events.LoadChunk.Add(onLoadChunk)
-    T.defer(self, function() Events.LoadChunk.Remove(onLoadChunk) end)
-    T.step(function()
-        home = { p:getX(), p:getY(), p:getZ() }
-        target = { args.x + AWAY + 0.5, args.y + 0.5, 0 }
-    end)
-    waitFor(function() return getCell():getGridSquare(args.x, args.y, args.z) == nil end, LOAD_MS,
-        "this client to unload the sink's square")
-    T.server(self, "probe.state", args)
-    T.step(function()
-        self.clientUnloaded = getCell():getGridSquare(args.x, args.y, args.z) == nil
-        self.serverUnloaded = not self.server["probe.state"].loaded
-        target = home
+    Lib.reload(self, args, function()
+        T.server(self, "probe.state", args)
+        T.step(function() self.serverUnloaded = not self.server["probe.state"].loaded end)
     end)
     waitFor(function() return copyOf(args) ~= nil end, LOAD_MS, "this client to load the sink again")
-    T.step(function() self.chunkLoads = loads end)
 end
 
 local function expectReloaded(self)
-    expect(self.clientUnloaded, "the sink's chunk didn't unload on this client")
     expect((self.chunkLoads or 0) > 0, "the sink's chunk came back without LoadChunk, from a cache")
     if not isClient() then
         expect(self.serverUnloaded, "the sink's chunk didn't unload")
@@ -267,7 +231,7 @@ T.test("irrigation_probe_empty_buffer_gives_no_town_water", {
 
 T.test("irrigation_probe_buffer_survives_unload_and_reload", {
     instant = true,
-    timeoutSeconds = RELOAD_SECONDS,
+    timeoutSeconds = Lib.RELOAD_SECONDS,
     run = function(self)
         local square = T.need(self, (T.squares(self, 1, { indoors = true }) or {})[1], "a free indoor square for a sink")
         if not square then return end
@@ -353,7 +317,7 @@ end
 T.test("irrigation_probe_plumbed_sink_converts_on_load", {
     spOnly = "a multiplayer server keeps the chunk loaded after the character leaves, so its load hook never runs",
     instant = true,
-    timeoutSeconds = RELOAD_SECONDS,
+    timeoutSeconds = Lib.RELOAD_SECONDS,
     run = function(self)
         local square = T.need(self, (T.squares(self, 1, { indoors = true }) or {})[1], "a free indoor square for a sink")
         if not square then return end

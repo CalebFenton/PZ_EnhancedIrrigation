@@ -68,7 +68,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
    - Reach: up to 10 tiles across, between vanilla plumbing's 1 and a generator's 20. Height follows the two rules above.
    - Cost: one pipe of any kind for every 3 tiles of distance, plus a joint per pipe: Glue, Epoxy or Duct Tape for plastic; the wrench alone for iron and lead.
    - Time grows with distance. The pipe runs out of sight, through walls and under floors, as vanilla's plumbing does. Buried like that, it doesn't freeze or wear.
-   - "Unplumb" gives back half the pipe, rounded up.
+   - "Unplumb" gives back every length of pipe as it went in; the joints are spent.
    - Each fixture is plumbed on its own and picks its own tank. So the toilet and the washing machine can run off the raw tank while the kitchen sink runs off the clean one. There's no "house" to wire.
 2. **Lay line** (tile by tile, for gardens). Pipe laid on the ground, one length a tile, each click of a cursor that stays up between clicks, as vanilla's build cursors do (vanilla has no drag-to-lay). The first tile must sit under or beside the tank's tile, the way vanilla's plumbing reaches 3×3 below. Lines are visible because their holes have to be where the plants are.
 
@@ -91,7 +91,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
   - Each outlet tile keeps a `soak` value. Water delivered to a plant already at 100 raises it, and it dries a little each day.
   - Above a threshold the plant's `mildewLvl` rises each hour; sprinklers soak harder. Rain never adds soak.
   - Seen as darker soil. Vanilla's plant info shows "damp / soaked / waterlogged" from Agriculture 2.
-- **Frost.** Water left standing in a pipe outdoors freezes below 0 °C and may split it (clay most, then iron, lead, plastic). "Drain Line" from any tile empties it. "Patch Crack" mends a split with glue, epoxy or duct tape; a patched pipe splits more easily, and a cracked or patched length is scrap when taken up.
+- **Frost.** A full outdoor pipe can split in a hard freeze, rarely or now and then by material: a line left full all winter loses a length or two of iron, a few of clay, and seldom one of lead or plastic. Real burst pipes come from trapped water under pressure; a low-pressure line with open holes mostly gets away with it. "Drain Line" from any tile empties it. "Patch Crack" mends a split with glue, epoxy or duct tape, and a cracked length is scrap when taken up, patched or not.
 - **Ollas.** An unglazed Clay Jar buried in a bed. Fill it by hand; it seeps into the eight tiles around it for days. It needs no line and no height.
 
 ### Pumps
@@ -232,7 +232,7 @@ The Barrel Filter is the pamphlet's prize: built at Woodwork 2 by anyone who fin
 
 | Part | Wears by | Patch | Remake |
 | --- | --- | --- | --- |
-| Pipe | frost when full (clay > iron > lead > plastic); a punched hole may crack plastic or clay | glue, epoxy or duct tape on the crack; a patched pipe splits more easily | new length |
+| Pipe | a hard freeze when full, rare to uncommon (clay > iron > lead > plastic); a punched hole may crack plastic or clay | glue, epoxy or duct tape on the crack; still scrap when taken up | new length |
 | Hand pump | the seal per litre; the body slowly (wood faster) | Replace Seal | rebuild |
 | Electric pump | per hour; heavily when dry | Electronics Scrap and a Tire Piece, lowering its ceiling | a new pump part |
 | Sand filter | clogs per litre; the living layer dies after two dry days or a freeze | Scrape Filter, then a day of ripening | fresh sand and charcoal, then a full ripening |
