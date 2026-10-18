@@ -1,0 +1,5 @@
+name=Enhanced Irrigation Dev Harness
+id=cf_enhanced_irrigation_devharness
+require=cf_enhanced_irrigation,cf_test_harness
+description=Development only. The Enhanced Irrigation debug scenario and its tests, for the shared test harness. Not published.
+versionMin=42.21

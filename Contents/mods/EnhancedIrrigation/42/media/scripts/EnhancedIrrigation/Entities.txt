@@ -1,0 +1,233 @@
+/*
+    The Tank Stand the build menu builds, and the raised rain barrels a stand becomes when a barrel
+    is set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with the mod's prefix, as
+    craftRecipes are, since magazines and research look recipes up by bare name. A DisplayName is
+    looked up, without its spaces, in Recipes.json.
+
+    The stand is taught by Cisterns for Kentucky or learned with Woodwork; vanilla applies an
+    entity recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
+*/
+module Base
+{
+    xuiSkin default
+    {
+        entity ES_EnhancedIrrigation_TankStand
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_TankStand,
+            Icon = EnhancedIrrigation_Build_TankStand,
+        }
+        /* Vanilla's barrel icons: the raised barrels are never built from a menu. */
+        entity ES_EnhancedIrrigation_RaisedBarrel
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_RaisedBarrel,
+            Icon = Build_RainCollectorBarrel2,
+        }
+        entity ES_EnhancedIrrigation_RaisedBarrelTarp
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_RaisedBarrelTarp,
+            Icon = Build_RainCollectorBarrel,
+        }
+    }
+
+    /* Built like vanilla's rain collectors, next to which it sits in the build menu. */
+    entity EnhancedIrrigation_TankStand
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_TankStand,
+            uiEnabled = false,
+        }
+        component SpriteConfig
+        {
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_129,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildWoodenStructureMedium,
+            time = 150,
+            category = Outdoors,
+            Tags = Carpentry,
+            NeedToBeLearn = true,
+            AutoLearnAny = Woodwork:5,
+            SkillRequired = Woodwork:3,
+            xpAward = Woodwork:40,
+            Tooltip = Tooltip_EnhancedIrrigation_TankStand,
+            inputs
+            {
+                item 1 tags[base:hammer] mode:keep flags[Prop1;MayDegradeVeryLight],
+                item 1 tags[base:saw;base:crudesaw] mode:keep flags[MayDegradeLight],
+                item 4 [Base.Log],
+                item 6 [Base.Plank],
+                item 8 [Base.Nails],
+            }
+        }
+    }
+
+    /*
+        The four raised barrels: vanilla's RainCollectorRound, its Closed, _Tarp and _TarpClosed
+        on the stand's deck, with the same containers and lids. No recipe: only setting a barrel
+        on a stand makes one. Vanilla's lid action (ISOpenCloseLid) makes the other entity of a
+        pair by adding "Closed" to the script name or taking it off, so the names must stay
+        pairs. Unlike vanilla's, the closed barrels keep a UiConfig, so every raised barrel is
+        named the same.
+    */
+    entity EnhancedIrrigation_RaisedBarrel
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_RaisedBarrel,
+            uiEnabled = false,
+        }
+        component ContextMenuConfig
+        {
+            contextEntry
+            {
+                menu = CloseLid,
+                customFunction = ContextMenuCode.OpenCloseLid,
+                extraParam = enhanced_irrigation_01_131,
+                time = 10,
+            }
+        }
+        component FluidContainer
+        {
+            ContainerName = Collector,
+            Capacity = 600.0,
+            RainFactor = 0.25,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+        }
+        component SpriteConfig
+        {
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_130,
+                }
+            }
+        }
+    }
+
+    entity EnhancedIrrigation_RaisedBarrelClosed
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_RaisedBarrel,
+            uiEnabled = false,
+        }
+        component ContextMenuConfig
+        {
+            contextEntry
+            {
+                menu = OpenLid,
+                customFunction = ContextMenuCode.OpenCloseLid,
+                extraParam = enhanced_irrigation_01_130,
+                time = 15,
+            }
+        }
+        component FluidContainer
+        {
+            ContainerName = Collector,
+            Capacity = 600.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+        }
+        component SpriteConfig
+        {
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_131,
+                }
+            }
+        }
+    }
+
+    entity EnhancedIrrigation_RaisedBarrel_Tarp
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_RaisedBarrelTarp,
+            uiEnabled = false,
+        }
+        component ContextMenuConfig
+        {
+            contextEntry
+            {
+                menu = CloseLid,
+                customFunction = ContextMenuCode.OpenCloseLid,
+                extraParam = enhanced_irrigation_01_133,
+                time = 10,
+            }
+        }
+        component FluidContainer
+        {
+            ContainerName = Collector,
+            Capacity = 600.0,
+            RainFactor = 0.25,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+        }
+        component SpriteConfig
+        {
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_132,
+                }
+            }
+        }
+    }
+
+    entity EnhancedIrrigation_RaisedBarrel_TarpClosed
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_RaisedBarrelTarp,
+            uiEnabled = false,
+        }
+        component ContextMenuConfig
+        {
+            contextEntry
+            {
+                menu = OpenLid,
+                customFunction = ContextMenuCode.OpenCloseLid,
+                extraParam = enhanced_irrigation_01_132,
+                time = 15,
+            }
+        }
+        component FluidContainer
+        {
+            ContainerName = Collector,
+            Capacity = 600.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+        }
+        component SpriteConfig
+        {
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_133,
+                }
+            }
+        }
+    }
+}

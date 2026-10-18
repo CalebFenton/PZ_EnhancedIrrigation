@@ -1,0 +1,252 @@
+-- Development only; dev/run-debug-client.sh --art runs it instead of the tests. It checks the art
+-- from art/models in the world: it lays every pipe material dry and wet, a tap, crops over pipes, a
+-- line along a wall, and the Tank Stand bare and with each raised barrel beside vanilla's rain
+-- barrel, on one open lot at noon, and saves each shot to <cachedir>/Screenshots as <name>.png.
+-- Single player only: it lays the lines through the authority's LineSystem.
+
+require "EnhancedIrrigation/Sprites"
+require "EnhancedIrrigation/Utilities"
+local Stage = require "EnhancedIrrigationDevStage"
+local Capture = require "PZHarness/Capture"
+
+local Art = {}
+
+local Sprites = EnhancedIrrigation.Sprites
+local MARK = "EIArt"
+
+local WALL_NORTH = "walls_exterior_house_01_1"
+local WALL_WEST = "walls_exterior_house_01_0"
+local VANILLA_BARREL = "carpentry_02_122"
+
+-- The lot, in squares east and south of its north-west corner. Each material takes a band four
+-- rows deep: a 3x3 block dry (corners, tees and the cross) with a tail east of its middle row (a
+-- straight and an end), then the same wet, column 5 left free for the character. The stands stand
+-- in a row below the bands, beside vanilla's rain barrel, and east of them a line runs round the
+-- inside of a wall corner.
+local AREA = { w = 10, h = 20 }
+-- Ground cover this far round the lot goes too, so none of it stands in front of the shots.
+local MARGIN = 3
+local BLOCK = { dry = 0, wet = 6 }
+local WET_FIELDS = { soak = 20 }
+local TAPS = { { x = 3, y = 1 }, { x = 9, y = 5 } }
+-- Crops on wet line tiles, as grown as each stage says.
+local CROPS = {
+    { x = 6, y = 0, seed = "Tomato", stage = 6 },
+    { x = 7, y = 1, seed = "Carrots", stage = 5 },
+    { x = 8, y = 10, seed = "Broccoli", stage = 4 },
+}
+local STAND_ROW = 18
+local STANDS = { Sprites.STAND, Sprites.RAISED_BARREL, Sprites.RAISED_BARREL_CLOSED, Sprites.RAISED_TARP_BARREL,
+    Sprites.RAISED_TARP_BARREL_CLOSED, VANILLA_BARREL }
+local WALLS = {
+    { x = 7, y = 16, sprite = WALL_NORTH }, { x = 8, y = 16, sprite = WALL_NORTH }, { x = 9, y = 16, sprite = WALL_NORTH },
+    { x = 7, y = 16, sprite = WALL_WEST }, { x = 7, y = 17, sprite = WALL_WEST },
+}
+local WALL_LINE = { material = "iron", tiles = { { x = 7, y = 16 }, { x = 8, y = 16 }, { x = 9, y = 16 }, { x = 7, y = 17 } } }
+
+-- Where the character stands for each shot, and how far it zooms out from the closest zoom. A
+-- material's spot is in the free column below its band, where it hides none of the pipes.
+local SHOTS = {}
+for i, material in ipairs(Sprites.PIPE_MATERIALS) do
+    table.insert(SHOTS, { name = "art_pipes_" .. material, x = 5, y = i * 4, zoomSteps = 0 })
+end
+for _, shot in ipairs({
+    { name = "art_pipes", x = 5, y = 8, zoomSteps = 2 },
+    { name = "art_lot", x = 5, y = 11, zoomSteps = 3 },
+    -- Beside vanilla's barrel, then behind the row, then in front of it, diagonally in front of
+    -- the bare stand, whose legs must draw behind the character.
+    { name = "art_stands", x = 6, y = 18, zoomSteps = 0 },
+    { name = "art_stands_mid", x = 6, y = 18, zoomSteps = 1 },
+    { name = "art_stands_behind", x = 2, y = 17, zoomSteps = 0 },
+    { name = "art_stands_front", x = 1, y = 19, zoomSteps = 0 },
+    { name = "art_wall", x = 8, y = 19, zoomSteps = 0 },
+}) do
+    table.insert(SHOTS, shot)
+end
+
+local function isNaturalFloor(square)
+    local floor = square:getFloor()
+    local name = floor and floor:getSprite() and floor:getSprite():getName()
+    return name ~= nil and luautils.stringStarts(name, "blends_natural")
+end
+
+-- Open: outdoors, nothing on it the stage can't clear, and with `natural`, soil or grass, on which
+-- the wet patches are meant to show.
+local function isOpen(square, natural)
+    if square == nil or not square:isOutside() or not square:isSolidFloor() or square:getRoom() ~= nil
+        or square:getWall(true) ~= nil or square:getWall(false) ~= nil or square:getVehicleContainer() ~= nil
+        or (natural and not isNaturalFloor(square)) then
+        return false
+    end
+    local objects = square:getObjects()
+    for i = 0, objects:size() - 1 do
+        local object = objects:get(i)
+        if not object:isFloor() and object:getType() ~= IsoObjectType.tree and not Stage.isGroundCover(object) then
+            return false
+        end
+    end
+    return true
+end
+
+local function lotFits(cornerX, cornerY, z, natural)
+    local cell = getCell()
+    for x = cornerX, cornerX + AREA.w - 1 do
+        for y = cornerY, cornerY + AREA.h - 1 do
+            if not isOpen(cell:getGridSquare(x, y, z), natural) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+-- The north-west corner of the closest lot that takes the whole stage, on soil or grass if one is
+-- in reach.
+local function findLot(player)
+    for _, natural in ipairs({ true, false }) do
+        local corner = Stage.closestSquare(player, function(square)
+            return lotFits(square:getX(), square:getY(), square:getZ(), natural)
+        end)
+        if corner then
+            return { x = corner:getX(), y = corner:getY(), z = corner:getZ(), natural = natural }
+        end
+    end
+end
+
+local function lotSquare(lot, x, y)
+    return getCell():getGridSquare(lot.x + x, lot.y + y, lot.z)
+end
+
+-- The object of the tile `sprite` as the build menu builds one (ISBuildIsoEntity:setInfo): a
+-- thumpable with the entity that owns the tile.
+local function build(square, sprite)
+    local script = EnhancedIrrigation.tileEntity(sprite)
+    if not script then
+        return "the entity of the tile " .. sprite
+    end
+    local thumpable = IsoThumpable.new(getCell(), square, sprite, false, nil)
+    GameEntityFactory.CreateIsoObjectEntity(thumpable, script, true)
+    square:AddSpecialObject(thumpable)
+end
+
+-- A crop sown on `square` as the line tests sow one (lines.plant), then grown to `stage` at full
+-- health, its tile set as the farming system's growth sets it.
+local function plant(square, seed, stage)
+    local farming = SFarmingSystem.instance
+    farming:plow(square)
+    local crop = farming:getLuaObjectOnSquare(square)
+    if not crop then
+        return "the plowed furrow's record at " .. square:getX() .. "," .. square:getY()
+    end
+    crop:seed(seed)
+    crop.nbOfGrow = stage
+    crop.health = 100
+    crop.waterLvl = 100
+    crop.mildewLvl = 0
+    crop:setSpriteName(farming_vegetableconf.getSpriteName(crop))
+    crop:saveData()
+end
+
+local function layBlock(lot, material, left, top, fields)
+    local LineSystem = EnhancedIrrigation.LineSystem
+    for x = left, left + 2 do
+        for y = top, top + 2 do
+            LineSystem.place(lotSquare(lot, x, y), material, fields)
+        end
+    end
+    LineSystem.place(lotSquare(lot, left + 3, top + 1), material, fields)
+end
+
+-- Builds the whole stage. Returns what was missing, or nil.
+local function buildStage(lot)
+    local LineSystem = EnhancedIrrigation.LineSystem
+    if not LineSystem or not SFarmingSystem then
+        return "the authority's systems (LineSystem, SFarmingSystem); --art runs in single player only"
+    end
+    Stage.removeTrees(lot.x, lot.y, lot.z)
+    for x = -MARGIN, AREA.w + MARGIN - 1 do
+        for y = -MARGIN, AREA.h + MARGIN - 1 do
+            local square = lotSquare(lot, x, y)
+            if square then
+                Stage.clearGroundCover(square)
+            end
+        end
+    end
+    for _, wall in ipairs(WALLS) do
+        PZHarness.Fixtures.newTile(lotSquare(lot, wall.x, wall.y), wall.sprite)
+    end
+    for i, material in ipairs(Sprites.PIPE_MATERIALS) do
+        local top = (i - 1) * 4
+        layBlock(lot, material, BLOCK.dry, top)
+        layBlock(lot, material, BLOCK.wet, top, WET_FIELDS)
+    end
+    for _, at in ipairs(WALL_LINE.tiles) do
+        LineSystem.place(lotSquare(lot, at.x, at.y), WALL_LINE.material)
+    end
+    for _, at in ipairs(TAPS) do
+        local record = EnhancedIrrigation.Lines.recordAt(lot.x + at.x, lot.y + at.y, lot.z)
+        record.tap = true
+        record:afterChange()
+    end
+    for _, crop in ipairs(CROPS) do
+        local missing = plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage)
+        if missing then
+            return missing
+        end
+    end
+    for x, sprite in ipairs(STANDS) do
+        local missing = build(lotSquare(lot, x - 1, STAND_ROW), sprite)
+        if missing then
+            return missing
+        end
+    end
+    for x = -1, AREA.w do
+        for y = -1, AREA.h do
+            local square = lotSquare(lot, x, y)
+            if square then
+                square:RecalcAllWithNeighbours(true)
+            end
+        end
+    end
+end
+
+-- The steps that walk the character to a shot's spot, let it see around, zoom and save.
+local function addShot(steps, player, lot, shot)
+    Stage.addLookAround(steps, player, lotSquare(lot, shot.x, shot.y))
+    table.insert(steps, function()
+        Stage.zoomOut(shot.zoomSteps)
+        return Capture.zoomSettled()
+    end)
+    table.insert(steps, function()
+        return Capture.DRAW_FRAMES
+    end)
+    table.insert(steps, function()
+        Capture.screenshot(MARK, shot.name)
+    end)
+end
+
+function Art.capture(onDone)
+    local run = Capture.new(MARK)
+    local player = getPlayer()
+    local lot = findLot(player)
+    if not lot then
+        run:fail("no open lot within " .. Stage.SEARCH_RADIUS .. " squares")
+        return
+    end
+    print(string.format("%s stage at %d,%d natural=%s", MARK, lot.x, lot.y, tostring(lot.natural)))
+    -- Hides the HUD, the debug console and the character window, which the shots don't need.
+    ISUIHandler.setVisibleAllUI(false)
+    table.insert(run.steps, function()
+        getGameTime():setTimeOfDay(12)
+        local missing = buildStage(lot)
+        if missing then
+            run:fail(missing)
+        end
+    end)
+    for _, shot in ipairs(SHOTS) do
+        addShot(run.steps, player, lot, shot)
+    end
+    run:run(nil, onDone)
+end
+
+return Art

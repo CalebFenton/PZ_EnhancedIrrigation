@@ -1,0 +1,131 @@
+-- Tanks plumbed to each other ("Plumb to Tank"): a pipe run out of sight, as vanilla's plumbing
+-- runs, between two tanks, through which water finds its level every ten minutes. A link is kept
+-- by the two tanks' squares, not on the tanks: the vanilla lid swap replaces a barrel's object and
+-- drops its modData, and the tank on the square stays the link's end. The authority keeps the
+-- links in its system (server/EnhancedIrrigation/Links/LinkSystem.lua), which sends every client
+-- the list (client/EnhancedIrrigation/Links/LinkView.lua).
+--
+-- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, condition }: its ends, the pipe in
+-- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), half of which, rounded up,
+-- Unplumb gives back, and the lowest condition of that pipe as it went in, nil for older links.
+
+require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Tanks"
+
+EnhancedIrrigation = EnhancedIrrigation or {}
+local Links = {}
+EnhancedIrrigation.Links = Links
+
+local Tanks = EnhancedIrrigation.Tanks
+
+Links.SYSTEM_NAME = "enhanced_irrigation_link"
+
+-- How far apart, in tiles, two plumbed tanks may stand: well past vanilla plumbing's one square,
+-- short of a generator's twenty, so tanks plumb across a yard but not across a farm.
+Links.MAX_TILES = 10
+-- A storey counts as this many tiles of pipe: down the stand or wall and back out.
+Links.TILES_PER_STOREY = 2
+-- Tiles one length of pipe covers.
+Links.TILES_PER_LENGTH = 3
+-- Minutes of wrench work at the tanks, and per tile of pipe run between them.
+Links.BASE_MINUTES = 10
+Links.MINUTES_PER_TILE = 3
+
+--- The tiles of pipe between the squares `a` and `b` ({ x, y, z }): the straight run across,
+--- rounded up, and the storeys between them.
+function Links.distance(a, b)
+    local dx, dy = b.x - a.x, b.y - a.y
+    return math.ceil(math.sqrt(dx * dx + dy * dy)) + Links.TILES_PER_STOREY * math.abs(b.z - a.z)
+end
+
+--- The lengths of pipe a run of `distance` tiles takes.
+function Links.lengthsFor(distance)
+    return math.ceil(distance / Links.TILES_PER_LENGTH)
+end
+
+--- The game minutes plumbing a run of `distance` tiles takes.
+function Links.minutesFor(distance)
+    return Links.BASE_MINUTES + Links.MINUTES_PER_TILE * distance
+end
+
+--- `at` as a job's `with` (EnhancedIrrigation.squareKey).
+function Links.encode(at)
+    return EnhancedIrrigation.squareKey(at.x, at.y, at.z)
+end
+
+--- The square { x, y, z } a job's `with` names, or nil.
+function Links.decode(with)
+    if type(with) ~= "string" then
+        return nil
+    end
+    local x, y, z = with:match("^(-?%d+),(-?%d+),(-?%d+)$")
+    if not x then
+        return nil
+    end
+    return { x = tonumber(x), y = tonumber(y), z = tonumber(z) }
+end
+
+--- Every link as this side knows it: on the authority its own list, which a job may have changed
+--- since the clients last heard, else the list the server last sent.
+function Links.all()
+    local system = not isClient() and Links.serverSystem or Links.clientSystem
+    return system and system.links or {}
+end
+
+--- The other end of `link` from the square `at`, or nil when `at` is neither end.
+function Links.otherEnd(link, at)
+    if EnhancedIrrigation.sameSquare(link.a, at) then
+        return link.b
+    elseif EnhancedIrrigation.sameSquare(link.b, at) then
+        return link.a
+    end
+    return nil
+end
+
+--- The links with an end on the square `at`, in the order they were made.
+function Links.linksAt(at)
+    local found = {}
+    for _, link in ipairs(Links.all()) do
+        if Links.otherEnd(link, at) then
+            table.insert(found, link)
+        end
+    end
+    return found
+end
+
+--- The link between the squares `p` and `q`, either way round, or nil.
+function Links.find(p, q)
+    for _, link in ipairs(Links.all()) do
+        local other = Links.otherEnd(link, p)
+        if other and EnhancedIrrigation.sameSquare(other, q) then
+            return link
+        end
+    end
+    return nil
+end
+
+--- The other tanks `tank` can be plumbed to: within reach and loaded on this side, nearest first,
+--- each { tank, at, distance }. Linked ones are listed too; the menu says so.
+function Links.tanksInReach(tank)
+    local here = EnhancedIrrigation.squareOf(tank)
+    local found = {}
+    local storeys = math.floor(Links.MAX_TILES / Links.TILES_PER_STOREY)
+    for dz = -storeys, storeys do
+        local across = Links.MAX_TILES - Links.TILES_PER_STOREY * math.abs(dz)
+        for dx = -across, across do
+            for dy = -across, across do
+                local at = { x = here.x + dx, y = here.y + dy, z = here.z + dz }
+                if not EnhancedIrrigation.sameSquare(at, here) and Links.distance(here, at) <= Links.MAX_TILES then
+                    local other = Tanks.tankAt(at.x, at.y, at.z)
+                    if other then
+                        table.insert(found, { tank = other, at = at, distance = Links.distance(here, at) })
+                    end
+                end
+            end
+        end
+    end
+    table.sort(found, function(p, q) return p.distance < q.distance end)
+    return found
+end
+
+return Links

@@ -1,0 +1,18 @@
+{
+    "ContextMenu_EnhancedIrrigation_SetBarrel": "Set Barrel on Stand",
+    "ContextMenu_EnhancedIrrigation_TakeBarrelDown": "Take Barrel Down",
+    "ContextMenu_EnhancedIrrigation_PlumbToTank": "Plumb to Tank",
+    "ContextMenu_EnhancedIrrigation_Unplumb": "Unplumb",
+    "ContextMenu_EnhancedIrrigation_PlumbedTo": "Plumbed to %1",
+    "ContextMenu_EnhancedIrrigation_TankThere": "%1, %2 tiles %3, level %4",
+    "ContextMenu_EnhancedIrrigation_TankOutOfSight": "A tank %1 tiles %2, out of sight",
+    "ContextMenu_EnhancedIrrigation_NoTankInReach": "No other tank within reach",
+    "ContextMenu_EnhancedIrrigation_LayLine": "Lay Line",
+    "ContextMenu_EnhancedIrrigation_GardenLine": "Garden Line",
+    "ContextMenu_EnhancedIrrigation_DrillHoles": "Drill Holes",
+    "ContextMenu_EnhancedIrrigation_FitTap": "Fit Tap",
+    "ContextMenu_EnhancedIrrigation_WaterFromTank": "Water from Tank",
+    "ContextMenu_EnhancedIrrigation_PatchCrack": "Patch Crack",
+    "ContextMenu_EnhancedIrrigation_DrainLine": "Drain Line",
+    "ContextMenu_EnhancedIrrigation_TakeUpPipe": "Take Up Pipe"
+}

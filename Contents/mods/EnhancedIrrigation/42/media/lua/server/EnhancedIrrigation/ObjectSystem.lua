@@ -1,0 +1,106 @@
+-- The authority's side of the features it keeps in a Global Object System (garden pipe): a system
+-- per feature that saves each object's record with the world, runs every record each ten minutes,
+-- loaded or not, and sends every client its summary; and a base for the records. Each side reads
+-- them through the accessors of shared/EnhancedIrrigation/GlobalObjects.lua.
+
+if isClient() then return end
+
+require "Map/SGlobalObjectSystem"
+require "Map/SGlobalObject"
+require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Sprites"
+
+EnhancedIrrigation = EnhancedIrrigation or {}
+local ObjectSystem = {}
+EnhancedIrrigation.ObjectSystem = ObjectSystem
+
+local Sprites = EnhancedIrrigation.Sprites
+
+-- Records ------------------------------------------------------------------------------------------
+
+--- The base of a feature's records. A record is its global object's table, so the fields its
+--- class's SAVED_FIELDS names are saved with the world. A class defines advance(hours), what the
+--- time does to it; afterChange(), which shows and tells what changed; and buildSummary(), what
+--- every client keeps of it.
+local Object = SGlobalObject:derive("EnhancedIrrigation_Object")
+ObjectSystem.Object = Object
+
+--- The game hours since the record last caught up, now caught up (EnhancedIrrigation.catchUp).
+function Object:elapsedHours()
+    return EnhancedIrrigation.catchUp(self)
+end
+
+--- Brings the record up to now, then shows and tells what changed.
+function Object:update()
+    self:advance(self:elapsedHours())
+    self:afterChange()
+end
+
+--- Sends the clients the summary, if it changed.
+function Object:sendSummary()
+    local summary = self:buildSummary()
+    if not EnhancedIrrigation.sameValue(summary, self.summary) then
+        self.summary = summary
+        self:updateOnClient()
+    end
+end
+
+-- Systems -------------------------------------------------------------------------------------------
+
+--- Defines and registers a feature's system. `spec`: name (the class is
+--- EnhancedIrrigation_<name>System), sprites (its tiles' names, for the load hook), owner (its
+--- shared module: SYSTEM_NAME and the accessors of GlobalObjects.addAccessors), Object (its record
+--- class), isObject(isoObject). Returns the class.
+function ObjectSystem.define(spec)
+    local System = SGlobalObjectSystem:derive("EnhancedIrrigation_" .. spec.name .. "System")
+    System.owner = spec.owner
+
+    function System:new()
+        return SGlobalObjectSystem.new(self, spec.owner.SYSTEM_NAME)
+    end
+
+    function System:initSystem()
+        spec.owner.serverSystem = self
+        self.system:setObjectModDataKeys(spec.Object.SAVED_FIELDS)
+        self.system:setObjectSyncKeys({ "summary" })
+    end
+
+    -- The summary isn't saved; each record gets it before any client connects.
+    function System:initLuaObjects()
+        SGlobalObjectSystem.initLuaObjects(self)
+        for i = 1, self:getLuaObjectCount() do
+            local record = self:getLuaObjectByIndex(i)
+            record.summary = record:buildSummary()
+        end
+    end
+
+    function System:isValidIsoObject(isoObject)
+        return spec.isObject(isoObject)
+    end
+
+    function System:newLuaObject(globalObject)
+        return spec.Object:new(self, globalObject)
+    end
+
+    -- Every record, loaded or not, each ten minutes; a pass removes none.
+    local function updateAll()
+        local self = System.instance
+        for i = 1, self:getLuaObjectCount() do
+            self:getLuaObjectByIndex(i):update()
+        end
+    end
+
+    local function load(isoObject)
+        if spec.isObject(isoObject) then
+            System.instance:loadIsoObject(isoObject)
+        end
+    end
+    for _, name in ipairs(spec.sprites) do
+        MapObjects.OnLoadWithSprite(name, load, Sprites.LOAD_PRIORITY)
+    end
+    Events.EveryTenMinutes.Add(updateAll)
+    SGlobalObjectSystem.RegisterSystemClass(System)
+    return System
+end
+
+return ObjectSystem

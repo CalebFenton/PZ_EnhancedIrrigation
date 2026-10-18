@@ -1,0 +1,26 @@
+/*
+    craftRecipes, in module Base with the mod's prefix: magazines and research look recipes up by
+    bare name, which resolves only in Base.
+
+    EnhancedIrrigation_PlumbToTank is knowledge, not a craft: the tank menu offers Plumb to Tank
+    once the character knows it (isRecipeActuallyKnown). Reading Cisterns for Kentucky teaches
+    it, and vanilla's AutoLearn check (ScriptManager.checkAutoLearn, at world load and on every
+    level up) learns it from the skills; shared/EnhancedIrrigation/Recipes.lua checks it too and
+    sends a multiplayer server's lesson to the client. It has nothing to craft and is never offered:
+    - its only tag is one no crafting bench or window asks for, so no recipe query finds it and
+      it needs a workstation that doesn't exist (CraftRecipe.requiresSpecificWorkstation);
+    - the crafting window that lists every recipe ("*", the main window and the magazines'
+      recipe lists) drops it through OnAddToMenu, a plain global
+      (shared/EnhancedIrrigation/Recipes.lua).
+*/
+module Base
+{
+    craftRecipe EnhancedIrrigation_PlumbToTank
+    {
+        icon = PipeWrench,
+        Tags = EnhancedIrrigationKnowledge,
+        NeedToBeLearn = true,
+        AutoLearnAny = Woodwork:4;MetalWelding:3,
+        OnAddToMenu = EnhancedIrrigation_NeverInMenu,
+    }
+}

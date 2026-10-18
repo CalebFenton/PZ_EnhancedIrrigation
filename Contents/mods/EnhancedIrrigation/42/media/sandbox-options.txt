@@ -1,0 +1,13 @@
+VERSION = 1,
+
+/* Times every loot weight of Cisterns for Kentucky (server/EnhancedIrrigation/Items/Distributions.lua);
+   0 keeps it out of loot, and the skills still teach its recipes. */
+option EnhancedIrrigation.PamphletLoot
+{
+    type = double,
+    min = 0,
+    max = 4,
+    default = 1,
+    page = EnhancedIrrigation,
+    translation = EnhancedIrrigation_PamphletLoot,
+}
