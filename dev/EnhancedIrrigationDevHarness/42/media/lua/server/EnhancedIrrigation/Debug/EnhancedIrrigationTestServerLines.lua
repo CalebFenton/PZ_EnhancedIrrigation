@@ -58,7 +58,8 @@ local function plantAt(at)
     if not plant then
         return nil
     end
-    return { state = plant.state, water = plant.waterLvl, mildew = plant.mildewLvl, alive = plant:isAlive() }
+    return { state = plant.state, water = plant.waterLvl, health = plant.health, mildew = plant.mildewLvl,
+        alive = plant:isAlive() }
 end
 
 -- What the server has at the tile `at`: `record` (its saved fields, wet and the line's size) or
@@ -136,8 +137,10 @@ handler("lines.set", function(player, args)
 end)
 
 -- Runs each tile's record as though `args.hours` had passed since its last pass, as the ten-minute
--- pass does, loaded or not; the hours pass for its soil's wet spell too.
+-- pass does, loaded or not; the hours pass for its soil's wet spell too. Answers the tiles after,
+-- and in `before` as they were, read in the same call so no vanilla pass lands between.
 handler("lines.age", function(player, args)
+    local before = readTiles(args.tiles).tiles
     for _, at in ipairs(args.tiles) do
         local record, missing = recordOrMissing(at)
         if not record then return nil, missing end
@@ -145,7 +148,9 @@ handler("lines.age", function(player, args)
         record.wetUntil = (record.wetUntil or 0) - args.hours
         record:update()
     end
-    return readTiles(args.tiles)
+    local reply = readTiles(args.tiles)
+    reply.before = before
+    return reply
 end)
 
 -- Runs the line tapped at x, y, z for `args.hours` (Flow.run) from the tank its tap draws on

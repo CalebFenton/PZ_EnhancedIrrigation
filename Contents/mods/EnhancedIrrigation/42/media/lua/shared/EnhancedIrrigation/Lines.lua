@@ -28,27 +28,29 @@ Lines.HOLE_RATE = 1
 Lines.CRACK_RATE = 3
 -- Vanilla's watering: one use of 200 mL adds 10 water points (SPlantGlobalObject.water).
 Lines.POINTS_PER_LITRE = 50
--- The most water and mildew vanilla lets a plant hold (SPlantGlobalObject).
+-- The most water vanilla lets a plant hold (SPlantGlobalObject).
 Lines.PLANT_FULL = 100
 -- How long after the water stops the soil under an outlet, or where a line was drained, still
 -- shows wet.
 Lines.WET_HOURS = 4
 
--- Soak and mildew ---------------------------------------------------------------------------------
+-- Soak and root rot --------------------------------------------------------------------------------
 
 -- Points of soak, the water an outlet gives past what its plant takes, as plant points.
 Lines.SOAK_MAX = 100
 -- Thresholds of the plant info's soil line: damp, soaked, and waterlogged (strictly above), where
--- the roots rot and mildew grows.
+-- the roots rot.
 Lines.DAMP = 1
 Lines.SOAKED = 15
 Lines.WATERLOGGED = 30
 -- Soak lost a day: sun and wind dry a bed outdoors twice as fast as one under a roof.
 Lines.SOAK_DRY_OUT = 10
 Lines.SOAK_DRY_IN = 5
--- Mildew a waterlogged plant gains an hour: an hour's overshoot waterlogs a bed long enough to slow
--- its plant, and a night left running can kill it.
-Lines.MILDEW_PER_HOUR = 0.2
+-- Health a plant loses an hour while its soil stays waterlogged, so drowned roots weigh on it as
+-- drought does. Vanilla's health pass, every second hour (SFarmingSystem.changeHealth), takes the
+-- first figure from a plant far short of water and gives the second to one watered enough, which a
+-- waterlogged plant also is to vanilla: rot takes both, leaving it where a parched plant stands.
+Lines.ROOT_ROT_PER_HOUR = (0.5 + 0.4) / 2
 
 -- Frost and holes -----------------------------------------------------------------------------------
 

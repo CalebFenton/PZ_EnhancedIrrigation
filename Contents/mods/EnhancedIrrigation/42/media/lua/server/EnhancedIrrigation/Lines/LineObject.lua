@@ -1,6 +1,6 @@
 -- The authority's record of one garden line tile: its pipe, holes, wear and water. Time dries its
--- soak, rots a waterlogged plant above it and freezes it when full; the flow (Flow.lua) fills and
--- wets it; the jobs (LineSystem.lua) change the rest.
+-- soak, rots the roots of a plant in waterlogged soil above it and freezes it when full; the flow
+-- (Flow.lua) fills and wets it; the jobs (LineSystem.lua) change the rest.
 
 if isClient() then return end
 
@@ -86,7 +86,8 @@ local function hoursAbove(soak, level, perHour, hours)
     return math.min(hours, (soak - level) / perHour)
 end
 
--- Soak dries; a plant standing in waterlogged soil mildews for as long as it stays so. The plant's
+-- Soak dries; a plant whose soil stays waterlogged loses health to root rot for as long as it does,
+-- down to none, where vanilla's own check kills it (SPlantGlobalObject.checkStat). The plant's
 -- record keeps the change when its chunk is unloaded (saveData then writes nothing, and loading the
 -- chunk puts the record on the plant, SPlantGlobalObject.stateToIsoObject).
 function LineObject:dryAndRot(hours)
@@ -99,7 +100,7 @@ function LineObject:dryAndRot(hours)
     self.soak = math.max(0, self.soak - perHour * hours)
     local plant = rotting > 0 and self:plant()
     if plant then
-        plant.mildewLvl = math.min(Lines.PLANT_FULL, (plant.mildewLvl or 0) + Lines.MILDEW_PER_HOUR * rotting)
+        plant.health = math.max(0, plant.health - Lines.ROOT_ROT_PER_HOUR * rotting)
         plant:saveData()
     end
 end

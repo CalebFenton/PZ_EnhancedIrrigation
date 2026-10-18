@@ -741,16 +741,17 @@ T.test("irrigation_lines_crack_leaks_to_waste", {
     end,
 })
 
--- Soak, mildew, frost --------------------------------------------------------------------------------
+-- Soak, root rot, frost -----------------------------------------------------------------------------
 
--- How long the waterlogged soil of the mildew test stays above the threshold as it dries, of the
+-- How long the waterlogged soil of the root rot test stays above the threshold as it dries, of the
 -- twice as long it ages.
 local LOGGED_HOURS = 6
 
--- A crop mildews for the hours its soil stays waterlogged as it dries through the threshold, not the
--- whole pass; one on the threshold itself doesn't. Catches mildew counted for the whole pass, or
--- the threshold taken as inclusive.
-T.test("irrigation_lines_waterlogged_crop_mildews", {
+-- A crop's roots rot for the hours its soil stays waterlogged as it dries through the threshold, not
+-- the whole pass, costing it health at the rot's rate; one on the threshold itself loses none, and
+-- neither gets mildew. Catches rot counted for the whole pass, the threshold taken as inclusive, or
+-- overwatering seeding a disease.
+T.test("irrigation_lines_waterlogged_roots_rot", {
     run = function(self)
         local rows = T.row(self, 2, { indoors = true })
         if not rows then return end
@@ -765,12 +766,18 @@ T.test("irrigation_lines_waterlogged_crop_mildews", {
         T.read(self, "lines.age", { tiles = T.tiles(self.tiles), hours = 2 * LOGGED_HOURS }, "aged")
     end,
     validate = function(self)
-        local aged = self.reads.aged.tiles
-        expectNear("the soak, dried past the threshold", aged[1].record.soak,
-            Lines.WATERLOGGED - LOGGED_HOURS * self.dryPerHour, POINTS)
-        expectNear("the mildew of the crop whose soil dried through the threshold", aged[1].plant.mildew,
-            LOGGED_HOURS * Lines.MILDEW_PER_HOUR, POINTS)
-        expectNear("the mildew of the crop on the threshold", aged[2].plant.mildew, 0, POINTS)
+        local before, after = self.reads.aged.before, self.reads.aged.tiles
+        expectNear("the soak, dried past the threshold", after[1].record.soak,
+            before[1].record.soak - 2 * LOGGED_HOURS * self.dryPerHour, POINTS)
+        -- The hours the soak stayed over the threshold as it dried, from where it stood.
+        local logged = math.max(0, (before[1].record.soak - Lines.WATERLOGGED) / self.dryPerHour)
+        expectNear("the health the crop whose soil dried through the threshold lost",
+            before[1].plant.health - after[1].plant.health, logged * Lines.ROOT_ROT_PER_HOUR, POINTS)
+        expectNear("the health the crop on the threshold lost", before[2].plant.health - after[2].plant.health, 0,
+            POINTS)
+        for i, tile in ipairs(after) do
+            expect(tile.plant.mildew == 0, "crop " .. i .. " has mildew " .. tostring(tile.plant.mildew))
+        end
     end,
 })
 
