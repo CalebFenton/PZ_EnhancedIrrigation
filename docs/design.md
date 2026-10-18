@@ -119,10 +119,10 @@ Every method turns Tainted Water into Water completely or not at all; the game h
 - **The height chain.** Raw tank on a platform, filter beside it on the same level, clean tank beside that, sinks below. A single-storey platform or an upstairs room does it all; a pump can stand in for any step.
 - **Slow sand filter: the living filter.**
   - The part that cleans is the mat of algae and bacteria that grows on the sand (the schmutzdecke). That's the "plants that clean water" idea, and it's real. It also means you keep it alive.
-  - **Ripening:** a new filter puts out tainted water for 3 days, and for 1 day after a scrape. Real filters are run to waste until mature. The filter doesn't divert: check its outlet (vanilla's tooltip says "Tainted" or not), Empty it, and only then plumb its outlet to the clean tank. Plumb it too soon and you taint the clean tank.
-  - **Alive:** feed it every day or so. Two dry days, or a freeze, kill the layer, and it ripens again from scratch.
+  - **Ripening:** a new filter puts out tainted water for 3 days, and for 1 day after a cleaning. Real filters are run to waste until mature. The filter doesn't divert: check its outlet (vanilla's tooltip says "Tainted" or not), Empty it, and only then plumb its outlet to the clean tank. Plumb it too soon and you taint the clean tank.
+  - **Alive:** feed it every day or so. Two dry days, or a hard freeze, kill the layer, and it ripens again from scratch.
   - **Slow:** a Barrel Filter yields about 100 L a day however hard you push; the extra spills on the ground and never bypasses the sand. A Brick Filter yields four times that.
-  - **Scrape:** flow falls over weeks. "Scrape Filter" with a shovel takes off the top inch, a Sand Bag tops it up, and it re-ripens for a day. The sand lasts years.
+  - **Clogged:** after enough water has passed, it slows to a trickle and its menu says so: one step, not a slow fade. "Clean Filter" stirs and skims the top of the sand by hand; a shovel or a trowel makes it quicker. It ripens for a day after. The sand lasts years. (Real household filters are cleaned the same way, by stirring or scraping the top centimetre or two: CDC, EPA; *Cisterns for Kentucky* says replace the top two inches when it clogs.)
 - **Boiler: clean water for fuel.**
   - A Metal Drum over a firebox, with an inlet from the raw tank and an outlet to the clean tank. Water held at 60 °C for half an hour, or boiled, is safe (CDC).
   - Fuel it and light it like a vanilla fire. After about an hour hot, it passes about 30 L an hour clean until the fuel's gone. A drum that never got hot passes nothing.
@@ -193,7 +193,7 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | **Bury Olla** | Pottery 1 | an unglazed Clay Jar; a trowel or shovel | auto at Pottery 1 |
 | **Pump** (at a hand pump) | none | endurance | everyone |
 | **Replace Seal** (hand pump) | none | Leather Strips, Tire Piece, Tarp Piece or Plunger; screwdriver | everyone |
-| **Scrape Filter** | none | shovel; 1 Sand Bag | with the filter |
+| **Clean Filter** | none | bare hands; quicker with a shovel or trowel | with the filter |
 | **Pour In** (crock) | none | any container of water | everyone |
 
 ### Builds (build menu)
@@ -235,12 +235,12 @@ The Barrel Filter is the pamphlet's prize: built at Woodwork 2 by anyone who fin
 | Pipe | a hard freeze when full, rare to uncommon (clay > iron > lead > plastic); a punched hole may crack plastic or clay | glue, epoxy or duct tape on the crack; still scrap when taken up | new length |
 | Hand pump | the seal per litre; the body slowly (wood faster) | Replace Seal | rebuild |
 | Electric pump | per hour; heavily when dry | Electronics Scrap and a Tire Piece, lowering its ceiling | a new pump part |
-| Sand filter | clogs per litre; the living layer dies after two dry days or a freeze | Scrape Filter, then a day of ripening | fresh sand and charcoal, then a full ripening |
+| Sand filter | clogs after so many litres (one visible step); the living layer dies after two dry days or a hard freeze | Clean Filter by hand, then a day of ripening | fresh sand and charcoal, then a full ripening |
 | Boiler | drum condition per hour burning; heavily when dry | weld a patch (Small Sheet Metal, torch), lowering its ceiling | a new drum |
-| Filter Crock | flow falls per litre | scrub it | fire a new one |
+| Filter Crock | clogs after so many litres (one visible step) | scrub it by hand | fire a new one |
 | Timer Valve, Sprinkler Timer | — | — | works until its power fails |
 
-Upkeep lands in batches: feed and scrape the filter, check the tanks, drain the pipes before a frost.
+Upkeep lands in batches: feed and clean the filter, check the tanks, drain the pipes before a frost.
 
 ## Where the parts are (risk)
 
@@ -316,7 +316,7 @@ Vanilla's yardsticks: 1 L = 50 plant points; a plant drains about 4.8 points a d
 | Appliance / Utility Pump | 6 / 20 L a game minute | a barrel in under two hours / half an hour |
 | Lawn sprinkler | 600 L/h over about 15 tiles, half lost | ten minutes soaks a bed; an hour empties a barrel |
 | Soak | dries 10 a day out, 5 in; waterlogged above 30; +1 mildew per 5 h (×1.5 under sprinklers) | an hour too long slows a plant; a forgotten night kills it |
-| Barrel / Brick Filter | about 4 / 16 L an hour; ripens in 3 days, 1 after a scrape; dies after 2 dry days | a household's daily water from one barrel |
+| Barrel / Brick Filter | about 4 / 16 L an hour; ripens in 3 days, 1 after a cleaning; dies after 2 dry days | a household's daily water from one barrel |
 | Boiler | about 30 L an hour once hot; heats in an hour; a log keeps it hot about an hour | fast clean water that costs a woodpile |
 | Filter Crock | about 10 L a day | one person's drinking and cooking |
 
