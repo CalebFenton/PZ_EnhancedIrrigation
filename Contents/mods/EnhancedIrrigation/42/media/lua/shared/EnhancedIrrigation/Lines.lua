@@ -135,7 +135,7 @@ end
 
 --- The tile at x, y, z as this side knows it: its record on the authority, loaded or not, else the
 --- summary this client has; nil where there is no line tile. Read only: both carry material,
---- holed, cracked, full, soak, tap.
+--- holed, cracked, full, tap and heldBy.
 function Lines.stateAt(x, y, z)
     return Lines.recordAt(x, y, z) or receivedAt(x, y, z)
 end
@@ -198,7 +198,8 @@ function Lines.shapeAt(x, y, z, isLineAt)
     return shape
 end
 
---- The IG_UI key of the plant info's soil word for `soak`, or nil when the soil is dry.
+--- The IG_UI key of the plant info's soil word for `soak`, or nil when the soil is dry. Strictly
+--- above WATERLOGGED, as the roots rot (LineObject.dryAndRot).
 function Lines.soilKey(soak)
     if not soak or soak < Lines.DAMP then
         return nil

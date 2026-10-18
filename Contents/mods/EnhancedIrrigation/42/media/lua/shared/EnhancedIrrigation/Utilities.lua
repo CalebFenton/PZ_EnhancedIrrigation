@@ -48,11 +48,6 @@ function EnhancedIrrigation.hasWorkingTool(character, tag)
     return character:getInventory():containsTagEvalRecurse(tag, EnhancedIrrigation.notBroken)
 end
 
-function EnhancedIrrigation.round(value, places)
-    local scale = 10 ^ (places or 0)
-    return math.floor(value * scale + 0.5) / scale
-end
-
 --- The key of the square x, y, z in a table, and how a job's `with` names a square: a string, which
 --- a multiplayer action's arguments can carry.
 function EnhancedIrrigation.squareKey(x, y, z)

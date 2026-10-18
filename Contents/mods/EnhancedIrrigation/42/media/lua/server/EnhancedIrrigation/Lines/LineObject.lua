@@ -160,14 +160,15 @@ function LineObject:afterChange()
 end
 
 -- What every client keeps: the fields the shared refusals read, under the record's names
--- (Lines.stateAt), rounded so a little drying sends nothing.
+-- (Lines.stateAt), and the soil's word for the plant info, decided from the soak itself, as the
+-- rot reads it, so the word never disagrees with the roots and a little drying sends nothing.
 function LineObject:buildSummary()
     return {
         material = self.material,
         holed = self.holed,
         cracked = self.cracked,
         full = self.full,
-        soak = EnhancedIrrigation.round(self.soak),
+        soil = Lines.soilKey(self.soak),
         tap = self.tap,
         heldBy = self.heldBy,
     }

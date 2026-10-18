@@ -20,12 +20,12 @@ local RIGHT = 17
 local BOTTOM = 8
 
 --- The IG_UI key of the soil word for the plant `plant` (a CPlantGlobalObject), or nil when there
---- is no wet line tile under it.
+--- is no wet line tile under it: the word the line tile's summary carries.
 function PlantInfo.soilKeyOf(plant)
     local square = plant:getSquare()
     local line = square and Lines.lineOn(square)
-    local state = line and Lines.stateOf(line)
-    return state and Lines.soilKey(state.soak) or nil
+    local summary = line and Lines.currentSummary(line)
+    return summary and summary.soil or nil
 end
 
 local vanillaRender = ISFarmingInfo.render

@@ -959,7 +959,8 @@ T.test("irrigation_lines_dry_and_freeze_while_unloaded", {
         expect(back.sprite == Sprites.pipe("iron", false, 0), "the server shows the dried tile as " .. tostring(back.sprite))
         local summary = T.lineSummary(self.tile)
         expect(summary.cracked, "this client's summary of the tile isn't cracked")
-        expectNear("this client's soak", summary.soak, back.record.soak, 1)
+        expect(summary.soil == Lines.soilKey(back.record.soak), "this client's soil word " .. tostring(summary.soil)
+            .. " for the server's soak " .. tostring(back.record.soak))
         expect(clientSprite(self.tile) == Sprites.pipe("iron", false, 0),
             "this client shows the dried tile as " .. tostring(clientSprite(self.tile)))
     end,
@@ -1243,5 +1244,46 @@ T.test("irrigation_lines_plant_info_names_the_soil", {
             .. self.skilled[1] .. " tall and the dry one's " .. self.skilled[2] .. ": no soil line")
         expect(self.unskilled[1] == self.unskilled[2], "below Agriculture " .. level .. " the wet crop's info is "
             .. self.unskilled[1] .. " tall and the dry one's " .. self.unskilled[2])
+    end,
+})
+
+-- The soil word comes from the same soak the roots and the wet look read, not a rounded copy: soil
+-- just past waterlogged says Waterlogged and its crop loses health; soil just short of damp says
+-- nothing and looks dry. Catches a rounded soak naming soil Soaked while its roots rot, or Damp
+-- while it looks dry.
+T.test("irrigation_lines_plant_info_soil_word_agrees_with_the_roots", {
+    run = function(self)
+        local rows = T.row(self, 2, { indoors = true })
+        if not rows then return end
+        local logged, dry = rows[1][1], rows[1][2]
+        self.tiles = { logged, dry }
+        -- Within rounding of each threshold, on the side the rules read.
+        logged.fields = { soak = Lines.WATERLOGGED + 0.4 }
+        dry.fields = { soak = Lines.DAMP - 0.4 }
+        T.placeLine(self, self.tiles, "plastic")
+        for _, tile in ipairs(self.tiles) do
+            T.plant(self, tile, Lines.PLANT_FULL / 2)
+        end
+        T.step(function()
+            self.keys = {}
+            for i, tile in ipairs(self.tiles) do
+                local plant = CFarmingSystem.instance:getLuaObjectOnSquare(tile.square)
+                if not T.need(self, plant, "this client's crop on tile " .. i) then return end
+                self.keys[i] = PlantInfo.soilKeyOf(plant)
+            end
+            self.drySprite = clientSprite(dry)
+        end)
+        T.read(self, "lines.age", { tiles = T.tiles({ logged }), hours = 1 }, "aged")
+    end,
+    validate = function(self)
+        expect(self.keys[1] == "IGUI_EnhancedIrrigation_Waterlogged", "soil just past waterlogged is named "
+            .. tostring(self.keys[1]))
+        local before, after = self.reads.aged.before[1], self.reads.aged.tiles[1]
+        expect(before.record.soak > Lines.WATERLOGGED, "the soil dried out of waterlogged before it aged: "
+            .. before.record.soak)
+        expect(after.plant.health < before.plant.health, "the crop under soil named Waterlogged lost no health")
+        expect(self.keys[2] == nil, "soil just short of damp is named " .. tostring(self.keys[2]))
+        local want = Sprites.pipe("plastic", false, Sprites.WEST)
+        expect(self.drySprite == want, "soil just short of damp shows as " .. tostring(self.drySprite) .. ", not " .. want)
     end,
 })
