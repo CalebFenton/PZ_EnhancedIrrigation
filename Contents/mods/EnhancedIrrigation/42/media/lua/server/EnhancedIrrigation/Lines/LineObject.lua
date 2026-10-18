@@ -22,12 +22,11 @@ EnhancedIrrigation.LineObject = LineObject
 -- The world's save format: renaming one loses it from saves. material: the pipe's kind; holed;
 -- cracked, patches; conditions: the condition of each item of pipe it was laid with, in order (none
 -- listed: as new); full: water stands in it; soak: plant points of water in the soil under it; tap,
--- tapMaterial and tapConditions (the pipe it took), tapX, tapY, tapZ (its tank's square); wetUntil:
--- the hour its soil stops showing wet; exterior: whether it lies outdoors, as last seen loaded;
--- lastHour: when time last reached it.
+-- tapMaterial and tapConditions (the pipe it took); wetUntil: the hour its soil stops showing wet;
+-- exterior: whether it lies outdoors, as last seen loaded; lastHour: when time last reached it.
 LineObject.SAVED_FIELDS = {
     "material", "holed", "cracked", "patches", "conditions", "full", "soak",
-    "tap", "tapMaterial", "tapConditions", "tapX", "tapY", "tapZ", "wetUntil", "exterior", "lastHour",
+    "tap", "tapMaterial", "tapConditions", "wetUntil", "exterior", "lastHour",
 }
 
 function LineObject:initNew()
@@ -171,9 +170,6 @@ function LineObject:buildSummary()
         full = self.full,
         soak = EnhancedIrrigation.round(self.soak),
         tap = self.tap,
-        tapX = self.tap and self.tapX or nil,
-        tapY = self.tap and self.tapY or nil,
-        tapZ = self.tap and self.tapZ or nil,
     }
 end
 

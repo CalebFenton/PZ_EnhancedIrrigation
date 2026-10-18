@@ -8,7 +8,6 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
-require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/ObjectSystem"
@@ -24,7 +23,6 @@ local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
 local Materials = EnhancedIrrigation.Materials
 local Pipes = EnhancedIrrigation.Pipes
-local Tanks = EnhancedIrrigation.Tanks
 local Flow = EnhancedIrrigation.Flow
 
 LineSystem.System = EnhancedIrrigation.ObjectSystem.define({
@@ -93,18 +91,6 @@ function LineSystem.System:OnObjectAboutToBeRemoved(isoObject)
     end
 end
 
--- The tank a new tap draws on: the highest of those reaching it, then the fullest.
-local function bestTank(x, y, z)
-    local best
-    for _, tank in ipairs(Tanks.tanksReaching(x, y, z)) do
-        if not best or Tanks.levelOf(tank) > Tanks.levelOf(best)
-                or (Tanks.levelOf(tank) == Tanks.levelOf(best) and Tanks.litres(tank) > Tanks.litres(best)) then
-            best = tank
-        end
-    end
-    return best
-end
-
 -- What each job does at `object`: the floor for Lay, else a line tile, whose record
 -- LineSystem.perform brought up to now. Returns whether it was done.
 local DO = {
@@ -123,14 +109,9 @@ local DO = {
     end,
     [LineJobs.TAP] = function(character, object, with, materials)
         local record = Lines.recordOf(object)
-        local tank = bestTank(record.x, record.y, record.z)
-        if not tank then
-            return false
-        end
         record.tap = true
         record.tapMaterial = Pipes.kindFor(character, 1)
         record.tapConditions = Materials.conditions(character, materials)
-        record.tapX, record.tapY, record.tapZ = tank:getX(), tank:getY(), tank:getZ()
         return true
     end,
     [LineJobs.PATCH] = function(character, object)

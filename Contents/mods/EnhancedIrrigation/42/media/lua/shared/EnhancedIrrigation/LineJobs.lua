@@ -116,7 +116,7 @@ function LineJobs.layBlocker(square, pending)
     if not touches and #Tanks.tanksReaching(x, y, z) == 0 then
         return "Tooltip_EnhancedIrrigation_NoTankReach"
     end
-    -- Two taps on one line would fight over which tank it drains.
+    -- One line takes one tap: two would each run every hole on it.
     if tapped >= 2 then
         return "Tooltip_EnhancedIrrigation_JoinsTwoTaps"
     end
@@ -133,6 +133,17 @@ local function atLine(check)
         end
         return check(character, object, state)
     end
+end
+
+-- The tanks reaching a tap at x, y, z that stand high enough to push water out of it.
+local function pushing(x, y, z)
+    local found = {}
+    for _, tank in ipairs(Tanks.tanksReaching(x, y, z)) do
+        if Tanks.hasPressureFor(tank, z) then
+            table.insert(found, tank)
+        end
+    end
+    return found
 end
 
 -- Lay's `with` is the pipe kind; the others' is nil. Fit Tap picks its kind on each side
@@ -174,7 +185,7 @@ LineJobs.JOBS = {
             if Lines.tapIn(Lines.component(x, y, z)) then
                 return "Tooltip_EnhancedIrrigation_LineHasTap"
             end
-            return #Tanks.tanksReaching(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoTankForTap" or nil
+            return #pushing(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
         end),
         materials = function(character)
             local list = { Pipes.WRENCH }
@@ -210,23 +221,29 @@ LineJobs.JOBS = {
 
 EnhancedIrrigation.Jobs.define(LineJobs)
 
---- The tank water runs from at the tap tile `object`, or nil and why it can't, a Tooltip key.
+--- The tank the water runs from at the tap tile `object`, asked each time it runs: of the tanks
+--- reaching the tile a storey or more above the line, the highest holding water, then the fullest.
+--- Or nil and why none, a Tooltip key.
 function LineJobs.tapTank(object)
     local state = Lines.stateOf(object)
-    if not (state and state.tap and state.tapX) then
+    if not (state and state.tap) then
         return nil, "Tooltip_EnhancedIrrigation_NoTap"
     end
-    local tank = Tanks.tankAt(state.tapX, state.tapY, state.tapZ)
-    if not tank then
-        return nil, "Tooltip_EnhancedIrrigation_TankGone"
-    end
-    if Tanks.litres(tank) <= 0 then
-        return nil, "Tooltip_EnhancedIrrigation_TankEmpty"
-    end
-    if not Tanks.hasPressureFor(tank, object:getZ()) then
+    local tanks = pushing(object:getX(), object:getY(), object:getZ())
+    if #tanks == 0 then
         return nil, "Tooltip_EnhancedIrrigation_NoPressure"
     end
-    return tank
+    local best
+    for _, tank in ipairs(tanks) do
+        if Tanks.litres(tank) > 0 and (not best or Tanks.levelOf(tank) > Tanks.levelOf(best)
+                or (Tanks.levelOf(tank) == Tanks.levelOf(best) and Tanks.litres(tank) > Tanks.litres(best))) then
+            best = tank
+        end
+    end
+    if not best then
+        return nil, "Tooltip_EnhancedIrrigation_TankEmpty"
+    end
+    return best
 end
 
 --- Why water can't run from the tap tile `object`, a Tooltip key, or nil.

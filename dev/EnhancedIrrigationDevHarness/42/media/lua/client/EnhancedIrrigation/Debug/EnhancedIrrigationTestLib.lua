@@ -405,8 +405,8 @@ T.TANKS = {
     ground = { sprite = "carpentry_02_122" },
     -- The same barrel on the floor above, as a player sets one on a roof or upper storey.
     above = { sprite = "carpentry_02_122", up = 1 },
-    -- The same barrel two storeys up: twice the head.
-    twoUp = { sprite = "carpentry_02_122", up = 2 },
+    -- A rain barrel on a Tank Stand on the floor above: two storeys of head.
+    raisedAbove = { sprite = Sprites.RAISED_BARREL, up = 1 },
     -- Vanilla's lidded rain barrel, which no rain fills meanwhile.
     lidded = { sprite = "carpentry_02_126" },
     -- A Tank Stand with no barrel on it: no tank.

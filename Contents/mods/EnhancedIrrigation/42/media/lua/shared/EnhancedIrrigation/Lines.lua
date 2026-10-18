@@ -132,7 +132,7 @@ end
 
 --- The tile at x, y, z as this side knows it: its record on the authority, loaded or not, else the
 --- summary this client has; nil where there is no line tile. Read only: both carry material,
---- holed, cracked, patches, full, soak, tap, tapX, tapY, tapZ.
+--- holed, cracked, patches, full, soak, tap.
 function Lines.stateAt(x, y, z)
     return Lines.recordAt(x, y, z) or receivedAt(x, y, z)
 end

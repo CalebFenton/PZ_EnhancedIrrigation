@@ -18,7 +18,6 @@
     "Tooltip_EnhancedIrrigation_AlreadyHoled": "This pipe already has holes.",
     "Tooltip_EnhancedIrrigation_MayCrack": "Punching holes may crack this pipe.",
     "Tooltip_EnhancedIrrigation_LineHasTap": "This line already has a tap.",
-    "Tooltip_EnhancedIrrigation_NoTankForTap": "No tank stands close enough to tap.",
     "Tooltip_EnhancedIrrigation_NoTap": "The line has no tap.",
     "Tooltip_EnhancedIrrigation_TankEmpty": "The tank is empty.",
     "Tooltip_EnhancedIrrigation_NoPressure": "The tank must stand a storey above the line.",

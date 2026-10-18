@@ -259,7 +259,7 @@ T.test("irrigation_tanks_well_feeds_nothing_by_gravity", {
         end, false)
     end,
     validate = function(self)
-        T.expectRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_NoTankForTap")
+        T.expectRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_NoPressure")
         expect(not self.menu["plumb to the well"].found, "Plumb to Tank lists a well")
         expect(self.menu["no tank in reach"].found, "Plumb to Tank doesn't say no other tank is in reach")
     end,

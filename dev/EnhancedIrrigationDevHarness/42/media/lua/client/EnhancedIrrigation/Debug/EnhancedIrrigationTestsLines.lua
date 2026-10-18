@@ -72,9 +72,9 @@ local function useWater(self, handle, label, choose)
     end, choose)
 end
 
--- The fields of a tap drawing on `tank`.
-local function tapOn(tank, material)
-    return { tap = true, tapMaterial = material or "iron", tapX = tank.x, tapY = tank.y, tapZ = tank.z }
+-- The fields of a tap fitted with a length of `material`.
+local function tapOn(material)
+    return { tap = true, tapMaterial = material or "iron" }
 end
 
 local function copyField(fields, extra)
@@ -268,9 +268,8 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         if not rows then return end
         local tiles = rows[1]
         T.trackLines(self, tiles)
-        local tank = T.placeTank(self, tiles[2], "above", 0)
-        tiles[1].fields = tapOn(tank)
-        tiles[3].fields = tapOn(tank)
+        tiles[1].fields = tapOn()
+        tiles[3].fields = tapOn()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
         T.give(self, "pipes", { { type = "Base.MetalPipe" } })
         T.goNextTo(self, tiles[2].square)
@@ -330,7 +329,7 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
         end)
         self.tank = T.placeTank(self, doorway, "above", TANK_LITRES)
         behind.fields = { holed = true }
-        doorway.fields = tapOn(self.tank)
+        doorway.fields = tapOn()
         T.placeLine(self, { behind, doorway }, "iron")
         T.plant(self, behind, 0)
         T.plant(self, inside, 0)
@@ -445,21 +444,22 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
 
 -- Taps ---------------------------------------------------------------------------------------------
 
--- Fit Tap draws on the highest tank in reach, even with less water than one lower down, and shows
--- the riser on the tile.
-T.test("irrigation_lines_fit_tap_picks_the_highest_tank", {
+-- Fit Tap wants a tank reaching the tile a storey above the line: beside a barrel on the ground
+-- it's refused, saying so; beside a barrel on a stand it fits, with a length of pipe, and shows the
+-- riser on both sides.
+T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
     instant = true,
     run = function(self)
-        local rows = T.row(self, 2)
+        local rows = T.row(self, 3)
         if not rows then return end
-        local tile, beside = rows[1][1], rows[1][2]
-        self.tile = tile
+        local west, tile, east = rows[1][1], rows[1][2], rows[1][3]
         T.placeLine(self, { tile }, "iron")
-        self.ground = T.placeTank(self, beside, "ground", 100)
-        self.above = T.placeTank(self, tile, "above", 10)
+        T.placeTank(self, west, "ground", 100)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         T.goNextTo(self, tile.square)
-        useJob(self, tile, LineJobs.TAP, nil, "fit tap", true)
+        useJob(self, tile, LineJobs.TAP, nil, "beside a ground barrel", false)
+        T.placeTank(self, east, "raised", 0)
+        useJob(self, tile, LineJobs.TAP, nil, "beside a raised barrel", true)
         readUntil(self, { tile }, "tapped", function(tiles) return tiles[1].record.tap == true end)
         T.waitFor(self, function()
             local line = T.lineObject(tile)
@@ -474,37 +474,48 @@ T.test("irrigation_lines_fit_tap_picks_the_highest_tank", {
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
     end,
     validate = function(self)
-        expectOffered(self, "fit tap")
-        local record = recordOf(self, "tapped", 1)
-        expect(record.tap, "no tap fitted")
-        expect(record.tapX == self.above.x and record.tapY == self.above.y and record.tapZ == self.above.z,
-            "the tap draws on " .. tostring(record.tapX) .. "," .. tostring(record.tapY) .. "," .. tostring(record.tapZ)
-            .. ", not the tank above")
+        expectRefused(self, "beside a ground barrel", "Tooltip_EnhancedIrrigation_NoPressure")
+        expectOffered(self, "beside a raised barrel")
+        expect(recordOf(self, "tapped", 1).tap, "no tap fitted")
         expect(hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
         expect(self.counts.left["Base.MetalPipe"] == 0, "the tap took no pipe")
         expect(self.counts.left["Base.PipeWrench"] == 1, "the tap took the pipe wrench")
     end,
 })
 
--- Between tanks on one level, Fit Tap takes the fuller.
-T.test("irrigation_lines_fit_tap_picks_the_fuller_tank", {
-    instant = true,
+-- Each time the water runs, the tap draws on the highest tank reaching it that holds water, the
+-- fuller of two on one level: an empty barrel two storeys up and a full one on the ground give
+-- none, and the fuller of two a storey up gives it all. Catches a tap tied to one tank, an empty
+-- tank chosen, or a tank without the head drawn on.
+T.test("irrigation_lines_tap_draws_from_the_highest_tank_holding_water", {
     run = function(self)
         local rows = T.row(self, 3)
         if not rows then return end
         local west, tile, east = rows[1][1], rows[1][2], rows[1][3]
-        T.placeLine(self, { tile }, "lead")
-        self.low = T.placeTank(self, west, "ground", 20)
-        self.full = T.placeTank(self, east, "ground", 80)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.LeadPipe" } })
-        T.goNextTo(self, tile.square)
-        useJob(self, tile, LineJobs.TAP, nil, "fit tap", true)
-        readUntil(self, { tile }, "tapped", function(tiles) return tiles[1].record.tap == true end)
+        tile.fields = copyField(tapOn(), { holed = true })
+        T.placeLine(self, { tile }, "iron")
+        self.start = { empty = 0, fuller = 20, emptier = 10, ground = TANK_LITRES }
+        self.tanks = {
+            empty = T.placeTank(self, east, "raisedAbove", self.start.empty),
+            fuller = T.placeTank(self, tile, "above", self.start.fuller),
+            emptier = T.placeTank(self, west, "raised", self.start.emptier),
+            ground = T.placeTank(self, east, "lidded", self.start.ground),
+        }
+        T.batch(function()
+            flow(self, tile, 1, {}, "hour")
+            for name, tank in pairs(self.tanks) do
+                T.read(self, "tanks.read", T.at(tank), name)
+            end
+        end)
     end,
     validate = function(self)
-        local record = recordOf(self, "tapped", 1)
-        expect(record.tap and record.tapX == self.full.x and record.tapY == self.full.y,
-            "the tap draws on " .. tostring(record.tapX) .. "," .. tostring(record.tapY) .. ", not the fuller tank")
+        local hour = self.reads.hour
+        if not expect(hour.drawn, "the line didn't run: " .. tostring(hour.stopped)) then return end
+        -- The fuller tank stands a storey over the line: one storey of head.
+        local want = { empty = 0, fuller = Lines.HOLE_RATE, emptier = 0, ground = 0 }
+        for name, drawn in pairs(want) do
+            expectNear("the " .. name .. " tank's water", self.reads[name].litres, self.start[name] - drawn, LITRES)
+        end
     end,
 })
 
@@ -515,8 +526,8 @@ T.test("irrigation_lines_water_needs_pressure", {
         local rows = T.row(self, 2)
         if not rows then return end
         local tile, beside = rows[1][1], rows[1][2]
-        local tank = T.placeTank(self, beside, "ground", 100)
-        tile.fields = tapOn(tank)
+        T.placeTank(self, beside, "ground", 100)
+        tile.fields = tapOn()
         T.placeLine(self, { tile }, "iron")
         T.goNextTo(self, tile.square)
         useWater(self, tile, "water", false)
@@ -538,7 +549,7 @@ T.test("irrigation_lines_water_from_a_raised_tank", {
         local tile, beside = rows[1][1], rows[1][2]
         self.tile = tile
         self.tank = T.placeTank(self, beside, "raised", SMALL_TANK_LITRES)
-        tile.fields = copyField(tapOn(self.tank), { cracked = true })
+        tile.fields = copyField(tapOn(), { cracked = true })
         T.placeLine(self, { tile }, "plastic")
         T.plant(self, tile, 0)
         T.goNextTo(self, tile.square)
@@ -575,7 +586,7 @@ T.test("irrigation_lines_water_stops_when_the_character_walks_off", {
         if not (rows and away) then return end
         local tile, there = rows[1][1], away[1][1]
         self.tank = T.placeTank(self, tile, "above", TANK_LITRES)
-        tile.fields = copyField(tapOn(self.tank), { cracked = true })
+        tile.fields = copyField(tapOn(), { cracked = true })
         T.placeLine(self, { tile }, "plastic")
         T.goNextTo(self, tile.square)
         T.setMultiplier(self, WATER_SPEED)
@@ -610,7 +621,7 @@ T.test("irrigation_lines_water_refused_out_of_reach", {
         if not (rows and away) then return end
         local tile = rows[1][1]
         self.tank = T.placeTank(self, tile, "above", TANK_LITRES)
-        tile.fields = copyField(tapOn(self.tank), { cracked = true })
+        tile.fields = copyField(tapOn(), { cracked = true })
         T.placeLine(self, { tile }, "plastic")
         T.goNextTo(self, away[1][1].square)
         waterUnchecked(self, tile)
@@ -635,7 +646,7 @@ T.test("irrigation_lines_flow_points_per_litre", {
         if not rows then return end
         local tap, thirsty, full = rows[1][1], rows[1][2], rows[1][3]
         self.tank = T.placeTank(self, tap, "above", TANK_LITRES)
-        tap.fields = tapOn(self.tank)
+        tap.fields = tapOn()
         thirsty.fields = { holed = true }
         full.fields = { holed = true }
         T.placeLine(self, { tap, thirsty, full }, "iron")
@@ -668,9 +679,10 @@ T.test("irrigation_lines_higher_tank_waters_faster", {
         local tiles = T.layout(self, { { 0, 0 }, { 2, 0 } }, { indoors = true })
         if not tiles then return end
         self.low = T.placeTank(self, tiles[1], "above", TANK_LITRES)
-        self.high = T.placeTank(self, tiles[2], "twoUp", TANK_LITRES)
-        tiles[1].fields = copyField(tapOn(self.low), { holed = true })
-        tiles[2].fields = copyField(tapOn(self.high), { holed = true })
+        -- A barrel on a stand on the floor above.
+        self.high = T.placeTank(self, tiles[2], "raisedAbove", TANK_LITRES)
+        tiles[1].fields = copyField(tapOn(), { holed = true })
+        tiles[2].fields = copyField(tapOn(), { holed = true })
         T.placeLine(self, tiles, "iron")
         T.batch(function()
             flow(self, tiles[1], 1, {}, "low hour")
@@ -797,8 +809,8 @@ T.test("irrigation_lines_dry_and_freeze_while_unloaded", {
         local tile, beside = rows[1][1], rows[1][2]
         self.tile = tile
         -- Beside the tile, not over it: a floor above would roof it.
-        local tank = T.placeTank(self, beside, "raised", TANK_LITRES)
-        tile.fields = copyField(tapOn(tank), { holed = true })
+        T.placeTank(self, beside, "raised", TANK_LITRES)
+        tile.fields = copyField(tapOn(), { holed = true })
         T.placeLine(self, { tile }, "iron")
         flow(self, tile, 1, { tile }, "watered")
         T.waitFor(self, function() return clientSprite(tile) == Sprites.pipe("iron", true, 0) end,
@@ -921,8 +933,7 @@ T.test("irrigation_lines_take_up_returns_items", {
         if not rows then return end
         local tapTile, cracked, clay, whole = rows[1][1], rows[1][2], rows[1][3], rows[1][4]
         self.tiles = rows[1]
-        local tank = T.placeTank(self, tapTile, "above", 0)
-        tapTile.fields = copyField(tapOn(tank, "iron"), { patches = 1 })
+        tapTile.fields = copyField(tapOn("iron"), { patches = 1 })
         cracked.fields = { cracked = true }
         tapTile.material, cracked.material, clay.material, whole.material = "iron", "iron", "clay", "iron"
         T.placeLine(self, self.tiles)
@@ -998,8 +1009,7 @@ T.test("irrigation_lines_sledgehammer_reshapes_neighbours", {
         if not rows then return end
         local west, middle, east = rows[1][1], rows[1][2], rows[1][3]
         self.tiles = { west, middle, east }
-        local tank = T.placeTank(self, middle, "above", 0)
-        middle.fields = tapOn(tank, "iron")
+        middle.fields = tapOn("iron")
         T.placeLine(self, self.tiles, "iron")
         T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
         T.goNextTo(self, middle.square)
