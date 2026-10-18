@@ -29,12 +29,13 @@ local MARGIN = 3
 local BLOCK = { dry = 0, wet = 6 }
 local WET_FIELDS = { soak = 20 }
 local TAPS = { { x = 3, y = 1 }, { x = 9, y = 5 } }
--- Crops on wet line tiles, as grown as each stage says.
+-- Crops on wet line tiles, as grown as each stage says, fully watered.
 local CROPS = {
     { x = 6, y = 0, seed = "Tomato", stage = 6 },
     { x = 7, y = 1, seed = "Carrots", stage = 5 },
     { x = 8, y = 10, seed = "Broccoli", stage = 4 },
 }
+local CROP_WATER = 100
 local STAND_ROW = 18
 local STANDS = { Sprites.STAND, Sprites.RAISED_BARREL, Sprites.RAISED_BARREL_CLOSED, Sprites.RAISED_TARP_BARREL,
     Sprites.RAISED_TARP_BARREL_CLOSED, VANILLA_BARREL }
@@ -64,88 +65,19 @@ for _, shot in ipairs({
     table.insert(SHOTS, shot)
 end
 
-local function isNaturalFloor(square)
-    local floor = square:getFloor()
-    local name = floor and floor:getSprite() and floor:getSprite():getName()
-    return name ~= nil and luautils.stringStarts(name, "blends_natural")
-end
-
--- Open: outdoors, nothing on it the stage can't clear, and with `natural`, soil or grass, on which
--- the wet patches are meant to show.
-local function isOpen(square, natural)
-    if square == nil or not square:isOutside() or not square:isSolidFloor() or square:getRoom() ~= nil
-        or square:getWall(true) ~= nil or square:getWall(false) ~= nil or square:getVehicleContainer() ~= nil
-        or (natural and not isNaturalFloor(square)) then
-        return false
-    end
-    local objects = square:getObjects()
-    for i = 0, objects:size() - 1 do
-        local object = objects:get(i)
-        if not object:isFloor() and object:getType() ~= IsoObjectType.tree and not Stage.isGroundCover(object) then
-            return false
-        end
-    end
-    return true
-end
-
-local function lotFits(cornerX, cornerY, z, natural)
-    local cell = getCell()
-    for x = cornerX, cornerX + AREA.w - 1 do
-        for y = cornerY, cornerY + AREA.h - 1 do
-            if not isOpen(cell:getGridSquare(x, y, z), natural) then
-                return false
-            end
-        end
-    end
-    return true
-end
-
 -- The north-west corner of the closest lot that takes the whole stage, on soil or grass if one is
 -- in reach.
 local function findLot(player)
     for _, natural in ipairs({ true, false }) do
-        local corner = Stage.closestSquare(player, function(square)
-            return lotFits(square:getX(), square:getY(), square:getZ(), natural)
-        end)
-        if corner then
-            return { x = corner:getX(), y = corner:getY(), z = corner:getZ(), natural = natural }
+        local lot = Stage.findLot(player, AREA.w, AREA.h, natural)
+        if lot then
+            lot.natural = natural
+            return lot
         end
     end
 end
 
-local function lotSquare(lot, x, y)
-    return getCell():getGridSquare(lot.x + x, lot.y + y, lot.z)
-end
-
--- The object of the tile `sprite` as the build menu builds one (ISBuildIsoEntity:setInfo): a
--- thumpable with the entity that owns the tile.
-local function build(square, sprite)
-    local script = EnhancedIrrigation.tileEntity(sprite)
-    if not script then
-        return "the entity of the tile " .. sprite
-    end
-    local thumpable = IsoThumpable.new(getCell(), square, sprite, false, nil)
-    GameEntityFactory.CreateIsoObjectEntity(thumpable, script, true)
-    square:AddSpecialObject(thumpable)
-end
-
--- A crop sown on `square` as the line tests sow one (lines.plant), then grown to `stage` at full
--- health, its tile set as the farming system's growth sets it.
-local function plant(square, seed, stage)
-    local farming = SFarmingSystem.instance
-    farming:plow(square)
-    local crop = farming:getLuaObjectOnSquare(square)
-    if not crop then
-        return "the plowed furrow's record at " .. square:getX() .. "," .. square:getY()
-    end
-    crop:seed(seed)
-    crop.nbOfGrow = stage
-    crop.health = 100
-    crop.waterLvl = 100
-    crop.mildewLvl = 0
-    crop:setSpriteName(farming_vegetableconf.getSpriteName(crop))
-    crop:saveData()
-end
+local lotSquare = Stage.lotSquare
 
 local function layBlock(lot, material, left, top, fields)
     local LineSystem = EnhancedIrrigation.LineSystem
@@ -164,14 +96,7 @@ local function buildStage(lot)
         return "the authority's systems (LineSystem, SFarmingSystem); --art runs in single player only"
     end
     Stage.removeTrees(lot.x, lot.y, lot.z)
-    for x = -MARGIN, AREA.w + MARGIN - 1 do
-        for y = -MARGIN, AREA.h + MARGIN - 1 do
-            local square = lotSquare(lot, x, y)
-            if square then
-                Stage.clearGroundCover(square)
-            end
-        end
-    end
+    Stage.clearLot(lot, AREA.w, AREA.h, MARGIN)
     for _, wall in ipairs(WALLS) do
         PZHarness.Fixtures.newTile(lotSquare(lot, wall.x, wall.y), wall.sprite)
     end
@@ -189,14 +114,14 @@ local function buildStage(lot)
         record:afterChange()
     end
     for _, crop in ipairs(CROPS) do
-        local missing = plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage)
+        local missing = Stage.plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage, CROP_WATER)
         if missing then
             return missing
         end
     end
     for x, sprite in ipairs(STANDS) do
-        local missing = build(lotSquare(lot, x - 1, STAND_ROW), sprite)
-        if missing then
+        local built, missing = Stage.build(lotSquare(lot, x - 1, STAND_ROW), sprite)
+        if not built then
             return missing
         end
     end
