@@ -1,7 +1,7 @@
 -- Development only; dev/run-debug-client.sh --art runs it instead of the tests. It checks the art
 -- from art/models in the world: it lays every pipe material dry and wet, a tap, crops over pipes, a
 -- line along a wall, and the Tank Stand bare and with each raised barrel beside vanilla's rain
--- barrel, on one open lot at noon, and saves each shot to <cachedir>/Screenshots as <name>.png.
+-- barrel, on one open lot, and saves each shot to <cachedir>/Screenshots as <name>.png.
 -- Single player only: it lays the lines through the authority's LineSystem.
 
 require "EnhancedIrrigation/Sprites"
@@ -18,11 +18,11 @@ local WALL_NORTH = "walls_exterior_house_01_1"
 local WALL_WEST = "walls_exterior_house_01_0"
 local VANILLA_BARREL = "carpentry_02_122"
 
--- The lot, in squares east and south of its north-west corner. Each material takes a band four
--- rows deep: a 3x3 block dry (corners, tees and the cross) with a tail east of its middle row (a
--- straight and an end), then the same wet, column 5 left free for the character. The stands stand
--- in a row below the bands, beside vanilla's rain barrel, and east of them a line runs round the
--- inside of a wall corner.
+-- The lot, in squares east and south of its north-west corner. Each material takes a band: a block
+-- dry (corners, tees and the cross) with a tail east of its middle row (a straight and an end),
+-- then the same wet, with a column between left free for the character. The stands stand in a row
+-- below the bands, beside vanilla's rain barrel, and east of them a line runs round the inside of
+-- a wall corner.
 local AREA = { w = 10, h = 20 }
 -- Ground cover this far round the lot goes too, so none of it stands in front of the shots.
 local MARGIN = 3

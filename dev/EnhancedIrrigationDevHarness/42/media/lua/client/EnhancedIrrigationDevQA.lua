@@ -1,12 +1,8 @@
 -- Development only. The setup of the Enhanced Irrigation QA debug scenario
 -- (EnhancedIrrigationDebugScenario.lua), for playing through the mod by hand: a character nothing
--- can see or hurt, who carries anything, has every skill the mod reads and knows its recipes, and
--- carries an empty rain barrel, on an open lot between a farmhouse and its field. Laid out on the
--- lot from north to south, a group to a few rows: beds of growing crops, each beside a tank to
--- lay a line from (a barrel on a Tank Stand, a barrel on a deck a storey up, up Log Stairs, a
--- barrel on the ground); a row of tanks to set up and plumb (an empty stand, an empty barrel, two barrels to
--- plumb together); and on the ground, a row to each group of items: the pipe, the joints, the
--- tools, the Tank Stand's materials, and the pamphlet and a watering can.
+-- can see or hurt, who carries anything and has every skill and recipe the mod reads, and on an
+-- open lot between a farmhouse and its field, from north to south, beds of crops beside tanks to
+-- lay lines from, tanks to set up and plumb, and a row to each group of items the jobs take.
 -- Single player only: it sows through the authority's SFarmingSystem.
 require "EnhancedIrrigation/Sprites"
 local Stage = require "EnhancedIrrigationDevStage"
@@ -87,7 +83,8 @@ local TOOLS = {
 }
 local READING = { { "EnhancedIrrigation.CisternsForKentucky", 1 }, { "Base.WateredCan", 1, FluidType.Water } }
 
--- The mod's build-menu recipes, which the craftRecipes T.learnRecipes teaches don't include.
+-- The mod's build-menu recipes, which PZHarness.Test.learnRecipes doesn't teach: it teaches only
+-- craftRecipes.
 local function buildRecipes()
     local recipes, prefix = {}, PZHarness.testSettings.recipePrefix
     local buildable = getScriptManager():getAllBuildableRecipes()
@@ -107,8 +104,7 @@ local function recipeNames(recipes)
     return names
 end
 
--- What the build-menu recipes use up, the Tank Stand's logs, planks and nails: their tools are
--- among TOOLS.
+-- What the build-menu recipes use up; their tools are among TOOLS.
 local function standMaterials(recipes)
     local materials = {}
     for _, recipe in ipairs(recipes) do

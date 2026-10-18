@@ -216,9 +216,9 @@ function Stage.build(square, sprite)
     return thumpable
 end
 
---- A crop sown on `square` as the line tests sow one (lines.plant), then grown to `stage` at full
---- health and `water` water points, its tile set as the farming system's growth sets it. Returns
---- what is missing, or nil. Single player only: SFarmingSystem is the authority's.
+--- A crop sown on `square`, then grown to `stage` at full health and `water` water points, its tile
+--- set as the farming system's growth sets it. Returns what is missing, or nil. Single player
+--- only: SFarmingSystem is the authority's.
 function Stage.plant(square, seed, stage, water)
     local farming = SFarmingSystem.instance
     farming:plow(square)
