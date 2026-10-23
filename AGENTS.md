@@ -14,6 +14,7 @@
 - A test checks what a player gets (plant water, soak, litres, items, tooltips, sprites on both sides) through the real verb, with expectations computed from the mod's constants. Don't test values a script file states, wiring or forwarding.
 - Give a new file under `Contents/` or the dev mod a `TEST_MAP` line in `dev/harness.conf` naming the tests that reach its code; without one, `--changed` runs every test.
 - Comments say why, without repeating values from the code.
+- When a change alters how a mechanic plays or where something spawns, update `docs/player-guide.md` in the same commit. It gives exact figures where players plan around them (costs, reach, times, levels) and rounded ones for rates.
 - `shared/EnhancedIrrigation/GlobalObjects.lua`, `client/EnhancedIrrigation/ClientObjects.lua` and `client/EnhancedIrrigation/UI/Needs.lua` are copies of Renewable Energy's; change both mods or neither.
 - Don't add `CLAUDE.md` files; the `AGENTS.md` files hold the agent instructions.
 
