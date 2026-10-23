@@ -1,5 +1,5 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
     "Sandbox_EnhancedIrrigation_PamphletLoot": "Cisterns for Kentucky loot",
-    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry and Welding still teach its plans."
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden and hardware stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry still teaches its plans, and Welding the plumbing."
 }

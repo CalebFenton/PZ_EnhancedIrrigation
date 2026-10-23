@@ -1,7 +1,7 @@
 name=Enhanced Irrigation
 id=cf_enhanced_irrigation
 author=Caleb Fenton
-description=Raised tanks, garden lines, pumps, plumbed fixtures and water you make safe yourself.
+description=Raised tanks, tanks plumbed together, and garden lines that water your beds from them.
 category=features
 modversion=0.1.0
 pack=enhanced_irrigation
