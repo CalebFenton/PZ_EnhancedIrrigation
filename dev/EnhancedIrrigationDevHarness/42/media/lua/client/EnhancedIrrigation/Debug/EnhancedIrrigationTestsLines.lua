@@ -77,7 +77,8 @@ end
 
 -- Three iron lengths laid with the cursor from the ground's menu, the first beside a tank on the
 -- floor above: each tile costs a length, and each joins its neighbours, so the row draws as one
--- pipe. Catches a free tile, or shapes that don't meet.
+-- pipe. Iron is joined with the pipe wrench, so without one the cursor and the authority refuse it.
+-- Catches a free tile, shapes that don't meet, or iron laid bare-handed.
 T.test("irrigation_lines_lay_costs_and_shapes", {
     instant = true,
     run = function(self)
@@ -89,6 +90,13 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
         T.placeTank(self, tiles[1], "above", 0)
         T.give(self, "pipes", { { type = "Base.MetalPipe", count = #tiles } })
         T.goNextTo(self, tiles[2].square)
+        T.step(function()
+            self.noWrench = layCursor(self, "iron"):refusal(tiles[1].square)
+            getCell():setDrag(nil, T.player():getPlayerNum())
+        end)
+        T.read(self, "lines.perform", T.at(tiles[1], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
+            "no wrench")
+        T.give(self, "wrench", { { type = "Base.PipeWrench" } })
         T.step(function()
             local context = T.need(self, T.worldMenu(tiles[1].square:getFloor()), "a world menu on the ground")
             if not context then return end
@@ -119,6 +127,9 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
         T.count(self, "left", { "Base.MetalPipe" })
     end,
     validate = function(self)
+        expect(self.noWrench == "Tooltip_EnhancedIrrigation_Short", "laying iron without a pipe wrench: " .. tostring(self.noWrench))
+        local noWrench = self.reads["no wrench"]
+        expect(noWrench.done == false and noWrench.tiles[1].record == nil, "the server laid iron without a pipe wrench")
         expect(self.layOffered, "the ground's menu doesn't offer Lay Line for iron pipe")
         local shapes = { Sprites.EAST, Sprites.EAST + Sprites.WEST, Sprites.WEST }
         for i, tile in ipairs(self.tiles) do
@@ -133,8 +144,8 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
     end,
 })
 
--- A plastic length takes one use of glue for its joint. Catches a joint that's free, or one that
--- empties the glue.
+-- A plastic length takes one use of glue for its joint; wood glue and adhesive tape hold no water,
+-- so they don't make one. Catches a joint that's free, one that empties the glue, or one of tape.
 T.test("irrigation_lines_lay_plastic_uses_a_joint", {
     instant = true,
     run = function(self)
@@ -144,14 +155,18 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         self.tile = tile
         T.trackLines(self, { tile })
         T.placeTank(self, tile, "above", 0)
-        T.give(self, "joint", { { type = "Base.Glue" } })
+        T.give(self, "weak joints", { { type = "Base.Woodglue" }, { type = "Base.Scotchtape" } })
         T.give(self, "pipes", { { type = "Base.Pipe" } })
         T.goNextTo(self, tile.square)
         T.step(function()
+            self.cursor = layCursor(self, "plastic")
+            self.weakJoint = self.cursor:refusal(tile.square)
+        end)
+        T.give(self, "joint", { { type = "Base.Glue" } })
+        T.step(function()
             self.usesBefore = self.items.joint[1]:getCurrentUses()
-            local cursor = layCursor(self, "plastic")
-            self.valid = cursor:isValid(tile.square)
-            cursor:tryBuild(tile.x, tile.y, tile.z)
+            self.valid = self.cursor:refusal(tile.square) == nil
+            self.cursor:tryBuild(tile.x, tile.y, tile.z)
         end)
         T.waitForLines(self, { tile }, "this client's copy of the plastic tile")
         T.waitFor(self, function() return self.items.joint[1]:getCurrentUses() < self.usesBefore end,
@@ -159,6 +174,8 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         T.count(self, "left", { "Base.Pipe" })
     end,
     validate = function(self)
+        expect(self.weakJoint == "Tooltip_EnhancedIrrigation_Short",
+            "wood glue and adhesive tape made a joint: " .. tostring(self.weakJoint))
         expect(self.valid, "the cursor refused a tile beside a tank")
         expect(self.items.joint[1]:getCurrentUses() == self.usesBefore - 1,
             "the joint used " .. (self.usesBefore - self.items.joint[1]:getCurrentUses()) .. " uses of glue, not 1")
@@ -176,7 +193,7 @@ T.test("irrigation_lines_first_tile_needs_a_tank", {
         if not rows then return end
         local tiles = rows[1]
         T.trackLines(self, tiles)
-        T.give(self, "pipes", { { type = "Base.MetalPipe", count = #tiles } })
+        T.give(self, "pipes", { { type = "Base.MetalPipe", count = #tiles }, { type = "Base.PipeWrench" } })
         T.step(function()
             if not T.need(self, #Tanks.tanksReaching(tiles[1].x, tiles[1].y, tiles[1].z) == 0,
                     "squares out of every tank's reach") then
@@ -214,7 +231,7 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         tiles[1].fields = T.tapped()
         tiles[3].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
-        T.give(self, "pipes", { { type = "Base.MetalPipe" } })
+        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tiles[2].square)
         T.step(function()
             self.cursor = layCursor(self, "iron")
@@ -254,7 +271,7 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
         T.placeTile(self, inside.square, WALL_WEST)
         T.placeTile(self, doorway.square, DOOR_FRAME_WEST)
         T.placeLine(self, { inside }, "iron", { holed = true })
-        T.give(self, "pipes", { { type = "Base.MetalPipe", count = 2 } })
+        T.give(self, "pipes", { { type = "Base.MetalPipe", count = 2 }, { type = "Base.PipeWrench" } })
         T.step(function()
             for _, tile in ipairs(self.tiles) do
                 if not T.need(self, #Tanks.tanksReaching(tile.x, tile.y, tile.z) == 0,
@@ -566,7 +583,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
         T.trackLines(self, { tile })
         T.placeTank(self, tile, "above", 0)
         self.worn = math.floor(instanceItem(Pipes.KINDS.iron.item):getConditionMax() / 2)
-        T.give(self, "pipe", { { type = Pipes.KINDS.iron.item, condition = self.worn } })
+        T.give(self, "pipe", { { type = Pipes.KINDS.iron.item, condition = self.worn }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tile.square)
         T.step(function()
             local cursor = layCursor(self, "iron")

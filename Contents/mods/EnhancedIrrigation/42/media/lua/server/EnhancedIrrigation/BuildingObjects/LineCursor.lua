@@ -66,7 +66,7 @@ function LineCursor:refusal(square)
         return "Tooltip_EnhancedIrrigation_CantLayHere"
     end
     local blocker = LineJobs.layBlocker(square, function(px, py, pz) return self:isPending(px, py, pz) end)
-    local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.materials(self.kind, self:pendingCount() + 1))
+    local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.layMaterials(self.kind, self:pendingCount() + 1))
     return EnhancedIrrigation.refusal(blocker, needs)
 end
 

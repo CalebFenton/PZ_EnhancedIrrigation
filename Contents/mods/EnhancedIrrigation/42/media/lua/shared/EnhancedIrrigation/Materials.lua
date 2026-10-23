@@ -5,8 +5,9 @@
 -- A material is one of:
 --   { tool = "TAG", item = fullType }         a working tool with an ItemTag, `item` naming it in
 --                                             the tooltip
---   { tags = { "TAG", ... }, uses = n,        n uses of drainables with any of the ItemTags, as a
---     labelKey = key }                        joint takes glue or tape; `labelKey` names them
+--   { tags = { "TAG", ... }, uses = n,        n uses of drainables with any of the ItemTags, or of
+--     labelKey = key }                        any of the types `types = { fullType, ... }` names,
+--                                             as a joint takes glue or tape; `labelKey` names them
 --   { item = fullType, need = n }             items of a type, taken; `keep` needs it but takes
 --                                             nothing
 --   { recipe = name }                         a craftRecipe the character knows
@@ -17,23 +18,35 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Materials = {}
 EnhancedIrrigation.Materials = Materials
 
--- The drainables with any of `tags` the character carries, unbroken and not used up, fullest first.
-local function drainablesTagged(character, tags)
+local function addDrainables(list, seen, items)
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if not seen[item] and instanceof(item, "DrainableComboItem") and item:getCurrentUses() > 0
+                and not item:isBroken() then
+            seen[item] = true
+            table.insert(list, item)
+        end
+    end
+end
+
+-- The drainables `material` names (its `tags` or `types`) the character carries, unbroken and not
+-- used up, fullest first.
+local function drainablesOf(character, material)
     local list, seen = {}, {}
     local inventory = character:getInventory()
-    for _, tag in ipairs(tags) do
-        local items = inventory:getAllTagRecurse(ItemTag[tag], ArrayList.new())
-        for i = 0, items:size() - 1 do
-            local item = items:get(i)
-            if not seen[item] and instanceof(item, "DrainableComboItem") and item:getCurrentUses() > 0
-                    and not item:isBroken() then
-                seen[item] = true
-                table.insert(list, item)
-            end
-        end
+    for _, tag in ipairs(material.tags or {}) do
+        addDrainables(list, seen, inventory:getAllTagRecurse(ItemTag[tag], ArrayList.new()))
+    end
+    for _, fullType in ipairs(material.types or {}) do
+        addDrainables(list, seen, inventory:getAllTypeRecurse(fullType))
     end
     table.sort(list, function(a, b) return a:getCurrentUses() > b:getCurrentUses() end)
     return list
+end
+
+-- Whether `material` is uses of drainables rather than items or a tool.
+local function isDrainable(material)
+    return material.tags ~= nil or material.types ~= nil
 end
 
 -- Whether the job uses up the items `material` names.
@@ -51,9 +64,9 @@ local function haveOf(character, material)
         return character:isRecipeActuallyKnown(material.recipe) and 1 or 0
     elseif material.tool then
         return EnhancedIrrigation.hasWorkingTool(character, ItemTag[material.tool]) and 1 or 0
-    elseif material.tags then
+    elseif isDrainable(material) then
         local uses = 0
-        for _, item in ipairs(drainablesTagged(character, material.tags)) do
+        for _, item in ipairs(drainablesOf(character, material)) do
             uses = uses + item:getCurrentUses()
         end
         return uses
@@ -71,7 +84,7 @@ function Materials.needs(character, list)
             need.recipe = getScriptManager():getCraftRecipe(material.recipe)
         elseif material.tool then
             need.tool, need.item = material.tool, material.item
-        elseif material.tags then
+        elseif isDrainable(material) then
             -- A key, not the text: the server reads needs too and has no IG_UI translations.
             need.labelKey = material.labelKey
         else
@@ -97,9 +110,9 @@ function Materials.conditions(character, list)
     return conditions
 end
 
-local function useTagged(character, tags, count)
+local function useDrainables(character, material, count)
     local left = count
-    for _, item in ipairs(drainablesTagged(character, tags)) do
+    for _, item in ipairs(drainablesOf(character, material)) do
         while left > 0 and item:getCurrentUses() > 0 do
             item:UseAndSync()
             left = left - 1
@@ -114,8 +127,8 @@ end
 function Materials.consume(character, list)
     local inventory = character:getInventory()
     for _, material in ipairs(list) do
-        if material.tags then
-            useTagged(character, material.tags, material.uses)
+        if isDrainable(material) then
+            useDrainables(character, material, material.uses)
         elseif takes(material) then
             local items = itemsTaken(inventory, material)
             for i = 0, items:size() - 1 do

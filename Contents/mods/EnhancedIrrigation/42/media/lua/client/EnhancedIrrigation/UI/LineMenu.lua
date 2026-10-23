@@ -85,7 +85,7 @@ local function addLay(context, playerNum, character, kinds)
     for _, kind in ipairs(kinds) do
         local option = menu:addOption(getItemNameFromFullType(Pipes.KINDS[kind].item), playerNum,
             EnhancedIrrigation.LineCursor.start, kind)
-        Needs.show(option, Materials.needs(character, Pipes.materials(kind, 1)))
+        Needs.show(option, Materials.needs(character, Pipes.layMaterials(kind, 1)))
     end
 end
 

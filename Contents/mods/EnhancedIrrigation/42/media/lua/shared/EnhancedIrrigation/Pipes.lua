@@ -11,8 +11,12 @@ local Pipes = {}
 EnhancedIrrigation.Pipes = Pipes
 
 Pipes.WRENCH = { tool = "PIPE_WRENCH", item = "Base.PipeWrench" }
--- What holds plastic, which also patches a crack in any pipe.
-Pipes.GLUE = { tags = { "GLUE", "EPOXY", "TAPE" }, uses = 1, labelKey = "IGUI_EnhancedIrrigation_GlueOrTape" }
+-- What holds plastic, which also patches a crack in any pipe: glue, epoxy or duct tape. Named by
+-- type, since the game's glue and tape tags also take wood glue and adhesive tape, which hold no
+-- water.
+Pipes.GLUE = {
+    types = { "Base.Glue", "Base.Epoxy", "Base.DuctTape" }, uses = 1, labelKey = "IGUI_EnhancedIrrigation_GlueOrTape",
+}
 
 -- Each material's frostPerHour is the cracks a winter a 24-tile line left full outdoors should
 -- expect, spread over the line's tile-hours of hard freeze in a winter of the game's own climate
@@ -23,17 +27,22 @@ Pipes.GLUE = { tags = { "GLUE", "EPOXY", "TAPE" }, uses = 1, labelKey = "IGUI_En
 local WINTER_TILE_HOURS = 24 * 600
 
 -- Each material: `item` and `perLength`, what one length of pipe is, and what taking it out gives
--- back; `joint`, the material each length's joint takes, or nil, used up for good; `frostPerHour`,
--- the chance an hour that a full length splits in a hard freeze (Lines.HARD_FREEZE_CELSIUS);
--- `punchCracks`, whether a punched hole may split it; `hardness`, which hole tools get into it
--- (LineJobs.HOLE_TOOLS reach).
+-- back; `joint`, the material each length's joint takes, or nil, used up for good; `wrench`, its
+-- lengths are joined with the pipe wrench alone, which laying it needs; `frostPerHour`, the chance
+-- an hour that a full length splits in a hard freeze (Lines.HARD_FREEZE_CELSIUS); `punchCracks`,
+-- whether a punched hole may split it; `hardness`, which hole tools get into it (LineJobs.HOLE_TOOLS
+-- reach).
 Pipes.KINDS = {
     plastic = {
         item = "Base.Pipe", perLength = 1, joint = Pipes.GLUE,
         frostPerHour = 0.3 / WINTER_TILE_HOURS, punchCracks = true, hardness = 1,
     },
-    iron = { item = "Base.MetalPipe", perLength = 1, frostPerHour = 1.5 / WINTER_TILE_HOURS, hardness = 3 },
-    lead = { item = "Base.LeadPipe", perLength = 1, frostPerHour = 0.5 / WINTER_TILE_HOURS, hardness = 1 },
+    iron = {
+        item = "Base.MetalPipe", perLength = 1, wrench = true, frostPerHour = 1.5 / WINTER_TILE_HOURS, hardness = 3,
+    },
+    lead = {
+        item = "Base.LeadPipe", perLength = 1, wrench = true, frostPerHour = 0.5 / WINTER_TILE_HOURS, hardness = 1,
+    },
     clay = {
         item = "Base.ClayPipeSegment", perLength = 2,
         joint = { tags = { "CONCRETE" }, labelKey = "IGUI_EnhancedIrrigation_Cement" },
@@ -48,8 +57,19 @@ Pipes.ORDER = EnhancedIrrigation.Sprites.PIPE_MATERIALS
 function Pipes.materials(kind, lengths)
     local spec = Pipes.KINDS[kind]
     local list = { { item = spec.item, need = spec.perLength * lengths } }
-    if spec.joint then
-        table.insert(list, { tags = spec.joint.tags, uses = lengths, labelKey = spec.joint.labelKey })
+    local joint = spec.joint
+    if joint then
+        table.insert(list, { tags = joint.tags, types = joint.types, uses = lengths, labelKey = joint.labelKey })
+    end
+    return list
+end
+
+--- The materials list of laying `lengths` tiles of `kind`'s line: its pipe and joints, and the pipe
+--- wrench where that is the joint. Fit Tap and Plumb to Tank take the wrench for any pipe.
+function Pipes.layMaterials(kind, lengths)
+    local list = Pipes.materials(kind, lengths)
+    if Pipes.KINDS[kind].wrench then
+        table.insert(list, 1, Pipes.WRENCH)
     end
     return list
 end

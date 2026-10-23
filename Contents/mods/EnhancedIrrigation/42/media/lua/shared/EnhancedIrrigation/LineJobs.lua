@@ -137,6 +137,9 @@ end
 LineJobs.JOBS = {
     [LineJobs.LAY] = {
         minutes = 3,
+        equip = function(character, floor, kind)
+            return Pipes.KINDS[kind] and Pipes.KINDS[kind].wrench and holdWrench(character) or nil
+        end,
         blocker = function(character, floor, kind)
             if not Pipes.KINDS[kind] then
                 return "Tooltip_EnhancedIrrigation_CantLayHere"
@@ -144,7 +147,7 @@ LineJobs.JOBS = {
             return LineJobs.layBlocker(floor:getSquare())
         end,
         materials = function(character, floor, kind)
-            return Pipes.KINDS[kind] and Pipes.materials(kind, 1) or {}
+            return Pipes.KINDS[kind] and Pipes.layMaterials(kind, 1) or {}
         end,
     },
     [LineJobs.DRILL] = {
