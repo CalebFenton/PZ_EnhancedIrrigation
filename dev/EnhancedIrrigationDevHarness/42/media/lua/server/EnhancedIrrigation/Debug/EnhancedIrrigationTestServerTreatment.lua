@@ -1,10 +1,9 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of the treatment unit tests: placing units,
--- reading them and running their records. Time runs here through the record's own advance, or its
--- update after a set gap, all in one call, so the clock and the ten-minute event don't decide what a
--- test sees. Only registers handlers, so a --stay rerun loads it again.
+-- Development only, not published. Time runs here through the record's own advance, or its update
+-- after a set gap, all in one call, so the clock and the ten-minute event don't decide what a test
+-- sees. Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 
@@ -14,10 +13,9 @@ end
 
 local recordAt, stateAt = Server.treatmentRecordAt, Server.treatmentStateAt
 
--- Places the unit tile `args.sprite` at x, y, z as the build menu builds it, its record made as its
--- OnCreate makes it (a boiler's fireplace too), then sends what stands there to the clients, on a
--- floor laid for it if the square has none (a unit on the storey above), with `args.fields` set on
--- the record. Answers its state. Removed, with its links, record and floor, when the test ends.
+-- Places the unit as the build menu builds it, its record made as its OnCreate makes it (a boiler's
+-- fireplace too), on a floor laid for it if the square has none (a unit on the storey above).
+-- Removed, with its links, record and floor, when the test ends.
 handler("treatment.place", function(_, args, defer)
     local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
     if not square then
