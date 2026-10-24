@@ -3,11 +3,9 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Tanks"
 
--- Water from Tank (Taps.lua, Lines/TapSystem.lua, Lines/Flow.lua and
--- TimedActions/EnhancedIrrigationWaterAction.lua): opening a tap from its menu, who may hold it,
--- which tank it draws on and what an hour's water gives the crops. The verb runs at a raised clock
--- speed; the flow's sums are run for set hours on the server (lines.flow), so the clock doesn't
--- decide them.
+-- Water from Tank: opening a tap from its menu, who may hold it, which tank it draws on and what an
+-- hour's water gives the crops. The verb runs at a raised clock speed; the flow's sums are run for
+-- set hours on the server, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -213,7 +211,6 @@ T.test("irrigation_water_one_person_per_tap", {
         useWater(self, tile, "while held", false)
         waterUnchecked(self, tile)
         T.read(self, "tanks.read", T.at(self.tank), "refused")
-        -- The other player's action has been silent too long.
         T.server(self, "lines.lapseHold", T.at(tile))
         T.setMultiplier(self, WATER_SPEED)
         quickRuns(self)
@@ -261,8 +258,7 @@ T.test("irrigation_water_tap_draws_from_the_highest_tank_holding_water", {
         pairTile.fields = T.tapped({ holed = true })
         T.placeLine(self, { tile }, "iron")
         T.placeLine(self, { pairTile }, "iron")
-        -- Each holding more than an hour draws; the higher less than the lower, the fuller twice
-        -- the emptier.
+        -- Each holding more than an hour draws.
         self.start = {
             empty = 0, higher = 2 * Lines.HOLE_RATE, lower = 4 * Lines.HOLE_RATE, ground = TANK_LITRES,
             fuller = 4 * Lines.HOLE_RATE, emptier = 2 * Lines.HOLE_RATE,
