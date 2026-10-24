@@ -96,6 +96,62 @@ function Server.stateAt(args)
     return state
 end
 
+-- Squares -------------------------------------------------------------------------------------------
+
+-- What the square `at` holds: its crop's `water` and `health` (nil without one), whether a line
+-- tile lies on it (`line`), and its soil's `soak`: that tile's, or off the line what every line
+-- record in a sprinkler's reach keeps of it, added up, so a soak kept twice reads twice. Not
+-- Sprinklers.holderOf, which stops at the first holder and so would hide a second.
+local function readSquare(at)
+    local EI = mod()
+    local reply = { x = at.x, y = at.y, z = at.z, soak = 0 }
+    local plant = SFarmingSystem.instance:getLuaObjectAt(at.x, at.y, at.z)
+    if plant and plant.state ~= "plow" then
+        reply.water, reply.health = plant.waterLvl, plant.health
+    end
+    local line = EI.Lines.recordAt(at.x, at.y, at.z)
+    if line then
+        reply.line, reply.soak = true, line.soak
+        return reply
+    end
+    local reach = EI.Sprinklers.ALONG
+    for dx = -reach, reach do
+        for dy = -reach, reach do
+            local holder = EI.Lines.recordAt(at.x - dx, at.y - dy, at.z)
+            local soak = holder and holder.sprinklerSoak and holder.sprinklerSoak[EI.Sprinklers.offsetKey(dx, dy)]
+            reply.soak = reply.soak + (soak or 0)
+        end
+    end
+    return reply
+end
+
+--- Each of `squares` ({ x, y, z }) as readSquare reads it, or nil without `squares`.
+function Server.readSquares(squares)
+    if not squares then
+        return nil
+    end
+    local read = {}
+    for i, at in ipairs(squares) do
+        read[i] = readSquare(at)
+    end
+    return read
+end
+
+--- Sets the crop on each of `squares` to `water` water points, when given, so what a pass gives
+--- them is measured from room made in the same call, whatever passes ran before it.
+function Server.setWater(squares, water)
+    if not water then
+        return
+    end
+    for _, at in ipairs(squares or {}) do
+        local plant = SFarmingSystem.instance:getLuaObjectAt(at.x, at.y, at.z)
+        if plant and plant.state ~= "plow" then
+            plant.waterLvl = water
+            plant:saveData()
+        end
+    end
+end
+
 -- Tanks ---------------------------------------------------------------------------------------------
 
 --- Builds the object of the tile `sprite` on `square` as the build menu builds one

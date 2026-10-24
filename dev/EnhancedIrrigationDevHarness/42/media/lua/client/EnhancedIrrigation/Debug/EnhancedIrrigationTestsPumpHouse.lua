@@ -79,18 +79,21 @@ local function link(self, house, tank)
     T.waitFor(self, function() return Pumps.outletOf(T.at(house)) ~= nil end, "this client's copy of the outlet")
 end
 
--- The args of a server handler at the house, with the tank and generator to read.
+-- The args of a server handler at the house, with the tank, generator and crop squares to read.
 local function at(house, extra)
     return T.at(house, {
         tank = extra and extra.tank and T.at(extra.tank) or nil,
         generator = extra and extra.generator and T.at(extra.generator) or nil,
+        squares = extra and extra.squares and T.tiles(extra.squares) or nil,
+        water = extra and extra.water,
         hoursAgo = extra and extra.hoursAgo,
         fields = extra and extra.fields,
     })
 end
 
 -- Queues the house's ten-minute pass on the server, `extra.hoursAgo` hours after its last, with
--- `extra.fields` set first, into self.reads[label] ({ now, before, after }).
+-- `extra.fields` set first and the crops on `extra.squares` set to `extra.water`, into
+-- self.reads[label] ({ now, before, after }).
 local function update(self, house, label, extra)
     T.read(self, "pumpHouse.update", at(house, extra), label)
 end
@@ -844,8 +847,7 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
         T.waitForLines(self, self.tiles, "this client's copy of the running line", function(summary) return summary.running end)
         useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain running", false)
         -- The crops dried in the same call, so the ten-minute passes since Turn On leave them room.
-        T.read(self, "sprinklers.house", T.at(self.house, { hoursAgo = HALF_HOUR, squares = T.tiles(self.tiles),
-            water = 0, tank = T.at(self.barrel) }), "half")
+        update(self, self.house, "half", { hoursAgo = HALF_HOUR, squares = self.tiles, water = 0, tank = self.barrel })
         T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
         T.waitForLines(self, self.tiles, "this client's copy of the stopped line", function(summary)
             return not summary.running
@@ -862,7 +864,7 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
                 each * Lines.POINTS_PER_LITRE, 0.05)
         end
         expectNear("the barrel's water drawn", half.before.tank.litres - half.after.tank.litres, 2 * each, LITRES)
-        expectNear("the part's wear", half.before.pump.partCondition - half.after.pump.partCondition,
+        expectNear("the part's wear", half.before.record.partCondition - half.after.record.partCondition,
             Pumps.PARTS[UTILITY].wearPerHour * HALF_HOUR, 0.001)
         expect(self.reads.off.done, "Turn Off wasn't done")
         T.expectOffered(self, "drain stopped")
@@ -906,8 +908,7 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         update(self, self.lineHouse, "line lit", {})
         T.reload(self, T.at(self.house), function()
             update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
-            T.read(self, "sprinklers.house", T.at(self.lineHouse, { hoursAgo = AWAY_HOURS, fields = { on = true } }),
-                "line away")
+            update(self, self.lineHouse, "line away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
         end)
         T.waitFor(self, function()
             for _, handle in ipairs({ self.lineHouse, self.barrel, self.tiles[1], self.tiles[2] }) do
@@ -918,8 +919,7 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
             return true
         end, "this client to load the line's house again", T.LOAD_MS)
         update(self, self.house, "back", { tank = self.tank })
-        T.read(self, "sprinklers.house", T.at(self.lineHouse, { squares = T.tiles(self.tiles), tank = T.at(self.barrel) }),
-            "line back")
+        update(self, self.lineHouse, "line back", { squares = self.tiles, tank = self.barrel })
     end,
     validate = function(self)
         expect((self.chunkLoads or 0) > 0, "the house's chunk came back without LoadChunk, from a cache")
@@ -928,7 +928,7 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
         expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), LITRES)
         local lineAway, lineBack = self.reads["line away"], self.reads["line back"]
-        expect(lineAway.after.pump.lastHour == lineAway.before.pump.lastHour, "the line's house ran while away")
+        expect(lineAway.after.record.lastHour == lineAway.before.record.lastHour, "the line's house ran while away")
         local perHour = 2 * Lines.HOLE_RATE * Pumps.PARTS[APPLIANCE].push
         expectNear("the line's barrel drawn, back", SOURCE_LITRES - lineBack.after.tank.litres,
             perHour * (lineBack.now - (lineAway.now - AWAY_HOURS)), LITRES)

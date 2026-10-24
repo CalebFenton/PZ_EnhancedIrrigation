@@ -595,7 +595,7 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
         if not spots then return end
         self.pump, self.tiles = pumpedLine(self, spots, { seal = LEATHER })
         if not self.pump then return end
-        T.read(self, "sprinklers.pump", T.at(self.pump, { hours = { HALF_HOUR }, squares = T.tiles(self.tiles) }), "half")
+        T.read(self, "pumps.run", T.at(self.pump, { hours = { HALF_HOUR }, squares = T.tiles(self.tiles) }), "half")
         setEndurance(self, Pumps.EXHAUSTED + LAST_ENDURANCE)
         quickRuns(self)
         T.step(function()
@@ -612,15 +612,16 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
     end,
     validate = function(self)
         local half = self.reads.half
+        local before, after = half.before, half.steps[1]
         local push = Pumps.UNITS[WOODEN].push
         local each = Lines.HOLE_RATE * push * HALF_HOUR
         for i = 1, 2 do
-            expectNear("crop " .. i .. "'s water", half.after.squares[i].water - half.before.squares[i].water,
+            expectNear("crop " .. i .. "'s water", after.squares[i].water - before.squares[i].water,
                 each * Lines.POINTS_PER_LITRE, 0.05)
         end
-        local before, after = half.before.pump, half.after.pump
-        expectNear("the seal's wear", after.sealWear - before.sealWear, 2 * each, LITRES)
-        expectNear("the pump's wear", before.condition - after.condition, 2 * each / Pumps.UNITS[WOODEN].wearLitres, 0.0001)
+        expectNear("the seal's wear", after.record.sealWear - before.record.sealWear, 2 * each, LITRES)
+        expectNear("the pump's wear", before.record.condition - after.record.condition,
+            2 * each / Pumps.UNITS[WOODEN].wearLitres, 0.0001)
         T.expectOffered(self, "pump")
         expect(self.sawRunning, "this client never saw the line run while the pump was worked")
     end,

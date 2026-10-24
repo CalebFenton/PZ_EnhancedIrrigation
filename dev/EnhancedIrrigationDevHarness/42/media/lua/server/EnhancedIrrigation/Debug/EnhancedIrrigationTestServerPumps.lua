@@ -35,7 +35,8 @@ end
 --- The pump at args' x, y, z as plain values: whether it stands there (`found`), its `entity`,
 --- its record's fields and summary (nil without one), whether it has an `outlet`, the `source` it
 --- draws from now ({ kind, litres, dry }), the tank at `args.tank` as Server.stateAt sees it, the
---- litres in the own container of the well at `args.well`, and `player`'s `endurance`.
+--- litres in the own container of the well at `args.well`, `player`'s `endurance`, and
+--- `args.squares` as Server.readSquares reads them.
 local function stateAt(player, args)
     local pump = Server.squareAt(args) and pumpAt(args)
     local record = recordAt(args)
@@ -56,6 +57,7 @@ local function stateAt(player, args)
         return mod().entityName(object) == "Well"
     end)
     state.wellLitres = well and well:getFluidContainer() and well:getFluidContainer():getAmount() or nil
+    state.squares = Server.readSquares(args.squares)
     return state
 end
 

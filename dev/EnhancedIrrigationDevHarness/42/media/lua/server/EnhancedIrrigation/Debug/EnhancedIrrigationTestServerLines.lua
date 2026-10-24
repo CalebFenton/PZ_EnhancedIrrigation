@@ -1,4 +1,5 @@
 require "PZHarness/ServerHandlers"
+local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. The authority's half of every line test file
 -- (EnhancedIrrigationTestsLines, Water, Time and PlantInfo) and of the line and crop fixtures in
@@ -126,9 +127,11 @@ end)
 
 -- Runs each tile's record as though `args.hours` had passed since its last pass, as the ten-minute
 -- pass does, loaded or not; the hours pass for its soil's wet spell too. Answers the tiles after,
--- and in `before` as they were, read in the same call so no vanilla pass lands between.
+-- and in `before` as they were, and `args.squares` as Server.readSquares reads them in
+-- `squares.before` and `squares.after`, read in the same call so no vanilla pass lands between.
 handler("lines.age", function(player, args)
     local before = readTiles(args.tiles).tiles
+    local squaresBefore = Server.readSquares(args.squares)
     for _, at in ipairs(args.tiles) do
         local record, missing = recordOrMissing(at)
         if not record then return nil, missing end
@@ -138,22 +141,26 @@ handler("lines.age", function(player, args)
     end
     local reply = readTiles(args.tiles)
     reply.before = before
+    reply.squares = args.squares and { before = squaresBefore, after = Server.readSquares(args.squares) } or nil
     return reply
 end)
 
 -- Runs the line tapped at x, y, z for `args.hours` as Water from Tank does (TapSystem.run), then
 -- reads `args.tiles`. Answers the litres `drawn` from the tank its tap drew on, nil if none could
--- feed it, and `stopped`, why the water stops, if it does.
+-- feed it, `stopped`, why the water stops, if it does, and `args.squares` as Server.readSquares
+-- reads them in `squares.before` and `squares.after`.
 handler("lines.flow", function(player, args)
     local tap = EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z)
     if not tap then return nil, "a loaded line tile at " .. args.x .. "," .. args.y .. "," .. args.z end
     local Tanks = EnhancedIrrigation.Tanks
     local tank = EnhancedIrrigation.Taps.tankFor(tap)
     local before = tank and Tanks.litres(tank)
+    local squaresBefore = Server.readSquares(args.squares)
     local stopped = EnhancedIrrigation.TapSystem.run(tap, args.hours)
     local reply = readTiles(args.tiles or {})
     reply.drawn = tank and before - Tanks.litres(tank) or nil
     reply.stopped = stopped
+    reply.squares = args.squares and { before = squaresBefore, after = Server.readSquares(args.squares) } or nil
     return reply
 end)
 

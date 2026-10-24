@@ -25,8 +25,8 @@ local function generatorAt(at)
 end
 
 -- The Pump House at args' x, y, z as plain values: its record's saved fields and summary (nil
--- without one), the tank at `args.tank` as Server.stateAt sees it, and the generator at
--- `args.generator`'s fuel and whether it runs.
+-- without one), the tank at `args.tank` as Server.stateAt sees it, the generator at
+-- `args.generator`'s fuel and whether it runs, and `args.squares` as Server.readSquares reads them.
 local function stateAt(args)
     local record = recordAt(args)
     local state = {}
@@ -42,6 +42,7 @@ local function stateAt(args)
     if generator then
         state.generator = { fuel = generator:getFuel(), running = generator:isActivated() }
     end
+    state.squares = Server.readSquares(args.squares)
     return state
 end
 
@@ -50,8 +51,9 @@ handler("pumpHouse.state", function(_, args)
 end)
 
 -- Sets `args.fields` on the Pump House's record, winds its clock back `args.hoursAgo` hours, if
--- given, and runs its ten-minute pass (PumpObject.update). Answers the clock's time, `now`, and
--- the state before and after, all in one call, so no ten-minute event runs in between.
+-- given, sets the crops of `args.squares` to `args.water` (Server.setWater), and runs its
+-- ten-minute pass (PumpObject.update). Answers the clock's time, `now`, and the state before and
+-- after, all in one call, so no ten-minute event runs in between.
 handler("pumpHouse.update", function(_, args)
     local record = recordAt(args)
     if not record then
@@ -63,6 +65,7 @@ handler("pumpHouse.update", function(_, args)
     if args.hoursAgo then
         record.lastHour = mod().now() - args.hoursAgo
     end
+    Server.setWater(args.squares, args.water)
     local reply = { now = mod().now(), before = stateAt(args) }
     record:update()
     reply.after = stateAt(args)
