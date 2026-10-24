@@ -426,6 +426,30 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
     end,
 })
 
+-- A house switched off, still owing fuel from a time its generator wasn't loaded, pays it at its
+-- next pass with the generator loaded. Catches a debt that waits until the house runs off the grid
+-- again.
+T.test("irrigation_pump_house_pays_its_debt_switched_off", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, false)
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
+        if not spots then return end
+        self.generator = spots[2]
+        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
+        self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        update(self, self.house, "owed", { fields = { payer = T.at(self.generator), owedFuel = OWED },
+            generator = self.generator })
+    end,
+    validate = function(self)
+        local owed = self.reads.owed
+        expect(not owed.after.record.on, "the house switched itself on")
+        expectNear("the generator's fuel once the debt is paid", owed.after.generator.fuel,
+            owed.before.generator.fuel - OWED, FUEL)
+        expect(owed.after.record.owedFuel == nil, "the house still owes " .. tostring(owed.after.record.owedFuel))
+    end,
+})
+
 -- Hours the spent generator's fuel runs the Appliance Pump.
 local FUEL_HOURS = 1.5
 

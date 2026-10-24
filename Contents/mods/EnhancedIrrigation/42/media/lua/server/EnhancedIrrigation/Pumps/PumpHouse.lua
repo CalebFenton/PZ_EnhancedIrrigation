@@ -251,10 +251,14 @@ function PumpHouse.step(record, pump, spec, hours, from)
     bill(record, payer, part, math.max(0, ran - free))
 end
 
---- How the record's Pump House `pump` stands once caught up, loaded: whether the grid powers it now,
---- for the next gap; switched off once its part is burnt out; and whether it runs now: switched on,
---- with a sound part and power, a generator's with fuel left.
+--- How the record's Pump House `pump` stands once caught up, loaded: fuel it owes paid once its
+--- payer is loaded, however it stands now; whether the grid powers it now, for the next gap;
+--- switched off once its part is burnt out; and whether it runs now: switched on, with a sound part
+--- and power, a generator's with fuel left.
 function PumpHouse.settle(record, pump)
+    if record.owedFuel and record.payer then
+        PumpHouse.payerOf(record)
+    end
     record.grid = Pumps.gridPowered(pump)
     if record:isBurntOut() then
         record.on = nil
