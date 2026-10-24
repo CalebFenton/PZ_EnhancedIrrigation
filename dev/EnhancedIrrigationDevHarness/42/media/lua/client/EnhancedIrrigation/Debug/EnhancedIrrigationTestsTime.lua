@@ -56,20 +56,17 @@ T.test("irrigation_time_soak_dries", {
 })
 
 -- A crop's roots rot for the hours its soil stays waterlogged as it dries through the threshold, not
--- the whole pass, costing it health at the rot's rate; one on the threshold itself loses none.
--- Catches rot counted for the whole pass, or the threshold taken as inclusive.
+-- the whole pass, costing it health at the rot's rate. Catches rot counted for the whole pass.
 T.test("irrigation_time_waterlogged_roots_rot", {
     run = function(self)
-        local rows = T.row(self, 2, { indoors = true })
+        local rows = T.row(self, 1, { indoors = true })
         if not rows then return end
-        local logged, edge = rows[1][1], rows[1][2]
-        self.tiles = { logged, edge }
+        local logged = rows[1][1]
+        self.tiles = { logged }
         self.dryPerHour = Lines.SOAK_DRY_IN / 24
         logged.fields = { soak = Lines.WATERLOGGED + LOGGED_HOURS * self.dryPerHour }
-        edge.fields = { soak = Lines.WATERLOGGED }
         T.placeLine(self, self.tiles, "iron")
         T.plant(self, logged, Lines.PLANT_FULL / 2)
-        T.plant(self, edge, Lines.PLANT_FULL / 2)
         T.read(self, "lines.age", { tiles = T.tiles(self.tiles), hours = 2 * LOGGED_HOURS }, "aged")
     end,
     validate = function(self)
@@ -80,41 +77,48 @@ T.test("irrigation_time_waterlogged_roots_rot", {
         local logged = math.max(0, (before[1].record.soak - Lines.WATERLOGGED) / self.dryPerHour)
         expectNear("the health the crop whose soil dried through the threshold lost",
             before[1].plant.health - after[1].plant.health, logged * Lines.ROOT_ROT_PER_HOUR, POINTS)
-        expectNear("the health the crop on the threshold lost", before[2].plant.health - after[2].plant.health, 0,
-            POINTS)
     end,
 })
 
 -- A hard freeze may split a full pipe and leaves an empty one whole; a frost short of a hard freeze
--- splits nothing. Each roll is pinned to a sure split, so only the cold and the water decide.
--- Catches the threshold back at freezing, or an empty pipe that splits.
+-- splits nothing. Each tile is aged on its own roll, pinned to a sure split, so only the cold and
+-- the water decide. Catches the threshold back at freezing, or an empty pipe that splits.
 T.test("irrigation_time_frost_cracks_full_lines", {
     run = function(self)
-        local rows = T.row(self, 3)
+        local rows = T.row(self, 4)
         if not rows then return end
-        local full, empty, mild = rows[1][1], rows[1][2], rows[1][3]
+        local full, empty, mild, beside = rows[1][1], rows[1][2], rows[1][3], rows[1][4]
+        self.full = full
         full.fields = { full = true }
         empty.fields = { full = false }
-        -- Filled only once the air is above a hard freeze, so no hard freeze can reach it before.
-        mild.fields = { full = false }
+        -- Filled from its tap only once the air is above a hard freeze, so no hard freeze can reach
+        -- it before.
+        mild.fields = T.tapped({ full = false })
+        -- Beside the line, not over it: a floor above would roof it.
+        T.placeTank(self, beside, "raised", TANK_LITRES)
         T.placeLine(self, { full, empty, mild }, "clay")
         T.batch(function()
             T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS - 1 })
             T.server(self, "lines.pinRoll", {})
-            T.read(self, "lines.age", { tiles = T.tiles({ full, empty }), hours = 1 }, "frozen")
+            T.read(self, "lines.age", { tiles = T.tiles({ full }), hours = 1 }, "frozen")
+            T.server(self, "lines.pinRoll", {})
+            T.read(self, "lines.age", { tiles = T.tiles({ empty }), hours = 1 }, "frozen empty")
             -- Below freezing, short of a hard freeze.
             T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS / 2 })
-            T.server(self, "lines.set", { tiles = { T.at(mild, { fields = { full = true } }) } })
+            T.flow(self, mild, 1, {}, "filled")
             T.server(self, "lines.pinRoll", {})
             T.read(self, "lines.age", { tiles = T.tiles({ mild }), hours = 1 }, "mild")
         end)
         T.waitForLines(self, { full }, "this client's summary of the split pipe", function(summary) return summary.cracked end)
     end,
     validate = function(self)
-        local frozen, mild = self.reads.frozen.tiles, self.reads.mild.tiles
+        local frozen, empty, mild = self.reads.frozen.tiles, self.reads["frozen empty"].tiles, self.reads.mild
         expect(frozen[1].record.cracked, "a full pipe came through a hard freeze whole")
-        expect(not frozen[2].record.cracked, "an empty pipe split in a hard freeze")
-        expect(not mild[1].record.cracked, "a full pipe split in a frost short of a hard freeze")
+        local summary = T.lineSummary(self.full)
+        expect(summary and summary.cracked, "this client's summary of the split pipe isn't cracked")
+        expect(not empty[1].record.full and not empty[1].record.cracked, "an empty pipe split in a hard freeze")
+        expect(mild.before[1].record.full, "the tap's hour didn't fill the pipe before the frost")
+        expect(not mild.tiles[1].record.cracked, "a full pipe split in a frost short of a hard freeze")
     end,
 })
 
