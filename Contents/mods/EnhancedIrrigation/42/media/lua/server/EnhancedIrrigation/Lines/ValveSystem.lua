@@ -108,8 +108,7 @@ function ValveSystem.update(record)
         return
     end
     local now = EnhancedIrrigation.now()
-    local from = math.max(valve.lastHour or now, now - EnhancedIrrigation.LONGEST_PASS)
-    valve.lastHour = now
+    local from = now - EnhancedIrrigation.hoursSince(valve)
     if not record.holder then
         for _, stretch in ipairs(openStretches(record, tap, from, now)) do
             local tank = Taps.tankFor(tap)
