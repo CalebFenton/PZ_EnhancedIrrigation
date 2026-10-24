@@ -1,5 +1,4 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
-require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Lines/Lines"
