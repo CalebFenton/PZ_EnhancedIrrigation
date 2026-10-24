@@ -476,8 +476,10 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
         readMenu(self, function() return copyOf(self.house) end, "spent")
     end,
     validate = function(self)
-        local after = self.reads.spent.after
-        expectNear("the barrel after the fuel ran out", after.tank.litres, lifts(APPLIANCE, FUEL_HOURS), LITRES)
+        local before, after = self.reads.spent.before, self.reads.spent.after
+        -- The fuel read in the same call: the generator burns its own at each hour's turn.
+        expectNear("the barrel after the fuel ran out", after.tank.litres - before.tank.litres,
+            lifts(APPLIANCE, before.generator.fuel / burns(APPLIANCE, 1)), LITRES)
         expect(after.generator.fuel == 0 and not after.generator.running, "the generator is left at "
             .. after.generator.fuel .. (after.generator.running and ", running" or ", off"))
         expectWord(self, "spent", getText("IGUI_EnhancedIrrigation_NoPower"))
