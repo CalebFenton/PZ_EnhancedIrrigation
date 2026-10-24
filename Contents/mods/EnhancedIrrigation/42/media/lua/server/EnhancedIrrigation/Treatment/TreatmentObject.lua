@@ -312,16 +312,8 @@ end
 --- LONGEST_PASS), the inlet feeding it through the gap as it would have.
 function TreatmentObject:catchUp()
     if self:getIsoObject() and not self:inletUnloaded() then
-        self:advance(self:elapsedHours())
+        EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
     end
-end
-
-function TreatmentObject:update()
-    if not self:getIsoObject() then
-        return
-    end
-    self:catchUp()
-    self:afterChange()
 end
 
 -- Sends the basin the clients drink from on, the tank the inlet drew from, and the summary, when

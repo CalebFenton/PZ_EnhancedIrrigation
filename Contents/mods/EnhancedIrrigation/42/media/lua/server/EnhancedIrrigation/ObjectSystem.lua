@@ -21,17 +21,18 @@ local Sprites = EnhancedIrrigation.Sprites
 --- The base of a feature's records. A record is its global object's table, so the fields its
 --- class's SAVED_FIELDS names are saved with the world. A class defines advance(hours), what the
 --- time does to it; afterChange(), which shows and tells what changed; and buildSummary(), what
---- every client keeps of it.
+--- every client keeps of it. A class whose time can't be told while parts of it are unloaded
+--- overrides catchUp() to wait for them.
 local Object = SGlobalObject:derive("EnhancedIrrigation_Object")
 ObjectSystem.Object = Object
 
---- The game hours since the record last caught up, now caught up (EnhancedIrrigation.hoursSince).
-function Object:elapsedHours()
-    return EnhancedIrrigation.hoursSince(self)
+--- Advances the record by the game hours since it last caught up.
+function Object:catchUp()
+    self:advance(EnhancedIrrigation.hoursSince(self))
 end
 
 function Object:update()
-    self:advance(self:elapsedHours())
+    self:catchUp()
     self:afterChange()
 end
 

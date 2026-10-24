@@ -116,7 +116,7 @@ end
 function Flow.run(record, source, hours)
     local tiles = Lines.component(record.x, record.y, record.z)
     for _, tile in ipairs(tiles) do
-        tile.state:advance(tile.state:elapsedHours())
+        tile.state:catchUp()
     end
     local outlets, asked = outletsOf(tiles, source)
     local demand = given(source, asked) * math.max(0, hours)

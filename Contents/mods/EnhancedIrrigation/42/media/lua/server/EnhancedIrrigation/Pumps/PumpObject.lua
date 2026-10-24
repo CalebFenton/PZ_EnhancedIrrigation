@@ -231,7 +231,7 @@ function PumpObject:catchUp()
     local pump = self:getIsoObject()
     if pump and self:endsLoaded() then
         self:findIntake()
-        self:advance(self:elapsedHours())
+        EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
         local spec = Pumps.specOf(pump)
         local kind = spec and PumpObject.KINDS[spec.kind]
         if kind and kind.settle then
@@ -240,12 +240,12 @@ function PumpObject:catchUp()
     end
 end
 
+-- While unloaded a pump doesn't run, yet afterChange would tell its outlet's line the running of
+-- its last pass, marking a tile laid or a line split since as run by it.
 function PumpObject:update()
-    if not self:getIsoObject() then
-        return
+    if self:getIsoObject() then
+        EnhancedIrrigation.ObjectSystem.Object.update(self)
     end
-    self:catchUp()
-    self:afterChange()
 end
 
 --- Whether the pump runs now: a hand pump while worked (PumpSystem.hold), a Pump House while

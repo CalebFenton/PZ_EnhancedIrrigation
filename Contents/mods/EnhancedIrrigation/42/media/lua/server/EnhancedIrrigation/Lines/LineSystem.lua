@@ -150,7 +150,7 @@ local DO = {
         for _, tile in ipairs(Lines.component(record.x, record.y, record.z)) do
             local other = tile.state
             if other ~= record then
-                other:advance(other:elapsedHours())
+                other:catchUp()
                 other.full = false
                 other:afterChange()
             end
@@ -215,7 +215,7 @@ function LineSystem.perform(character, job, object, with)
     -- Kept here: removing a record (Take Up) clears its x, y, z.
     local x, y, z = object:getX(), object:getY(), object:getZ()
     if record then
-        record:advance(record:elapsedHours())
+        record:catchUp()
     end
     local done = EnhancedIrrigation.Jobs.perform(LineJobs, DO, character, job, object, with)
     -- Unless Take Up took the record with the tile.
