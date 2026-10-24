@@ -831,41 +831,6 @@ T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
     end,
 })
 
--- Hours the house is away while its chunk is unloaded.
-local AWAY_HOURS = 1
-
--- A running house's record waits while its chunk is away: the pass leaves its barrel as it was,
--- however long ago it last ran. Loaded again, it runs the whole gap on the grid it still has.
--- Catches a record that lifts into a tank it can't see, or forgets the time it was away. The house
--- is switched on only once away, so no ten-minute pass before the reload lifts water the gap
--- doesn't count.
-T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
-    spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
-    instant = true,
-    timeoutSeconds = T.RELOAD_SECONDS,
-    run = function(self)
-        T.setGrid(self, true)
-        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
-        if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
-        update(self, self.house, "lit", {})
-        T.reload(self, T.at(self.house), function()
-            update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
-        end)
-        update(self, self.house, "back", { tank = self.tank })
-    end,
-    validate = function(self)
-        expect((self.chunkLoads or 0) > 0, "the house's chunk came back without LoadChunk, from a cache")
-        local away, back = self.reads.away, self.reads.back
-        expect(away.after.record.lastHour == away.before.record.lastHour, "the house's record ran while away")
-        -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
-        expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), LITRES)
-    end,
-})
-
 -- Lines ------------------------------------------------------------------------------------------------
 
 -- Where the line tests set a house, the barrel it draws from beside it, and two line tiles below.
@@ -941,36 +906,71 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
     end,
 })
 
--- A running house's line waits with the house while its chunk is away, and once loaded again the
--- house runs the whole gap on the grid it still has, pushing each hole's water out at its part's
--- push for all of it. Catches a pumped line that loses the time it was away, or runs unseen. As the
--- catch-up test above, the house is switched on only once away.
-T.test("irrigation_pump_house_catches_up_its_line_after_a_reload", {
+-- Hours the houses are away while their chunk is unloaded.
+local AWAY_HOURS = 1
+
+-- Two running houses' records wait while their chunk is away, one plumbed to a barrel, one to a
+-- line of two holed tiles: the pass leaves each as it was, however long ago it last ran. Loaded
+-- again, each runs the whole gap on the grid it still has: the barrel gets the gap's water, and the
+-- line's holes push theirs out at the part's push for all of it. Catches a record that lifts into a
+-- tank or line it can't see, or forgets the time it was away. The houses are switched on only once
+-- away, so no ten-minute pass before the reload runs what the gap doesn't count. The line's house
+-- stands clear of the other's well and barrel, which it would draw from instead of its own.
+T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
     spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
     instant = true,
     timeoutSeconds = T.RELOAD_SECONDS,
     run = function(self)
         T.setGrid(self, true)
-        local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house, self.barrel, self.tiles = houseLine(self, spots, WOOD, APPLIANCE)
+        local lineSpots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true,
+            accept = function(squares)
+                for _, spot in ipairs(spots) do
+                    if math.abs(spot.x - squares[1]:getX()) <= 1 and math.abs(spot.y - squares[1]:getY()) <= 1 then
+                        return false
+                    end
+                end
+                return true
+            end })
+        if not lineSpots then return end
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
+        T.placeTank(self, spots[2], "well")
+        self.tank = T.placeTank(self, spots[3], "raisedLidded")
+        link(self, self.house, self.tank)
+        self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, WOOD, APPLIANCE)
         update(self, self.house, "lit", {})
+        update(self, self.lineHouse, "line lit", {})
         T.reload(self, T.at(self.house), function()
-            T.read(self, "sprinklers.house", T.at(self.house, { hoursAgo = AWAY_HOURS, fields = { on = true } }), "away")
+            update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
+            T.read(self, "sprinklers.house", T.at(self.lineHouse, { hoursAgo = AWAY_HOURS, fields = { on = true } }),
+                "line away")
         end)
-        T.read(self, "sprinklers.house", T.at(self.house, { squares = T.tiles(self.tiles), tank = T.at(self.barrel) }),
-            "back")
+        T.waitFor(self, function()
+            for _, handle in ipairs({ self.lineHouse, self.barrel, self.tiles[1], self.tiles[2] }) do
+                if not getSquare(handle.x, handle.y, handle.z) then
+                    return false
+                end
+            end
+            return true
+        end, "this client to load the line's house again", T.LOAD_MS)
+        update(self, self.house, "back", { tank = self.tank })
+        T.read(self, "sprinklers.house", T.at(self.lineHouse, { squares = T.tiles(self.tiles), tank = T.at(self.barrel) }),
+            "line back")
     end,
     validate = function(self)
         expect((self.chunkLoads or 0) > 0, "the house's chunk came back without LoadChunk, from a cache")
         local away, back = self.reads.away, self.reads.back
-        expect(away.after.pump.lastHour == away.before.pump.lastHour, "the house's record ran while away")
+        expect(away.after.record.lastHour == away.before.record.lastHour, "the barrel's house ran while away")
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
+        expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), LITRES)
+        local lineAway, lineBack = self.reads["line away"], self.reads["line back"]
+        expect(lineAway.after.pump.lastHour == lineAway.before.pump.lastHour, "the line's house ran while away")
         local perHour = 2 * Lines.HOLE_RATE * Pumps.PARTS[APPLIANCE].push
-        expectNear("the barrel's water drawn, back", SOURCE_LITRES - back.after.tank.litres,
-            perHour * (back.now - (away.now - AWAY_HOURS)), LITRES)
+        expectNear("the line's barrel drawn, back", SOURCE_LITRES - lineBack.after.tank.litres,
+            perHour * (lineBack.now - (lineAway.now - AWAY_HOURS)), LITRES)
         for i = 1, 2 do
-            expect((back.after.squares[i].water or 0) > 0, "crop " .. i .. " got no water from the gap")
+            expect((lineBack.after.squares[i].water or 0) > 0, "crop " .. i .. " got no water from the gap")
         end
     end,
 })
