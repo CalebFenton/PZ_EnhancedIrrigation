@@ -152,7 +152,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Repair Pump | Electricity 2; a screwdriver, Scrap Electronics and a Tire Piece; 30 minutes. Brings the part back to 10% below its last ceiling (90%, then 80%, …), and is refused while the part is better than that. The ceiling travels with the part. |
 | Away | While the house's area isn't loaded it waits, and catches the time up when you come back: grid hours count up to the shutoff, a generator's as far as its fuel goes, and nothing if it has no power when you return. |
 | Salvage Pump | On a washing machine, washer-dryer or dishwasher: Electricity 2 (learned automatically at that level), a screwdriver and pliers, 30 minutes. Gives an Appliance Pump at 60-100% and leaves the appliance where it stands, switched off; it never switches on again ("Its pump has been salvaged"), even moved. Refused on one already stripped. |
-| Make Utility Pump | Electricity 3 and Welding 2, in hand: a Blower Fan, 2 small steel sheets, 4 screws, 2 electrical wires, a rubber hose, 2 uses of a welding torch and 1 of welding rods; a welder mask and a screwdriver. The pump comes out at 80%, its ceiling. Learned at Electricity 6 or by researching a Utility Pump. |
+| Make Utility Pump | Electricity 3 and Welding 2, at a table or counter: a Blower Fan, 2 small steel sheets, 4 screws, 2 electrical wires, a rubber hose, 2 uses of a welding torch and 1 of welding rods; a welder mask and a screwdriver. The pump comes out at 80%, its ceiling. Learned at Electricity 6 or by researching a Utility Pump. |
 
 ### Learning and options
 

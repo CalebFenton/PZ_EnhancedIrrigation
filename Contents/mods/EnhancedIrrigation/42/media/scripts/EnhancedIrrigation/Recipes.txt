@@ -36,16 +36,17 @@ module Base
 
     /*
         A Utility Pump made from a Blower Fan: the fan's motor drives an impeller cut and welded
-        from sheet steel in a screwed housing, wired and fitted with a hose. Made in hand, its torch
-        and rods taken by uses, as vanilla welds sheet metal (MakeSmallMetalSheet). It comes out at
-        a lower ceiling than a found one (Pumps.onMadePump). Learned at Electricity 6 or by
+        from sheet steel in a screwed housing, wired and fitted with a hose. Too much to hold and
+        weld at once, so it needs a table or another surface in reach (AnySurfaceCraft), as
+        Renewable Energy's welded battery boxes do; its torch and rods are taken by uses. It comes
+        out at a lower ceiling than a found one (Pumps.onMadePump). Learned at Electricity 6 or by
         researching a Utility Pump.
     */
     craftRecipe EnhancedIrrigation_MakeUtilityPump
     {
         timedAction = Welding,
         time = 300,
-        Tags = InHandCraft;Welding,
+        Tags = AnySurfaceCraft;Welding,
         category = Electrical,
         NeedToBeLearn = true,
         AutoLearnAny = Electricity:6,
