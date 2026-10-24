@@ -270,13 +270,14 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
     end,
 })
 
--- What a part's wear leaves past its last whole point.
-local FRACTION = 0.2
+-- What a part's wear leaves past its last whole point: more than half, so rounding to the nearest
+-- point would hand it back a point up.
+local FRACTION = 0.7
 
 -- Take Out Pump of a part worn to a fraction of a point gives it back at the whole points below,
 -- on both sides, and Fit Pump puts it back in at the fraction it had: taking a part out and in
--- again never gains it condition. Catches a part handed back rounded up, a free hour's wear on
--- every Take Out.
+-- again never gains it condition. Catches a part handed back rounded up or to the nearest point, a
+-- free hour's wear on every Take Out.
 T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     instant = true,
     run = function(self)
