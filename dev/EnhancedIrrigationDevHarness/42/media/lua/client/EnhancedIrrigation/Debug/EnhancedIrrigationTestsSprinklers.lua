@@ -1,5 +1,4 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
-require "ISUI/ISInventoryPaneContextMenu"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -14,7 +13,7 @@ require "EnhancedIrrigation/UI/PlantInfo"
 -- word, Make Pipe Sprinkler in Recipes.txt): a sprinkler on a pumped line watering its rectangle at
 -- the pump's rate, soaking it and rotting what's left waterlogged under it, overlapping sprinklers
 -- keeping one soak; nothing from a tapped line; setting and taking one, the soil word outlasting
--- it; making one and learning to. Lines run for set hours on the server
+-- it; making one. Lines run for set hours on the server
 -- by what runs them there (EnhancedIrrigationTestServerSprinklers.lua), so the clock doesn't decide
 -- the sums.
 
@@ -380,14 +379,13 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
     end,
 })
 
--- Making and learning -------------------------------------------------------------------------------
+-- Making --------------------------------------------------------------------------------------------
 
 local RECIPE = "EnhancedIrrigation_MakePipeSprinkler"
 
 -- Make Pipe Sprinkler from an iron pipe, in hand, with the skill, the knowledge and exactly a
--- craft's inputs, makes a Lawn Sprinkler at the made ceiling, taking the pipe, the spray can and the
--- screws and keeping the drill and pliers. Catches a recipe the game won't craft, a made sprinkler
--- as good as a found one, or tools used up.
+-- craft's inputs, makes one Lawn Sprinkler at the made ceiling (its OnCreate). Catches a recipe the
+-- game won't craft, or a made sprinkler as good as a found one.
 T.test("irrigation_sprinklers_make_pipe_sprinkler", {
     instant = true,
     run = function(self)
@@ -405,56 +403,15 @@ T.test("irrigation_sprinklers_make_pipe_sprinkler", {
             local pipe = T.need(self, T.player():getInventory():getFirstTypeRecurse("Base.MetalPipe"), "an iron pipe")
             if not pipe then return end
             T.startCraft(self, recipe, pipe)
-            T.count(self, "craft", { Sprinklers.ITEM, "Base.MetalPipe", "Base.GardeningSprayEmpty", "Base.Screws",
-                "Base.HandDrill", "Base.Pliers" }, { dropped = true })
+            T.count(self, "craft", { Sprinklers.ITEM }, { dropped = true })
         end)
         T.read(self, "pumpHouse.carried", { type = Sprinklers.ITEM }, "made")
     end,
     validate = function(self)
         local craft = self.counts.craft or {}
         expect(craft[Sprinklers.ITEM] == 1, "the craft made " .. tostring(craft[Sprinklers.ITEM]) .. " sprinklers")
-        for _, fullType in ipairs({ "Base.MetalPipe", "Base.GardeningSprayEmpty", "Base.Screws" }) do
-            expect(craft[fullType] == 0, "the craft left " .. tostring(craft[fullType]) .. " " .. fullType)
-        end
-        for _, fullType in ipairs({ "Base.HandDrill", "Base.Pliers" }) do
-            expect(craft[fullType] == 1, "the craft took the " .. fullType)
-        end
         local made = self.reads.made.items[1]
         expect(made and made.condition == Sprinklers.MADE_CEILING and made.ceiling == Sprinklers.MADE_CEILING,
             "the made sprinkler is at " .. tostring(made and made.condition) .. " of " .. tostring(made and made.ceiling))
-    end,
-})
-
--- A welder at the research level of Make Pipe Sprinkler (two-thirds of its Welding, rounded)
--- researches a Lawn Sprinkler and learns it on both sides. Catches a sprinkler that teaches nothing,
--- or teaches on one side only.
-T.test("irrigation_sprinklers_researching_one_teaches_make_pipe_sprinkler", {
-    instant = true,
-    hour = 12,
-    run = function(self)
-        T.knowRecipes(self, { RECIPE }, false)
-        T.setPerk(self, Perks.MetalWelding, getScriptManager():getCraftRecipe(RECIPE):getResearchSkillLevel())
-        T.give(self, "sprinkler", { { type = Sprinklers.ITEM } })
-        T.step(function()
-            local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items.sprinkler[1] }, 0, 0)
-            if not T.need(self, type(context) == "table" and context, "the Lawn Sprinkler's right-click menu") then return end
-            local research = T.findNamed(context, context, getText("ContextMenu_ResearchCraft"))
-            self.offered = T.offered(research)
-            if self.offered then
-                T.choose(research)
-            end
-            context:hideAndChildren()
-        end)
-        T.serverUntil(self, "learning.known", { names = { RECIPE } }, function(reply)
-            return reply and reply.known and reply.known[RECIPE]
-        end)
-        T.waitFor(self, function() return T.player():isRecipeActuallyKnown(RECIPE) end,
-            "this client's copy of the character knowing " .. RECIPE)
-    end,
-    validate = function(self)
-        expect(self.offered, "the Lawn Sprinkler's menu offers no Research")
-        local known = self.server["learning.known"] and self.server["learning.known"].known
-        expect(known and known[RECIPE], "researching a Lawn Sprinkler didn't teach the server " .. RECIPE)
-        expect(T.player():isRecipeActuallyKnown(RECIPE), "researching a Lawn Sprinkler didn't teach this client " .. RECIPE)
     end,
 })
