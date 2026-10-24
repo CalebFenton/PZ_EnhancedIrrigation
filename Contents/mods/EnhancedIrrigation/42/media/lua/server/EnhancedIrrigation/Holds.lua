@@ -5,7 +5,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationWaterAction"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationHeldAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Holds = {}
@@ -15,7 +15,7 @@ EnhancedIrrigation.Holds = Holds
 -- server drops the action of a client that disconnects mid-run without stopping it
 -- (ActionManager.disconnectPlayer), so a hold its action no longer renews lets go by itself. Single
 -- player has no such end, and runs its actions by game minutes, which a long day draws out.
-Holds.LAPSE_MS = 5 * EnhancedIrrigationWaterAction.RUN_MS
+Holds.LAPSE_MS = 5 * EnhancedIrrigationHeldAction.RUN_MS
 
 -- The records held now.
 local held = {}

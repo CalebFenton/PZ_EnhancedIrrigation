@@ -219,7 +219,8 @@ end)
 -- doesn't depend on it.
 handler("water.runEvery", function(player, args, defer)
     local Action = EnhancedIrrigationWaterAction
-    local before = Action.RUN_MS
+    -- The action's own setting, nil while it reads its base's.
+    local before = rawget(Action, "RUN_MS")
     Action.RUN_MS = args.ms
     defer(function() Action.RUN_MS = before end)
     return {}

@@ -175,7 +175,8 @@ end)
 -- second. The pump counts world time since its last run, so the water lifted doesn't depend on it.
 handler("pumps.runEvery", function(_, args, defer)
     local Action = EnhancedIrrigationPumpAction
-    local before = Action.RUN_MS
+    -- The action's own setting, nil while it reads its base's.
+    local before = rawget(Action, "RUN_MS")
     Action.RUN_MS = args.ms
     defer(function() Action.RUN_MS = before end)
     return {}
