@@ -82,7 +82,7 @@ end)
 handler("stands.dropBarrels", function(player)
     local carried = player:getInventory():getAllEvalRecurse(isBarrelItem)
     for i = carried:size() - 1, 0, -1 do
-        mod().takeItem(player, carried:get(i))
+        mod().Materials.takeItem(player, carried:get(i))
     end
     return {}
 end)
