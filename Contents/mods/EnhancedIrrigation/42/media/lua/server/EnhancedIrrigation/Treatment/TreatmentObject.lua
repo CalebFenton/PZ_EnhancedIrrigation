@@ -245,6 +245,10 @@ TreatmentObject.KINDS.boiler = {
         local lit = math.min(hours, record.burnLeft)
         record.burnLeft = record.burnLeft - lit
         if record:isBurntThrough() then
+            -- A holed drum still warms and cools with the fire under it, so a patch finds it only as
+            -- hot as a fire has kept it since.
+            local _
+            _, record.hotHours = heat(record.hotHours, lit, hours - lit)
             return
         end
         local wear = record.head > 0 and Treatment.WEAR_WET or Treatment.WEAR_DRY

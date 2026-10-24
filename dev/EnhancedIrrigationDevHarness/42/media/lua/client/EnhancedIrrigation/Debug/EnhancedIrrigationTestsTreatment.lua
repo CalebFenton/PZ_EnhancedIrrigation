@@ -1218,8 +1218,9 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
 -- A boiler lit with nothing in its drum scorches it fast; burnt through, its menu says so, Pour In
 -- is refused, and water in it passes nothing however hot. Patch Drum, put out and with a welder's
 -- kit, restores it to less than new, and its menu says how much; a second patch would leave it no
--- better and is refused. Catches a dry fire that doesn't wear, a holed drum still working, or a
--- patch that restores it new.
+-- better and is refused. A drum that cooled while holed comes back from its patch cold, and passes
+-- nothing unlit. Catches a dry fire that doesn't wear, a holed drum still working, a patch that
+-- restores it new, or one that finds it as hot as when it failed.
 T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
     instant = true,
     run = function(self)
@@ -1240,6 +1241,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
         end, false)
         setFire(self, self.unit, "out", false)
+        run(self, self.unit, "cooled", { 2 })
         T.setPerk(self, Perks.MetalWelding, 2)
         T.give(self, "kit", { { type = "Base.WeldingMask" }, { type = "Base.SmallSheetMetal" }, { type = "Base.BlowTorch" },
             { type = "Base.WeldingRods" } })
@@ -1247,6 +1249,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         readUntil(self, self.unit, "patched", function(state) return not state.summary.burntThrough end)
         waitForServer(self, self.unit, "patched", "condition")
         readMenu(self, self.unit, "patched")
+        run(self, self.unit, "after patch", { 1 }, { head = 20, headTainted = true })
         useMenu(self, self.unit, "again", job(TreatmentJobs.PATCH_DRUM), false)
         T.count(self, "used", { "Base.SmallSheetMetal" })
     end,
@@ -1261,6 +1264,9 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Drum",
             Treatment.DRUM_CONDITION - Treatment.PATCH_LOSS))
         T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_DrumSound")
+        expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Cold"))
+        local after = self.reads["after patch"]
+        expectNear("a patched, unlit boiler's hour", after.steps[1].basin.litres, after.before.basin.litres, LITRES)
         expect(self.counts.used["Base.SmallSheetMetal"] == 0, "Patch Drum left the sheet metal")
     end,
 })
