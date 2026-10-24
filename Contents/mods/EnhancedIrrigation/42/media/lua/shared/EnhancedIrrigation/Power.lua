@@ -1,4 +1,4 @@
--- Power as vanilla gives an appliance, which Pump Houses and timer valves run on.
+-- Power as vanilla gives an appliance, and what a gap caught up after a wait ran on.
 
 require "EnhancedIrrigation/Utilities"
 
