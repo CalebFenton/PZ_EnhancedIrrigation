@@ -218,9 +218,9 @@ T.test("irrigation_lines_first_tile_needs_a_tank", {
 })
 
 -- A tile between two tapped lines would make one line with two taps: the cursor refuses it and so
--- does the authority on its own, laying nothing. Between a tapped and an untapped line the same lay
--- joins them, so the authority refused for the taps. Catches the refusal only on the client, or a
--- join refused for one tap.
+-- does the authority on its own, laying nothing. Once the second tap's tile is taken up and an
+-- untapped one laid there, the same lay joins them, so the authority refused for the taps. Catches
+-- the refusal only on the client, or a join refused for one tap.
 T.test("irrigation_lines_merging_two_tapped_lines_refused", {
     instant = true,
     run = function(self)
@@ -240,7 +240,10 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         end)
         local lay = T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) })
         T.read(self, "lines.perform", lay, "two taps")
-        T.server(self, "lines.set", { tiles = { T.at(tiles[3], { fields = { tap = false } }) } })
+        useJob(self, tiles[3], LineJobs.TAKE_UP, "take up the tap", true)
+        T.waitFor(self, function() return T.lineObject(tiles[3]) == nil end, "this client to lose the taken-up tap")
+        tiles[3].fields = nil
+        T.placeLine(self, { tiles[3] }, "iron")
         T.waitForLines(self, { tiles[3] }, "this client's copy of the untapped line", function(summary) return not summary.tap end)
         T.step(function() self.oneTap = self.cursor:refusal(tiles[2].square) end)
         T.read(self, "lines.perform", lay, "one tap")
@@ -250,6 +253,7 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         local twoTaps, oneTap = self.reads["two taps"], self.reads["one tap"]
         expect(twoTaps.done == false and twoTaps.tiles[2].record == nil, "the server laid a tile between two taps")
         expect(self.oneTap == nil, "between a tapped and an untapped line: " .. tostring(self.oneTap))
+        expectOffered(self, "take up the tap")
         local joined = oneTap.tiles[2].record
         expect(oneTap.done and joined and joined.tiles == self.size,
             "the server didn't lay the tile joining a tapped and an untapped line")
@@ -270,7 +274,7 @@ end
 T.test("irrigation_lines_first_tile_beside_a_pump", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 3, 0 } }, { bare = true, minDistance = 2 })
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 2, 0 } }, { bare = true, minDistance = 2 })
         if not spots then return end
         local pump, beside, far = spots[1], spots[2], spots[3]
         T.trackLines(self, { beside, far })
@@ -328,7 +332,8 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
 
 -- A pump's outlet stays buried where its tile was taken up, and still feeds a tile laid back
 -- there: laying it beside a line tapped since is refused on the cursor and by the authority, as
--- joining a tapped and a pumped line is. Catches a pumped tile laid onto a tapped line.
+-- joining a tapped and a pumped line is. Catches a pumped tile laid onto a tapped line, or a take-up
+-- that takes the pump's outlet with the tile.
 T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
     instant = true,
     run = function(self)
@@ -338,19 +343,27 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         if not spots then return end
         local tiles = rows[1]
         T.trackLines(self, tiles)
-        tiles[1].fields = T.tapped()
-        T.placeLine(self, { tiles[1] }, "iron")
+        T.placeLine(self, { tiles[2] }, "iron")
         placePump(self, spots[1])
         T.server(self, "pumps.link", T.at(spots[1], { tank = T.at(tiles[2]) }))
         T.waitFor(self, function() return EnhancedIrrigation.Pumps.outletOf(T.at(spots[1])) ~= nil end,
             "this client's copy of the pump's outlet")
-        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tiles[2].square)
-        T.step(function() self.refusal = layCursor(self, "iron"):refusal(tiles[2].square) end)
+        useJob(self, tiles[2], LineJobs.TAKE_UP, "take up", true)
+        T.waitFor(self, function() return T.lineObject(tiles[2]) == nil end, "this client to lose the taken-up tile")
+        tiles[1].fields = T.tapped()
+        T.placeLine(self, { tiles[1] }, "iron")
+        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
+        T.step(function()
+            self.outlet = EnhancedIrrigation.Pumps.outletOf(T.at(spots[1]))
+            self.refusal = layCursor(self, "iron"):refusal(tiles[2].square)
+        end)
         T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
             "forced")
     end,
     validate = function(self)
+        expectOffered(self, "take up")
+        expect(self.outlet ~= nil, "taking up the pump's tile took its outlet")
         expect(self.refusal == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "on a pump's outlet beside a tap: "
             .. tostring(self.refusal))
         local forced = self.reads.forced
@@ -432,9 +445,10 @@ local function useDrill(self, handle, label, choose)
     end, choose)
 end
 
--- An awl gets into soft pipe but not iron or clay, which its one Drill Holes option says; a hand
--- drill gets into iron; a holed tile offers no more drilling. Catches a tool gate that lets the
--- wrong tool through, a menu with an option per tool, or re-drilling.
+-- An awl gets into soft pipe but not iron or clay, which its one Drill Holes option says, and never
+-- splits it, even on a sure roll; a hand drill gets into iron; a holed tile offers no more drilling.
+-- Catches a tool gate that lets the wrong tool through, an awl that splits pipe as a punch does, a
+-- menu with an option per tool, or re-drilling.
 T.test("irrigation_lines_drill_holes_tool_gate", {
     instant = true,
     run = function(self)
@@ -448,6 +462,8 @@ T.test("irrigation_lines_drill_holes_tool_gate", {
         T.goNextTo(self, clay.square)
         useDrill(self, iron, "awl on iron", false)
         useDrill(self, clay, "awl on clay", false)
+        -- A sure split for any tool that may split plastic.
+        T.server(self, "lines.pinRoll", {})
         useDrill(self, plastic, "awl on plastic", true)
         T.waitForLines(self, { plastic }, "this client's summary of the awl's hole", function(summary) return summary.holed end)
         T.give(self, "drill", { { type = "Base.HandDrill" } })
@@ -467,6 +483,7 @@ T.test("irrigation_lines_drill_holes_tool_gate", {
         local drilled = self.reads.drilled.tiles
         expect(drilled[1].record.holed and drilled[3].record.holed, "the server has the iron or the plastic tile unholed")
         expect(not drilled[2].record.holed, "the clay tile was holed")
+        expect(not drilled[3].record.cracked, "the awl split the plastic tile")
         local described = LineMenu.describe(T.lineSummary(self.tiles[3]))
         expect(described:find(getText("IGUI_EnhancedIrrigation_Holed"), 1, true) ~= nil,
             "the menu doesn't say the tile is holed: " .. described)
@@ -482,6 +499,13 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
         if not rows then return end
         local tile = rows[1][1]
         self.nails = 10
+        for _, tool in ipairs(LineJobs.HOLE_TOOLS) do
+            for _, material in ipairs(tool.materials) do
+                if material.item == "Base.Nails" then
+                    self.need = material.need
+                end
+            end
+        end
         T.placeLine(self, { tile }, "plastic")
         T.give(self, "tools", { { type = "Base.Hammer" }, { type = "Base.Nails", count = self.nails } })
         T.goNextTo(self, tile.square)
@@ -498,7 +522,8 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
         expect(tooltip:find(getText("Tooltip_EnhancedIrrigation_MayCrack"), 1, true) ~= nil,
             "the tooltip doesn't warn the nail may split plastic: " .. tooltip)
         local left = self.counts.left["Base.Nails"] or 0
-        expect(left < self.nails, "drilling used no nails: " .. left .. " of " .. self.nails .. " left")
+        expect(left == self.nails - self.need, "drilling left " .. left .. " of " .. self.nails .. " nails, not "
+            .. (self.nails - self.need))
         expect(self.counts.left["Base.Hammer"] == 1, "drilling took the hammer")
     end,
 })
