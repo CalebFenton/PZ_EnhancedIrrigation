@@ -1,7 +1,7 @@
 -- Water running through a garden line: what its source gives, and what each outlet does with its
--- share. A tapped line runs from the tank its tap draws on (Flow.fromTank) for the time Water from
--- Tank holds the tap open; a pumped line from its pump while that runs (PumpSystem.pump,
--- PumpHouse.run), which alone pushes hard enough to work a sprinkler.
+-- share. A tapped line runs from the tank its tap draws on for the time Water from Tank holds the
+-- tap open; a pumped line from its pump while that runs, which alone pushes hard enough to work a
+-- sprinkler.
 --
 -- A source is { push, perHour, pumped, holds, draw(litres) }: the head it gives every outlet (as
 -- storeys of a tank's), the most litres an hour it gives (none for a tank, which gives what its
@@ -79,9 +79,9 @@ local function deliver(record, litres)
 end
 
 -- Throws `litres` from the sprinkler on `record`'s tile: what the air and the paths don't take falls
--- evenly over its squares (Sprinklers.squaresOf), each plant taking it up to full and the soil the
--- rest: a line tile's soil on its own record, any other square's on the record keeping its soak
--- (LineObject:addSprinklerSoak). Notes in `touched` the line records it soaked.
+-- evenly over its squares, each plant taking it up to full and the soil the rest: a line tile's
+-- soil on its own record, any other square's on the record keeping its soak. Notes in `touched`
+-- the line records it soaked.
 local function spray(record, litres, touched)
     local squares = Sprinklers.squaresOf(record.x, record.y, record.z, Lines.recordAt)
     local points = litres * (1 - Sprinklers.LOST) * Lines.POINTS_PER_LITRE / #squares
@@ -99,8 +99,8 @@ end
 
 --- Runs the line through the tile `record` from `source` for `hours` game hours. Its outlets ask
 --- their rates together, as much of it as the source gives; a source that gives less than they ask
---- gives each the same fraction of what it asked. Callers check the source first (Taps.tankFor,
---- PumpJobs.deliveryOf). Authority only. Returns the litres drawn.
+--- gives each the same fraction of what it asked. The caller checks the source first. Authority
+--- only. Returns the litres drawn.
 function Flow.run(record, source, hours)
     local tiles = Lines.component(record.x, record.y, record.z)
     for _, tile in ipairs(tiles) do

@@ -67,7 +67,6 @@ Sprites.RAISED_BARREL_CLOSED = tile(131)
 Sprites.RAISED_TARP_BARREL = tile(132)
 Sprites.RAISED_TARP_BARREL_CLOSED = tile(133)
 
--- The sand filters.
 Sprites.BARREL_FILTER = tile(134)
 Sprites.BRICK_FILTER = tile(135)
 

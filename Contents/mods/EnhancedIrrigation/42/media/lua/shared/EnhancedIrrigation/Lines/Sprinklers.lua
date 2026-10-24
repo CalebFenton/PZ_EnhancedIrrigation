@@ -1,9 +1,8 @@
--- Lawn Sprinklers: set on a garden line tile (LineJobs' Set Sprinkler), a sprinkler throws its
--- water over a rectangle of squares around it while a pump drives the line; a tank's gravity is
--- too weak to work one (docs/design.md, Garden lines). Its tile's record keeps it and the soak of
--- the squares it waters off the line (server/EnhancedIrrigation/Lines/LineObject.lua); the flow
--- sprays it (Flow.lua). What both sides read: which squares a sprinkler waters, and the soil word
--- at a square, from its own line tile and the soak any sprinkler left on it.
+-- Lawn Sprinklers: set on a garden line tile, a sprinkler throws its water over a rectangle of
+-- squares around it while a pump drives the line; a tank's gravity is too weak to work one. Its
+-- tile's record keeps it and the soak of the squares it waters off the line. What both sides read:
+-- which squares a sprinkler waters, and the soil word at a square, from its own line tile and the
+-- soak any sprinkler left on it.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -19,14 +18,12 @@ local Sprites, Lines, Pumps = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lin
 Sprinklers.ITEM = "EnhancedIrrigation.LawnSprinkler"
 
 -- Litres an hour a sprinkler asks of a pumped line, and the share of it lost to the air and the
--- paths between the beds: each square gets 90 plant points an hour, about what a pumped hole gives
--- its own. Vanilla's plant drinks about 5 points a day, so 3 minutes a day keeps a bed level and
--- the soil dries off what up to 10 gives past that (Lines.SOAK_DRY_OUT), as for a holed line: a
--- run set by watching a held tap suits both (design, Starting numbers). Faster, no daily run lay
--- between a dry bed and a drowned one.
+-- paths between the beds. Each square it waters gets about what a pumped hole gives its own, so a
+-- daily run set by watching a held tap suits both (design, Starting numbers); faster, no daily run
+-- would lie between a dry bed and a drowned one.
 Sprinklers.RATE = 54
 Sprinklers.LOST = 0.5
--- Squares the rectangle reaches from the sprinkler along the line and across it: five by three.
+-- Squares the rectangle reaches each way from the sprinkler, along the line and across it.
 Sprinklers.ALONG = 2
 Sprinklers.ACROSS = 1
 

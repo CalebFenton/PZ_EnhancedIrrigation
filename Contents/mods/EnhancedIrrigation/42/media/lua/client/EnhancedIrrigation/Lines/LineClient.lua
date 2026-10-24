@@ -1,7 +1,6 @@
--- The client's side of garden lines: the system that receives each tile's summary
--- (EnhancedIrrigation.Lines.stateAt reads it), and the water running at each tap whose valve runs
--- it. A line tile is a plain object with nothing unsaved and no container, so the copies need no
--- setting up.
+-- The client's side of garden lines: the system that receives each tile's summary, and the water
+-- running at each tap whose valve runs it. A line tile is a plain object with nothing unsaved and
+-- no container, so the copies need no setting up.
 
 require "EnhancedIrrigation/ClientObjects"
 require "EnhancedIrrigation/Sprites"

@@ -1,7 +1,7 @@
 -- The authority's record of one garden line tile: its pipe, holes, wear, sprinkler and water. Time
 -- dries its soak and the soak its sprinkler left off the line, rots the roots of a plant in
--- waterlogged soil there and freezes it when full; the flow (Flow.lua) fills and wets it; the jobs
--- (LineSystem.lua) change the rest.
+-- waterlogged soil there and freezes it when full; the flow fills and wets it; the jobs change the
+-- rest.
 
 if isClient() then return end
 
@@ -26,21 +26,28 @@ local Plants = EnhancedIrrigation.Plants
 local LineObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Line")
 EnhancedIrrigation.LineObject = LineObject
 
--- The world's save format: renaming one loses it from saves. material: the pipe's kind; holed;
--- cracked; conditions: the condition of each item of pipe it was laid with, in order (none listed:
--- as new); full: water stands in it; soak: plant points of water in the soil under it; tap,
--- tapMaterial and tapConditions (the pipe it took); wetUntil: the hour its soil stops showing wet;
--- exterior: whether it lies outdoors, as last seen loaded; lastHour: when time last reached it;
--- sprinkler: { condition, ceiling } of the Lawn Sprinkler set on it, as its item had them, nil for
--- none; sprinklerSoak: the soak of squares with no line tile that its sprinkler soaked, by
--- Sprinklers.offsetKey from it, nil for none, a square's on one record only, the first sprinkler's
--- to soak it (addSprinklerSoak); valve: the valve on its tap, nil for none (ValveSystem.lua).
--- Unsaved, `running`: its pump runs the line now (LineSystem.showRunning), which a loaded world's
--- pumps say again; and `valveOpen`: its valve runs the line now, which the valve says again.
+-- The world's save format: renaming a field loses it from saves.
 LineObject.SAVED_FIELDS = {
-    "material", "holed", "cracked", "conditions", "full", "soak", "tap", "tapMaterial", "tapConditions",
-    "wetUntil", "exterior", "lastHour", "sprinkler", "sprinklerSoak", "valve",
+    "material", -- the pipe's kind
+    "holed",
+    "cracked",
+    "conditions", -- the condition of each item of pipe it was laid with, in order; none listed: as new
+    "full", -- water stands in it
+    "soak", -- plant points of water in the soil under it
+    "tap",
+    "tapMaterial", -- the kind of the pipe the tap took
+    "tapConditions", -- that pipe's, as `conditions`
+    "wetUntil", -- the hour its soil stops showing wet
+    "exterior", -- whether it lies outdoors, as last seen loaded
+    "lastHour", -- when time last reached it
+    "sprinkler", -- { condition, ceiling } of the Lawn Sprinkler set on it, as its item had them
+    -- The soak of squares with no line tile that its sprinkler soaked, by Sprinklers.offsetKey from
+    -- it; a square's on one record only (addSprinklerSoak).
+    "sprinklerSoak",
+    "valve", -- the valve on its tap, as ValveSystem keeps it
 }
+-- Unsaved: `running`, its pump runs the line now, and `valveOpen`, its valve does; each says so
+-- again as it next runs after a load.
 
 function LineObject:initNew()
     self.material = "plastic"
@@ -155,7 +162,6 @@ function LineObject:advance(hours)
     self:freeze(hours)
 end
 
--- The overlays a tile may carry.
 local OVERLAYS = { [Sprites.TAP] = true, [Sprites.SPRINKLER] = true }
 for _, sprite in pairs(Sprites.TAP_VALVES) do
     OVERLAYS[sprite] = true
@@ -165,8 +171,7 @@ local function isOverlay(name)
     return OVERLAYS[name] == true
 end
 
---- Shows the tile as its record says: the pipe joined to its neighbours, wet or dry, with the tap's
---- riser and its valve or the sprinkler over it if it has one. Does nothing while its chunk is
+--- Shows the tile as its record says, joined to its neighbours. Does nothing while its chunk is
 --- unloaded.
 function LineObject:show()
     local isoObject = self:getIsoObject()
