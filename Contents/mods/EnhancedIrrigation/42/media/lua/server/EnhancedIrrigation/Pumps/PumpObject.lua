@@ -81,18 +81,23 @@ function PumpObject:isBurntOut()
     return self.part ~= nil and self.partCondition <= 0
 end
 
---- Fits the pump part `item` in the Pump House, as worn as it is, with the ceiling it carries.
+--- Fits the pump part `item` in the Pump House, as worn as it is, the fraction of a point it was
+--- taken out with included, with the ceiling it carries.
 function PumpObject:fitPart(item)
     self.part = item:getFullType()
-    self.partCondition = item:getCondition()
+    self.partCondition = item:getCondition() + (item:getModData()[Pumps.FRACTION_KEY] or 0)
     self.partCeiling = Pumps.ceilingOf(item)
 end
 
 --- Takes the Pump House's part out and switches it off. Returns the part as an item, as worn as it
---- was, with its ceiling.
+--- was: its whole points as its condition and the rest with it, which Fit Pump adds back, so a
+--- part never gains condition by being taken out; and with its ceiling.
 function PumpObject:takeOutPart()
     local item = instanceItem(self.part)
-    item:setCondition(math.ceil(self.partCondition))
+    local whole = math.floor(self.partCondition)
+    item:setCondition(whole)
+    local fraction = self.partCondition - whole
+    item:getModData()[Pumps.FRACTION_KEY] = fraction > 0 and fraction or nil
     Pumps.setCeiling(item, self.partCeiling)
     self.part, self.partCondition, self.partCeiling = nil, nil, nil
     self.on, self.running = nil, nil

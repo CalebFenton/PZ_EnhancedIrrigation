@@ -260,6 +260,44 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
     end,
 })
 
+-- What a part's wear leaves past its last whole point.
+local FRACTION = 0.2
+
+-- Take Out Pump of a part worn to a fraction of a point gives it back at the whole points below,
+-- on both sides, and Fit Pump puts it back in at the fraction it had: taking a part out and in
+-- again never gains it condition. Catches a part handed back rounded up, a free hour's wear on
+-- every Take Out.
+T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { partCondition = WORN + FRACTION }))
+        T.give(self, "tools", { { type = "Base.Screwdriver" } })
+        useMenu(self, self.house, "take out", job(PumpJobs.TAKE_OUT_PUMP), true)
+        readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
+        T.read(self, "pumpHouse.carried", { type = APPLIANCE }, "carried")
+        T.waitFor(self, function()
+            self.back = T.player():getInventory():getFirstTypeRecurse(APPLIANCE)
+            return self.back ~= nil
+        end, "this client's copy of the part taken out")
+        T.step(function() self.backCondition = self.back:getCondition() end)
+        useMenu(self, self.house, "fit", function(context)
+            return T.jobOption(context, "pump", PumpJobs.FIT_PUMP, self.back)
+        end, true)
+        readUntil(self, self.house, "refitted", function(state) return state.record.part ~= nil end)
+    end,
+    validate = function(self)
+        T.expectOffered(self, "take out")
+        local items = self.reads.carried.items
+        expect(#items == 1 and items[1].condition == WORN, "the server's part came back at "
+            .. (items[1] and items[1].condition or "nothing"))
+        expect(self.backCondition == WORN, "this client's part came back at " .. tostring(self.backCondition))
+        T.expectOffered(self, "fit")
+        expectNear("the part fitted again", self.reads.refitted.record.partCondition, WORN + FRACTION, 0.0001)
+    end,
+})
+
 -- Power ---------------------------------------------------------------------------------------------------
 
 -- On open ground with no room beside it, the grid on, a fitted house has no power: Turn On is greyed

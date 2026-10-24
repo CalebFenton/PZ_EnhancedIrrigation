@@ -73,11 +73,13 @@ Pumps.PARTS = {
 Pumps.DRY_WEAR = 10
 
 -- A pump part's condition new, the most a repair restores; the item modData key of a lower ceiling
--- a part carries, made or repaired, absent at that; what each Repair Pump takes off the ceiling, as
--- vanilla's repairs fall short; and the ceiling of a Utility Pump made from a Blower Fan, as a
--- home-made pump falls short of a bought one.
+-- a part carries, made or repaired, absent at that; the key of the wear past its whole points a
+-- part taken out carries, as an item's condition is whole; what each Repair Pump takes off the
+-- ceiling, as vanilla's repairs fall short; and the ceiling of a Utility Pump made from a Blower
+-- Fan, as a home-made pump falls short of a bought one.
 Pumps.PART_CONDITION = 100
 Pumps.CEILING_KEY = "EnhancedIrrigation_ceiling"
+Pumps.FRACTION_KEY = "EnhancedIrrigation_conditionFraction"
 Pumps.REPAIR_LOSS = 10
 Pumps.MADE_CEILING = 80
 
