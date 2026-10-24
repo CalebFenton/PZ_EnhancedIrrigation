@@ -1,9 +1,8 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/ServerFixtures"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsStands.lua: the
--- barrel moveables the authority gives, finds and takes; placing stands and running their jobs is
--- EnhancedIrrigationTestServer.lua's. Only registers handlers, so a --stay rerun loads it again.
+-- Development only, not published. Test handlers for the barrel moveables the authority gives,
+-- finds and takes. Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 
