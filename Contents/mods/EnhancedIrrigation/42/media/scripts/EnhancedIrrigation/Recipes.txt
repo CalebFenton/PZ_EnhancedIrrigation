@@ -28,8 +28,9 @@ module Base
         The Filter Crock, made as vanilla's clay jar is: shaped at a pottery wheel, with the water
         from any container kept, then fired in a kiln. The charcoal crushed into the clay burns
         out in the firing and leaves the pores the water seeps through. Both are learned together
-        with setting the crock up (Entities.txt): by Pottery 5, or by researching a Clay Jar
-        (shared/EnhancedIrrigation/Recipes.lua adds that at load) or a Filter Crock.
+        with setting the crock up (Entities.txt): by the Pottery level their AutoLearn names, or by
+        researching a Clay Jar (shared/EnhancedIrrigation/Recipes.lua adds that at load) or a
+        Filter Crock.
     */
     craftRecipe EnhancedIrrigation_ShapeFilterCrock
     {

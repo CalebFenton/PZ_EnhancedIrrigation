@@ -210,8 +210,8 @@ module Base
 
     /*
         The Filter Crock (Items.txt, Recipes.txt) set in a bucket: raw water poured into the crock
-        seeps through its fired walls into the bucket, this FluidContainer, the bucket's size,
-        locked and rainless as a filter's basin is. Any empty bucket, as every kind holds 10 L,
+        seeps through its fired walls into the bucket, this FluidContainer, a common bucket's size
+        whatever bucket it stands in, locked and rainless as a filter's basin is. Any empty bucket,
         counted as an item: the game uses up an input that holds a fluid container only then. The
         OnCreate gives the unit its record at once and notes which bucket it took, which Take Down
         gives back. Learned with Shape Filter Crock, so whoever can make a crock can set one up.
