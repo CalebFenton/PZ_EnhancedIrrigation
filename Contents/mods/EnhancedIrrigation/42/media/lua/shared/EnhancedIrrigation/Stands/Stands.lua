@@ -7,6 +7,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
+require "EnhancedIrrigation/Tanks"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Stands = {}
@@ -36,6 +37,7 @@ for _, spec in ipairs(Stands.BARRELS) do
     spec.item = "Moveables." .. spec.barrel
     BY_ENTITY[spec.entity] = spec
     BY_TILE[spec.barrel] = spec
+    EnhancedIrrigation.Tanks.ENTITIES[spec.entity] = { raised = true }
 end
 
 --- Whether `isoObject` is an empty Tank Stand.

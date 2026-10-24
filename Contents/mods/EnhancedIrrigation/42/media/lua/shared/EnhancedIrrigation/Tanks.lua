@@ -10,9 +10,9 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Tanks = {}
 EnhancedIrrigation.Tanks = Tanks
 
--- Each tank's entity script name; `raised` for the barrels on a Tank Stand. A well isn't one: its
--- water stands underground, below any line or tank it could feed by gravity, so only a pump
--- (docs/design.md, Pumps) draws from it.
+-- Each tank's entity script name; `raised` for the barrels on a Tank Stand, which Stands adds. A
+-- well isn't one: its water stands underground, below any line or tank it could feed by gravity, so
+-- only a pump (docs/design.md, Pumps) draws from it.
 Tanks.ENTITIES = {
     RainCollector = {},
     RainCollector_Tarp = {},
@@ -22,10 +22,6 @@ Tanks.ENTITIES = {
     RainCollectorRound_TarpClosed = {},
     Amphora = {},
     AmphoraClosed = {},
-    EnhancedIrrigation_RaisedBarrel = { raised = true },
-    EnhancedIrrigation_RaisedBarrelClosed = { raised = true },
-    EnhancedIrrigation_RaisedBarrel_Tarp = { raised = true },
-    EnhancedIrrigation_RaisedBarrel_TarpClosed = { raised = true },
 }
 
 local function specOf(isoObject)
