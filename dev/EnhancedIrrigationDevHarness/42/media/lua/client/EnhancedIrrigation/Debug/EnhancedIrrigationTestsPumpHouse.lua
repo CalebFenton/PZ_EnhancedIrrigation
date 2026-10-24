@@ -519,7 +519,10 @@ T.test("irrigation_pump_house_grid_runs_a_gap_until_the_shutoff", {
         local shutoff, gap = self.reads.shutoff, self.reads.gap
         expect(not shutoff.grid, "the grid is still on after its shutoff")
         local from = gap.now - self.gap
-        expectNear("the barrel after the gap", gap.after.tank.litres, lifts(APPLIANCE, shutoff.shutoff - from), LITRES)
+        -- Within a minute's water: the clock a multiplayer server reports between two answers
+        -- drifts by seconds against the hour the shutoff was set to.
+        expectNear("the barrel after the gap", gap.after.tank.litres, lifts(APPLIANCE, shutoff.shutoff - from),
+            lifts(APPLIANCE, 1 / 60))
     end,
 })
 
@@ -563,16 +566,10 @@ local function readWasher(self, washer, label, done)
     T.readUntil(self, "appliances.state", T.at(washer, { sprite = WASHER }), label, done)
 end
 
--- Queues vanilla's Turn On or Off of the washer, as its menus and loot window queue it, for a
--- character whose client doesn't check that it may: only the authority's own check can stop it.
-local function toggleUnchecked(self, washer)
-    T.step(function()
-        local copy = T.objectWithSprite(getSquare(washer.x, washer.y, washer.z), WASHER)
-        if not T.need(self, copy, "this client's copy of the washer") then return end
-        local action = ISToggleClothingWasher:new(T.player(), copy)
-        action.isValid = function() return true end
-        ISTimedActionQueue.add(action)
-    end)
+-- Queues vanilla's Turn On or Off of the washer run on the authority as its action's complete()
+-- does, whatever the client checked, into self.reads[label].
+local function toggle(self, washer, label)
+    T.read(self, "appliances.toggle", T.at(washer, { sprite = WASHER }), label)
 end
 
 -- A washing machine indoors on the grid with water in it runs once switched on. Salvage Pump from
@@ -591,8 +588,7 @@ T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
         T.waitFor(self, function() return T.objectWithSprite(self.washer.square, WASHER) ~= nil end,
             "this client's copy of the washer")
         T.goNextTo(self, self.washer.square)
-        toggleUnchecked(self, self.washer)
-        readWasher(self, self.washer, "running", function(state) return state.activated end)
+        toggle(self, self.washer, "running")
         T.knowRecipes(self, { ApplianceJobs.RECIPE }, true)
         T.setPerk(self, Perks.Electricity, 2)
         T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = "Base.Pliers" } })
@@ -609,8 +605,7 @@ T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
         T.useOption(self, washer, "on", function(context)
             return T.findNamed(context, context, getText("ContextMenu_Turn_On"))
         end, false)
-        toggleUnchecked(self, self.washer)
-        readWasher(self, self.washer, "forced", function() return true end)
+        toggle(self, self.washer, "forced")
         T.useOption(self, washer, "again", function(context)
             return T.jobOption(context, "appliance", ApplianceJobs.SALVAGE_PUMP)
         end, false)

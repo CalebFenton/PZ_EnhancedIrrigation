@@ -107,6 +107,20 @@ handler("appliances.state", function(_, args)
         stripped = mod().Appliances.isStripped(appliance) }
 end)
 
+-- Runs vanilla's switch of the washer drawn as `args.sprite` at x, y, z on the authority, as its
+-- action's complete() does once a client asks (ISToggleClothingWasher), whatever the client checked.
+-- Answers whether it ran and the washer's state after. A refused action on a multiplayer client
+-- would clear the test's queue, so the switch is run here rather than queued.
+handler("appliances.toggle", function(player, args)
+    local square = Server.squareAt(args)
+    local washer = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
+    if not washer then
+        return nil, "the washer at " .. args.x .. "," .. args.y
+    end
+    local done = ISToggleClothingWasher:new(player, washer):complete()
+    return { done = done == true, activated = washer:isActivated(), stripped = mod().Appliances.isStripped(washer) }
+end)
+
 -- Every item of `args.type` the server's copy of the character carries, bags included: its
 -- condition, the ceiling it carries (Pumps.ceilingOf) and, for a drainable, its uses left.
 handler("pumpHouse.carried", function(player, args)
