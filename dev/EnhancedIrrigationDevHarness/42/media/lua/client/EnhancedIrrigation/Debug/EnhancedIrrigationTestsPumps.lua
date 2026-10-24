@@ -151,14 +151,17 @@ end
 
 -- How near this client's endurance comes to what the server set, a frame or two of rest later.
 local ENDURANCE_SLACK = 0.01
--- The fatigue the tests' character works the pump at: standing still gives endurance back per
--- frame scaled by the clock's speed, which on a multiplayer server at the tests' speed outpaces
--- the world hours it counts and so the work's cost; a tired character gets a fraction of it
--- back (IsoPlayer.updateEndurance).
+-- The fatigue the tests' character works the pump at, and vanilla's slowest Endurance Regen
+-- (EndRegen): standing still gives endurance back per frame scaled by the clock's speed, which on
+-- a multiplayer server at the tests' speed outpaces the world hours it counts and so the work's
+-- cost; a tired character with slow regen gets a fraction of it back (IsoPlayer.updateEndurance).
 local FATIGUE = 0.9
+local END_REGEN = 5
 
--- Queues the character's endurance set to `value`, tired, on both sides until the test ends.
+-- Queues the character's endurance set to `value`, tired and slow to rest, on both sides until
+-- the test ends.
 local function setEndurance(self, value)
+    T.setSandbox(self, "EndRegen", END_REGEN)
     T.server(self, "pumps.endurance", { value = value, fatigue = FATIGUE })
     -- Near, not exact: standing still gives some back before this client looks.
     T.waitFor(self, function()
@@ -238,7 +241,8 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         useMenu(self, self.pump, "outlet", linkJob(LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
-        self.endurance = 0.5
+        -- Full, as rest can't add to it before the work starts.
+        self.endurance = 1
         setEndurance(self, self.endurance)
         read(self, self.pump, "before", { well = T.at(self.well) })
         quickRuns(self)
