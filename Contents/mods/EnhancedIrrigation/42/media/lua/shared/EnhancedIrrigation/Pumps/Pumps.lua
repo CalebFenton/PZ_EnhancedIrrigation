@@ -17,6 +17,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Jobs"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Pumps = {}
@@ -116,6 +117,12 @@ Pumps.WELL_SPRITES = {
 
 -- Litres below which a source counts as dry, or a tank as full.
 Pumps.LEAST_LITRES = 0.01
+
+-- The Tooltip key saying how high a pump of each lift fills a tank.
+Pumps.LIFT_KEYS = {
+    [1] = "Tooltip_EnhancedIrrigation_LiftsOneStorey",
+    [2] = "Tooltip_EnhancedIrrigation_LiftsTwoStoreys",
+}
 
 --- The spec of `isoObject`'s pump (a row of UNITS), or nil when it isn't one.
 function Pumps.specOf(isoObject)
@@ -343,6 +350,65 @@ function Pumps.sourceOf(pump, intake, outletEnd)
         return { kind = "river", object = square and square:getWaterObject(), at = river, infinite = true }
     end
     return dry
+end
+
+-- Delivery -------------------------------------------------------------------------------------------
+
+--- The level a pump lifts to for `into`, its outlet's tank or line tile: the tank's, or the floor
+--- the line lies on.
+function Pumps.levelOf(into)
+    return Tanks.isTank(into) and Tanks.levelOf(into) or into:getZ()
+end
+
+--- What a pump lifting by `spec` (a row of UNITS or PARTS) would lift into, as this side sees it:
+--- its outlet's tank, while that stands within its lift and has room, or its outlet's line tile,
+--- while its line has no tap; and the source it draws from (Pumps.sourceOf, with the hose's
+--- `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of why it
+--- lifts nothing.
+function Pumps.deliveryOf(pump, spec, intake)
+    local b = Pumps.outletEnd(EnhancedIrrigation.squareOf(pump))
+    if not b then
+        return nil, "Tooltip_EnhancedIrrigation_NoOutlet"
+    end
+    local into = Tanks.tankAt(b.x, b.y, b.z) or Lines.lineAt(b.x, b.y, b.z)
+    if not into then
+        return nil, "Tooltip_EnhancedIrrigation_OutletGone"
+    end
+    -- A barrel set on a stand at the far end since it was plumbed may stand out of its reach.
+    if not Pumps.lifts(spec, Pumps.levelOf(into), pump:getZ()) then
+        return nil, Pumps.LIFT_KEYS[spec.lift]
+    end
+    if Lines.isLine(into) then
+        -- A wall knocked down since may have joined it to a tapped line. This pump feeds it too,
+        -- so only a tap is another feed.
+        if Pumps.feedOf(Lines.component(b.x, b.y, b.z)) == "tap" then
+            return nil, Pumps.FEED_TAKEN.tap
+        end
+    elseif into:getFluidContainer():getFreeCapacity() < Pumps.LEAST_LITRES then
+        return nil, "Tooltip_EnhancedIrrigation_OutletFull"
+    end
+    local source = Pumps.sourceOf(pump, intake, b)
+    if not source or source.dry then
+        return nil, "Tooltip_EnhancedIrrigation_NoWaterToDraw"
+    end
+    return into, source
+end
+
+--- What the hand pump `pump` would lift into, as this side sees it (Pumps.deliveryOf), unless its
+--- body or seal is worn out. Returns the tank or line tile and the source, or nil and the Tooltip
+--- key of why it lifts nothing.
+function Pumps.flowOf(pump)
+    local spec, summary = Pumps.specOf(pump), Pumps.currentSummary(pump)
+    if not (spec and spec.kind == "hand" and summary) then
+        return nil, EnhancedIrrigation.Jobs.UNKNOWN
+    end
+    if summary.wornOut then
+        return nil, "Tooltip_EnhancedIrrigation_PumpWornOut"
+    end
+    if summary.sealWorn then
+        return nil, "Tooltip_EnhancedIrrigation_SealWornOut"
+    end
+    return Pumps.deliveryOf(pump, spec, summary.intake)
 end
 
 -- What the menu says ---------------------------------------------------------------------------------

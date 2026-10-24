@@ -24,7 +24,6 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
-require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Timers"
@@ -34,7 +33,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
-local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
+local Pumps, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.Tanks
 local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
 local Timers, Power = EnhancedIrrigation.Timers, EnhancedIrrigation.Power
 
@@ -206,8 +205,11 @@ end
 --- water go, or what the line its outlet feeds takes of it, and wears the part, ten times as fast
 --- for the time its source is dry. Stops where the part burns out. Returns the hours it ran.
 function PumpHouse.run(record, pump, part, hours)
-    local source = Pumps.sourceOf(pump, record.intake, Pumps.outletEnd(record))
-    local into = PumpJobs.deliveryOf(pump, part, record.intake)
+    local into, source = Pumps.deliveryOf(pump, part, record.intake)
+    if not into then
+        -- Refused, it still runs: its source decides how fast it wears.
+        source = Pumps.sourceOf(pump, record.intake, Pumps.outletEnd(record))
+    end
     local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
     -- The litres an hour it lifts while it has water, and how many its outlet takes at most.
     local perHour, room = part.rate * 60, math.huge

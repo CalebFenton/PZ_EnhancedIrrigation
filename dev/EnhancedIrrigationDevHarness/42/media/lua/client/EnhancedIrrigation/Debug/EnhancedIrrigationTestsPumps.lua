@@ -485,7 +485,7 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         readUntil(self, self.iron, "plumbed", function(state) return state.outlet end)
     end,
     validate = function(self)
-        T.expectRefused(self, "wooden", PumpJobs.LIFT_KEYS[Pumps.UNITS[WOODEN].lift])
+        T.expectRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.UNITS[WOODEN].lift])
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed the wooden pump two storeys up")
         T.expectOffered(self, "iron")

@@ -14,7 +14,6 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Pumps/Pumps"
-require "EnhancedIrrigation/Pumps/PumpJobs"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
@@ -24,7 +23,7 @@ local Jobs = EnhancedIrrigation.Jobs
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
 local Lines = EnhancedIrrigation.Lines
 local Fixtures, Treatment = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Treatment
-local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
+local Pumps = EnhancedIrrigation.Pumps
 
 LinkJobs.PLUMB = "PlumbToTank"
 LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
@@ -163,8 +162,8 @@ function LinkJobs.pumpBlocker(pump, with)
     if taken then
         return taken
     end
-    if not Pumps.lifts(spec, PumpJobs.levelOf(into), here.z) then
-        return PumpJobs.LIFT_KEYS[spec.lift]
+    if not Pumps.lifts(spec, Pumps.levelOf(into), here.z) then
+        return Pumps.LIFT_KEYS[spec.lift]
     end
     return nil, here, other
 end
