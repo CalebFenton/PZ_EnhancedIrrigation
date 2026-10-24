@@ -511,6 +511,8 @@ T.TANKS = {
     raisedLidded = { sprite = Sprites.RAISED_BARREL_CLOSED },
     -- Vanilla's well, on the floor above: never a tank, whatever water it holds.
     wellAbove = { sprite = "camping_01_16", up = 1 },
+    -- The same well on the ground, as the map has them, for a pump to draw from.
+    well = { sprite = "camping_01_16" },
 }
 
 --- Queues placing a T.TANKS `kind` at `handle`, holding `litres` of water (tainted when

@@ -10,8 +10,9 @@
 -- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), all of which Unplumb gives
 -- back, and the condition of each item of that pipe as it went in (Materials.conditions). One of
 -- `fixture` (b is a plumbed fixture, Fixtures.lua), `inlet` (b is a treatment unit fed from the
--- tank at a) or `outlet` (a is a unit whose basin empties into the tank at b, Treatment.lua) is
--- true when the link isn't between two tanks.
+-- tank at a), `outlet` (a is a unit whose basin empties into the tank at b, Treatment.lua) or
+-- `pump` (a is a pump that lifts water into the tank at b, Pumps.lua) is true when the link isn't
+-- between two tanks.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"

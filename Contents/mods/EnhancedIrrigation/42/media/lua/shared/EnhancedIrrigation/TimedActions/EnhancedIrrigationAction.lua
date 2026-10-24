@@ -9,9 +9,11 @@ require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Treatment"
 require "EnhancedIrrigation/TreatmentJobs"
+require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/PumpJobs"
 
 -- Every hands-on job of fixed length at one of the mod's objects (StandJobs, LinkJobs, LineJobs,
--- TreatmentJobs).
+-- TreatmentJobs, PumpJobs).
 -- In multiplayer the client runs start() and perform() and the server rebuilds the action from
 -- new()'s parameters and runs complete(), which does the job; single player runs both. A global,
 -- as the server finds the class by its Type (NetTimedAction.parse).
@@ -19,6 +21,7 @@ EnhancedIrrigationAction = EnhancedIrrigationAction or ISBaseTimedAction:derive(
 
 local Action = EnhancedIrrigationAction
 local Stands, LineJobs, Treatment = EnhancedIrrigation.Stands, EnhancedIrrigation.LineJobs, EnhancedIrrigation.Treatment
+local Pumps = EnhancedIrrigation.Pumps
 
 -- Each feature: isTarget(object), the objects it works at; jobs, its job module
 -- (Jobs.define), whose JOBS[job] rows also say how long the job takes and how it looks;
@@ -34,12 +37,12 @@ local FEATURES = {
         jobs = EnhancedIrrigation.StandJobs,
         perform = function(...) return EnhancedIrrigation.StandSystem.perform(...) end,
     },
-    -- Plumbing works at a tank, a fixture or a treatment unit; Unplumb also at the floor of an end
-    -- whose tank, fixture or unit is gone.
+    -- Plumbing works at a tank, a fixture, a treatment unit or a pump; Unplumb also at the floor of
+    -- an end whose tank, fixture, unit or pump is gone.
     link = {
         isTarget = function(object)
             return EnhancedIrrigation.Tanks.isTank(object) or EnhancedIrrigation.Fixtures.isFixture(object)
-                or Treatment.isUnit(object) or EnhancedIrrigation.isFloor(object)
+                or Treatment.isUnit(object) or Pumps.isPump(object) or EnhancedIrrigation.isFloor(object)
         end,
         jobs = EnhancedIrrigation.LinkJobs,
         perform = function(...) return EnhancedIrrigation.LinkSystem.perform(...) end,
@@ -53,6 +56,11 @@ local FEATURES = {
         isTarget = Treatment.isUnit,
         jobs = EnhancedIrrigation.TreatmentJobs,
         perform = function(...) return EnhancedIrrigation.TreatmentSystem.perform(...) end,
+    },
+    pump = {
+        isTarget = Pumps.isPump,
+        jobs = EnhancedIrrigation.PumpJobs,
+        perform = function(...) return EnhancedIrrigation.PumpSystem.perform(...) end,
     },
 }
 

@@ -1,0 +1,17 @@
+/*
+    The mod's sounds, each a vanilla event under a name of its own, so the event can change without
+    the code that plays it.
+*/
+module Base
+{
+    /* A wooden hand pump's handle squealing on its dry pivot as it is worked: a wooden door's creak,
+       the nearest the game has. */
+    sound EnhancedIrrigationPumpSqueal
+    {
+        category = Object,
+        clip
+        {
+            event = Object/WoodDoor/Creak,
+        }
+    }
+}

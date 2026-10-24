@@ -12,9 +12,10 @@ module EnhancedIrrigation
 
     /*
         A University of Kentucky extension leaflet on storing, moving and filtering farm water: the
-        Tank Stand and the Barrel and Brick Filters (build-menu recipes) and plumbing tanks together
-        (a knowledge-only recipe, Recipes.txt). The skills teach them too. Drawn with vanilla's
-        magazine models, as the game's own recipe magazines are.
+        Tank Stand, the Wooden and Iron Hand Pumps and the Barrel and Brick Filters (build-menu
+        recipes) and plumbing tanks together (a knowledge-only recipe, Recipes.txt). The skills
+        teach them too. Drawn with vanilla's magazine models, as the game's own recipe magazines
+        are.
     */
     item CisternsForKentucky
     {
@@ -26,7 +27,7 @@ module EnhancedIrrigation
         WorldStaticModel = MagazineGround,
         BoredomChange = -10,
         StressChange = -5,
-        LearnedRecipes = EnhancedIrrigation_TankStand;EnhancedIrrigation_PlumbToTank;EnhancedIrrigation_BarrelFilter;EnhancedIrrigation_BrickFilter,
+        LearnedRecipes = EnhancedIrrigation_TankStand;EnhancedIrrigation_PlumbToTank;EnhancedIrrigation_WoodenHandPump;EnhancedIrrigation_IronHandPump;EnhancedIrrigation_BarrelFilter;EnhancedIrrigation_BrickFilter,
         Tooltip = Tooltip_EnhancedIrrigation_CisternsForKentucky,
         OnCreate = ItemCodeOnCreate.onCreateRecipeMagazine,
         Tags = base:magazine;base:ignorezombiedensity,

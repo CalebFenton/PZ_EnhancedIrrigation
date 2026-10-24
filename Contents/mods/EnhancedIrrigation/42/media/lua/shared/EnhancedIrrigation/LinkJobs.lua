@@ -1,10 +1,11 @@
--- The jobs that plumb a tank to another tank, to a fixture or to a treatment unit's inlet or outlet,
--- and take the pipe out again, done on the authority by server/EnhancedIrrigation/Links/
--- LinkSystem.lua. A job's `with` names the square of the link's other end and, for Plumb, the pipe
--- the player chose to lay (Links.encode). Plumb works at a tank; Plumb Fixture and vanilla's Plumb
--- (Plumb Above) at a fixture, toward its tank; Plumb Inlet and Plumb Outlet at a unit, toward the
--- tank it draws from or fills; Unplumb at either end, or at the floor of an end whose tank,
--- fixture or unit is gone, as the buried pipe stays (Links.lua).
+-- The jobs that plumb a tank to another tank, to a fixture, to a treatment unit's inlet or outlet
+-- or to a pump's outlet, and take the pipe out again, done on the authority by
+-- server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square of the link's
+-- other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb works at a tank;
+-- Plumb Fixture and vanilla's Plumb (Plumb Above) at a fixture, toward its tank; Plumb Inlet and
+-- Plumb Outlet at a unit, toward the tank it draws from or fills; Plumb Pump at a pump, toward the
+-- tank it fills; Unplumb at either end, or at the floor of an end whose tank, fixture, unit or pump
+-- is gone, as the buried pipe stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
@@ -13,6 +14,8 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/PumpJobs"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
@@ -20,6 +23,7 @@ EnhancedIrrigation.LinkJobs = LinkJobs
 
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
 local Fixtures, Treatment = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Treatment
+local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 
 LinkJobs.PLUMB = "PlumbToTank"
 LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
@@ -27,6 +31,7 @@ LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
 LinkJobs.PLUMB_ABOVE = "PlumbAbove"
 LinkJobs.PLUMB_INLET = "PlumbInlet"
 LinkJobs.PLUMB_OUTLET = "PlumbOutlet"
+LinkJobs.PLUMB_PUMP = "PlumbPump"
 LinkJobs.UNPLUMB = "Unplumb"
 
 -- The knowledge recipe the pamphlet teaches; it is never crafted, only known.
@@ -141,23 +146,54 @@ function LinkJobs.unitBlocker(unit, with, role)
     return nil, here, other
 end
 
--- The row of Plumb Inlet or Plumb Outlet: Plumb Fixture's, toward a unit's `role` end.
-local function unitPlumbJob(role)
+--- Why the pump `pump`'s outlet can't be plumbed to the tank on the square `with` names, as far as
+--- both ends go, a Tooltip key, or nil; and the two squares. A pump fills a tank up to its lift
+--- above its floor, whatever the filling rule says (Pumps.lifts).
+function LinkJobs.pumpBlocker(pump, with)
+    local here, other = endsOf(pump, with)
+    local spec = Pumps.specOf(pump)
+    if not (here and spec) then
+        return "Tooltip_EnhancedIrrigation_UnknownJob"
+    end
+    local tank = Tanks.tankAt(other.x, other.y, other.z)
+    if not tank then
+        return "Tooltip_EnhancedIrrigation_TankGone"
+    end
+    if Pumps.outletOf(here) then
+        return "Tooltip_EnhancedIrrigation_OutletPlumbed"
+    end
+    if Links.find(here, other) then
+        return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
+    end
+    if not Pumps.lifts(spec, Tanks.levelOf(tank), here.z) then
+        return PumpJobs.LIFT_KEYS[spec.lift]
+    end
+    return nil, here, other
+end
+
+-- The row of a plumbing job at a unit or pump toward the tank `with` names, refused as
+-- `blocker(object, with)` refuses it as far as both ends go: Plumb Fixture's.
+local function plumbJobFor(blocker)
     return {
-        minutes = function(unit, with) return Links.minutesFor(runTiles(unit, with)) end,
+        minutes = function(object, with) return Links.minutesFor(runTiles(object, with)) end,
         position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
-        blocker = function(character, unit, with)
-            local blocker, here, other = LinkJobs.unitBlocker(unit, with, role)
-            if blocker then
-                return blocker
+        blocker = function(character, object, with)
+            local refusal, here, other = blocker(object, with)
+            if refusal then
+                return refusal
             end
             if Links.distance(here, other) > Links.MAX_TILES then
                 return "Tooltip_EnhancedIrrigation_OutOfReach"
             end
-            return not LinkJobs.pipeFor(unit, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not LinkJobs.pipeFor(object, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
         end,
         materials = plumbMaterials,
     }
+end
+
+-- The row of Plumb Inlet or Plumb Outlet, toward a unit's `role` end.
+local function unitPlumbJob(role)
+    return plumbJobFor(function(unit, with) return LinkJobs.unitBlocker(unit, with, role) end)
 end
 
 LinkJobs.JOBS = {
@@ -212,6 +248,7 @@ LinkJobs.JOBS = {
     },
     [LinkJobs.PLUMB_INLET] = unitPlumbJob("inlet"),
     [LinkJobs.PLUMB_OUTLET] = unitPlumbJob("outlet"),
+    [LinkJobs.PLUMB_PUMP] = plumbJobFor(LinkJobs.pumpBlocker),
     [LinkJobs.UNPLUMB] = {
         minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
         blocker = function(character, object, with)

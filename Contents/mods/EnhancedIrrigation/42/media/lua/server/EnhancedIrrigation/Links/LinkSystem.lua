@@ -4,9 +4,10 @@
 -- finds its level through each link between two tanks loaded at both ends, each plumbed fixture's
 -- tank refills its buffer, and each treatment unit's outlet empties its basin; its inlet fills its
 -- head in the unit's own time (TreatmentObject.advance), which catches up the time the unit was
--- unloaded. A link is buried pipe, run through walls and under floors as vanilla's plumbing is,
--- so it never freezes or wears: unlike a garden line it has nothing to age. Nor does it go with a
--- tank, fixture or unit: taken down, picked up or smashed, it leaves the pipe in the ground, and
+-- unloaded, and a pump's outlet carries what the pump lifts as it lifts it (PumpSystem.pump). A
+-- link is buried pipe, run through walls and under floors as vanilla's plumbing is, so it never
+-- freezes or wears: unlike a garden line it has nothing to age. Nor does it go with a tank,
+-- fixture, unit or pump: taken down, picked up or smashed, it leaves the pipe in the ground, and
 -- one set on that square again is on it.
 
 if isClient() then return end
@@ -75,9 +76,9 @@ function LinkSystem:sendLinks()
 end
 
 --- Adds the link from the square `a` to the square `b`: `kind` pipe in `lengths` lengths whose
---- items were at `conditions`, none for vanilla's Plumb; `role` ("fixture", "inlet" or "outlet")
---- when `b` is a plumbed fixture or a unit's inlet, or `a` a unit's outlet, set true on the link.
---- Returns the link.
+--- items were at `conditions`, none for vanilla's Plumb; `role` ("fixture", "inlet", "outlet" or
+--- "pump") when `b` is a plumbed fixture or a unit's inlet, or `a` a unit's or pump's outlet, set
+--- true on the link. Returns the link.
 function LinkSystem:addLink(a, b, kind, lengths, conditions, role)
     local link = {
         a = { x = a.x, y = a.y, z = a.z }, b = { x = b.x, y = b.y, z = b.z }, kind = kind, lengths = lengths,
@@ -138,6 +139,13 @@ local DO = {
             Materials.conditions(character, materials), "outlet")
         return true
     end,
+    -- The pump at the link's `a` end, as a unit's outlet is.
+    [LinkJobs.PLUMB_PUMP] = function(character, pump, with, materials)
+        local kind, lengths = LinkJobs.pipeFor(pump, with)
+        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(pump), Links.decode(with), kind, lengths,
+            Materials.conditions(character, materials), "pump")
+        return true
+    end,
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
     [LinkJobs.UNPLUMB] = function(character, object, with)
         local link = Links.find(EnhancedIrrigation.squareOf(object), Links.decode(with))
@@ -152,9 +160,9 @@ local DO = {
     end,
 }
 
---- Does `job` at `object` (a tank, a fixture, or for Unplumb the floor of a bare end) toward the
---- square `with` names for `character` on the authority (Jobs.perform). Returns whether it was
---- done.
+--- Does `job` at `object` (a tank, a fixture, a unit, a pump, or for Unplumb the floor of a bare
+--- end) toward the square `with` names for `character` on the authority (Jobs.perform). Returns
+--- whether it was done.
 function LinkSystem.perform(character, job, object, with)
     return EnhancedIrrigation.Jobs.perform(LinkJobs, DO, character, job, object, with)
 end
@@ -217,7 +225,8 @@ end
 
 --- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks,
 --- from a tank into a fixture's buffer, or out of a unit's basin into a tank. A link with an end
---- unloaded, or gone from it, waits; an inlet runs in its unit's time (TreatmentObject.advance).
+--- unloaded, or gone from it, waits; an inlet runs in its unit's time (TreatmentObject.advance),
+--- and a pump's outlet in its pump's, so neither can carry one gap's water twice.
 function LinkSystem:pass(hours)
     local changed = {}
     for _, link in ipairs(self.links) do
@@ -226,7 +235,7 @@ function LinkSystem:pass(hours)
             tank = refill(link, hours)
         elseif link.outlet then
             tank = TreatmentSystem.drain(link, LinkSystem.LINK_RATE * hours)
-        elseif not link.inlet then
+        elseif not (link.inlet or link.pump) then
             local tankA, tankB = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
             if tankA and tankB and flow(tankA, tankB, hours) then
                 changed[tankA], changed[tankB] = true, true

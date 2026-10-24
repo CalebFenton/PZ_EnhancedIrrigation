@@ -1,9 +1,10 @@
 -- The right-click options of tanks and Tank Stands: Set Barrel on Stand and Take Barrel Down on a
 -- stand, and on any tank Plumb to Tank, with a submenu of the tanks in reach, and Unplumb, with a
--- submenu of the pipe buried from it, to tanks, fixtures and treatment units. The floor where a
--- plumbed tank stood also offers Unplumb, so pipe whose tanks are both gone is found where it was
--- laid. Each option is greyed out saying why when its job would be refused (StandJobs, LinkJobs).
--- A fixture's own options are FixtureMenu.lua's, a unit's TreatmentMenu.lua's.
+-- submenu of the pipe buried from it, to tanks, fixtures, treatment units and pumps. The floor
+-- where a plumbed tank stood also offers Unplumb, so pipe whose tanks are both gone is found where
+-- it was laid. Each option is greyed out saying why when its job would be refused (StandJobs,
+-- LinkJobs). A fixture's own options are FixtureMenu.lua's, a unit's TreatmentMenu.lua's, a pump's
+-- PumpMenu.lua's.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -17,6 +18,7 @@ require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -26,7 +28,7 @@ EnhancedIrrigation.TankMenu = TankMenu
 local Needs, Tanks, Stands = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Stands
 local StandJobs, Links, LinkJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Pipes, Fixtures, Action = EnhancedIrrigation.Pipes, EnhancedIrrigation.Fixtures, EnhancedIrrigationAction
-local Treatment = EnhancedIrrigation.Treatment
+local Treatment, Pumps = EnhancedIrrigation.Treatment, EnhancedIrrigation.Pumps
 
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
@@ -55,8 +57,8 @@ function TankMenu.tankLabel(here, there)
         distance, direction, Tanks.levelOf(tank))
 end
 
---- The name the game gives `object` ("Sink", "Bath", "Barrel Filter"), a fixture or a unit, as its
---- own menus name it.
+--- The name the game gives `object` ("Sink", "Bath", "Barrel Filter"), a fixture, a unit or a
+--- pump, as its own menus name it.
 function TankMenu.objectName(object)
     local props = object:getSprite():getProperties()
     local name = props:get("CustomName")
@@ -68,11 +70,11 @@ function TankMenu.objectName(object)
 end
 
 --- How Unplumb names the buried pipe from the square `here` to the square `there`: by the tank,
---- fixture or unit at its far end, or as pipe to an empty spot when that square is loaded with
---- none of them.
+--- fixture, unit or pump at its far end, or as pipe to an empty spot when that square is loaded
+--- with none of them.
 function TankMenu.linkLabel(here, there)
     local square = getCell():getGridSquare(there.x, there.y, there.z)
-    local object = Fixtures.fixtureOn(square) or Treatment.unitOn(square)
+    local object = Fixtures.fixtureOn(square) or Treatment.unitOn(square) or Pumps.pumpOn(square)
     if object then
         return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", getText("ContextMenu_EnhancedIrrigation_FixtureThere",
             TankMenu.objectName(object), Links.distance(here, there), TankMenu.direction(here, there)))
@@ -168,14 +170,15 @@ function TankMenu.addUnplumbOptions(context, playerNum, character, object)
     end
 end
 
--- The floor of the first right-clicked square with no tank, fixture or unit on it that buried pipe
--- runs from, or nil. Fixtures and units offer their own Unplumb (FixtureMenu.lua, TreatmentMenu.lua).
+-- The floor of the first right-clicked square with no tank, fixture, unit or pump on it that buried
+-- pipe runs from, or nil. Fixtures, units and pumps offer their own Unplumb (FixtureMenu.lua,
+-- TreatmentMenu.lua, PumpMenu.lua).
 local function bareEnd(worldobjects)
     for _, clicked in ipairs(worldobjects) do
         local square = clicked:getSquare()
         local floor = square and square:getFloor()
         if floor and not Tanks.tankOn(square) and not Fixtures.fixtureOn(square) and not Treatment.unitOn(square)
-                and #Links.linksAt(EnhancedIrrigation.squareOf(floor)) > 0 then
+                and not Pumps.pumpOn(square) and #Links.linksAt(EnhancedIrrigation.squareOf(floor)) > 0 then
             return floor
         end
     end

@@ -26,11 +26,11 @@ function Server.squareAt(args)
 end
 
 --- Whether `object` is one of the things the tank tests place: a stand, with or without its barrel,
---- a tank, a treatment unit, or a well, which isn't a tank.
+--- a tank, a treatment unit, a pump, or a well, which isn't a tank.
 function Server.isPlaced(object)
     local EI = mod()
     return EI.Stands.isStand(object) or EI.Stands.isRaised(object) or EI.Tanks.isTank(object)
-        or EI.Treatment.isUnit(object) or EI.entityName(object) == "Well"
+        or EI.Treatment.isUnit(object) or EI.Pumps.isPump(object) or EI.entityName(object) == "Well"
 end
 
 --- Removes the stand or tank at x, y, z the way the game removes an object.
@@ -164,7 +164,7 @@ handler("tanks.remove", function(_, args)
 end)
 
 -- The system whose perform does each action feature's jobs.
-local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "TreatmentSystem" }
+local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "TreatmentSystem", pump = "PumpSystem" }
 
 -- Runs the job `args.job` of the action feature `args.feature` at the object at x, y, z through the
 -- authority's own perform (what the action's complete() calls), with `args.with`, or with the first

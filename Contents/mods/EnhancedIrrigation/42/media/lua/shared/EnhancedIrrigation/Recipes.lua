@@ -15,6 +15,7 @@ Recipes.AUTO_LEARN = {
     "EnhancedIrrigation_TankStand", "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter",
     "EnhancedIrrigation_PlumbToTank", "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
     "EnhancedIrrigation_FilterCrock", "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded",
+    "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump",
 }
 
 -- Vanilla items that teach the mod's recipes when researched, by full type: what a player who

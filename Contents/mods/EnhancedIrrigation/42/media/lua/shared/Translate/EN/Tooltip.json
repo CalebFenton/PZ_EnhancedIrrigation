@@ -47,5 +47,16 @@
     "Tooltip_EnhancedIrrigation_Boiler": "A Metal Drum over a firebox. Fuel and light it like any fire; raw water poured or piped into the drum comes out clean once it has been hot for an hour, about 30 L an hour while the fire lasts. Build it outdoors, clear of walls. Don't let it burn dry.",
     "Tooltip_EnhancedIrrigation_BurntThrough": "The drum is burnt through. Build a new boiler.",
     "Tooltip_EnhancedIrrigation_DrumWornOut": "The drum is too patched to take another. Build a new boiler.",
-    "Tooltip_EnhancedIrrigation_DrumSound": "The drum is sounder than a patch would leave it."
+    "Tooltip_EnhancedIrrigation_DrumSound": "The drum is sounder than a patch would leave it.",
+    "Tooltip_EnhancedIrrigation_WoodenHandPump": "A plank hand pump with a leather, rubber or tarp seal. Build it beside a well, a barrel or a trough, or within 3 tiles of a river for its hose, then plumb its outlet to a tank up to a storey above it and work the handle: about 6 L a minute. It squeals, and the wood wears.",
+    "Tooltip_EnhancedIrrigation_IronHandPump": "An iron hand pump with a leather, rubber or tarp seal. Build it beside a well, a barrel or a trough, or within 3 tiles of a river for its hose, then plumb its outlet to a tank up to two storeys above it and work the handle: about 8 L a minute.",
+    "Tooltip_EnhancedIrrigation_LiftsOneStorey": "This pump lifts water one storey: the tank can stand no higher than a storey above it.",
+    "Tooltip_EnhancedIrrigation_LiftsTwoStoreys": "This pump lifts water two storeys: the tank can stand no higher than two storeys above it.",
+    "Tooltip_EnhancedIrrigation_NoOutlet": "Plumb its outlet to a tank first.",
+    "Tooltip_EnhancedIrrigation_OutletFull": "The tank it fills is full.",
+    "Tooltip_EnhancedIrrigation_NoWaterToDraw": "No water to draw: it needs a well, a barrel or a trough with water beside it, or a river within reach of its hose.",
+    "Tooltip_EnhancedIrrigation_SealWornOut": "The seal is worn out: the pump squeals and lifts nothing. Replace Seal.",
+    "Tooltip_EnhancedIrrigation_PumpWornOut": "The pump is worn out. Knock it down with a sledgehammer and build a new one.",
+    "Tooltip_EnhancedIrrigation_NoSeal": "Needs a seal: Leather Strips, a Tire Piece, a Tarp Piece or a Plunger.",
+    "Tooltip_EnhancedIrrigation_Exhausted": "Too exhausted to work the pump."
 }

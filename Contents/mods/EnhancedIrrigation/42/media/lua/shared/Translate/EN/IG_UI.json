@@ -35,5 +35,16 @@
     "IGUI_EnhancedIrrigation_Drum": "drum %1%%",
     "IGUI_EnhancedIrrigation_BurntThrough": "burnt through",
     "IGUI_EnhancedIrrigation_WeldingTorch": "Welding Torch",
-    "IGUI_EnhancedIrrigation_WeldingRods": "Welding Rods"
+    "IGUI_EnhancedIrrigation_WeldingRods": "Welding Rods",
+    "IGUI_EnhancedIrrigation_SourceWell": "Well",
+    "IGUI_EnhancedIrrigation_SourceTrough": "Trough",
+    "IGUI_EnhancedIrrigation_SourceRiver": "River",
+    "IGUI_EnhancedIrrigation_NoWaterToDraw": "No water to draw",
+    "IGUI_EnhancedIrrigation_Seal": "seal %1%%",
+    "IGUI_EnhancedIrrigation_NoSeal": "no seal",
+    "IGUI_EnhancedIrrigation_SealWornOut": "seal worn out",
+    "IGUI_EnhancedIrrigation_PumpCondition": "pump %1%%",
+    "IGUI_EnhancedIrrigation_PumpWornOut": "pump worn out",
+    "IGUI_EnhancedIrrigation_OutletTo": "fills the %1",
+    "IGUI_EnhancedIrrigation_NoOutlet": "no outlet"
 }

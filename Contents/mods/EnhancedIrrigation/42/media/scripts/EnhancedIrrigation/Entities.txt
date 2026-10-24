@@ -1,9 +1,9 @@
 /*
-    The Tank Stand and the treatment units the build menu builds (the sand filters, the Filter
-    Crock and the Boilers), and the raised rain barrels a stand becomes when a barrel is set on it
-    (shared/EnhancedIrrigation/Stands.lua). In module Base with the mod's prefix, as craftRecipes
-    are, since magazines and research look recipes up by bare name. A DisplayName is looked up,
-    without its spaces, in Recipes.json.
+    The Tank Stand, the treatment units the build menu builds (the sand filters, the Filter Crock
+    and the Boilers), the hand pumps, and the raised rain barrels a stand becomes when a barrel is
+    set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with the mod's prefix, as
+    craftRecipes are, since magazines and research look recipes up by bare name. A DisplayName is
+    looked up, without its spaces, in Recipes.json.
 
     Each build is taught by Cisterns for Kentucky, a skill or research; vanilla applies an entity
     recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
@@ -47,6 +47,18 @@ module Base
             LuaWindowClass = ISEntityWindow,
             DisplayName = EnhancedIrrigation_BoilerWelded,
             Icon = EnhancedIrrigation_Build_BoilerWelded,
+        }
+        entity ES_EnhancedIrrigation_WoodenHandPump
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_WoodenHandPump,
+            Icon = EnhancedIrrigation_Build_WoodenHandPump,
+        }
+        entity ES_EnhancedIrrigation_IronHandPump
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_IronHandPump,
+            Icon = EnhancedIrrigation_Build_IronHandPump,
         }
         /* Vanilla's barrel icons: the raised barrels are never built from a menu. */
         entity ES_EnhancedIrrigation_RaisedBarrel
@@ -382,6 +394,107 @@ module Base
                 item 4 [Base.SmallSheetMetal],
                 item 4 [Base.Screws],
                 item 2 [Base.MetalPipe],
+            }
+        }
+    }
+
+    /*
+        The hand pumps (shared/EnhancedIrrigation/Pumps.lua): built beside a well, a tank or a
+        trough, or near a river for the hose, or anywhere until one is there. Worked by hand, a
+        pump lifts its source's water into the tank its outlet is plumbed to. The OnCreate gives
+        the pump its record at once and fits the seal the build took. No container: the water goes
+        straight through.
+
+        The seal is the cup on the plunger: any of the three that hold a cup's shape, destroyed as
+        it goes in, so leather strips leave no dirty strips behind. The wooden one is a carpenter's
+        box with a plastic barrel and a drilled handle; the iron one an iron barrel welded to a
+        sheet-steel base, its torch and rods by uses as the welded boiler's.
+    */
+    entity EnhancedIrrigation_WoodenHandPump
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_WoodenHandPump,
+            uiEnabled = false,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.PumpSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_139,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildWoodenStructureSmall,
+            time = 150,
+            category = Outdoors,
+            Tags = Carpentry,
+            NeedToBeLearn = true,
+            AutoLearnAny = Woodwork:4,
+            SkillRequired = Woodwork:2,
+            xpAward = Woodwork:20,
+            Tooltip = Tooltip_EnhancedIrrigation_WoodenHandPump,
+            inputs
+            {
+                item 1 tags[base:hammer] mode:keep flags[Prop1;MayDegradeVeryLight],
+                item 1 tags[base:saw;base:crudesaw] mode:keep flags[MayDegradeLight],
+                item 1 tags[base:drillwood;base:drillmetal;base:drillwoodpoor] mode:keep flags[MayDegradeLight],
+                item 4 [Base.Plank],
+                item 4 [Base.Nails],
+                item 2 [Base.Pipe],
+                item 1 [Base.RubberHose],
+                item 1 [Base.LeatherStrips;Base.TirePiece;Base.TarpPiece] mode:destroy,
+            }
+        }
+    }
+
+    entity EnhancedIrrigation_IronHandPump
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_IronHandPump,
+            uiEnabled = false,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.PumpSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_140,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildMetalStructureMedium,
+            time = 200,
+            category = Outdoors,
+            Tags = Welding,
+            NeedToBeLearn = true,
+            AutoLearnAny = MetalWelding:5,
+            SkillRequired = MetalWelding:3,
+            xpAward = MetalWelding:25,
+            Tooltip = Tooltip_EnhancedIrrigation_IronHandPump,
+            inputs
+            {
+                item 1 tags[base:weldingmask] mode:keep,
+                item 1 [Base.HandDrill] mode:keep flags[MayDegradeLight],
+                item 2 [Base.BlowTorch] flags[DontRecordInput],
+                item 2 [Base.WeldingRods] flags[DontRecordInput],
+                item 2 [Base.MetalPipe],
+                item 2 [Base.SmallSheetMetal],
+                item 4 [Base.Screws],
+                item 1 [Base.RubberHose],
+                item 1 [Base.LeatherStrips;Base.TirePiece;Base.TarpPiece] mode:destroy,
             }
         }
     }

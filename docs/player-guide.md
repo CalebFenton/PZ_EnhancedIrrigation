@@ -2,7 +2,7 @@
 
 How the mod's systems work, for players who want more than the Workshop page tells them, and where to start looking for the gear. Figures assume the default sandbox settings and vanilla's own plant figures: 1 L of water is 50 water points, a plant holds 100, and a plant uses about 5 a day.
 
-This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, and sand filters, a filter crock and boilers that make rain water safe to drink. Pumps and timers are planned, but they aren't in the game yet.
+This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, sand filters, a filter crock and boilers that make rain water safe to drink, and hand pumps that lift water from a well, a barrel or a river into a tank. The Pump House, pumped lines, sprinklers and timers are planned, but they aren't in the game yet.
 
 ## Mechanics
 
@@ -10,7 +10,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 
 | Mechanic | How it works |
 |---|---|
-| What counts as a tank | Any of vanilla's rain barrels or rain collectors, an amphora, and a rain barrel on a Tank Stand, with the lid open or shut. Wells, troughs, sinks and toilets aren't tanks. |
+| What counts as a tank | Any of vanilla's rain barrels or rain collectors, an amphora, and a rain barrel on a Tank Stand, with the lid open or shut. Wells, troughs, sinks and toilets aren't tanks, though a hand pump draws from a well or a trough. |
 | Level | A tank's level is the floor it stands on, plus one if it's on a Tank Stand. A barrel on the ground is level 0. A barrel on a stand, or on the floor one storey up, is level 1. A barrel on a stand one storey up is level 2. |
 | Pressure | A tap runs only from a tank at least one level above the line. A barrel on the ground waters nothing by gravity. Each extra level pushes harder: two levels above the line run about 1.4 times as fast, three about 1.7 times. |
 | Filling a tank | Rain, through an open lid, as with vanilla's barrels. You can also pour in water with vanilla's fluid menu, or let a tank plumbed to it fill it from above. |
@@ -114,15 +114,27 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Wear | Every hour of fire wears the drum a little while it holds water, so a drum lasts about 200 hours of fire. Run dry, it scorches fast: 10 hours of fire with nothing in the drum burn it through. A burnt-through drum holds and passes nothing, Pour In is refused, the inlet draws nothing, and its menu says **burnt through**. |
 | Patch Drum | From the boiler's menu: Welding 2, a small steel sheet, 2 uses of a welding torch and 1 of welding rods, and a welder mask; 30 minutes. Each patch restores the drum 10% less than the last: to 90%, then 80%, and so on. It's refused while the drum is already in better shape than the patch would leave it, and once there's nothing left to patch; then build a new boiler. |
 
+### Hand pumps
+
+| Mechanic | How it works |
+|---|---|
+| Building a hand pump | In the build menu, beside the rain collectors. **Wooden Hand Pump**: Carpentry 2; 4 planks, 4 nails, 2 plastic pipes, a rubber hose and a seal (Leather Strips, a Tire Piece or a Tarp Piece); a hammer, a saw and any drill, which you keep. **Iron Hand Pump**: Welding 3; 2 iron pipes, 2 small steel sheets, 4 screws, a rubber hose and a seal, with 2 uses of a welding torch and of welding rods; a welder mask and a hand drill, which you keep. The seal goes in whole: Leather Strips leave no dirty strips. Both give XP. You learn them from *Cisterns for Kentucky*, or at Carpentry 4 and Welding 5. Build it anywhere; it says **No water to draw** until it has a source. |
+| Where it draws | From the first of: a well beside it (the stone well, or the forest's old hand pump), clean and endless; the fullest rain barrel, rain collector, amphora or water trough beside it, its water as it is, taint and all; or, for a pump on the ground, the nearest river or pond water within 3 tiles, which its hose reaches, endless and always tainted. Beside means the 8 squares around it. The menu's first line names the source, then the seal, the pump's condition and the tank it fills. |
+| Plumb Outlet | From the pump's menu, to one tank in reach, with the same reach, pipe, joints, time and learning as Plumb to Tank. A Wooden Hand Pump fills a tank up to a level above its floor: a barrel on a Tank Stand beside it, or on the floor above. An Iron Hand Pump fills one up to two levels above: a barrel on a stand one storey up. A tank too high is greyed out saying how high the pump lifts. The tank it fills is never its source. Unplumb from the pump, the tank or the floor where either stood. |
+| Pump | Stand at the pump and work the handle: about 6 L a minute from a wooden pump and 8 from an iron one, so a 600 L barrel takes about 100 or 75 minutes. It's hard work, about 60% of your endurance an hour, less what standing still gives back. It stops by itself when the tank is full, the source runs dry, the seal or the pump wears out, or you're exhausted. You hear the water, and a wooden pump squeals. Zombies hear it too: about 15 tiles off for a wooden pump, 8 for an iron one. |
+| Seals | Each seal lifts so many litres before it's worn through: Leather Strips 3000, a Tire Piece 2000, a Tarp Piece 1200 and a Plunger's cup 600. The menu shows what's left of it. A worn-out seal lifts nothing, and Pump is greyed out until you replace it. |
+| Replace Seal | From the pump's menu, then the seal, from the Leather Strips, Tire Pieces, Tarp Pieces and Plungers you carry: 10 minutes with a screwdriver, which you keep. The old seal is thrown away. Anyone can do it, whenever they like. |
+| Wear | Every 300 L lifted takes 1% off a wooden pump, every 1500 L off an iron one: about 30,000 L in all from a wooden pump and 150,000 from an iron one. At 0% it's worn out and lifts nothing; knock it down with a sledgehammer and build a new one. |
+
 ### Learning and options
 
 | Mechanic | How it works |
 |---|---|
-| *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures, filters and boilers) and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
-| Skills | Carpentry 5 teaches the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 5 the welded-firebox Boiler, Pottery 5 the Filter Crock (shaping, firing and setting it up); Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
+| *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures, filters, boilers and pumps), the Wooden and Iron Hand Pumps and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
+| Skills | Carpentry 4 teaches the Wooden Hand Pump, Carpentry 5 the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 5 the welded-firebox Boiler and the Iron Hand Pump, Pottery 5 the Filter Crock (shaping, firing and setting it up); Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
 | Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. Researching a Metal Drum teaches the stone-firebox Boiler from Masonry 1 and the welded-firebox Boiler from Welding 2. |
-| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Pour In, Clean Filter, Scrub Crock, Take Down and Patch Drum. |
-| XP | Building the Tank Stand and the Barrel Filter give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler gives Welding XP; shaping a Filter Crock gives Pottery XP. |
+| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Pour In, Clean Filter, Scrub Crock, Take Down, Patch Drum, Pump and Replace Seal. |
+| XP | Building the Tank Stand, the Barrel Filter and the Wooden Hand Pump give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler and the Iron Hand Pump give Welding XP; shaping a Filter Crock gives Pottery XP. |
 | Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. **Plumbing keeps taint** (on by default): vanilla's Plumb makes the mod's connection and old plumbed fixtures change over; off, vanilla's plumbing is untouched and a rooftop barrel's water comes out clean. |
 | Adding to a save | The pamphlet turns up only in containers nobody has opened yet. Barrels already in your world count as tanks straight away. |
 
@@ -130,7 +142,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 
 | What | Kind | Made from, or found | Used for |
 |---|---|---|---|
-| *Cisterns for Kentucky* | Pamphlet, weight 0.1 | Found only | Teaches the Tank Stand, the filters and Plumb to Tank |
+| *Cisterns for Kentucky* | Pamphlet, weight 0.1 | Found only | Teaches the Tank Stand, the hand pumps, the filters and Plumb to Tank |
 | Tank Stand | Built | Carpentry 3: 4 logs, 6 planks, 8 nails; hammer, saw | Holds one rain barrel a level up |
 | Raised Rain Barrel | A barrel on a stand | Set Barrel on Stand | A 600 L tank a level up |
 | Barrel Filter | Built | Carpentry 2: 6 planks, 5 nails, gravel bag, 2 sand bags, 5 charcoal, a pipe and a joint; hammer, shovel | About 100 L of clean water a day, once ripe |
@@ -140,20 +152,22 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Filter Crock in a bucket | Built | A Filter Crock and an empty bucket | About 10 L of clean water a day |
 | Boiler (Stone Firebox) | Built | Masonry 2: Metal Drum, 12 clay bricks or stone blocks, 2 uses of cement, 2 iron pipes; mason's trowel, pipe wrench | About 30 L of clean water an hour while its fire keeps it hot |
 | Boiler (Welded Firebox) | Built | Welding 3: Metal Drum, 4 small steel sheets, 4 screws, 2 iron pipes, 4 uses of torch and rods; welder mask | The same |
+| Wooden Hand Pump | Built | Carpentry 2: 4 planks, 4 nails, 2 plastic pipes, a rubber hose, a seal; hammer, saw, any drill | Lifts about 6 L a minute from a well, barrel, trough or river into a tank up to a level above |
+| Iron Hand Pump | Built | Welding 3: 2 iron pipes, 2 small steel sheets, 4 screws, a rubber hose, a seal, 2 uses of torch and rods; welder mask, hand drill | Lifts about 8 L a minute, into a tank up to two levels above |
 | Garden line tile | Laid | One tile of pipe and its joint | Carries water; holed, it waters the plant on its square |
 | Tap | Fitted to a line tile | A Pipe Wrench, one length of pipe and its joint | Where you run the line |
-| Buried pipe | Plumbed between tanks, from a tank to a fixture, or into and out of a filter or boiler | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, or through a filter or boiler |
+| Buried pipe | Plumbed between tanks, from a tank to a fixture, into and out of a filter or boiler, or out of a pump | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, through a filter or boiler, or from a pump |
 | Plumbed fixture | A vanilla sink, bath, shower, toilet or washer | Plumb to Tank, or vanilla's Plumb | Holds its tank's water for vanilla's drink, fill, wash and washer |
 
 Everything else is vanilla:
 
 | Vanilla item | Used for |
 |---|---|
-| Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet |
+| Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet; plastic and iron pipe build the hand pumps |
 | Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack; the Barrel Filter's outlet |
 | Bucket of Clay Cement or Concrete | Joints in clay pipe; the Brick Filter; the stone-firebox Boiler |
-| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Plumb Inlet and Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler |
-| Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes |
+| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Plumb Inlet and Outlet, a pump's Plumb Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler |
+| Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes; a drill builds the Wooden Hand Pump, a Hand Drill the Iron one |
 | Rain barrel | Set on a Tank Stand |
 | Sand Bag, Gravel Bag, Charcoal, Clay Bricks | The filters |
 | Clay, Charcoal; a pottery wheel and a kiln | Making the Filter Crock |
@@ -161,7 +175,11 @@ Everything else is vanilla:
 | Clay Jar | Research it to learn the Filter Crock |
 | Metal Drum | The boiler's drum; research it to learn the boilers |
 | Clay Bricks or Stone Blocks, Iron Pipe | The stone-firebox Boiler |
-| Small Steel Sheet, Screws, Welding Torch, Welding Rods, Welder Mask | The welded-firebox Boiler; Patch Drum |
+| Small Steel Sheet, Screws, Welding Torch, Welding Rods, Welder Mask | The welded-firebox Boiler; Patch Drum; the Iron Hand Pump |
+| Rubber Hose | A hand pump's intake |
+| Leather Strips, Tire Piece, Tarp Piece, Plunger | A hand pump's seal; the Plunger only through Replace Seal |
+| Screwdriver | Replace Seal |
+| Well, forest hand pump, river or pond, water trough | Water for a hand pump |
 | Logs, planks and anything else vanilla burns; a lighter or matches and tinder | Fuelling and lighting a boiler, as any vanilla fire |
 | Shovel, garden trowel, mason's trowel | Building the filters and the stone-firebox Boiler; Clean Filter |
 
