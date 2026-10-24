@@ -5,6 +5,7 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Treatment/Treatment"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -179,11 +180,8 @@ TreatmentJobs.JOBS = {
             if not summary then
                 return Jobs.UNKNOWN
             end
-            local restores = summary.ceiling - Treatment.PATCH_LOSS
-            if restores <= 0 then
-                return "Tooltip_EnhancedIrrigation_DrumWornOut"
-            end
-            return summary.condition >= restores and "Tooltip_EnhancedIrrigation_DrumSound" or nil
+            return EnhancedIrrigation.Parts.mendRefusal(summary.condition, summary.ceiling, Treatment.PATCH_LOSS,
+                "Tooltip_EnhancedIrrigation_DrumWornOut", "Tooltip_EnhancedIrrigation_DrumSound")
         end,
         materials = {
             { skill = "MetalWelding", level = 2 },

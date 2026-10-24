@@ -4,6 +4,7 @@
 
 if isClient() then return end
 
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentObject"
 
@@ -86,7 +87,7 @@ TreatmentObject.KINDS.boiler = {
 
 --- Patch Drum: the patch restores the drum to a little less than the last one did.
 function TreatmentObject:patch()
-    self.ceiling = self.ceiling - Treatment.PATCH_LOSS
+    self.ceiling = EnhancedIrrigation.Parts.restores(self.ceiling, Treatment.PATCH_LOSS)
     self.condition = self.ceiling
 end
 
