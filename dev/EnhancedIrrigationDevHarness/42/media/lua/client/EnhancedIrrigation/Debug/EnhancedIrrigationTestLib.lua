@@ -125,20 +125,28 @@ function T.tooltipOf(option)
     return option and option.toolTip and option.toolTip.description or ""
 end
 
---- Turns the character to face `square` at once, body and animation, as T.standNextTo faces the
---- square it is given: an action on a neighbouring tile would otherwise wait for its turn
---- (waitToStart) in real time, which neither the instant cheat nor the frame rate shortens.
-function T.face(square)
+--- Turns the character at once, body and animation, toward `target`: an object as an action's
+--- faceThisObject aims at it (the nearest piece of a sprite grid, its facing position), or a
+--- square's middle. An action otherwise waits for its turn (waitToStart) in real time, which
+--- neither the instant cheat nor the frame rate shortens, and a square's middle isn't where the
+--- game aims at a fixture or a treatment unit.
+function T.face(target)
     local p = T.player()
-    local dx, dy = square:getX() + 0.5 - p:getX(), square:getY() + 0.5 - p:getY()
-    if math.abs(dx) > 0.5 or math.abs(dy) > 0.5 then
-        p:setTargetAndCurrentDirection(dx, dy)
+    if instanceof(target, "IsoGridSquare") then
+        local dx, dy = target:getX() + 0.5 - p:getX(), target:getY() + 0.5 - p:getY()
+        if math.abs(dx) > 0.5 or math.abs(dy) > 0.5 then
+            p:setTargetAndCurrentDirection(dx, dy)
+        end
+        return
     end
+    p:faceThisObject(target)
+    local forward = p:getForwardDirection()
+    p:setTargetAndCurrentDirection(forward:getX(), forward:getY())
 end
 
 --- Queues opening the world menu of `getObject()`, looked up when the step runs, and noting in
 --- self.menu[label] what the option `find(context)` finds: { found, offered, tooltip, submenu,
---- name }. When `choose` and it is offered, the character faces the object's square and chooses it.
+--- name }. When `choose` and it is offered, the character faces the object (T.face) and chooses it.
 function T.useOption(self, getObject, label, find, choose)
     self.menu = self.menu or {}
     T.step(function()
@@ -149,7 +157,7 @@ function T.useOption(self, getObject, label, find, choose)
         self.menu[label] = { found = option ~= nil, offered = T.offered(option), tooltip = T.tooltipOf(option),
             submenu = option ~= nil and option.subOption ~= nil, name = option and option.name }
         if choose and T.offered(option) then
-            T.face(object:getSquare())
+            T.face(object)
             T.choose(option)
         end
         context:hideAndChildren()
