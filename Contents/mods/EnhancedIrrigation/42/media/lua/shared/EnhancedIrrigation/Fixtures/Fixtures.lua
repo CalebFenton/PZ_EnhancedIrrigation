@@ -66,12 +66,6 @@ function Fixtures.townWaterRuns(fixture)
         and getGameTime():getWorldAgeDaysSinceBegin() < getSandboxOptions():getWaterShutModifier()
 end
 
---- Whether the tank on the square `tankAt` is where vanilla's Plumb looks for a fixture on the square
---- `at`: the square straight above or one of the eight around it (IsoObject.FindExternalWaterSource).
-function Fixtures.isAbove(at, tankAt)
-    return tankAt.z == at.z + 1 and math.abs(tankAt.x - at.x) <= 1 and math.abs(tankAt.y - at.y) <= 1
-end
-
 --- Whether vanilla's Plumb makes this mod's link, keeping the tank's taint (the PlumbingKeepsTaint
 --- sandbox option), rather than vanilla's rooftop plumbing, which serves every drop clean.
 function Fixtures.plumbingKeepsTaint()

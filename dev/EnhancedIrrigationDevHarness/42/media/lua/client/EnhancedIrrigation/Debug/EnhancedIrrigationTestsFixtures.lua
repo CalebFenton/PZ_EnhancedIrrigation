@@ -26,6 +26,10 @@ local WASHER = "appliances_laundry_01_0"
 -- A sink's buffer: vanilla's reserve for its tile.
 local SINK_LITRES = 20
 local TANK_LITRES = 50
+-- A bath facing east, its two tiles west to east (their SpriteGridPos 0,0 and 1,0), and its buffer:
+-- vanilla's reserve for its tiles.
+local BATH = { "fixtures_bathroom_01_26", "fixtures_bathroom_01_27" }
+local BATH_LITRES = 100
 
 -- Fixtures ------------------------------------------------------------------------------------------
 
@@ -303,6 +307,31 @@ T.test("irrigation_fixtures_vanilla_plumb_untouched_when_option_off", {
             .. tostring(plumbed.linked) .. ", buffer " .. tostring(plumbed.buffer))
         local client = clientState(self.sink)
         expect(client and client.external and not client.tainted, "this client's sink doesn't serve the barrel clean")
+    end,
+})
+
+-- Vanilla's Plumb on a bath reaches a barrel one storey up over either of its tiles, as vanilla's
+-- plumbing searches around every tile of a fixture's sprite grid: plumbed from the tile two squares
+-- from the barrel, the bath fills from it, tainted. Catches a reach measured from the clicked tile
+-- alone, which refuses the job vanilla's menu offered.
+T.test("irrigation_fixtures_vanilla_plumb_reaches_over_a_whole_bath", {
+    instant = true,
+    sandbox = { WaterShutModifier = 0 },
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 2, 0 } }, { bare = true, indoors = true })
+        if not spots then return end
+        self.bath = placeFixture(self, spots[1], BATH[1])
+        placeFixture(self, spots[2], BATH[2])
+        self.tank = T.placeTank(self, spots[3], "above", 2 * BATH_LITRES, true)
+        T.give(self, "tools", { { type = "Base.PipeWrench" } })
+        useFixtureMenu(self, self.bath, "plumb", vanillaPlumb, true)
+        readUntil(self, self.bath, self.tank, "plumbed", function(state) return state.linked end)
+    end,
+    validate = function(self)
+        T.expectOffered(self, "plumb")
+        local plumbed = self.reads.plumbed
+        expectFixture("the server", plumbed, { litres = BATH_LITRES, tainted = true })
+        expectTankLitres("the server", plumbed.tank, BATH_LITRES)
     end,
 })
 

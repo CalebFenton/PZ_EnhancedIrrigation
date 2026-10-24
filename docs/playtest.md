@@ -31,6 +31,7 @@ Set up with `dev/run-debug-client.sh`, then main menu > Scenarios > **Enhanced I
 - **A stripped washer moved.** Salvage a washer's pump, pick the washer up, put it down elsewhere. Pass: it still won't switch on and says its pump has been salvaged.
 - **Other mods' sinks.** With a mod that adds sink tiles, plumb one to a tank. Old saves' plumbed sinks of other mods keep vanilla's plumbing until plumbed again; check that's all that happens.
 - **A plumbed filter across a real absence.** Plumb a Barrel Filter's inlet from a full raw barrel and its outlet to an empty lidded barrel, walk far enough that all three unload (in single player), wait two in-game days, and come back. Pass: the clean barrel holds about 4 L for every hour you were away, up to what the raw barrel and the head held; the filter's basin isn't standing full; its menu still says Ripe. The tests wind the record's clock back with the chunks loaded, so none sees the three chunks load in their own order.
+- **Vanilla's Plumb on a bath.** In a house after the shutoff, set a rain barrel of tainted water on the floor above the far half of a bath, one square beyond it, and use vanilla's Plumb on the near half, then on the far half. Pass: Plumb is offered on both and both jobs finish rather than stopping as out of reach; each half then serves the barrel's water tainted. Say whether plumbing each half on its own reads right to a player, as vanilla also plumbs them one at a time.
 
 ## Art
 

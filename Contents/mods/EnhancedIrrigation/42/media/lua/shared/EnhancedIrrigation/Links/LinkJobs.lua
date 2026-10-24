@@ -27,7 +27,8 @@ local Pumps = EnhancedIrrigation.Pumps
 
 LinkJobs.PLUMB = "PlumbToTank"
 LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
--- Vanilla's Plumb, which needs no pipe and no learning: a fixture to the tank straight above it.
+-- Vanilla's Plumb, which needs no pipe and no learning: a fixture to the tank vanilla's plumbing
+-- would draw on.
 LinkJobs.PLUMB_ABOVE = "PlumbAbove"
 LinkJobs.PLUMB_INLET = "PlumbInlet"
 LinkJobs.PLUMB_OUTLET = "PlumbOutlet"
@@ -217,11 +218,17 @@ LinkJobs.JOBS = {
             if not Fixtures.plumbingKeepsTaint() then
                 return Jobs.UNKNOWN
             end
-            local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
+            local blocker, _, other = LinkJobs.fixtureBlocker(fixture, with)
             if blocker then
                 return blocker
             end
-            return not Fixtures.isAbove(here, other) and "Tooltip_EnhancedIrrigation_OutOfReach" or nil
+            -- Vanilla searches the floor above every tile of the fixture's sprite grid, so a bath reaches
+            -- a tank over its far half.
+            local source = fixture:FindExternalWaterSource()
+            if not (source and EnhancedIrrigation.sameSquare(EnhancedIrrigation.squareOf(source), other)) then
+                return "Tooltip_EnhancedIrrigation_OutOfReach"
+            end
+            return nil
         end,
         materials = { Pipes.WRENCH },
     },
