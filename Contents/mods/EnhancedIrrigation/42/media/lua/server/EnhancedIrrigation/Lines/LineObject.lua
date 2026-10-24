@@ -77,11 +77,6 @@ function LineObject.plantAt(x, y, z)
     return nil
 end
 
---- The live, sown plant on the tile's square, or nil.
-function LineObject:plant()
-    return LineObject.plantAt(self.x, self.y, self.z)
-end
-
 function LineObject:addSoak(points)
     self.soak = math.min(Lines.SOAK_MAX, self.soak + points)
 end
