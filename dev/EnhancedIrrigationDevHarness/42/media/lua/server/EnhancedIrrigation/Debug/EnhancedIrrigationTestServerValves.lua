@@ -1,11 +1,9 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsValves.lua: a valve
--- put on a tap as Fit Valve leaves it, and a valve's clock wound back as though the hours had gone
--- by, then run by its own pass (ValveSystem.update), the crops and tank read after in the same call
--- so no vanilla pass lands between. Lines, tanks and crops are placed by the other
--- handler files. Only registers handlers, so a --stay rerun loads it again.
+-- Development only, not published. A valve's clock is wound back as though the hours had gone by,
+-- then run by its own pass (ValveSystem.update), and the crops and tank read after in the same call
+-- so no vanilla pass lands between. Only registers handlers, so a --stay rerun loads it again.
 --
 -- A tile is { x, y, z }; `args.tiles` lists the crops to read.
 
@@ -36,7 +34,7 @@ local function readWater(args)
     return reply
 end
 
--- Puts the valve `args.item` on the tap at x, y, z as Fit Valve does.
+-- Puts a new `args.item` on the tap at x, y, z as Fit Valve fits a carried one.
 handler("valves.place", function(_, args)
     local record, missing = Server.lineRecordAt(args)
     if not record then return nil, missing end

@@ -6,10 +6,8 @@ require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 
--- The valves and timers: fitting a valve to a tap and taking it off, winding a Wind-up Valve and
--- setting a timer from the panel, the water each gives and when, and the power a timer needs. A
--- valve's hours are run on the server by winding its clock back (valves.age), so the clock doesn't
--- decide the sums.
+-- A valve's hours are run on the server by winding its clock back (valves.age), so the clock
+-- doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
