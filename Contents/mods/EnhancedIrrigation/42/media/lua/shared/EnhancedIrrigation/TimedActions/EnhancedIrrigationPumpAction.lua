@@ -4,8 +4,7 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationHeldAction"
 
 -- Pump: the character works a hand pump's handle, and it lifts water into its outlet's tank, or
 -- drives the line its outlet feeds, for as long as they keep at it, until they stop, the tank is
--- full, the source runs dry, the seal or the pump wears out, or they are exhausted. The action
--- holds the pump while it works (PumpSystem.hold).
+-- full, the source runs dry, the seal or the pump wears out, or they are exhausted.
 EnhancedIrrigationPumpAction = EnhancedIrrigationPumpAction or EnhancedIrrigationHeldAction:derive("EnhancedIrrigationPumpAction")
 
 local Action = EnhancedIrrigationPumpAction

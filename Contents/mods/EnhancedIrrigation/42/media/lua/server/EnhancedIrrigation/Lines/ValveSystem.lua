@@ -1,14 +1,13 @@
--- The authority's side of the valves on taps (shared/EnhancedIrrigation/Lines/Valves.lua): each game
--- minute, every tap with a valve runs its line for the stretch its valve held it open since the last
--- time, as a held tap runs it (Flow.run from Taps.tankFor), and says whether it runs now.
+-- The authority's side of the valves on taps: each game minute, every tap with a valve runs its
+-- line for the stretch its valve held it open since the last time, as a held tap runs it, and says
+-- whether it runs now.
 --
 -- A Wind-up Valve is open until the world hour it was wound to. A Timer Valve or Sprinkler Timer is
 -- open in its daily window while it has power: power now covers the whole stretch; without it, the
 -- grid's power at its last loaded run covers the stretch up to the shutoff; else nothing. A valve
 -- waits, as a pump does, while its tap or the squares around it where its tanks stand aren't
--- loaded, keeping its clock, and catches the stretch up (at most a week) once they are, from the
--- tank as it stands then. While someone holds the tap, their watering counts and the valve's
--- doesn't.
+-- loaded, keeping its clock, and catches the stretch up once they are, from the tank as it stands
+-- then. While someone holds the tap, their watering counts and the valve's doesn't.
 --
 -- The record's `valve` (LineObject.SAVED_FIELDS): item, the valve's full type; start and minutes, a
 -- timer's setting; untilHour, the world hour a wind-up runs to; lastHour, when the valve last ran;

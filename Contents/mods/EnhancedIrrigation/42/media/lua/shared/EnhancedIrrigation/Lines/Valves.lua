@@ -1,7 +1,6 @@
 -- The valves that run a tap with nobody holding it, and the timers that run a Pump House
--- (docs/design.md, Automation): what each item is and the minutes its knob offers; when a timer's
--- daily window falls is Timers.lua's. What the menus, the jobs and the authority all read; running
--- the water is server/EnhancedIrrigation/Lines/ValveSystem.lua's and Pumps/PumpHouse.lua's.
+-- (docs/design.md, Automation): what each item is, the minutes its knob offers and how a menu
+-- words it.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Timers"

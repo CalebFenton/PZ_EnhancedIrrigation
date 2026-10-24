@@ -1,6 +1,6 @@
--- The client's side of pumps: the system that receives each pump's summary (Pumps.summaryOf reads
--- it), and the hum of each Pump House that runs. A pump holds no container and nothing unsaved, so
--- its copies need nothing set up.
+-- The client's side of pumps: the system that receives each pump's summary, and the hum of each
+-- Pump House that runs. A pump holds no container and nothing unsaved, so its copies need nothing
+-- set up.
 
 require "EnhancedIrrigation/ClientObjects"
 require "EnhancedIrrigation/Pumps/Pumps"
