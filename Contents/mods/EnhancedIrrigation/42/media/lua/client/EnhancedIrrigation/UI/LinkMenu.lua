@@ -89,6 +89,7 @@ end
 --- A plumbing option at `object` (a tank, a fixture, a unit or a pump): a submenu of the tanks in
 --- reach, and with `spec.lines` the garden lines too, each by its nearest tile, each with a submenu
 --- of the pipe the character carries to lay to it, as Lay Line lists it, greyed out with what the
+--- run takes. `spec`: `nameKey`, the option's ContextMenu key; `job`, the LinkJobs job each pipe
 --- queues; `skip(at)`, if given, which tanks to leave out; `refusal(at)`, if given, a Tooltip key
 --- greying a tank or line out before its pipe is listed, or nil; `noneKey`, what the submenu says
 --- when it lists none.
