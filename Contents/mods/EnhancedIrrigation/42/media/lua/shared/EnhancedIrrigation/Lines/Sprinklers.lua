@@ -61,20 +61,31 @@ function Sprinklers.squaresOf(x, y, z, isLineAt)
     return squares
 end
 
+--- The state of those `stateAt(x, y, z)` gives that keeps what sprinklers left on the square x, y,
+--- z off the line, and the square's key in its `field` (a record's sprinklerSoak, a summary's
+--- sprinklerSoil); nil when none does. A square has one holder (LineObject:addSprinklerSoak),
+--- sought as far along either axis, as a sprinkler's rectangle may lie either way.
+function Sprinklers.holderOf(x, y, z, stateAt, field)
+    for dx = -Sprinklers.ALONG, Sprinklers.ALONG do
+        for dy = -Sprinklers.ALONG, Sprinklers.ALONG do
+            local state = (dx ~= 0 or dy ~= 0) and stateAt(x - dx, y - dy, z)
+            local kept = state and state[field]
+            local key = Sprinklers.offsetKey(dx, dy)
+            if kept and kept[key] then
+                return state, key
+            end
+        end
+    end
+    return nil
+end
+
 --- The IG_UI key of the soil word at x, y, z as this side knows it, or nil when the soil is dry:
---- the wettest of the line tile's on that square and of the soak a sprinkler left on it, which
+--- the wetter of the line tile's on that square and of the soak a sprinkler left on it, which
 --- rots the roots for as long as it lasts, whether or not a sprinkler waters the square now.
 function Sprinklers.soilKeyAt(x, y, z)
     local own = Lines.summaryAt(x, y, z)
-    local key = own and own.soil
-    for dx = -Sprinklers.ALONG, Sprinklers.ALONG do
-        for dy = -Sprinklers.ALONG, Sprinklers.ALONG do
-            local summary = (dx ~= 0 or dy ~= 0) and Lines.summaryAt(x - dx, y - dy, z)
-            local soil = summary and summary.sprinklerSoil
-            key = Lines.wetterKey(key, soil and soil[Sprinklers.offsetKey(dx, dy)])
-        end
-    end
-    return key
+    local holder, key = Sprinklers.holderOf(x, y, z, Lines.summaryAt, "sprinklerSoil")
+    return Lines.wetterKey(own and own.soil, holder and holder.sprinklerSoil[key])
 end
 
 --- OnCreate of Make Pipe Sprinkler (Recipes.txt): the sprinkler comes out at its lower ceiling,

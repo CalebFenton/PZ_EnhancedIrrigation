@@ -77,26 +77,11 @@ function LineObject:addSoak(points)
     self.soak = math.min(Lines.SOAK_MAX, self.soak + points)
 end
 
--- The line record within a sprinkler's reach of the square x, y, z that keeps its soak, and the
--- square's key there; nil when none does.
-local function soakHolder(x, y, z)
-    for dx = -Sprinklers.ALONG, Sprinklers.ALONG do
-        for dy = -Sprinklers.ALONG, Sprinklers.ALONG do
-            local record = Lines.recordAt(x - dx, y - dy, z)
-            local key = Sprinklers.offsetKey(dx, dy)
-            if record and record.sprinklerSoak and record.sprinklerSoak[key] then
-                return record, key
-            end
-        end
-    end
-    return nil
-end
-
 --- Adds `points` the tile's sprinkler threw to the soak of the square x, y off the line: on the
 --- record already keeping it, so overlapping sprinklers share one soak there that rots and dries
 --- once, else on this one. Returns the record it went on.
 function LineObject:addSprinklerSoak(x, y, points)
-    local holder, key = soakHolder(x, y, self.z)
+    local holder, key = Sprinklers.holderOf(x, y, self.z, Lines.recordAt, "sprinklerSoak")
     if not holder then
         holder, key = self, Sprinklers.offsetKey(x - self.x, y - self.y)
         self.sprinklerSoak = self.sprinklerSoak or {}
