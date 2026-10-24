@@ -185,57 +185,65 @@ T.test("irrigation_valves_wind_up_runs_its_minutes_and_shuts", {
 
 -- Timers --------------------------------------------------------------------------------------------
 
--- The opening hour two hours before the hour now, so a timer set to it opened and shut a while ago.
-local function twoHoursAgo()
-    return (math.floor(getGameTime():getTimeOfDay()) - 2) % 24
+-- The opening hour an hour before the hour now, so a window set to it has opened and shut.
+local function anHourAgo()
+    return (math.floor(getGameTime():getTimeOfDay()) - 1) % 24
 end
 
--- A Timer Valve set from its panel to open two hours before the hour now for 30 minutes, on a tap
--- the grid powers indoors: three hours gone by, every holed tile got 30 minutes of water and the
--- tank gave as much, and it isn't open now. Catches a window at the wrong hour or of the wrong
--- length, or a timer that runs outside it.
-T.test("irrigation_valves_timer_opens_in_its_window", {
-    instant = true,
-    run = function(self)
-        T.setGrid(self, true)
-        local line = tappedLine(self, { indoors = true })
-        if not line then return end
-        placeValve(self, line, Valves.TIMER)
-        self.start = twoHoursAgo()
-        setFromPanel(self, line, "set", function(panel)
-            -- Stepped up to it, as a player clicks the hour's ^.
-            for _ = 1, (self.start - panel.hour) % 24 do
-                panel:onClick(panel.hourUp)
-            end
-            panel.knob:setKnobPosition(30)
-        end)
-        T.readUntil(self, "valves.read", T.at(line.tap), "set", function(reply) return reply.valve.minutes == 30 end)
-        age(self, line, 3, "ran")
-    end,
-    validate = function(self)
-        expect(self.panelRefusal == nil, "the panel refused the setting: " .. tostring(self.panelRefusal))
-        local set = self.reads.set.valve
-        expect(set.start == self.start, "the timer starts at " .. tostring(set.start) .. ", not " .. self.start)
-        expectWatered(self.reads.ran, 30, "half an hour's window")
-        expect(not self.reads.ran.valve.open, "the timer is open outside its window")
-    end,
-})
+--- Queues the timer `item` fitted to the tap of an indoor line, with the grid on or off as
+--- `powered`, set from its panel to open an hour before the hour now for 30 minutes, then an hour
+--- and a half gone by, into self.reads.ran. The span starts half an hour before the window, so a
+--- window an hour late is open now and one an hour early falls before the span.
+local function runTimer(self, item, powered)
+    T.setGrid(self, powered)
+    local line = tappedLine(self, { indoors = true })
+    if not line then return end
+    placeValve(self, line, item)
+    self.start = anHourAgo()
+    setFromPanel(self, line, "set", function(panel)
+        -- Stepped up to it, as a player clicks the hour's ^.
+        for _ = 1, (self.start - panel.hour) % 24 do
+            panel:onClick(panel.hourUp)
+        end
+        panel.knob:setKnobPosition(30)
+    end)
+    T.readUntil(self, "valves.read", T.at(line.tap), "set", function(reply) return reply.valve.minutes == 30 end)
+    age(self, line, 1.5, "ran")
+end
 
--- The same timer outdoors with no grid and no generator: its window goes by and no water runs.
--- Catches a timer that needs no power.
-T.test("irrigation_valves_timer_needs_power", {
-    instant = true,
-    run = function(self)
-        T.setGrid(self, false)
-        local line = tappedLine(self)
-        if not line then return end
-        T.server(self, "valves.place", T.at(line.tap, { item = Valves.SPRINKLER_TIMER, start = twoHoursAgo(), minutes = 30 }))
-        age(self, line, 3, "ran")
-    end,
-    validate = function(self)
-        expectWatered(self.reads.ran, 0, "an unpowered window")
-    end,
-})
+--- Expects the panel's setting to have reached the valve.
+local function expectSet(self)
+    expect(self.panelRefusal == nil, "the panel refused the setting: " .. tostring(self.panelRefusal))
+    local set = self.reads.set.valve
+    expect(set.start == self.start, "the timer starts at " .. tostring(set.start) .. ", not " .. self.start)
+    expect(set.minutes == 30, "the timer runs " .. tostring(set.minutes) .. " minutes")
+end
+
+for _, case in ipairs({ { name = "timer", item = Valves.TIMER }, { name = "sprinkler_timer", item = Valves.SPRINKLER_TIMER } }) do
+    -- Set from its panel on a tap the grid powers indoors: every holed tile got the window's 30
+    -- minutes of water and the tank gave as much, and it isn't open now. Catches a window at the
+    -- wrong hour or of the wrong length, a timer that runs outside it, or an item that isn't a timer.
+    T.test("irrigation_valves_" .. case.name .. "_opens_in_its_window", {
+        instant = true,
+        run = function(self) runTimer(self, case.item, true) end,
+        validate = function(self)
+            expectSet(self)
+            expectWatered(self.reads.ran, 30, "half an hour's window")
+            expect(not self.reads.ran.valve.open, "the timer is open outside its window")
+        end,
+    })
+
+    -- The same with the grid off and no generator: its window goes by and no water runs. Catches a
+    -- timer that needs no power.
+    T.test("irrigation_valves_" .. case.name .. "_needs_power", {
+        instant = true,
+        run = function(self) runTimer(self, case.item, false) end,
+        validate = function(self)
+            expectSet(self)
+            expectWatered(self.reads.ran, 0, "an unpowered window")
+        end,
+    })
+end
 
 -- Making and learning -------------------------------------------------------------------------------
 
