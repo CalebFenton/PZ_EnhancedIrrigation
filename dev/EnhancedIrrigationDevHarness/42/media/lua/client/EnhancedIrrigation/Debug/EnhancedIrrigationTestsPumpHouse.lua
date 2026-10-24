@@ -662,9 +662,9 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         useMenu(self, self.house, "set", function(context)
             return T.findOption(context, context, function(option) return option.onSelect == PumpMenu.openTimer end)
         end, true)
+        T.waitFor(self, function() return ValveUI.instances[T.player():getPlayerNum()] ~= nil end, "the timer's panel")
         T.step(function()
-            local panel = T.need(self, ValveUI.instances[T.player():getPlayerNum()], "the timer's panel")
-            if not panel then return end
+            local panel = ValveUI.instances[T.player():getPlayerNum()]
             for _ = 1, (self.start - panel.hour) % 24 do
                 panel:onClick(panel.hourUp)
             end
@@ -694,6 +694,34 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
         T.expectOffered(self, "take off")
         expect(#self.reads.carried.items == 1, "Take Off Timer gave back " .. #self.reads.carried.items .. " timers")
+    end,
+})
+
+-- Renewable Energy ------------------------------------------------------------------------------------
+
+-- What a running Utility Pump's house tells a Renewable Energy bank it draws (PumpHouse.bankDraw,
+-- which the bank's scan asks when that mod is loaded): its part's draw under the house's own load
+-- label while nothing else pays; nothing while a vanilla generator pays for it, so the two never
+-- both bill one run, nor while it is stopped. Catches a house a bank powers for free, or one billed
+-- twice.
+T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        T.read(self, "pumpHouse.bankDraw", T.at(self.house, { cases = {
+            { running = true },
+            { running = true, payer = T.at(spots[1]) },
+            {},
+        } }), "draws")
+    end,
+    validate = function(self)
+        local draws = self.reads.draws.draws
+        expect(draws[1].kind == "IGUI_EnhancedIrrigation_PumpHouseLoad", "the running house reports the load " .. tostring(draws[1].kind))
+        expectNear("the running house's draw", draws[1].fuel or 0, Pumps.PARTS[UTILITY].draw, 0.0001)
+        expect(draws[2].kind == nil, "a house a generator pays for also bills the bank")
+        expect(draws[3].kind == nil, "a stopped house bills the bank")
     end,
 })
 

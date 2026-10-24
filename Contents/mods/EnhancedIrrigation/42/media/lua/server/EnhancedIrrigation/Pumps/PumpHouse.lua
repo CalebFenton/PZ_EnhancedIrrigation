@@ -9,9 +9,9 @@
 -- Power, as a washer has it: the grid in a room or beside one, which costs nothing; else a running
 -- vanilla generator in reach, the nearest, which burns fuel for the part's draw at vanilla's rate
 -- (owed while the generator's square isn't loaded, and settled once it is), and is switched off
--- when that empties it; else a Renewable Energy bank, which this stage doesn't bill (docs/design.md,
--- Renewable Energy). The generator's bill is never written to its own (setTotalPowerUsing), which
--- Renewable Energy keeps.
+-- when that empties it; else a Renewable Energy bank, which bills the part's draw as it bills an
+-- appliance in its reach, told of it through its Loads.addConsumer (PumpHouse.bankDraw). The
+-- generator's bill is never written to its own (setTotalPowerUsing), which Renewable Energy keeps.
 --
 -- A gap caught up after the record waited (PumpObject.catchUp) is decided by the power as it stands
 -- then, so the mod can only under-count: grid hours count up to the shutoff if the grid powered it at
@@ -349,6 +349,32 @@ Events.EveryOneMinute.Add(function()
         if pump then
             addSound(pump, record.x, record.y, record.z, part.noise.radius, part.noise.volume)
         end
+    end
+end)
+
+-- Renewable Energy -----------------------------------------------------------------------------------
+
+--- What the Pump House `object` draws from a Renewable Energy bank now, as its Loads.addConsumer
+--- asks: the kind its status lists it as and the generator fuel an hour its part burns in vanilla's
+--- units, while it runs with no vanilla generator paying for it, as one in reach pays first
+--- (PumpHouse.payerOf); else nil. The bank decides whether the grid powers it.
+function PumpHouse.bankDraw(object)
+    if not Pumps.isHouse(object) then
+        return nil
+    end
+    local record = Pumps.recordOf(object)
+    local part = record and record.running and not record.payer and Pumps.partSpec(record.part)
+    if not part then
+        return nil
+    end
+    return "IGUI_EnhancedIrrigation_PumpHouseLoad", part.draw
+end
+
+-- Renewable Energy's server files have all loaded by the world's start, whatever the mod order.
+Events.OnInitGlobalModData.Add(function()
+    local RE = _G["RenewableEnergy"]
+    if RE and RE.Loads and RE.Loads.addConsumer then
+        RE.Loads.addConsumer(PumpHouse.bankDraw)
     end
 end)
 

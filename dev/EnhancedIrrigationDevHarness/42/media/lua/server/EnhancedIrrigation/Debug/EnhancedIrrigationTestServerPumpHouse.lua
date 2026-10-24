@@ -69,6 +69,24 @@ handler("pumpHouse.update", function(_, args)
     return reply
 end)
 
+-- What the Pump House at x, y, z tells a Renewable Energy bank it draws (PumpHouse.bankDraw), with
+-- each of `args.cases`' fields set on its record in turn: { kind, fuel } for each, kind nil when it
+-- reports none.
+handler("pumpHouse.bankDraw", function(_, args)
+    local record = recordAt(args)
+    local house = record and record:getIsoObject()
+    if not house then
+        return nil, "the Pump House at " .. args.x .. "," .. args.y
+    end
+    local draws = {}
+    for i, fields in ipairs(args.cases) do
+        record.running, record.payer = fields.running, fields.payer
+        local kind, fuel = mod().PumpHouse.bankDraw(house)
+        draws[i] = { kind = kind, fuel = fuel }
+    end
+    return { draws = draws }
+end)
+
 -- Sets a vanilla generator down on x, y, z, connected, with `args.fuel` in it, and starts it.
 -- Answers its fuel. Switched off and taken away when the test ends.
 handler("pumpHouse.generator", function(_, args, defer)

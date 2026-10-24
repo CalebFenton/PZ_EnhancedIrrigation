@@ -60,5 +60,6 @@
     "IGUI_EnhancedIrrigation_ValveRunDown": "%1: run down",
     "IGUI_EnhancedIrrigation_TimerSet": "%1: daily at %2 for %3 min",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: not set",
-    "IGUI_EnhancedIrrigation_StartsAt": "Starts at"
+    "IGUI_EnhancedIrrigation_StartsAt": "Starts at",
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Pump House"
 }
