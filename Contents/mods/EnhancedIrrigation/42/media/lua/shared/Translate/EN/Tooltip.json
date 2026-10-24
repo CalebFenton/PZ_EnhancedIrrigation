@@ -54,7 +54,7 @@
     "Tooltip_EnhancedIrrigation_FilterCrockItem": "A porous clay pot. Set it in an empty bucket from the build menu, pour raw water in, and clean water seeps into the bucket.",
     "Tooltip_EnhancedIrrigation_CrockCracked": "The crock is cracked. Take it down and fire a new one.",
     "Tooltip_EnhancedIrrigation_Boiler": "A Metal Drum over a firebox. Fuel and light it like any fire; raw water poured or piped into the drum comes out clean once it has been hot for an hour, about 30 L an hour while the fire lasts. Build it outdoors, clear of walls. Don't let it burn dry.",
-    "Tooltip_EnhancedIrrigation_BurntThrough": "The drum is burnt through. Build a new boiler.",
+    "Tooltip_EnhancedIrrigation_BurntThrough": "The drum is burnt through. Patch it first.",
     "Tooltip_EnhancedIrrigation_DrumWornOut": "The drum is too patched to take another. Build a new boiler.",
     "Tooltip_EnhancedIrrigation_DrumSound": "The drum is sounder than a patch would leave it.",
     "Tooltip_EnhancedIrrigation_WoodenHandPump": "A plank hand pump with a leather, rubber or tarp seal. Build it beside a well, a barrel or a trough, or within 3 tiles of a river for its hose, then plumb its outlet to a tank up to a storey above it or to a garden line, and work the handle: about 6 L a minute. It squeals, and the wood wears.",
