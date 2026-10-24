@@ -61,7 +61,6 @@ local function addFitPump(menu, playerNum, character, pump)
         PumpJobs.FIT_PUMP, pump, partsCarried(character), partName)
 end
 
--- A hand pump's own options: Pump and Replace Seal.
 local function addHandOptions(menu, playerNum, character, pump)
     local work = menu:addOption(getText("ContextMenu_EnhancedIrrigation_Pump"), playerNum, EnhancedIrrigationPumpAction.queue,
         pump)
@@ -141,7 +140,6 @@ function PumpMenu.onFill(playerNum, context, worldobjects, test)
     LinkMenu.addPlumbOptions(menu, playerNum, character, pump, {
         nameKey = "ContextMenu_EnhancedIrrigation_PlumbOutlet",
         job = LinkJobs.PLUMB_PUMP,
-        skip = function() return false end,
         refusal = function(at) return (LinkJobs.pumpBlocker(pump, Links.encode(at))) end,
         noneKey = "ContextMenu_EnhancedIrrigation_NoOutletInReach",
         lines = true,
