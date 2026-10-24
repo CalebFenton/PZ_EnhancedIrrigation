@@ -127,6 +127,8 @@ local ROT_HOURS = 2
 T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
     instant = true,
     run = function(self)
+        if not T.need(self, Pumps.UNITS[IRON].rate * 60 > Sprinklers.RATE,
+            "an iron hand pump that lifts more than a sprinkler asks") then return end
         local squares = T.layout(self, NORTH_SOUTH, { joined = true })
         if not squares then return end
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
@@ -155,16 +157,14 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
             "rotted")
     end,
     validate = function(self)
-        local spec = self.pump.spec
-        local lifted = math.min(Sprinklers.RATE, spec.rate * 60)
         local minute = self.reads.minute
-        local each = sprayed(lifted, MINUTE)
+        local each = sprayed(Sprinklers.RATE, MINUTE)
         for i, change in ipairs(changes(minute.before.squares, minute.after.squares)) do
             local offset = NORTH_SOUTH[i][1] .. "," .. NORTH_SOUTH[i][2]
             expectNear("the crop at " .. offset .. " after a minute", change.water, i <= INSIDE and each or 0, POINTS)
         end
         expectNear("the seal's wear after a minute", minute.after.pump.sealWear - minute.before.pump.sealWear,
-            lifted * MINUTE, LITRES)
+            Sprinklers.RATE * MINUTE, LITRES)
         local soaked = self.reads.soaked
         for i, square in ipairs(soaked.after.squares) do
             local offset = NORTH_SOUTH[i][1] .. "," .. NORTH_SOUTH[i][2]
