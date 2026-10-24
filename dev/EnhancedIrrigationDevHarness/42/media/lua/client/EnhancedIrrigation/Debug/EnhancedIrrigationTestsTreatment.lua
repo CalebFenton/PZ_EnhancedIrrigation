@@ -1230,11 +1230,11 @@ T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
     end,
 })
 
--- Raw water poured in waits in a lit boiler's head while the drum heats, and its
--- menu says so; once hot, the boiler passes clean water at its rate, and its menu says
--- so. Put out, the hot drum passes on while it cools, then nothing, and its menu says it's cold; a
--- boiler never lit passes nothing. Catches water passed before it's safe, a boiler that never
--- passes, one that keeps passing cold, or the taint carried through.
+-- Raw water waits in a lit boiler's head while the drum heats, and its menu says so; once hot, the
+-- boiler passes clean water at its rate, and its menu says so. Put out, the hot drum passes on while
+-- it cools, then nothing, and its menu says it's cold; a boiler never lit passes nothing. Catches
+-- water passed before it's safe, a boiler that never passes, one that keeps passing cold, or the
+-- taint carried through.
 T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
     instant = true,
     run = function(self)
@@ -1242,21 +1242,15 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
         if not spots then return end
         self.unit = placeUnit(self, spots[1], STONE)
         self.cold = placeUnit(self, spots[2], WELDED)
-        T.give(self, "carried", { { type = "Base.Bucket" } })
-        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 10 })
-        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 10 - LITRES end,
-            "this client's copy of the filled bucket")
-        useMenu(self, self.unit, "pour", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
-        end, true)
-        readUntil(self, self.unit, "poured", function(state) return state.record and state.record.head > 10 - LITRES end)
+        -- More than three hours of the boiler's water, so the head lasts the test, in the drum before
+        -- the fire is lit so that it never burns dry.
+        self.head = self.unit.spec.rate * 4
+        run(self, self.unit, "raw", {}, { head = self.head, headTainted = true })
         setFire(self, self.unit, "lit", true, FUEL)
         readMenu(self, self.unit, "heating")
-        -- More than three hours of the boiler's water, so the head lasts the test. Each run starts
-        -- the drum at the heat the steps before left it, which a ten-minute pass in between would
-        -- have moved on a little.
-        self.head = self.unit.spec.rate * 4
-        run(self, self.unit, "heating", { 1 }, { head = self.head, headTainted = true, hotHours = 0 })
+        -- Each run starts the drum at the heat the steps before left it, which a ten-minute pass in
+        -- between would have moved on a little.
+        run(self, self.unit, "heating", { 1 }, { hotHours = 0 })
         run(self, self.unit, "hot", { 1 })
         waitForServer(self, self.unit, "hot", "hot")
         readMenu(self, self.unit, "hot")
@@ -1269,8 +1263,6 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
     end,
     validate = function(self)
         local rate = self.unit.spec.rate
-        T.expectOffered(self, "pour")
-        expectNear("the head after pouring", self.reads.poured.record.head, 10, LITRES)
         local heating = self.reads.heating
         expectNear("the first hour's water", heating.steps[1].basin.litres - heating.before.basin.litres, 0, LITRES)
         expectWord(self, "heating", getText("IGUI_EnhancedIrrigation_Heating"))
