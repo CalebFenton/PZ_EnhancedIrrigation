@@ -9,6 +9,7 @@ import random
 from mathutils import Matrix, Quaternion, Vector
 
 from kit import beam, box, circle, cylinder, group, heading, lathe, material, parts, profile_radius, stain, text, tube
+from sprites import PIPE_MATERIALS, SHAPES
 
 
 def M(name):
@@ -221,7 +222,7 @@ def _wet_soil(material, arms):
     differs from tile to tile but for a strip along each edge, which every tile shares, so wet
     neighbours join without a seam (kit.stain). Opaque inside, where neighbours overlap (see
     WET_OVERHANG), so its colour has a little of the grass's in it, which no longer shows through."""
-    variant = 1 + list(PIPES).index(material) * 16 + sum(arms)
+    variant = 1 + PIPE_MATERIALS.index(material) * SHAPES + sum(arms)
     return stain("EI_WetSoil_%s_%d" % (material, sum(arms)), "#3e321d", [DIRECTIONS[bit] for bit in arms],
                  centre=0.64, near=0.24, far=0.2, softness=0.12, ragged=0.14, opacity=1.0, variant=variant)
 

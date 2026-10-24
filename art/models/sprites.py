@@ -11,7 +11,7 @@ SHAPES = 16
 
 
 def pipe_index(material, wet, shape):
-    return PIPE_MATERIALS.index(material) * 32 + (SHAPES if wet else 0) + shape
+    return PIPE_MATERIALS.index(material) * 2 * SHAPES + (SHAPES if wet else 0) + shape
 
 
 TAP = 128
