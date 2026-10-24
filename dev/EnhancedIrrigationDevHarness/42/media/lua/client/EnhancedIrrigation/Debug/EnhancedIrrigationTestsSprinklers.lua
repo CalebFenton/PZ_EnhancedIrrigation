@@ -315,6 +315,8 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         expect(drawn, "the server doesn't draw the sprinkler")
         T.expectRefused(self, "tap on it", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
         T.expectOffered(self, "take")
+        local taken = self.reads.taken.tiles[1].record
+        expect(taken.sprinkler == nil, "the tile's record still keeps the sprinkler it gave back")
         local items = self.reads.carried.items
         expect(#items == 1 and items[1].condition == WORN.condition and items[1].ceiling == WORN.ceiling,
             "Take Sprinkler gave " .. #items .. " sprinklers" .. (items[1] and " at " .. items[1].condition .. " of "
