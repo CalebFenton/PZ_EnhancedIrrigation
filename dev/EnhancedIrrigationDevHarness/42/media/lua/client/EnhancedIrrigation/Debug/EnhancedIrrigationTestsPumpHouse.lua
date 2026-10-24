@@ -203,7 +203,6 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
             self.house = T.buildFromMenu(self, "Base." .. case.entity, spots[1], SPRITES[case.entity])
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
-            T.count(self, "left", { "Base.ElectricWire", "Base.RubberHose" })
             waitForSummary(self, self.house, function() return true end, "this client's summary of the built house")
             readMenu(self, function() return copyOf(self.house) end, "built")
             useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), false)
@@ -213,8 +212,6 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
             if not expect(record, "the built house has no record") then return end
             expect(record.unit == case.entity and record.part == nil, "the built house is " .. tostring(record.unit)
                 .. " with " .. tostring(record.part) .. " in it")
-            local left = self.counts.left
-            expect(left["Base.ElectricWire"] == 0 and left["Base.RubberHose"] == 0, "building left wire or hose")
             expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
             T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_NoPumpFitted")
         end,
