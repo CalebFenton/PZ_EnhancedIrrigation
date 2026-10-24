@@ -23,6 +23,8 @@
     "Tooltip_EnhancedIrrigation_TapInUse": "Someone is already at this tap.",
     "Tooltip_EnhancedIrrigation_TankEmpty": "The tank is empty.",
     "Tooltip_EnhancedIrrigation_NoPressure": "The tank must stand a storey above the line.",
+    "Tooltip_EnhancedIrrigation_FixtureNoPressure": "The tank must stand a storey above the fixture.",
+    "Tooltip_EnhancedIrrigation_FixturePlumbed": "This fixture is already plumbed to a tank.",
     "Tooltip_EnhancedIrrigation_NotCracked": "This pipe isn't cracked.",
     "Tooltip_EnhancedIrrigation_LineEmpty": "The line is already empty.",
     "Tooltip_EnhancedIrrigation_CisternsForKentucky": "A University of Kentucky extension leaflet on keeping and moving farm water: a barrel on a log stand for pressure, and tanks piped together to share what the rain gives.",

@@ -1,22 +1,28 @@
--- The jobs that plumb one tank to another and take the pipe out again, done on the authority by
--- server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square of the link's
--- other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb works at a tank;
--- Unplumb at a tank on one end, or at the floor of an end whose tank is gone, as the buried pipe
--- stays (Links.lua).
+-- The jobs that plumb a tank to another tank or to a fixture and take the pipe out again, done on
+-- the authority by server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square
+-- of the link's other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb
+-- works at a tank; Plumb Fixture and vanilla's Plumb (Plumb Above) at a fixture, toward its tank;
+-- Unplumb at either end, or at the floor of an end whose tank or fixture is gone, as the buried
+-- pipe stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
+require "EnhancedIrrigation/Fixtures"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
 EnhancedIrrigation.LinkJobs = LinkJobs
 
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
+local Fixtures = EnhancedIrrigation.Fixtures
 
 LinkJobs.PLUMB = "PlumbToTank"
+LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
+-- Vanilla's Plumb, which needs no pipe and no learning: a fixture to the tank straight above it.
+LinkJobs.PLUMB_ABOVE = "PlumbAbove"
 LinkJobs.UNPLUMB = "Unplumb"
 
 -- The knowledge recipe the pamphlet teaches; it is never crafted, only known.
@@ -56,6 +62,40 @@ local function endsOf(object, with)
     return here, other
 end
 
+-- What Plumb and Plumb Fixture take: the wrench, the knowledge, and the pipe the run needs.
+local function plumbMaterials(character, object, with)
+    local list = {}
+    for _, material in ipairs(LinkJobs.PLUMB_TOOLS) do
+        table.insert(list, material)
+    end
+    local kind, lengths = LinkJobs.pipeFor(object, with)
+    for _, material in ipairs(kind and Pipes.materials(kind, lengths) or {}) do
+        table.insert(list, material)
+    end
+    return list
+end
+
+--- Why the fixture `fixture` can't be plumbed to the tank on the square `with` names, as far as
+--- both ends go, a Tooltip key, or nil; and the two squares.
+function LinkJobs.fixtureBlocker(fixture, with)
+    local here, other = endsOf(fixture, with)
+    if not (here and Fixtures.isFixture(fixture)) then
+        return "Tooltip_EnhancedIrrigation_UnknownJob"
+    end
+    local tank = Tanks.tankAt(other.x, other.y, other.z)
+    if not tank then
+        return "Tooltip_EnhancedIrrigation_TankGone"
+    end
+    if Fixtures.linkAt(here) then
+        return "Tooltip_EnhancedIrrigation_FixturePlumbed"
+    end
+    -- A fixture is an outlet: its tank must push, as a tap's must.
+    if not Tanks.hasPressureFor(tank, here.z) then
+        return "Tooltip_EnhancedIrrigation_FixtureNoPressure"
+    end
+    return nil, here, other
+end
+
 LinkJobs.JOBS = {
     [LinkJobs.PLUMB] = {
         minutes = function(tank, with) return Links.minutesFor(runTiles(tank, with)) end,
@@ -74,17 +114,37 @@ LinkJobs.JOBS = {
             -- Only a client that made up a job asks for pipe no kind has.
             return not LinkJobs.pipeFor(tank, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
         end,
-        materials = function(character, tank, with)
-            local list = {}
-            for _, material in ipairs(LinkJobs.PLUMB_TOOLS) do
-                table.insert(list, material)
+        materials = plumbMaterials,
+    },
+    [LinkJobs.PLUMB_FIXTURE] = {
+        minutes = function(fixture, with) return Links.minutesFor(runTiles(fixture, with)) end,
+        position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
+        blocker = function(character, fixture, with)
+            local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
+            if blocker then
+                return blocker
             end
-            local kind, lengths = LinkJobs.pipeFor(tank, with)
-            for _, material in ipairs(kind and Pipes.materials(kind, lengths) or {}) do
-                table.insert(list, material)
+            if Links.distance(here, other) > Links.MAX_TILES then
+                return "Tooltip_EnhancedIrrigation_OutOfReach"
             end
-            return list
+            return not LinkJobs.pipeFor(fixture, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
         end,
+        materials = plumbMaterials,
+    },
+    -- The pipe of vanilla's plumbing runs up through the ceiling; like vanilla's it takes none.
+    [LinkJobs.PLUMB_ABOVE] = {
+        minutes = Links.BASE_MINUTES, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
+        blocker = function(character, fixture, with)
+            if not Fixtures.plumbingKeepsTaint() then
+                return "Tooltip_EnhancedIrrigation_UnknownJob"
+            end
+            local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
+            if blocker then
+                return blocker
+            end
+            return not Fixtures.isAbove(here, other) and "Tooltip_EnhancedIrrigation_OutOfReach" or nil
+        end,
+        materials = { Pipes.WRENCH },
     },
     [LinkJobs.UNPLUMB] = {
         minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,

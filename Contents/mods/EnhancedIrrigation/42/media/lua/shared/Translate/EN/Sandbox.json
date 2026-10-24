@@ -1,5 +1,7 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
     "Sandbox_EnhancedIrrigation_PamphletLoot": "Cisterns for Kentucky loot",
-    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden and hardware stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry still teaches its plans, and Welding the plumbing."
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden and hardware stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry still teaches its plans, and Welding the plumbing.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Plumbing keeps taint",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "On: a sink, bath or toilet plumbed under a rooftop barrel gets the barrel's water as it is, tainted if the barrel's is, and fixtures already plumbed that way change over when their area loads.<br>Off: vanilla's plumbing, which serves a rooftop barrel's water clean."
 }

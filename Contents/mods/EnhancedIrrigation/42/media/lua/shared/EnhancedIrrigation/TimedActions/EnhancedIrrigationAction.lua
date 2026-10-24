@@ -4,6 +4,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Stands"
 require "EnhancedIrrigation/StandJobs"
 require "EnhancedIrrigation/LinkJobs"
+require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
 
@@ -30,9 +31,13 @@ local FEATURES = {
         jobs = EnhancedIrrigation.StandJobs,
         perform = function(...) return EnhancedIrrigation.StandSystem.perform(...) end,
     },
-    -- Unplumb also works at the floor of a link's end whose tank is gone.
+    -- Plumbing works at a tank or a fixture; Unplumb also at the floor of an end whose tank or
+    -- fixture is gone.
     link = {
-        isTarget = function(object) return EnhancedIrrigation.Tanks.isTank(object) or EnhancedIrrigation.isFloor(object) end,
+        isTarget = function(object)
+            return EnhancedIrrigation.Tanks.isTank(object) or EnhancedIrrigation.Fixtures.isFixture(object)
+                or EnhancedIrrigation.isFloor(object)
+        end,
         jobs = EnhancedIrrigation.LinkJobs,
         perform = function(...) return EnhancedIrrigation.LinkSystem.perform(...) end,
     },
