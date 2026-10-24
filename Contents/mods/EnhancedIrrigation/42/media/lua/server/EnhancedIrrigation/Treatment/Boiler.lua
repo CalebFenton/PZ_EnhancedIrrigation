@@ -39,15 +39,11 @@ end
 -- player can light one only while the boiler is loaded, where the passes run.
 local PASS_HOURS = 10 / 60
 
--- The boiler's fire is the fireplace's: vanilla burns its fuel down a minute a minute while its
--- square is loaded, catches a reloaded one up from the world's clock as it loads, and puts it out
--- when the fuel runs out. The record notes the fire after every pass and, catching up, burns what
--- it noted down the same way: a fire lit at lastHour burned from the gap's start for as long as
--- its fuel then lasted, whatever order the game's catch-up and the record's run in after a reload.
--- A fire burning now that wasn't then, or was refuelled since, burned at least the last pass's
--- span. The fire heats the drum (heat); while hot it passes clean water at its rate. Fire wears
--- the drum, slowly while water carries the heat off and fast run dry; burnt through, its water
--- runs out and it holds and passes nothing.
+-- Vanilla burns the fireplace's fuel down while its square is loaded, and after a reload catches it
+-- up and may put it out before or after the record catches up. So the record notes the fire after
+-- every pass and burns that note down: a fire noted lit burned from the gap's start for as long as
+-- its noted fuel lasted, whichever runs first. A fire burning now that wasn't noted, or was
+-- refuelled since, burned at least PASS_HOURS.
 TreatmentObject.KINDS.boiler = {
     init = function(record)
         record.hotHours = 0

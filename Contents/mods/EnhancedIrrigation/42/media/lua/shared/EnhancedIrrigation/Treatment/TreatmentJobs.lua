@@ -21,15 +21,13 @@ TreatmentJobs.SCRUB_CROCK = "ScrubCrock"
 TreatmentJobs.TAKE_DOWN_CROCK = "TakeDownCrock"
 TreatmentJobs.PATCH_DRUM = "PatchDrum"
 
--- Minutes to scrub the clogged skin off a crock by hand, and to lift it out of its bucket.
 local SCRUB_MINUTES = 15
 local TAKE_DOWN_MINUTES = 2
 local PATCH_MINUTES = 30
 -- Litres a minute poured from a carried container, about vanilla's pour.
 local POUR_LITRES_PER_MINUTE = 4
 
--- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand: a shovel or a
--- garden trowel, or a mason's trowel.
+-- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand.
 local CLEAN_MINUTES = 60
 local CLEAN_TOOL_MINUTES = 30
 local CLEAN_TOOLS = { ItemTag.TAKE_DIRT, ItemTag.MASONS_TROWEL }

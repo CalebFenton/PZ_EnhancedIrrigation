@@ -149,7 +149,9 @@ end
 
 -- Kinds ---------------------------------------------------------------------------------------------
 
---- What an hour or less of time does to a unit of each kind: `step(record, unit, spec, hours)`.
+--- Each kind's time: `step(record, unit, spec, hours)`, what an hour or less does to it; and, if
+--- it keeps more, `init(record)` for a new record, `begin(record, unit, hours)` before a run of
+--- steps and `finish(record, unit)` after any run, however short.
 TreatmentObject.KINDS = {}
 
 --- Whether the sand filter's film is grown: it cleans what passes.
@@ -157,7 +159,7 @@ function TreatmentObject:isRipe()
     return self.ripeHours >= Treatment.RIPE_HOURS
 end
 
---- Whether the sand has passed its litres since the last cleaning.
+--- Whether the unit has passed its spec's clogLitres since the last cleaning.
 function TreatmentObject:isClogged(spec)
     return spec.clogLitres ~= nil and self.passed >= spec.clogLitres
 end
@@ -212,8 +214,7 @@ TreatmentObject.KINDS.crock = {
 --- `hours` of time on the unit, in steps of an hour at most, the inlet topping the head up before
 --- each and the outlet emptying the basin after, so a long catch-up drains the head and then dries
 --- the sand in order, unless the inlet keeps it wet, and the basin fills only while the outlet
---- can't keep up. A kind may look at the unit before the steps (`begin`) and, however short the
---- time, after (`finish`). Does nothing while the unit is unloaded.
+--- can't keep up. Does nothing while the unit is unloaded.
 function TreatmentObject:advance(hours)
     local unit = self:getIsoObject()
     local spec = unit and Treatment.specOf(unit)

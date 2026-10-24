@@ -70,7 +70,7 @@ local function endsOf(object, with)
     return here, other
 end
 
--- What Plumb and Plumb Fixture take: the wrench, the knowledge, and the pipe the run needs.
+-- What a job that lays pipe takes: the wrench, the knowledge, and the pipe the run needs.
 local function plumbMaterials(character, object, with)
     local list = {}
     for _, material in ipairs(LinkJobs.PLUMB_TOOLS) do

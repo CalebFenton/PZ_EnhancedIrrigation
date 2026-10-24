@@ -24,7 +24,6 @@ Links.SYSTEM_NAME = "enhanced_irrigation_link"
 Links.MAX_TILES = 10
 -- A storey counts as this many tiles of pipe: down the stand or wall and back out.
 Links.TILES_PER_STOREY = 2
--- Tiles one length of pipe covers.
 Links.TILES_PER_LENGTH = 3
 -- Minutes of wrench work at the tanks, and per tile of pipe run between them.
 Links.BASE_MINUTES = 10
@@ -157,9 +156,8 @@ function Links.find(p, q)
     return nil
 end
 
---- What `find(x, y, z)` finds within plumbing reach of `object`, loaded on this side, nearest
---- first, each { found, at, distance }: with Tanks.tankAt, the tanks it can be plumbed to, linked
---- ones too (the menu says so).
+--- What `find(x, y, z)` finds within plumbing reach of `object`, loaded on this side, linked to it
+--- or not, nearest first, each { found, at, distance }.
 function Links.inReach(object, find)
     local here = EnhancedIrrigation.squareOf(object)
     local found = {}

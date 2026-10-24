@@ -1,13 +1,10 @@
 -- Treatment units: placed things that make raw water safe (docs/design.md, Making water safe). A
--- unit holds raw water waiting to be treated, its head, as a number of litres in the authority's
--- record (server/EnhancedIrrigation/Treatment/TreatmentObject.lua), tainted or not as a whole, as
--- vanilla's water is; treats it at its own rate; and puts the result in its basin, the unit's own
--- FluidContainer, from which vanilla's menus drink, fill and empty. The basin is input-locked, so
--- water reaches it only through the unit. Water reaches the head by Pour In (TreatmentJobs.lua) or
--- an inlet link from a tank; an outlet link takes the basin's water on to a tank (Links.lua). What
--- a kind does is in its rows here and in TreatmentObject.KINDS, not spread through the code. The
--- sand filters and the Filter Crock are entities; a boiler is also a vanilla fireplace, which the
--- game's own fire menus fuel, light and put out.
+-- unit holds raw water waiting to be treated, its head, as litres in the authority's record,
+-- tainted or not as a whole, as vanilla's water is; treats it at its own rate; and puts the result
+-- in its basin, the unit's own FluidContainer, from which vanilla's menus drink, fill and empty.
+-- The basin is input-locked, so water reaches it only through the unit. What a kind does is in its
+-- rows here and in the record's KINDS, not spread through the code. A boiler is also a vanilla
+-- fireplace, which the game's own fire menus fuel, light and put out.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
