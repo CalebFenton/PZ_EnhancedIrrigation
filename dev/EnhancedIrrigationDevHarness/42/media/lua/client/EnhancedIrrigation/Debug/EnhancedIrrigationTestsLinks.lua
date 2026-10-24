@@ -40,21 +40,6 @@ local function lengthsFor(tiles)
     return lengths
 end
 
--- Vanilla's closed amphora: a tank smaller than the barrels, so equal fill isn't equal litres.
-local AMPHORA = "crafted_04_32"
-
--- Queues placing the amphora at `handle` holding `litres`, as T.placeTank places its kinds, and a
--- wait for this client's copy. Returns its handle.
-local function placeAmphora(self, handle, litres)
-    local tank = { x = handle.x, y = handle.y, z = handle.z, sprite = AMPHORA, square = handle.square }
-    T.server(self, "tanks.place", T.at(tank, { sprite = AMPHORA, litres = litres }))
-    T.waitFor(self, function()
-        local copy = T.copyOf(tank)
-        return copy ~= nil and math.abs(copy:getFluidContainer():getAmount() - litres) < T.LITRES
-    end, "this client's copy of the amphora")
-    return tank
-end
-
 -- A tank's capacity from this client's copy, which its entity script gives it.
 local function capacityOf(handle)
     return T.copyOf(handle):getFluidContainer():getCapacity()
@@ -297,7 +282,7 @@ T.test("irrigation_links_levels_tanks_on_one_level", {
         -- Most of the amphora full, so levelling takes more passes than equal litres would.
         -- Not in a T.batch: the flow call would go out across these waits for this client's
         -- copies, and move the water before they see it.
-        self.a = placeAmphora(self, spots[1], 4 * PASS_LITRES)
+        self.a = T.placeTank(self, spots[1], "amphora", 4 * PASS_LITRES)
         self.b = T.placeTank(self, spots[2], "lidded")
         T.step(function()
             self.start = T.copyOf(self.a):getFluidContainer():getAmount()

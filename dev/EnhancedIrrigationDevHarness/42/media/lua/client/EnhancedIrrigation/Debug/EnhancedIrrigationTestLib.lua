@@ -594,6 +594,8 @@ T.TANKS = {
     wellAbove = { sprite = "camping_01_16", up = 1 },
     -- The same well on the ground, as the map has them, for a pump to draw from.
     well = { sprite = "camping_01_16" },
+    -- Vanilla's closed amphora: a tank smaller than the barrels, so equal fill isn't equal litres.
+    amphora = { sprite = "crafted_04_32" },
 }
 
 --- Queues placing a T.TANKS `kind` at `handle`, holding `litres` of water (tainted when
