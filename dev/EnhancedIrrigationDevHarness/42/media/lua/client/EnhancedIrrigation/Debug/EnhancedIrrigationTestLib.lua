@@ -501,6 +501,12 @@ function T.reload(self, at, whileAway)
     T.step(function() self.chunkLoads = loads end)
 end
 
+--- Expects the chunk T.reload sent away to have come back through LoadChunk, not from a cache:
+--- `what` names the thing in it.
+function T.expectReloaded(self, what)
+    T.expect((self.chunkLoads or 0) > 0, "the " .. what .. "'s chunk came back without LoadChunk, from a cache")
+end
+
 -- Line tiles ----------------------------------------------------------------------------------------
 
 --- This client's copy of the line tile at `handle`, or nil.

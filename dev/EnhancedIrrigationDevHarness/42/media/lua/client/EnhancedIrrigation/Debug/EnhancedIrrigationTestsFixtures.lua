@@ -377,7 +377,7 @@ T.test("irrigation_fixtures_plumbed_sink_converts_on_load", {
         readConverted(self)
     end,
     validate = function(self)
-        expect((self.chunkLoads or 0) > 0, "the sink's chunk came back without LoadChunk, from a cache")
+        T.expectReloaded(self, "sink")
         expectConverted(self)
     end,
 })
@@ -507,7 +507,7 @@ T.test("irrigation_fixtures_buffer_survives_reload", {
         waitForCopy(self, self.sink, function(state) return state.buffer end, "this client's copy of the reloaded sink")
     end,
     validate = function(self)
-        expect((self.chunkLoads or 0) > 0, "the sink's chunk came back without LoadChunk, from a cache")
+        T.expectReloaded(self, "sink")
         expectFixture("the server, reloaded", self.reads.reloaded, { litres = 12, tainted = true })
         expectFixture("this client, reloaded", clientState(self.sink), { litres = 12, tainted = true })
     end,

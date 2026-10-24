@@ -671,7 +671,7 @@ T.test("irrigation_treatment_record_catches_up_after_its_chunk_reloads", {
         T.read(self, "treatment.update", T.at(self.unit), "back")
     end,
     validate = function(self)
-        expect((self.chunkLoads or 0) > 0, "the filter's chunk came back without LoadChunk, from a cache")
+        T.expectReloaded(self, "filter")
         local away, back = self.reads.away, self.reads.back
         expect(not away.after.loaded, "the filter's chunk stayed loaded on the server")
         expectNear("the head while away", away.after.record.head, 40, T.LITRES)

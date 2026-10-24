@@ -159,7 +159,7 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
     validate = function(self)
         local watered, left = self.reads.watered.tiles[1].record, self.reads.left.tiles[1]
         local away, back = self.reads.away.tiles[1], self.reads.back.tiles[1]
-        expect((self.chunkLoads or 0) > 0, "the tile's chunk came back without LoadChunk, from a cache")
+        T.expectReloaded(self, "tile")
         expect(watered.full and left.record.soak >= Lines.DAMP, "the hour's flow left the tile full "
             .. tostring(watered.full) .. ", soak " .. tostring(left.record.soak))
         expect(left.sprite == nil, "the server kept the tile's chunk loaded")

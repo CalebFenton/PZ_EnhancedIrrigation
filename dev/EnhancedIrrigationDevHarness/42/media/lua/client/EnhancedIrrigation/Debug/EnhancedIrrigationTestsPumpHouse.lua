@@ -842,7 +842,7 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         update(self, self.lineHouse, "line back", { squares = self.tiles, tank = self.barrel })
     end,
     validate = function(self)
-        expect((self.chunkLoads or 0) > 0, "the house's chunk came back without LoadChunk, from a cache")
+        T.expectReloaded(self, "house")
         local away, back = self.reads.away, self.reads.back
         expect(away.after.record.lastHour == away.before.record.lastHour, "the barrel's house ran while away")
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
