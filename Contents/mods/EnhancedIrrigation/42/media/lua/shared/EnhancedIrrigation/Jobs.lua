@@ -56,17 +56,14 @@ function Jobs.define(Module)
 end
 
 --- Does `job` of `Module` (Jobs.define) on the authority once its timed action has finished: checks
---- it again, does it (`DO[job](character, object, with, materials)`, which returns whether it was
---- done), and only then uses up the materials, read before the job changed anything. Returns
---- whether it was done.
+--- it again, does it (`DO[job](character, object, with, materials)`), and only then uses up the
+--- materials, read before the job changed anything. Returns whether it was done.
 function Jobs.perform(Module, DO, character, job, object, with)
     if Module.refusal(character, job, object, with) then
         return false
     end
     local materials = Module.materials(character, job, object, with)
-    if not DO[job](character, object, with, materials) then
-        return false
-    end
+    DO[job](character, object, with, materials)
     Materials.consume(character, materials)
     return true
 end
