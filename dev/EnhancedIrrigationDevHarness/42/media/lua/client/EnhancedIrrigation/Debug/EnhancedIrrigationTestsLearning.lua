@@ -475,28 +475,15 @@ local function expectNoFailures(answer)
     end
 end
 
--- Each found item, with its test name and the loot rarity option of its kind
--- (ItemPickerJava.getLootType): the pamphlet is a recipe resource, the pump and the water valve
--- electronic parts, the sprinkler and its timer gardening kit.
-local LOOT = {
-    { item = "EnhancedIrrigation.CisternsForKentucky", name = "pamphlet", rarity = "RecipeResourceLoot" },
-    { item = "EnhancedIrrigation.UtilityPump", name = "utility_pump", rarity = "OtherLootNew" },
-    { item = "EnhancedIrrigation.LawnSprinkler", name = "lawn_sprinkler", rarity = "FarmingLootNew" },
-    { item = "EnhancedIrrigation.SprinklerTimer", name = "sprinkler_timer", rarity = "FarmingLootNew" },
-    { item = "EnhancedIrrigation.WaterValve", name = "water_valve", rarity = "OtherLootNew" },
-}
+-- Each item of the server's Distributions.LOOT sits once in each list it names for the item, as
+-- loaded and at each value of its option, at its weight times the option, and nowhere at 0.
+test("irrigation_loot_items_in_their_lists_scaled_by_the_option", {
+    run = function(self) T.server(self, "learning.lootLists", { multipliers = { 2.5, 0, 1 } }) end,
+    validate = function(self) expectNoFailures(self.server["learning.lootLists"]) end,
+})
 
-for _, loot in ipairs(LOOT) do
-    -- The item sits once in each list Distributions.lua names for it, as loaded and at each value of
-    -- its option, at its weight times the option, and nowhere at 0.
-    test("irrigation_loot_" .. loot.name .. "_in_its_lists_scaled_by_the_option", {
-        run = function(self) T.server(self, "learning.lootLists", { item = loot.item, multipliers = { 2.5, 0, 1 } }) end,
-        validate = function(self) expectNoFailures(self.server["learning.lootLists"]) end,
-    })
-
-    -- Each of those lists hands the item out through the game's own roll.
-    test("irrigation_loot_" .. loot.name .. "_rolls_from_each_list", {
-        run = function(self) T.server(self, "learning.lootRolls", { item = loot.item, rarity = loot.rarity, fills = 100 }) end,
-        validate = function(self) expectNoFailures(self.server["learning.lootRolls"]) end,
-    })
-end
+-- Each of those lists hands its item out through the game's own roll.
+test("irrigation_loot_items_roll_from_each_list", {
+    run = function(self) T.server(self, "learning.lootRolls", { fills = 100 }) end,
+    validate = function(self) expectNoFailures(self.server["learning.lootRolls"]) end,
+})
