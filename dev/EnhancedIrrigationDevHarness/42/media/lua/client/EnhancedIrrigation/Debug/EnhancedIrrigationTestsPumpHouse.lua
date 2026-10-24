@@ -627,7 +627,9 @@ local AWAY_HOURS = 1
 
 -- A running house's record waits while its chunk is away: the pass leaves its barrel as it was,
 -- however long ago it last ran. Loaded again, it runs the whole gap on the grid it still has.
--- Catches a record that lifts into a tank it can't see, or forgets the time it was away.
+-- Catches a record that lifts into a tank it can't see, or forgets the time it was away. The house
+-- is switched on only once away, so no ten-minute pass before the reload lifts water the gap
+-- doesn't count.
 T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
     spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
     instant = true,
@@ -636,13 +638,13 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
         link(self, self.house, self.tank)
         update(self, self.house, "lit", {})
         T.reload(self, T.at(self.house), function()
-            update(self, self.house, "away", { hoursAgo = AWAY_HOURS })
+            update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
         end)
         update(self, self.house, "back", { tank = self.tank })
     end,
