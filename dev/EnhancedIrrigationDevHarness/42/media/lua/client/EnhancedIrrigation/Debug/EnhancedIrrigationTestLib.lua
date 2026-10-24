@@ -241,9 +241,11 @@ function T.buildFromMenu(self, entity, handle, sprite, prefer)
     if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return nil end
     T.give(self, "materials", inputs)
     T.server(self, "tanks.track", T.at(handle))
+    -- Stands first: the character's current square follows a teleport only on its next update, and
+    -- the cursor walks a character it can't see beside the site (luautils.walkAdjSquares).
+    T.goNextTo(self, handle.square)
     T.step(function()
         local player = T.player()
-        T.standNextTo(handle.square)
         local build = ISBuildIsoEntity:new(player, info, 1, ISInventoryPaneContextMenu.getContainers(player))
         -- What the build panel does before the cursor can build (ISBuildPanel): the player number
         -- the drag sets (IsoCell.setDrag), and the recipe's inputs picked from what is carried.

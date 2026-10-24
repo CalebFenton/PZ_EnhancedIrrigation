@@ -200,6 +200,30 @@ handler("lines.holdTap", function(player, args)
     return { held = EnhancedIrrigation.TapSystem.hold(tap, standIn) }
 end)
 
+-- Dates the hold on the tap at x, y, z back past TapSystem.HOLD_LAPSE_MS, as if its action had
+-- been silent that long, so the test doesn't wait it out in real time.
+handler("lines.lapseHold", function(player, args)
+    local tap = EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z)
+    local record = tap and EnhancedIrrigation.Lines.recordOf(tap)
+    if not (record and record.heldMs) then
+        return nil, "a held tap at " .. args.x .. "," .. args.y
+    end
+    record.heldMs = getTimestampMs() - EnhancedIrrigation.TapSystem.HOLD_LAPSE_MS - 1
+    return {}
+end)
+
+-- Makes a Water from Tank the multiplayer server starts from now run its flow every `args.ms`
+-- real milliseconds until the test ends, so a test sees a walk-off or a dry tank in a frame or
+-- two rather than a second. The flow counts world time since its last run, so the water drawn
+-- doesn't depend on it.
+handler("water.runEvery", function(player, args, defer)
+    local Action = EnhancedIrrigationWaterAction
+    local before = Action.RUN_MS
+    Action.RUN_MS = args.ms
+    defer(function() Action.RUN_MS = before end)
+    return {}
+end)
+
 -- Makes every line's air `args.celsius` until the test ends.
 handler("lines.temperature", function(player, args, defer)
     local LineObject = EnhancedIrrigation.LineObject

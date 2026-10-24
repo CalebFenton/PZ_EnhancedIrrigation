@@ -22,7 +22,7 @@ local CROP_POINTS = 0.25
 -- How long the tap may take to drain the test's tank at the raised speed, in real time.
 local WATER_MS = 60000
 -- The clock's speed while the tap runs, so the tank empties in seconds.
-local WATER_SPEED = 20
+local WATER_SPEED = 100
 -- How far from the tap, in squares, the character goes: well past EnhancedIrrigationAction.REACH.
 local AWAY_SQUARES = 8
 -- What the tank holds when the tap is let go of early: far more than a few runs draw.
@@ -32,6 +32,14 @@ local TANK_LITRES = 100
 local SMALL_TANK_LITRES = 0.05
 -- Who holds the tap in the one-person test, standing in for another player.
 local OTHER = "EnhancedIrrigationTestOther"
+-- How often, in real milliseconds, the multiplayer server runs an open tap in these tests: a
+-- frame or two, where the mod's second would be most of a test's time.
+local RUN_MS = 20
+
+-- Makes the multiplayer server run taps opened from now every RUN_MS until the test ends.
+local function quickRuns(self)
+    T.server(self, "water.runEvery", { ms = RUN_MS })
+end
 
 -- Queues T.useOption on this client's copy of the tap tile at `handle` for Water from Tank.
 local function useWater(self, handle, label, choose)
@@ -106,6 +114,7 @@ T.test("irrigation_water_from_a_raised_tank", {
         T.plant(self, tile, 0)
         T.goNextTo(self, tile.square)
         T.setMultiplier(self, WATER_SPEED)
+        quickRuns(self)
         useWater(self, tile, "water", true)
         -- The open tap holds the queue until it closes itself; a refused or stopped one would have
         -- emptied it, failing the test.
@@ -141,6 +150,7 @@ T.test("irrigation_water_stops_when_the_character_walks_off", {
         T.placeLine(self, { tile }, "plastic")
         T.goNextTo(self, tile.square)
         T.setMultiplier(self, WATER_SPEED)
+        quickRuns(self)
         walkOffOnceWaterRuns(self, self.tank, away[1][1])
         -- An open tap the authority never closes holds the queue until the test runs out of time.
         waterUnchecked(self, tile)
@@ -203,7 +213,10 @@ T.test("irrigation_water_one_person_per_tap", {
         useWater(self, tile, "while held", false)
         waterUnchecked(self, tile)
         T.read(self, "tanks.read", T.at(self.tank), "refused")
+        -- The other player's action has been silent too long.
+        T.server(self, "lines.lapseHold", T.at(tile))
         T.setMultiplier(self, WATER_SPEED)
+        quickRuns(self)
         T.waitFor(self, function()
             local summary = T.lineSummary(tile)
             return summary ~= nil and summary.heldBy == nil

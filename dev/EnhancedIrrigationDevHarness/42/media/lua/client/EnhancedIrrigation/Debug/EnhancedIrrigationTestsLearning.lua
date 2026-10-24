@@ -441,7 +441,13 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
             self.opened = openPanel("handCraftPanel") ~= nil
             self.craftableAtOnce = craftable()
         end)
-        T.step(function() ISHandCraftPanel.drawDirty = true end)
+        T.step(function()
+            -- The window refreshes only once its throttle (updateTimer, ten UI updates for a long
+            -- recipe list) has run down; zeroed, it refreshes on its next update.
+            local panel = openPanel("handCraftPanel")
+            if panel then panel.updateTimer = 0 end
+            ISHandCraftPanel.drawDirty = true
+        end)
         T.waitFor(self, function() return not ISHandCraftPanel.drawDirty end, "the crafting window to refresh")
         T.step(function() self.craftableLater = craftable() end)
     end,
