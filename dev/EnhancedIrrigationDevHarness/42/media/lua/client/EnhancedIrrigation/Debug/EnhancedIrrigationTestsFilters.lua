@@ -7,10 +7,8 @@ require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/TreatmentMenu"
 
--- The sand filters: the film that ripens on their sand and dies, clogging and cleaning, their inlet
--- and outlet, and their catch-up after time away. Units are placed, read and run by the server's
--- treatment handlers; time runs there through the record's own advance for set hours, so the clock
--- doesn't decide what a test sees.
+-- Time runs on the server through the record's own advance for set hours, so the clock doesn't
+-- decide what a test sees.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -492,6 +490,5 @@ T.test("irrigation_treatment_filter_record_catches_up_after_its_chunk_reloads", 
     end,
 })
 
--- The Barrel Filter's basin through vanilla's menus (T.vanillaBasinTest).
 T.vanillaBasinTest({ name = "irrigation_treatment_filter_vanilla_menu_drinks_fills_and_empties_the_basin",
     entity = BARREL, litres = 20, tainted = true, inBucket = 0 })
