@@ -12,10 +12,11 @@ local function mod()
 end
 
 -- Plumbs x, y, z to `args.to` ({ x, y, z }) with `args.lengths` lengths of `args.kind`, as Plumb to
--- Tank leaves it, without the job. Dropped when the test ends.
+-- Tank leaves it, or as Plumb Inlet or Plumb Outlet does with `args.role` ("inlet", from a tank at
+-- x, y, z to a unit; "outlet", from a unit to a tank), without the job. Dropped when the test ends.
 handler("links.make", function(_, args, defer)
     local a, b = { x = args.x, y = args.y, z = args.z }, args.to
-    mod().LinkSystem.instance:addLink(a, b, args.kind, args.lengths)
+    mod().LinkSystem.instance:addLink(a, b, args.kind, args.lengths, nil, args.role)
     defer(function() Server.unlinkAt(a.x, a.y, a.z) end)
     return Server.stateAt(args)
 end)

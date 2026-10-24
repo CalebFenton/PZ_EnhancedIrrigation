@@ -139,7 +139,7 @@ end)
 
 -- Winds the unit's record's clock back `args.hoursAgo` hours, if given, and runs the ten-minute
 -- pass on it (TreatmentObject.update), loaded or not. Answers the clock's time, `now`, and the state
--- after.
+-- before and after, all in one call, so no ten-minute event runs in between.
 handler("treatment.update", function(_, args)
     local record = recordAt(args)
     if not record then
@@ -148,7 +148,7 @@ handler("treatment.update", function(_, args)
     if args.hoursAgo then
         record.lastHour = mod().now() - args.hoursAgo
     end
-    local reply = { now = mod().now() }
+    local reply = { now = mod().now(), before = stateAt(args) }
     record:update()
     reply.after = stateAt(args)
     return reply

@@ -1,6 +1,7 @@
 -- The authority's side of treatment units (shared/EnhancedIrrigation/Treatment.lua): their Global
 -- Object System, a record for each unit built, the jobs of TreatmentJobs done for real, and what
--- an inlet or outlet link (LinkSystem.lua) moves into a unit's head or out of its basin.
+-- an outlet link (LinkSystem.lua) moves out of a unit's basin. What an inlet link moves into its
+-- head is the record's time (TreatmentObject.advance).
 
 if isClient() then return end
 
@@ -110,32 +111,6 @@ function TreatmentSystem.perform(character, job, unit, with)
 end
 
 -- Links ----------------------------------------------------------------------------------------------
-
---- Fills the head of the unit at the `b` end of the inlet `link` from the tank at its `a` end by up
---- to `litres`, while both are loaded, the tank stands at least level with the unit (design, Tanks
---- and height) and holds water and nothing else; the taint goes with it. Returns the tank when any
---- water moved.
-function TreatmentSystem.feed(link, litres)
-    local tank, unit = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Treatment.unitAt(link.b.x, link.b.y, link.b.z)
-    local record = unit and Treatment.recordOf(unit)
-    if not (tank and record) or not LinkJobs.runsFor("inlet", Tanks.levelOf(tank), Treatment.levelOf(unit)) then
-        return nil
-    end
-    local fluid = tank:getFluidContainer()
-    if not Treatment.isWater(fluid) then
-        return nil
-    end
-    record:catchUp()
-    litres = math.min(litres, fluid:getAmount(), record:spec().head - record.head)
-    if litres < LEAST_LITRES then
-        return nil
-    end
-    local tainted = fluid:isTainted()
-    fluid:removeFluid(litres, false)
-    record:fill(litres, tainted)
-    record:afterChange()
-    return tank
-end
 
 --- Empties the basin of the unit at the `a` end of the outlet `link` into the tank at its `b` end by
 --- up to `litres`, while both are loaded and the tank stands no higher than the unit, as far as the

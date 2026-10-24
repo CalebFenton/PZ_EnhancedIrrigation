@@ -1,26 +1,32 @@
 -- The authority's record of one treatment unit (shared/EnhancedIrrigation/Treatment.lua): the raw
--- water in its head and what time and use have done to it. Time treats the head into the basin as
--- its kind says (KINDS); Pour In, an inlet link and the jobs (TreatmentSystem.lua) change the rest.
--- Unlike a line tile's, a unit's record waits while its chunk is unloaded, as the basin it fills
--- lives on the unit, and catches up the whole gap when it loads.
+-- water in its head and what time and use have done to it. Time tops the head up from an inlet's
+-- tank and treats it into the basin as its kind says (KINDS); Pour In and the jobs
+-- (TreatmentSystem.lua) change the rest. Unlike a line tile's, a unit's record waits while its chunk
+-- is unloaded, as the basin it fills lives on the unit, and catches up the whole gap when it loads,
+-- its inlet feeding it through the gap as it would have loaded.
 
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
-local Treatment, Lines = EnhancedIrrigation.Treatment, EnhancedIrrigation.Lines
+local Treatment, Lines, Tanks = EnhancedIrrigation.Treatment, EnhancedIrrigation.Lines, EnhancedIrrigation.Tanks
+local LinkJobs = EnhancedIrrigation.LinkJobs
 
 local TreatmentObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Treatment")
 EnhancedIrrigation.TreatmentObject = TreatmentObject
 
 -- A head with less than this left counts as empty.
 local LEAST_LITRES = 0.001
+-- A draw from an inlet's tank smaller than this isn't worth a sync to every client.
+local LEAST_DRAWN = 0.01
 
 -- The world's save format: renaming one loses it from saves. unit: the unit's entity script name,
 -- a key of Treatment.UNITS, so the record knows its numbers unloaded too; head: litres of raw water
@@ -60,6 +66,36 @@ end
 function TreatmentObject:fill(litres, tainted)
     self.head = self.head + litres
     self.headTainted = self.headTainted or tainted == true
+end
+
+--- The tank the unit's inlet draws from: the one at the far end of its inlet link, while it is
+--- loaded and stands at least level with `unit` (design, Tanks and height); or nil.
+function TreatmentObject:inletTank(unit)
+    local link = Treatment.linkOf(self, "inlet")
+    local tank = link and Tanks.tankAt(link.a.x, link.a.y, link.a.z)
+    if tank and LinkJobs.runsFor("inlet", Tanks.levelOf(tank), Treatment.levelOf(unit)) then
+        return tank
+    end
+    return nil
+end
+
+--- Tops the head up from `tank` with what a link carries in `hours`, while the tank holds water and
+--- nothing else; the taint goes with it. Returns whether any moved.
+function TreatmentObject:draw(tank, hours)
+    local fluid = tank:getFluidContainer()
+    if not Treatment.isWater(fluid) then
+        return false
+    end
+    -- Read when called: LinkSystem.lua requires this file.
+    local carried = EnhancedIrrigation.LinkSystem.LINK_RATE * hours
+    local litres = math.min(carried, fluid:getAmount(), self:spec().head - self.head)
+    if litres < LEAST_DRAWN then
+        return false
+    end
+    local tainted = fluid:isTainted()
+    fluid:removeFluid(litres, false)
+    self:fill(litres, tainted)
+    return true
 end
 
 --- Takes `litres` out of the head into the basin of `unit` as `fluid` (a FluidType), as far as the
@@ -149,8 +185,9 @@ TreatmentObject.KINDS.crock = {
 
 -- Time -----------------------------------------------------------------------------------------------
 
---- `hours` of time on the unit, in steps of an hour at most, so a long catch-up drains the head and
---- then dries the sand, in order. Does nothing while the unit is unloaded.
+--- `hours` of time on the unit, in steps of an hour at most, the inlet topping the head up before
+--- each, so a long catch-up drains the head and then dries the sand in order, unless the inlet keeps
+--- it wet. Does nothing while the unit is unloaded.
 function TreatmentObject:advance(hours)
     local unit = self:getIsoObject()
     local spec = unit and Treatment.specOf(unit)
@@ -158,8 +195,12 @@ function TreatmentObject:advance(hours)
         return
     end
     local kind = TreatmentObject.KINDS[spec.kind]
+    local tank = self:inletTank(unit)
     while hours > 0 do
         local step = math.min(1, hours)
+        if tank and self:draw(tank, step) then
+            self.drewFrom = tank
+        end
         kind.step(self, unit, spec, step)
         hours = hours - step
     end
@@ -181,13 +222,17 @@ function TreatmentObject:update()
     self:afterChange()
 end
 
--- Sends the basin the clients drink from on, and the summary, when they changed.
+-- Sends the basin the clients drink from on, the tank the inlet drew from, and the summary, when
+-- they changed.
 function TreatmentObject:afterChange()
     local unit = self:getIsoObject()
     if unit and self.basinChanged then
         unit:sync()
     end
-    self.basinChanged = nil
+    if self.drewFrom then
+        Tanks.sync(self.drewFrom)
+    end
+    self.basinChanged, self.drewFrom = nil, nil
     self:sendSummary()
 end
 

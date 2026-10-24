@@ -2,8 +2,9 @@
 -- with no objects, used for what it saves with the world (its own modData keys) and sends the
 -- clients (its initial state on connect, then a command on each change). Every ten minutes water
 -- finds its level through each link between two tanks loaded at both ends, each plumbed fixture's
--- tank refills its buffer, and each treatment unit's inlet fills its head and its outlet empties
--- its basin. A link is buried pipe, run through walls and under floors as vanilla's plumbing is,
+-- tank refills its buffer, and each treatment unit's outlet empties its basin; its inlet fills its
+-- head in the unit's own time (TreatmentObject.advance), which catches up the time the unit was
+-- unloaded. A link is buried pipe, run through walls and under floors as vanilla's plumbing is,
 -- so it never freezes or wears: unlike a garden line it has nothing to age. Nor does it go with a
 -- tank, fixture or unit: taken down, picked up or smashed, it leaves the pipe in the ground, and
 -- one set on that square again is on it.
@@ -215,19 +216,17 @@ local function refill(link, hours)
 end
 
 --- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks,
---- from a tank into a fixture's buffer or a unit's head, or out of a unit's basin into a tank. A
---- link with an end unloaded, or gone from it, waits.
+--- from a tank into a fixture's buffer, or out of a unit's basin into a tank. A link with an end
+--- unloaded, or gone from it, waits; an inlet runs in its unit's time (TreatmentObject.advance).
 function LinkSystem:pass(hours)
     local changed = {}
     for _, link in ipairs(self.links) do
         local tank
         if link.fixture then
             tank = refill(link, hours)
-        elseif link.inlet then
-            tank = TreatmentSystem.feed(link, LinkSystem.LINK_RATE * hours)
         elseif link.outlet then
             tank = TreatmentSystem.drain(link, LinkSystem.LINK_RATE * hours)
-        else
+        elseif not link.inlet then
             local tankA, tankB = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
             if tankA and tankB and flow(tankA, tankB, hours) then
                 changed[tankA], changed[tankB] = true, true
