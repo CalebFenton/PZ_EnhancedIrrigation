@@ -14,14 +14,14 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Sprinklers"
-require "EnhancedIrrigation/Lines/LineObject"
+require "EnhancedIrrigation/Lines/Plants"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Flow = {}
 EnhancedIrrigation.Flow = Flow
 
 local Lines, Tanks, Sprinklers = EnhancedIrrigation.Lines, EnhancedIrrigation.Tanks, EnhancedIrrigation.Sprinklers
-local LineObject = EnhancedIrrigation.LineObject
+local Plants = EnhancedIrrigation.Plants
 
 --- The source of a line tapped on floor `z` from `tank`: the square root of its head (Torricelli),
 --- as much as its outlets ask while it holds water, sent to the clients when drawn on.
@@ -72,22 +72,10 @@ function Flow.takesPerHour(record, source)
     return given(source, asked)
 end
 
--- The plant points of `points` the live plant at x, y, z takes up to full, given it; 0 without one.
-local function water(x, y, z, points)
-    local plant = LineObject.plantAt(x, y, z)
-    local taken = plant and math.min(points, math.max(0, Lines.PLANT_FULL - plant.waterLvl)) or 0
-    if taken > 0 then
-        plant.waterLvl = plant.waterLvl + taken
-        plant.lastWaterHour = SFarmingSystem.instance.hoursElapsed
-        plant:saveData()
-    end
-    return taken
-end
-
 -- Gives `litres` to the plant on `record`'s square up to full, the rest to the soil.
 local function deliver(record, litres)
     local points = litres * Lines.POINTS_PER_LITRE
-    record:addSoak(points - water(record.x, record.y, record.z, points))
+    record:addSoak(points - Plants.water(record.x, record.y, record.z, points))
 end
 
 -- Throws `litres` from the sprinkler on `record`'s tile: what the air and the paths don't take falls
@@ -98,7 +86,7 @@ local function spray(record, litres, touched)
     local squares = Sprinklers.squaresOf(record.x, record.y, record.z, Lines.recordAt)
     local points = litres * (1 - Sprinklers.LOST) * Lines.POINTS_PER_LITRE / #squares
     for _, square in ipairs(squares) do
-        local rest = points - water(square.x, square.y, record.z, points)
+        local rest = points - Plants.water(square.x, square.y, record.z, points)
         local line = Lines.recordAt(square.x, square.y, record.z)
         if line then
             line:addSoak(rest)

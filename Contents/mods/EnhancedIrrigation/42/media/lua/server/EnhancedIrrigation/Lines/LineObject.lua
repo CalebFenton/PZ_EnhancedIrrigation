@@ -11,6 +11,7 @@ require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Sprinklers"
+require "EnhancedIrrigation/Lines/Plants"
 require "EnhancedIrrigation/ObjectSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -20,6 +21,7 @@ local Pipes = EnhancedIrrigation.Pipes
 local Frost = EnhancedIrrigation.Frost
 local Lines = EnhancedIrrigation.Lines
 local Sprinklers = EnhancedIrrigation.Sprinklers
+local Plants = EnhancedIrrigation.Plants
 
 local LineObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Line")
 EnhancedIrrigation.LineObject = LineObject
@@ -71,16 +73,6 @@ function LineObject:isWet()
     return self.soak >= Lines.DAMP or EnhancedIrrigation.now() < (self.wetUntil or 0)
 end
 
---- The live, sown plant on the square x, y, z (its SFarmingSystem record, loaded or not), or nil.
-function LineObject.plantAt(x, y, z)
-    local farming = SFarmingSystem and SFarmingSystem.instance
-    local plant = farming and farming:getLuaObjectAt(x, y, z)
-    if plant and plant:isAlive() and plant.state ~= "plow" then
-        return plant
-    end
-    return nil
-end
-
 function LineObject:addSoak(points)
     self.soak = math.min(Lines.SOAK_MAX, self.soak + points)
 end
@@ -124,17 +116,12 @@ local function hoursAbove(soak, level, perHour, hours)
     return math.min(hours, (soak - level) / perHour)
 end
 
--- Dries `soak` for `hours` at `perHour`; the plant at x, y, z, if any, loses health to root rot for
--- as long as the soil stays waterlogged, down to none, where vanilla's own check kills it
--- (SPlantGlobalObject.checkStat). The plant's record keeps the change when its chunk is unloaded
--- (saveData then writes nothing, and loading the chunk puts the record on the plant,
--- SPlantGlobalObject.stateToIsoObject). Returns the soak left.
+-- Dries `soak` for `hours` at `perHour`, rotting the roots of the plant at x, y, z for as long as
+-- the soil stays waterlogged. Returns the soak left.
 local function dryAndRotAt(soak, perHour, hours, x, y, z)
     local rotting = hoursAbove(soak, Lines.WATERLOGGED, perHour, hours)
-    local plant = rotting > 0 and LineObject.plantAt(x, y, z)
-    if plant then
-        plant.health = math.max(0, plant.health - Lines.ROOT_ROT_PER_HOUR * rotting)
-        plant:saveData()
+    if rotting > 0 then
+        Plants.rot(x, y, z, rotting)
     end
     return math.max(0, soak - perHour * hours)
 end
