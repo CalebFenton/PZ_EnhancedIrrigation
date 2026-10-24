@@ -1,6 +1,5 @@
--- The hands-on jobs at a hand pump or a Pump House, done on the authority by PumpSystem. A job's
--- `with` is the seal, pump part or timer carried, or a timer's setting (Valves.decodeTimer). A
--- pump's outlet is plumbed by LinkJobs.
+-- The hands-on jobs at a hand pump or a Pump House. A job's `with` is the seal, pump part or timer
+-- carried, or a timer's setting (Valves.decodeTimer).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -80,7 +79,7 @@ PumpJobs.JOBS = {
     -- Worked for as long as the character keeps at it, so it has no minutes of its own.
     [PumpJobs.PUMP] = {
         blocker = function(character, pump)
-            -- Someone else works the handle (PumpSystem.hold).
+            -- Someone else works the handle.
             local summary = Pumps.currentSummary(pump)
             if summary and summary.heldBy and summary.heldBy ~= character:getUsername() then
                 return "Tooltip_EnhancedIrrigation_PumpInUse"

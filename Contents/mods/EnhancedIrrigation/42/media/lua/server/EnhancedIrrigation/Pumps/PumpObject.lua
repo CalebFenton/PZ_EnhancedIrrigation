@@ -1,17 +1,13 @@
--- The authority's record of one pump (shared/EnhancedIrrigation/Pumps/Pumps.lua): a hand pump's seal and
--- how far it has worn, and its body's condition, which lifting water wears (PumpObject.lift); a
--- Pump House's part, its condition, its switch, its timer and who pays for its power
--- (Pumps/PumpHouse.lua); and where its hose drinks. Like a treatment unit's, a pump's record waits
--- while its square, the squares it draws from or its outlet's far end aren't loaded, keeping its
--- clock, and catches the whole gap up once they are; time alone moves no water through a hand
--- pump, which runs only while worked, but runs a Pump House that is switched on or whose timer
--- opens.
+-- The authority's record of one pump. Like a treatment unit's, it waits while the squares its water
+-- comes from or goes to aren't loaded, keeping its clock, and catches the whole gap up once they
+-- are.
 
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
 require "EnhancedIrrigation/Pumps/PumpHouse"
@@ -198,8 +194,8 @@ function PumpObject:update()
     end
 end
 
---- Whether the pump runs now: a hand pump while worked (PumpSystem.hold), a Pump House while
---- running at its last pass.
+--- Whether the pump runs now: a hand pump while someone works it, a Pump House while running at its
+--- last pass.
 function PumpObject:isRunning()
     if self:isHouse() then
         return self.running == true
@@ -232,9 +228,8 @@ function PumpObject:afterChange()
 end
 
 -- What every client keeps, as the menu words it, rounded, so wear that changes nothing a player
--- sees sends nothing: a hand pump's seal and body, and who works it now (PumpSystem.hold); a Pump
--- House's part, its condition and ceiling, its switch, its timer and whether it runs now; and where
--- the hose drinks.
+-- sees sends nothing: a hand pump's seal and body, and who works it now; a Pump House's part, its
+-- condition and ceiling, its switch, its timer and whether it runs now; and where the hose drinks.
 function PumpObject:buildSummary()
     if self:isHouse() then
         local timer = self.timer

@@ -1,7 +1,5 @@
--- The authority's side of pumps (shared/EnhancedIrrigation/Pumps/Pumps.lua): their Global Object System,
--- a record for each pump built, the jobs of PumpJobs done for real, who holds each hand pump, and
--- the water a hand pump lifts from its source into its outlet's tank or line. A Pump House runs in
--- its record's own time (Pumps/PumpHouse.lua).
+-- The authority's side of pumps: their Global Object System, the jobs done for real, and the water
+-- a hand pump lifts while worked.
 
 if isClient() then return end
 

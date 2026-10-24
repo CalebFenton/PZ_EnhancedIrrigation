@@ -1,15 +1,10 @@
--- What time does to a Pump House: while it is switched on, or its timer
--- holds it open (Timers.lua), has a pump part fitted that isn't burnt out, and has power, it runs,
--- lifting its part's rate from its source into its outlet's tank as far as its lift, the tank's
--- room and a finite source's water go, or driving the line its outlet feeds with what that takes
--- up to its rate (Lines/Flow.lua), and wearing its part by the hour it runs, faster run dry. A
--- full tank stops the water, not the pump. The switch runs it whatever the timer says; switched
--- off, the timer runs it in its daily window, as a plug-in timer powers what is plugged into it.
+-- What time does to a Pump House. The switch runs it whatever the timer says; switched off, the
+-- timer runs it in its daily window, as a plug-in timer powers what is plugged into it. A full tank
+-- stops the water, not the pump.
 --
--- A gap caught up after the record waited (PumpObject.catchUp) is decided by the power as it stands
--- then, so the mod can only under-count: grid hours count up to the shutoff if the grid powered it at
--- its last loaded pass; a generator's as far as its fuel goes; with no power now, the gap ran nothing.
--- While it runs, zombies hear it every game minute.
+-- A gap caught up after the record waited is decided by the power as it stands then, so the mod can
+-- only under-count: the grid's hours count up to the shutoff if it powered the house at its last
+-- loaded pass; a generator's as far as its fuel goes; with no power now, the gap ran nothing.
 
 if isClient() then return end
 
