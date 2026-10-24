@@ -67,24 +67,20 @@ Sprites.RAISED_BARREL_CLOSED = tile(131)
 Sprites.RAISED_TARP_BARREL = tile(132)
 Sprites.RAISED_TARP_BARREL_CLOSED = tile(133)
 
--- The sand filters: a barrel and a brick tank of sand, each with an outlet near its foot.
+-- The sand filters.
 Sprites.BARREL_FILTER = tile(134)
 Sprites.BRICK_FILTER = tile(135)
 
--- The Filter Crock: a porous clay pot standing in a bucket, which its water seeps into.
 Sprites.FILTER_CROCK = tile(136)
 
--- The boilers: a Metal Drum over a firebox, stone or welded plate. Their CustomName is vanilla's
--- "Metal Drum" so the fireplace they are draws vanilla's barrel-fire flames when lit.
+-- The boilers. Their CustomName is vanilla's "Metal Drum" so the fireplace they are draws vanilla's
+-- barrel-fire flames when lit.
 Sprites.BOILER_STONE = tile(137)
 Sprites.BOILER_WELDED = tile(138)
 
--- The hand pumps: pitcher pumps worked by hand, homemade of planks and Plastic Pipe or of cast
--- iron, each drawing through a Rubber Hose from its foot.
 Sprites.WOODEN_HAND_PUMP = tile(139)
 Sprites.IRON_HAND_PUMP = tile(140)
 
--- The Pump Houses: a plank or sheet-steel box round an electric pump, its hoses and wire out of it.
 Sprites.PUMP_HOUSE_WOOD = tile(141)
 Sprites.PUMP_HOUSE_METAL = tile(142)
 

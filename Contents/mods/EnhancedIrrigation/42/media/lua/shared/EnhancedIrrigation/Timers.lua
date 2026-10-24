@@ -7,7 +7,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Timers = {}
 EnhancedIrrigation.Timers = Timers
 
---- Whether `hour` is an hour of the day a timer may start at: a whole number 0 to 23.
+--- Whether `hour` is an hour of the day a timer may start at.
 function Timers.isStartHour(hour)
     return type(hour) == "number" and hour >= 0 and hour <= 23 and hour == math.floor(hour)
 end

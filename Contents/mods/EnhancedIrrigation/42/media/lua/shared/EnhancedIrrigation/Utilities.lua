@@ -1,9 +1,6 @@
--- Helpers that several of the mod's modules share.
---
--- EnhancedIrrigation is the mod's one global table. The other globals are the ones the game looks
--- up by name: the timed action classes (EnhancedIrrigation*Action) and the recipes' OnAddToMenu
--- hook (EnhancedIrrigation_NeverInMenu, Recipes.lua). Every file that adds to the table creates it
--- first if no file has yet, so files may load in any order.
+-- EnhancedIrrigation is the mod's one global table; its other globals are names the game looks up
+-- itself. Every file that adds to the table creates it first if no file has yet, so files may load
+-- in any order.
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 

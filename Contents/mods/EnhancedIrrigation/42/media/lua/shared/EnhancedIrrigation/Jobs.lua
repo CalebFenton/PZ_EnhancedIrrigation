@@ -1,5 +1,5 @@
--- The one shape every feature's hands-on jobs take (StandJobs, LinkJobs, LineJobs), so the menu,
--- the action's start() and the authority read the same refusal and can't disagree.
+-- The one shape every feature's hands-on jobs take, so the menu, the action's start() and the
+-- authority read the same refusal and can't disagree.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -15,7 +15,7 @@ local Materials = EnhancedIrrigation.Materials
 Jobs.UNKNOWN = "Tooltip_EnhancedIrrigation_UnknownJob"
 
 --- Whether `item` is an inventory item `character` carries, bags included, of a kind `isKind(item)`
---- accepts (any kind without it): a job whose `with` is the item it works with checks it so.
+--- accepts (any kind without it).
 function Jobs.carries(character, item, isKind)
     return instanceof(item, "InventoryItem") and (not isKind or isKind(item))
         and character:getInventory():containsRecursive(item)

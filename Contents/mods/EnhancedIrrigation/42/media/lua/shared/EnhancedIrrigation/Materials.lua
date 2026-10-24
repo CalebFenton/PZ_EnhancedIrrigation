@@ -46,12 +46,10 @@ local function drainablesOf(character, material)
     return list
 end
 
--- Whether `material` is uses of drainables rather than items or a tool.
 local function isDrainable(material)
     return material.tags ~= nil or material.types ~= nil
 end
 
--- Whether the job uses up the items `material` names.
 local function takes(material)
     return material.item ~= nil and not material.keep and not material.tool
 end
@@ -78,8 +76,9 @@ local function haveOf(character, material)
     return character:getInventory():getCountTypeRecurse(material.item)
 end
 
---- What `list` takes of `character`, as needs (EnhancedIrrigation.firstUnmet,
---- EnhancedIrrigation.Needs).
+--- What `list` takes of `character`, as needs: each { have, need } with what names it, `labelKey`
+--- (an IG_UI key) for drainable uses, `tool` and `item` for a tool, `item` (a full type) for items,
+--- `recipe` (the CraftRecipe; have 1 when known) or `perk`.
 function Materials.needs(character, list)
     local needs = {}
     for _, material in ipairs(list) do
@@ -168,7 +167,6 @@ local function notBroken(item)
     return not item:isBroken()
 end
 
--- The screwdriver the jobs at pumps and appliances take, as Pipes.WRENCH is the plumbing jobs'.
 Materials.SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
 
 --- The first working tool with `tag` (an ItemTag value) `character` carries, bags included, or nil.
@@ -182,12 +180,6 @@ function Materials.holds(tool)
         return Materials.workingTool(character, ItemTag[tool.tool])
     end
 end
-
--- A job's needs are a list of what it takes of the character, each { have, need } with what it
--- names: `labelKey` (an IG_UI key) for drainable uses, `tool` (an ItemTag field) and `item` for a
--- tool, `item` (a full type) for an item counted by type, `recipe` for a recipe to know (have 1
--- when known). The same list refuses the job and tells the menu what it lacks, so the two can't
--- disagree.
 
 --- The first of `needs` the character is short of, or nil when they have them all.
 function EnhancedIrrigation.firstUnmet(needs)

@@ -1,7 +1,5 @@
--- The pipe the mod lays and plumbs with. Plastic, lead and clay are pipe vanilla's recipes hardly
--- want; iron is contested, an input to about 25 vanilla recipes and a weapon besides. Each length
--- is joined to the next with what holds that material; threaded iron and soft lead need only the
--- pipe wrench.
+-- The pipe the mod lays and plumbs with. Each length is joined to the next with what holds that
+-- material; threaded iron and soft lead need only the pipe wrench.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -66,7 +64,7 @@ function Pipes.materials(kind, lengths)
 end
 
 --- The materials list of laying `lengths` tiles of `kind`'s line: its pipe and joints, and the pipe
---- wrench where that is the joint. Fit Tap and Plumb to Tank take the wrench for any pipe.
+--- wrench where that is the joint.
 function Pipes.layMaterials(kind, lengths)
     local list = Pipes.materials(kind, lengths)
     if Pipes.KINDS[kind].wrench then

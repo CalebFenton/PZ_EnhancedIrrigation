@@ -1,6 +1,6 @@
--- Hooks of the mod's recipes (media/scripts/EnhancedIrrigation/Recipes.txt and Entities.txt).
--- Shared: the crafting window that reads OnAddToMenu is the client's, and vanilla's own AutoLearn
--- check runs wherever LevelPerk fires (server/XpSystem/XpUpdate.lua, which every side loads).
+-- Hooks of the mod's recipes. Shared: the crafting window that reads OnAddToMenu is the client's,
+-- and vanilla's own AutoLearn check runs wherever LevelPerk fires (XpUpdate.lua, which every side
+-- loads).
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Recipes = {}
