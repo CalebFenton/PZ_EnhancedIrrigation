@@ -43,7 +43,15 @@ TILES[STAND] = [layer(items.tank_stand)]
 for index, barrel, tarp in ((130, "open", False), (131, "closed", False), (132, "open", True), (133, "closed", True)):
     TILES[index] = [layer(items.tank_stand, barrel=barrel, tarp=tarp)]
 
-# Build-menu icons by the name after EnhancedIrrigation_Build_: the stand as it stands built.
+# The sand filters.
+BARREL_FILTER = 134
+BRICK_FILTER = 135
+TILES[BARREL_FILTER] = [layer(items.barrel_filter)]
+TILES[BRICK_FILTER] = [layer(items.brick_filter)]
+
+# Build-menu icons by the name after EnhancedIrrigation_Build_: each thing as it stands built.
 BUILD_ICONS = {
     "TankStand": [layer(items.tank_stand)],
+    "BarrelFilter": [layer(items.barrel_filter)],
+    "BrickFilter": [layer(items.brick_filter)],
 }

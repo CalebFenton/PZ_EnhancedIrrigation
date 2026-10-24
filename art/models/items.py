@@ -1,5 +1,6 @@
 """The parts every tile and icon is built from, in real metres (kit.py has the frame): garden pipe of
-four materials, the tap, the Tank Stand and the rain barrels that sit on it, and the pamphlet.
+four materials, the tap, the Tank Stand and the rain barrels that sit on it, the sand filters, and
+the pamphlet.
 """
 import math
 import random
@@ -40,6 +41,12 @@ def M(name):
         "tarp": lambda: material("EI_Tarp", "#d27449", roughness=0.7, grime=0.25, scale=30),
         "cord": lambda: material("EI_Cord", "#2b241f", roughness=0.8, grime=0.1),
         "lid": lambda: material("EI_Lid", "#8d5a2b", roughness=0.8, grime=0.25, scale=10, grain="board"),
+        # The sand filters: washed sand, red clay bricks in two shades, and the lime mortar between them,
+        # the colours of Renewable Energy's.
+        "sand": lambda: material("EI_Sand", "#c9b48a", roughness=0.95, grime=0.2, scale=60, speckle=("#a48f64", 0.4)),
+        "brick": lambda: material("EI_Brick", "#a5503a", roughness=0.85, grime=0.2, scale=30),
+        "brickdark": lambda: material("EI_BrickDark", "#86412d", roughness=0.85, grime=0.2, scale=30),
+        "mortar": lambda: material("EI_Mortar", "#b0aa9c", roughness=0.95, grime=0.2, scale=30),
         # The pamphlet: cream stock, green ink for the band, brown for the drawing and the type.
         "paper": lambda: material("EI_Paper", "#efe5c6", roughness=0.9, grime=0.05),
         "paperback": lambda: material("EI_PaperBack", "#ddd0ab", roughness=0.9, grime=0.05),
@@ -334,12 +341,8 @@ def _barrel_radius(z):
     return BARREL_PROFILE[-1][0]
 
 
-def rain_barrel(col, closed=False, tarp=False):
-    """The game's rain barrel standing on z = 0: staves, hoops and a dark core showing between the
-    staves; a garbage bag (or, with `tarp`, a tarp) lining it, gathered over the rim in folds and
-    tied round under it, the cord's ends sticking out; `closed` puts a lid of boards over the liner.
-    Returns its parts, to be moved as one."""
-    before = set(col.objects)
+def _barrel_shell(col):
+    """The rain barrel's staves and hoops standing on z = 0, and the dark core between the staves."""
     lathe(col, "Barrel_Core", M("barrelinside"), [(0, 0.004), (0.315, 0.004), (0.335, 0.44), (0.315, BARREL_HEIGHT - 0.01)],
           segments=24)
     step = 360 / BARREL_STAVES
@@ -349,6 +352,15 @@ def rain_barrel(col, closed=False, tarp=False):
     for z in BARREL_HOOPS + (0.035,):
         r = _barrel_radius(z) + 0.004
         lathe(col, "Barrel_Hoop", M("hoop"), [(r, z - 0.022), (r + 0.004, z), (r, z + 0.022)], segments=36)
+
+
+def rain_barrel(col, closed=False, tarp=False):
+    """The game's rain barrel standing on z = 0: staves, hoops and a dark core showing between the
+    staves; a garbage bag (or, with `tarp`, a tarp) lining it, gathered over the rim in folds and
+    tied round under it, the cord's ends sticking out; `closed` puts a lid of boards over the liner.
+    Returns its parts, to be moved as one."""
+    before = set(col.objects)
+    _barrel_shell(col)
     liner = M("tarp" if tarp else "bag")
     rng = random.Random(124 if tarp else 122)
     folds = [rng.uniform(0, 2 * math.pi) for _ in range(3)]
@@ -389,6 +401,106 @@ def rain_barrel(col, closed=False, tarp=False):
             half = math.sqrt(max(0.0, 0.345 ** 2 - offset ** 2))
             box(col, "Barrel_LidSeam", M("barrelinside"), (0.012, 2 * half - 0.01, 0.001), at=(offset, 0, lid_z + 0.03))
     return [obj for obj in col.objects if obj not in before and obj.parent is None]
+
+
+# The sand filters ----------------------------------------------------------------------------------
+#
+# Each is filled with sand nearly to its top, which is what tells it from a barrel of water at a
+# glance, and has an outlet pipe near its foot on a face the camera sees (east, toward the viewer),
+# turned down as a spout.
+
+OUTLET_RADIUS = 0.022  # drawn fatter than a real nipple, as the pipes are, so it holds at game size
+
+
+def _outlet(col, start, angle, length, drop):
+    """A galvanised nipple out of a wall at `start` (x, y, z), heading `angle` degrees from east,
+    `length` long to its elbow, then turning down `drop` to its mouth: a sleeve where it leaves the
+    wall and a lip round the mouth. Returns the mouth."""
+    out = Vector((math.cos(math.radians(angle)), math.sin(math.radians(angle)), 0))
+    down = Vector((0, 0, -1))
+    start = Vector(start)
+    bend = start + out * length
+    radius = OUTLET_RADIUS * 1.5  # the elbow's: no tighter than the pipe, or its inside pinches
+    centre = bend + down * radius
+    elbow = [centre - down * (radius * math.cos(t)) + out * (radius * math.sin(t))
+             for t in (math.radians(d) for d in range(0, 91, 15))]
+    mouth = elbow[-1] + down * (drop - radius)
+    tube(col, "Outlet_Pipe", M("galvanised"), [start] + elbow + [mouth], OUTLET_RADIUS, sides=10, up=(0, 0, 1))
+    tube(col, "Outlet_Sleeve", M("malleable"), [start - out * 0.01, start + out * 0.03], OUTLET_RADIUS * 1.35, sides=10,
+         up=(0, 0, 1))
+    tube(col, "Outlet_Lip", M("malleable"), [mouth - down * 0.018, mouth + down * 0.004], OUTLET_RADIUS * 1.3, sides=10,
+         up=tuple(out))
+    return mouth
+
+
+BARREL_SAND = BARREL_HEIGHT - 0.07  # the sand's top, below the rim so the barrel's inside shows over it
+BARREL_OUTLET = (-20, 0.15)  # the outlet's heading (degrees from east) and height
+
+
+def barrel_filter(col):
+    """The game's rain barrel without its liner, open, filled with sand to a hand below its rim; a
+    nipple out of a stave between the bottom hoops turns down over a clay dish on the ground."""
+    _barrel_shell(col)
+    # The staves' cut ends round the rim, and the sand's surface, heaped a little in the middle.
+    rim = BARREL_HEIGHT
+    lathe(col, "Filter_Rim", M("stave"), [(0.313, rim - 0.012), (0.317, rim), (0.337, rim)], segments=36, smooth=False)
+    edge = 0.335 + (0.315 - 0.335) * (BARREL_SAND - 0.44) / (rim - 0.01 - 0.44) - 0.002
+    rng = random.Random(134)
+    ripples = [rng.uniform(-1, 1) for _ in range(36)]
+    lathe(col, "Filter_Sand", M("sand"), [(0, BARREL_SAND + 0.014), (edge * 0.5, BARREL_SAND + 0.01), (edge, BARREL_SAND)],
+          segments=36, shape=lambda angle, row: (0.0, 0.003 * ripples[int(round(angle / 10)) % 36] * (row == 1)))
+    angle, z = BARREL_OUTLET
+    a = math.radians(angle)
+    wall = _barrel_radius(z) - 0.01
+    mouth = _outlet(col, (wall * math.cos(a), wall * math.sin(a), z), angle, 0.06, 0.06)
+    # The dish under the spout, its rim a few fingers below the mouth.
+    lathe(col, "Filter_Dish", M("clay"), [(0, 0.004), (0.06, 0.004), (0.085, 0.045), (0.079, 0.047), (0.058, 0.012), (0, 0.012)],
+          segments=24, at=(mouth.x, mouth.y, 0))
+
+
+BRICK_TANK = 0.84  # the brick filter's outside width, both ways: four bricks, and room for its outlet
+BRICK_WALL = 0.11  # a stretcher's width: the walls are one brick thick
+BRICK_COURSE = 0.075  # a brick's height and its mortar bed
+BRICK_COURSES = 11
+BRICK_LENGTH = 0.21  # a brick's length and its joint
+BRICK_JOINT = 0.01
+
+
+def brick_filter(col):
+    """A square tank of red bricks in stretcher bond, the corners lapped course by course, mortar
+    showing in every joint, filled with sand to a course below its top; a nipple out of the east
+    wall near its south corner turns down over the ground."""
+    half = BRICK_TANK / 2
+    height = BRICK_COURSES * BRICK_COURSE
+    rng = random.Random(135)
+    # The mortar behind each wall's bricks, set in from every face further than a joint sets a brick's
+    # end back, so it shows only in the joints and no face of it lies in a brick's, where the render
+    # draws black.
+    for sx, sy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+        length, thickness = BRICK_TANK - 0.03, BRICK_WALL - 0.016
+        size = (length, thickness, height - 0.006) if sy else (thickness, length, height - 0.006)
+        box(col, "BrickFilter_Mortar", M("mortar"), size, at=(sx * (half - BRICK_WALL / 2), sy * (half - BRICK_WALL / 2), 0))
+    for course in range(BRICK_COURSES):
+        z = course * BRICK_COURSE
+        # The north and south walls run to the corners on even courses, the east and west walls on
+        # odd ones, so each corner laps; a wall a brick's width shorter at both ends puts its joints
+        # about half a brick along from the course below's, which is the bond.
+        for sx, sy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+            long_wall = (sy != 0) == (course % 2 == 0)
+            length = BRICK_TANK if long_wall else BRICK_TANK - 2 * BRICK_WALL
+            count = max(1, round(length / BRICK_LENGTH))
+            module = length / count
+            for i in range(count):
+                along = -length / 2 + (i + 0.5) * module
+                size = (module - BRICK_JOINT, BRICK_WALL, BRICK_COURSE - BRICK_JOINT)
+                at = (along, sy * (half - BRICK_WALL / 2), z + BRICK_JOINT)
+                if sx:
+                    size, at = (size[1], size[0], size[2]), (sx * (half - BRICK_WALL / 2), along, z + BRICK_JOINT)
+                box(col, "BrickFilter_Brick", M("brick" if rng.random() < 0.6 else "brickdark"), size, at=at, bevel=0.004)
+    inside = BRICK_TANK - 2 * BRICK_WALL
+    sand = height - BRICK_COURSE
+    box(col, "BrickFilter_Sand", M("sand"), (inside - 0.004, inside - 0.004, sand), at=(0, 0, 0))
+    _outlet(col, (half - 0.01, -half + 0.2, 2 * BRICK_COURSE), 0, 0.045, 0.07)
 
 
 # The pamphlet --------------------------------------------------------------------------------------

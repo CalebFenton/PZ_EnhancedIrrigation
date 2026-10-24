@@ -17,6 +17,9 @@ values follow the vanilla tile definitions (newtiledefinitions.tiles).
   action, so the raised barrels carry neither, nor CanScrap. The bare stand is scrapped as vanilla
   scraps wooden furniture (ISMoveableDefinitions' Wood material: planks and nails back), which
   needs no IsMoveAble.
+- The sand filters block as the barrel does too. They hold sand and water the mod keeps track of,
+  so the scrap cursor, which would drop all that, can't take them (no CanScrap). The brick filter's
+  Material is Brick, as the game's brick fireplaces' is.
 
 The game loads a mod's depth maps (media/depthmaps/DEPTH_<tileset>.png, which art/models/render.py
 renders) only when the mod's common/media has a tileGeometry.txt (TileDepthTextureManager.init),
@@ -38,6 +41,7 @@ COLUMNS, ROWS = 8, 17
 
 STAND = 129
 RAISED_BARRELS = (130, 131, 132, 133)
+BARREL_FILTER, BRICK_FILTER = 134, 135
 
 
 def stand_like(name, **props):
@@ -47,6 +51,8 @@ def stand_like(name, **props):
 TILES = {STAND: stand_like("Tank Stand", CanScrap="")}
 for index in RAISED_BARRELS:
     TILES[index] = stand_like("Raised Rain Barrel")
+TILES[BARREL_FILTER] = stand_like("Barrel Filter")
+TILES[BRICK_FILTER] = stand_like("Brick Filter", Material="Brick")
 
 
 def main():

@@ -64,6 +64,10 @@ Sprites.RAISED_BARREL_CLOSED = tile(131)
 Sprites.RAISED_TARP_BARREL = tile(132)
 Sprites.RAISED_TARP_BARREL_CLOSED = tile(133)
 
+-- The sand filters: a barrel and a brick tank of sand, each with an outlet near its foot.
+Sprites.BARREL_FILTER = tile(134)
+Sprites.BRICK_FILTER = tile(135)
+
 -- The priority every loader of the mod's tiles passes to MapObjects.OnLoadWithSprite. MapObjects
 -- keeps one function per sprite and priority, a later one silently replacing an earlier
 -- (MapObjects.java), so a second loader of the same tiles on one side needs a priority of its own.
