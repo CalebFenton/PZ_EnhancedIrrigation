@@ -92,7 +92,7 @@ local function run(record, pump, part, hours)
         if wet > 0 then
             Flow.run(line, lineSource(part, source, litres), wet)
         end
-    elseif into then
+    elseif into and litres >= Pumps.LEAST_LITRES then
         Pumps.fillTank(source, into, litres)
     end
     return ran

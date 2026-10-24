@@ -428,15 +428,14 @@ function Pumps.lineSource(spec, draw)
 end
 
 --- Lifts up to `litres` from `source` into the tank `into`, as far as its room and a finite
---- source's water go, and returns the litres moved: none below what counts as a fill. Authority
---- only.
+--- source's water go, and returns the litres moved. Authority only.
 function Pumps.fillTank(source, into, litres)
     local fluid = into:getFluidContainer()
     litres = math.min(litres, fluid:getFreeCapacity())
     if not source.infinite then
         litres = math.min(litres, source.litres)
     end
-    if litres < Pumps.LEAST_LITRES then
+    if litres <= 0 then
         return 0
     end
     local moved = Pumps.draw(source, fluid, litres)
