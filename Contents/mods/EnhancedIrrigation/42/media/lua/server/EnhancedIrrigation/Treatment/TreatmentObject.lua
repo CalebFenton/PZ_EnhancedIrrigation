@@ -12,14 +12,13 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
-require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/ObjectSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
 local Treatment, Tanks, Frost = EnhancedIrrigation.Treatment, EnhancedIrrigation.Tanks, EnhancedIrrigation.Frost
-local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
+local Links = EnhancedIrrigation.Links
 
 local TreatmentObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Treatment")
 EnhancedIrrigation.TreatmentObject = TreatmentObject
@@ -82,7 +81,7 @@ function TreatmentObject:inletTank(unit)
     local link = Links.roleAt(self, "inlet")
     local at = link and Links.otherEnd(link, self)
     local tank = at and Tanks.tankAt(at.x, at.y, at.z)
-    if tank and LinkJobs.runsFor("inlet", Tanks.levelOf(tank), Treatment.levelOf(unit)) then
+    if tank and Treatment.runsFor("inlet", tank, unit) then
         return tank
     end
     return nil
@@ -100,9 +99,7 @@ function TreatmentObject:draw(tank, hours)
     if self:isBurntThrough() or not Treatment.isWater(fluid) then
         return false
     end
-    -- Read when called: LinkSystem.lua requires this file.
-    local carried = EnhancedIrrigation.LinkSystem.LINK_RATE * hours
-    local litres = math.min(carried, fluid:getAmount(), self:spec().head - self.head)
+    local litres = math.min(Links.RATE * hours, fluid:getAmount(), self:spec().head - self.head)
     if litres < LEAST_DRAWN then
         return false
     end

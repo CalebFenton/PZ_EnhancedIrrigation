@@ -111,16 +111,6 @@ local UNIT_ENDS = {
     outlet = { plumbed = "Tooltip_EnhancedIrrigation_OutletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_OutletTankTooHigh" },
 }
 
---- Whether water runs between a tank at `tankLevel` and a unit at `unitLevel` through the unit's
---- `role` end: into its head from a tank at least level with it, out of its basin into a tank no
---- higher.
-function LinkJobs.runsFor(role, tankLevel, unitLevel)
-    if role == "inlet" then
-        return tankLevel >= unitLevel
-    end
-    return unitLevel >= tankLevel
-end
-
 --- Why the unit `unit`'s `role` end ("inlet" or "outlet") can't be plumbed to the tank on the square
 --- `with` names, as far as both ends go, a Tooltip key, or nil; and the two squares.
 function LinkJobs.unitBlocker(unit, with, role)
@@ -139,7 +129,7 @@ function LinkJobs.unitBlocker(unit, with, role)
     if Links.find(here, other) then
         return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
     end
-    if not LinkJobs.runsFor(role, Tanks.levelOf(tank), Treatment.levelOf(unit)) then
+    if not Treatment.runsFor(role, tank, unit) then
         return UNIT_ENDS[role].wrongLevel
     end
     return nil, here, other

@@ -35,9 +35,6 @@ local Materials, Fixtures, FixtureSystem = EnhancedIrrigation.Materials, Enhance
     EnhancedIrrigation.FixtureSystem
 local TreatmentSystem = EnhancedIrrigation.TreatmentSystem
 
--- Litres an hour a link carries at most: a pipe under a barrel's head passes a few litres a
--- minute.
-LinkSystem.LINK_RATE = 360
 -- A flow smaller than this isn't worth a sync to every client.
 local LEAST_LITRES = 0.01
 
@@ -180,7 +177,7 @@ local function flow(tankA, tankB, hours)
         end
         litres = math.min(from:getAmount(), to:getFreeCapacity())
     end
-    litres = math.min(litres, LinkSystem.LINK_RATE * hours)
+    litres = math.min(litres, Links.RATE * hours)
     if litres < LEAST_LITRES then
         return false
     end
@@ -217,7 +214,7 @@ function LinkSystem:pass(hours)
         if link.fixture then
             tank = refill(link, hours)
         elseif link.outlet then
-            tank = TreatmentSystem.drain(link, LinkSystem.LINK_RATE * hours)
+            tank = TreatmentSystem.drain(link, Links.RATE * hours)
         elseif not (link.inlet or link.pump) then
             local tankA, tankB = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
             if tankA and tankB and flow(tankA, tankB, hours) then

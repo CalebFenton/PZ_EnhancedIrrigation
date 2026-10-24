@@ -12,11 +12,14 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
+require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Treatment = {}
 EnhancedIrrigation.Treatment = Treatment
+
+local Tanks = EnhancedIrrigation.Tanks
 
 Treatment.SYSTEM_NAME = "enhanced_irrigation_treatment"
 
@@ -105,6 +108,15 @@ end
 --- The level of `unit`'s water, as a tank's (Tanks.levelOf): a unit stands on its floor.
 function Treatment.levelOf(unit)
     return unit:getZ()
+end
+
+--- Whether water runs between `tank` and `unit` through the unit's `role` end: into its head from
+--- a tank at least level with it, out of its basin into a tank no higher.
+function Treatment.runsFor(role, tank, unit)
+    if role == "inlet" then
+        return Tanks.levelOf(tank) >= Treatment.levelOf(unit)
+    end
+    return Treatment.levelOf(unit) >= Tanks.levelOf(tank)
 end
 
 --- Whether `fluid` (a FluidContainer) holds water and nothing else, tainted or not: all a unit

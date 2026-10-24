@@ -11,7 +11,6 @@ require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
-require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Treatment/TreatmentObject"
 
@@ -21,7 +20,6 @@ EnhancedIrrigation.TreatmentSystem = TreatmentSystem
 
 local Tanks = EnhancedIrrigation.Tanks
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
-local LinkJobs = EnhancedIrrigation.LinkJobs
 
 -- A flow smaller than this isn't worth a sync to every client.
 local LEAST_LITRES = 0.01
@@ -137,7 +135,7 @@ end
 --- tank has room; the mixture moves as it is. Returns the tank when any water moved.
 function TreatmentSystem.drain(link, litres)
     local unit, tank = Treatment.unitAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
-    if not (unit and tank) or not LinkJobs.runsFor("outlet", Tanks.levelOf(tank), Treatment.levelOf(unit)) then
+    if not (unit and tank) or not Treatment.runsFor("outlet", tank, unit) then
         return nil
     end
     local basin, fluid = unit:getFluidContainer(), tank:getFluidContainer()

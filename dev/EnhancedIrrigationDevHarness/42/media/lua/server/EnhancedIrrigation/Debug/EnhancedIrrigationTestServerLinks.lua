@@ -50,7 +50,7 @@ handler("links.flow", function(_, args, defer)
     defer(function() Server.unlinkAt(a.x, a.y, a.z) end)
     local passes = {}
     for _ = 1, args.passes or 1 do
-        system:pass(args.litres / mod().LinkSystem.LINK_RATE)
+        system:pass(args.litres / mod().Links.RATE)
         table.insert(passes, { a = Server.stateAt(a), b = Server.stateAt(b) })
     end
     return { passes = passes }
@@ -59,8 +59,7 @@ end)
 -- One link pass (LinkSystem:pass), as long as a link takes to carry `args.litres` at its full rate.
 -- Answers the state at x, y, z after, and at `args.other` ({ x, y, z }) if given.
 handler("links.pass", function(_, args)
-    local LinkSystem = mod().LinkSystem
-    LinkSystem.instance:pass(args.litres / LinkSystem.LINK_RATE)
+    mod().LinkSystem.instance:pass(args.litres / mod().Links.RATE)
     local state = Server.stateAt(args)
     state.other = args.other and Server.stateAt(args.other) or nil
     return state
