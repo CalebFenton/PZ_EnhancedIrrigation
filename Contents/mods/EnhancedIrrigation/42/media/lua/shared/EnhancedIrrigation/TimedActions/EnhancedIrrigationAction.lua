@@ -99,8 +99,13 @@ local FEATURES = {
 -- at it: what luautils.walkAdj counts as there, and a little for drift and a client's lag.
 Action.REACH = 2.6
 
+--- The job module (Jobs.define) of `feature`, as the menus read its needs and refusals.
+function Action.jobsOf(feature)
+    return FEATURES[feature].jobs
+end
+
 local function rowOf(feature, job)
-    return FEATURES[feature].jobs.JOBS[job]
+    return Action.jobsOf(feature).JOBS[job]
 end
 
 -- Whether `with` is an inventory item the character works with, rather than a world object.
@@ -147,7 +152,7 @@ function Action:update()
 end
 
 function Action:start()
-    if not isClient() and FEATURES[self.feature].jobs.refusal(self.character, self.job, self.object, self.with) then
+    if not isClient() and Action.jobsOf(self.feature).refusal(self.character, self.job, self.object, self.with) then
         self:forceStop()
         return
     end
