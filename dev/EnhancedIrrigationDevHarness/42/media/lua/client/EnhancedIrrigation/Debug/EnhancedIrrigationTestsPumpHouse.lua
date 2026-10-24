@@ -15,16 +15,13 @@ require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/ApplianceMenu"
 require "EnhancedIrrigation/UI/LineMenu"
 
--- The Pump Houses and their parts (Pumps.lua, PumpJobs.lua, Pumps/PumpHouse.lua, PumpObject.lua,
--- PumpSystem.lua, PumpClient.lua, PumpMenu.lua, their entities in Entities.txt), Salvage Pump
--- (Appliances.lua, ApplianceJobs.lua, ApplianceSystem.lua, ApplianceMenu.lua) and Make Utility Pump
--- (Recipes.txt): building the houses from the build menu, fitting and taking out a part, the
--- switch, running on the grid beside a room and on a generator that pays for it in fuel, a dry
--- source and burning out, Repair Pump, the time a house was away and the grid's shutoff, a
--- garden line a house drives, a washer's pump salvaged, and a Utility Pump made. Houses are placed
--- and plumbed by EnhancedIrrigationTestServerPumps.lua's handlers, and run for set hours by its own
--- pass from EnhancedIrrigationTestServerPumpHouse.lua's and EnhancedIrrigationTestServerSprinklers.lua's,
--- so the clock doesn't decide the sums.
+-- The Pump Houses and their parts, Salvage Pump and Make Utility Pump: building the houses from the
+-- build menu, fitting and taking out a part, the switch, running on the grid beside a room and on a
+-- generator that pays for it in fuel, looking for that generator once an hour, a house a storey up,
+-- a dry source and burning out, Repair Pump, the time a house was away and the grid's shutoff, the
+-- timer, what a house tells a Renewable Energy bank, a garden line a house drives, a washer's pump
+-- salvaged, and a Utility Pump made. Houses are placed, plumbed and run for set hours by their own
+-- pass from server handlers, so the clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear

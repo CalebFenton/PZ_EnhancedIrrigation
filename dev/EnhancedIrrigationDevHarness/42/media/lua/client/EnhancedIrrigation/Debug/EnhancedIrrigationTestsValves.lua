@@ -7,12 +7,10 @@ require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 
--- The valves and timers (Valves.lua, Lines/ValveSystem.lua, the valve jobs of LineJobs.lua, the
--- line menu's valve options and the ValveUI panel, Make Wind-up Valve and Make Timer Valve in
--- Recipes.txt): fitting a valve to a tap and taking it off, winding a Wind-up Valve and setting a
--- timer from the panel, the water each gives and when, the power a timer needs; making each, and
--- learning the Timer Valve. A valve's hours are run on the server by winding its clock back
--- (valves.age, EnhancedIrrigationTestServerValves.lua), so the clock doesn't decide the sums.
+-- The valves and timers: fitting a valve to a tap and taking it off, winding a Wind-up Valve and
+-- setting a timer from the panel, the water each gives and when, the power a timer needs; making
+-- each, and learning the Timer Valve. A valve's hours are run on the server by winding its clock
+-- back (valves.age), so the clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear

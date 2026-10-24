@@ -12,15 +12,13 @@ require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
--- The hand pumps (Pumps.lua, PumpJobs.lua, PumpObject.lua, PumpSystem.lua, PumpMenu.lua,
--- TimedActions/EnhancedIrrigationPumpAction.lua, the Plumb Pump job of LinkJobs, their entities in
--- Entities.txt): building them from the build menu, plumbing the outlet within the pump's lift,
+-- The hand pumps: building them from the build menu, plumbing the outlet within the pump's lift,
 -- working the handle until the tank is full or the character is exhausted, the water each source
 -- gives (a well's clean and endless, a barrel's with its taint, a river's tainted), the seal
 -- wearing through and replaced, a worn-out pump smashed, and a pump's outlet plumbed to a garden
--- line, which it drives while worked. Pumps are placed, read and worked for set hours by
--- EnhancedIrrigationTestServerPumps.lua and EnhancedIrrigationTestServerSprinklers.lua, so the
--- clock doesn't decide the sums; the Pump action itself runs at a raised clock speed.
+-- line, which it drives while worked. Pumps are placed, read and worked for set hours by server
+-- handlers, so the clock doesn't decide the sums; the Pump action itself runs at a raised clock
+-- speed.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
