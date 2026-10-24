@@ -62,7 +62,6 @@ def barrel_filter(col):
     angle, z = BARREL_OUTLET
     wall = heading(angle) * (profile_radius(BARREL_PROFILE, z) - 0.01)
     mouth = _outlet(col, (wall.x, wall.y, z), angle, 0.06, 0.06)
-    # The dish under the spout, its rim a few fingers below the mouth.
     lathe(col, "Filter_Dish", M("clay"), [(0, 0.004), (0.06, 0.004), (0.085, 0.045), (0.079, 0.047), (0.058, 0.012), (0, 0.012)],
           segments=24, at=(mouth.x, mouth.y, 0))
 
@@ -344,7 +343,6 @@ def boiler_welded(col):
         box(col, "Firebox_Top", M("plate"), (FIREBOX, rim, PLATE), at=(0, sy * (half - rim / 2), side))
     for sx in (-1, 1):
         box(col, "Firebox_Top", M("plate"), (rim, FIREBOX_INSIDE, PLATE), at=(sx * (half - rim / 2), 0, side))
-    # Angle iron up each corner, a flange on each face, riveted through the plates.
     flange, thick = 0.045, 0.005
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -361,7 +359,6 @@ def boiler_welded(col):
         box(col, "Firebox_Strap", M("ironwork"), (FIREBOX + 2 * thick, 0.004, 0.04), at=(0, sy * (half + thick + 0.002), strap))
     for sx in (-1, 1):
         box(col, "Firebox_Strap", M("ironwork"), (0.004, FIREBOX + 2 * thick, 0.04), at=(sx * (half + thick + 0.002), 0, strap))
-    # The door over the mouth, lapping its sides, its edges framed in flat bar.
     face = -(half + 0.002)
     lap, bar = 0.015, 0.015
     left, right, bottom, top = west - lap, east + lap, sill - lap, head + lap

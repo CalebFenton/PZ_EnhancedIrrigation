@@ -21,19 +21,18 @@ NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
 DIRECTIONS = {NORTH: (0, 1), EAST: (1, 0), SOUTH: (0, -1), WEST: (-1, 0)}
 PIPE_SIDES = 16
 
-# For each material: its radius, its material, the
-# joint along each arm ("coupling" a threaded sleeve, "wiped" a lead joint's bulb, "bell" a clay
-# socket, or none), the fitting at the middle of a tee or cross and of an elbow that can't bend
-# ("hub"), and the radius a pipe that bends is bent round. Each is drawn a little fatter than life,
-# drip line 3 cm across, iron and lead 4 cm, clay 10 cm: at the game's scale a centimetre is under a
-# pixel, and a line two pixels wide comes and goes as the camera moves.
+# For each material: its radius, its material, the joint along each arm ("coupling" a threaded
+# sleeve, "wiped" a lead joint's bulb, "bell" a clay socket, or none), the fitting at the middle of a
+# tee or cross and of an elbow that can't bend ("hub"), and the radius a pipe that bends is bent
+# round. Each is drawn a little fatter than life: at the game's scale a centimetre is under a pixel,
+# and a line two pixels wide comes and goes as the camera moves.
 PIPES = {
     "plastic": {"radius": 0.015, "mat": "poly", "joint": None, "hub": "poly", "bend": 0.12},
     "iron": {"radius": 0.02, "mat": "galvanised", "joint": "coupling", "hub": "malleable", "bend": None},
     "lead": {"radius": 0.02, "mat": "lead", "joint": "wiped", "hub": "solder", "bend": 0.16},
     "clay": {"radius": 0.05, "mat": "clay", "joint": "bell", "hub": "clay", "bend": None},
 }
-LONE_HALF = 0.2  # a lone piece's half length
+LONE_HALF = 0.2
 FITTING = 1.5  # the widest fitting's radius over its pipe's: a wiped joint's bulb
 
 
@@ -135,7 +134,7 @@ def _wet_soil(material, arms):
     outlet drips, and in a band along each arm that runs into the next wet tile's. Its edge noise
     differs from tile to tile but for a strip along each edge, which every tile shares, so wet
     neighbours join without a seam (kit.stain). Opaque inside, where neighbours overlap (see
-    WET_OVERHANG), so its colour has a little of the grass's in it, which no longer shows through."""
+    WET_OVERHANG), so its colour carries a little of the grass's, which can't show through there."""
     variant = 1 + PIPE_MATERIALS.index(material) * SHAPES + sum(arms)
     return stain("EI_WetSoil_%s_%d" % (material, sum(arms)), "#3e321d", [DIRECTIONS[bit] for bit in arms],
                  centre=0.64, near=0.24, far=0.2, softness=0.12, ragged=0.14, opacity=1.0, variant=variant)
@@ -196,7 +195,6 @@ def tap(col):
     cylinder(col, "Tap_Riser", M("galvanised"), 0.019, 0.25, at=(0, 0, TAP_FOOT - 0.005), segments=12)
     top = TAP_TOP
     cylinder(col, "Tap_Body", M("brass"), 0.034, 0.07, at=(0, 0, top), segments=14)
-    # The spout turned down, its hose thread at the end.
     out = TAP_OUT
     spout = [(0, 0, top + 0.035), (out[0] * 0.06, out[1] * 0.06, top + 0.035), (out[0] * 0.09, out[1] * 0.09, top + 0.01),
              TAP_SPOUT_END]

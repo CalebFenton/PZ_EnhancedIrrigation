@@ -18,7 +18,7 @@ from mathutils import Matrix, Vector
 
 
 def hex_rgb(value):
-    """'#rrggbb' to linear RGB, so the colours below read like the sRGB values of a paint chip."""
+    """'#rrggbb' to linear RGB, so the palette's colours read like the sRGB values of a paint chip."""
     def channel(c):
         c /= 255
         return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
@@ -62,7 +62,7 @@ def material(name, color, roughness=0.6, metallic=0.0, grime=0.12, scale=40.0, s
     """A painted, plastic or metal surface. `grime` darkens it in blotches, so flat colours don't
     look like a render. `speckle` = (colour, amount) mottles it with a second colour in a web of
     flakes, the base colour left at each flake's centre and less of it the higher `amount`: the way
-    multicrystalline cells sparkle, or rust on scrap steel. `streaks` = (colour, amount) runs that
+    sand and ash are flecked with darker grains. `streaks` = (colour, amount) runs that
     colour down its sides in thin streaks, as rust and soot run down a drum left out in the rain.
     `scorch` = (soot, tint, height) blackens it from its foot up to a ragged line `height` metres
     up, with a band of heat tint above, as a fire inside leaves a stove. `grain`, a kind in GRAIN,
@@ -276,7 +276,7 @@ def stain(name, color, arms, centre, near, far, softness, ragged, opacity, scale
         band = _math(nodes, links, "MAXIMUM", _math(nodes, links, "SUBTRACT", across, half),
                      _math(nodes, links, "MULTIPLY", along, -1.0))
         outside = _math(nodes, links, "MINIMUM", outside, band)
-    # 0 within a twentieth of a metre of an edge, where tiles meet, rising to 1 inside 0.3.
+    # 0 at the tile's edges, where neighbours must match, rising to 1 inland.
     reach = _math(nodes, links, "MAXIMUM", _math(nodes, links, "ABSOLUTE", axes.outputs["X"]),
                   _math(nodes, links, "ABSOLUTE", axes.outputs["Y"]))
     inland = _math(nodes, links, "MULTIPLY", _math(nodes, links, "SUBTRACT", 0.45, reach), 1 / 0.15, clamp=True)

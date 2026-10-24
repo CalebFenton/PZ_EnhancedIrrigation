@@ -33,7 +33,6 @@ def tank_stand(col, barrel=None, tarp=False):
             leg = cylinder(col, "Stand_Leg", M("bark"), LEG_RADIUS, top, at=(sx * LEG_AT, sy * LEG_AT, 0), segments=10)
             leg.rotation_euler.z = math.radians(17 * (sx + 2 * sy))
             cylinder(col, "Stand_LegEnd", M("logend"), LEG_RADIUS - 0.004, 0.002, at=(sx * LEG_AT, sy * LEG_AT, top), segments=10)
-    # Joists along the north and south rows of legs, nailed to their outer faces.
     for sy in (-1, 1):
         y = sy * (LEG_AT + LEG_RADIUS + JOIST[0] / 2)
         box(col, "Stand_Joist", M("planksdark"), (2 * LEG_AT + 0.2, JOIST[0], JOIST[1]), at=(0, y, top - JOIST[1]), bevel=0.004)
@@ -60,7 +59,6 @@ def tank_stand(col, barrel=None, tarp=False):
             # its width turns onto Y, flat against the legs.
             if side in (1, 3):
                 brace.rotation_quaternion = brace.rotation_quaternion @ _quarter_turn()
-    # The deck: boards north to south across the joists, a finger's gap between them.
     boards, gap = 6, 0.012
     width = (2 * (LEG_AT + LEG_RADIUS) + 0.06 - (boards - 1) * gap) / boards
     span = boards * width + (boards - 1) * gap
