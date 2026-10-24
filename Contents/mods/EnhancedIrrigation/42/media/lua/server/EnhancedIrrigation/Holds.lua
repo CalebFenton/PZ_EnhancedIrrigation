@@ -1,4 +1,4 @@
--- Who holds each tap and hand pump. One open-ended action (EnhancedIrrigationHeldAction) works a
+-- Who holds each tap and hand pump. One open-ended action (EnhancedIrrigation.HeldAction) works a
 -- record at a time: the action is the record's `holder`, its character's name `heldBy`, which the
 -- summary carries so every menu can say so, and `heldMs` when it last ran it. None of them is
 -- saved: a loaded world has no action running. A change tells through the record's afterChange, as
@@ -17,7 +17,7 @@ EnhancedIrrigation.Holds = Holds
 -- server drops the action of a client that disconnects mid-run without stopping it
 -- (ActionManager.disconnectPlayer), so a hold its action no longer renews lets go by itself. Single
 -- player has no such end, and runs its actions by game minutes, which a long day draws out.
-Holds.LAPSE_MS = 5 * EnhancedIrrigationHeldAction.RUN_MS
+Holds.LAPSE_MS = 5 * EnhancedIrrigation.HeldAction.RUN_MS
 
 local held = {}
 

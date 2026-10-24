@@ -14,9 +14,10 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 -- hold(), whether it holds the target now; runFor(hours), on the authority, the Tooltip key of
 -- why it stops or nil; playSounds(), through keepPlaying; LOOT_POSITION; RUN_EVENT; and HEAVY for
 -- heavy work.
-EnhancedIrrigationHeldAction = EnhancedIrrigationHeldAction or ISBaseTimedAction:derive("EnhancedIrrigationHeldAction")
+EnhancedIrrigation = EnhancedIrrigation or {}
+EnhancedIrrigation.HeldAction = EnhancedIrrigation.HeldAction or ISBaseTimedAction:derive("EnhancedIrrigationHeldAction")
 
-local Action = EnhancedIrrigationHeldAction
+local Action = EnhancedIrrigation.HeldAction
 
 -- How often, in real milliseconds, the multiplayer server runs the action: often enough that what
 -- stops it (a tank dry or full) stops the character soon after. Read as each action starts.

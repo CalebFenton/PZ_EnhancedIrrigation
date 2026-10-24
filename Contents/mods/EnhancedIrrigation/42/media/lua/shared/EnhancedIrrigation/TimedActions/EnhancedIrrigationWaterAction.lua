@@ -5,7 +5,7 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationHeldAction"
 -- Water from Tank: the character holds a garden line's tap open, and the line runs for as long as
 -- they stand there, until they stop or the tank gives out. One person at a time holds a tap
 -- (TapSystem.hold).
-EnhancedIrrigationWaterAction = EnhancedIrrigationWaterAction or EnhancedIrrigationHeldAction:derive("EnhancedIrrigationWaterAction")
+EnhancedIrrigationWaterAction = EnhancedIrrigationWaterAction or EnhancedIrrigation.HeldAction:derive("EnhancedIrrigationWaterAction")
 
 local Action = EnhancedIrrigationWaterAction
 local Lines = EnhancedIrrigation.Lines
@@ -40,8 +40,7 @@ function Action:playSounds()
     self:keepPlaying(Taps.SOUND)
 end
 
--- Parameter names match the fields: the multiplayer server rebuilds the action by passing them to
--- new() in order (NetTimedAction). `tap` is the line tile holding the tap.
+-- `tap` is the line tile holding the tap.
 function Action:new(character, tap)
     local o = ISBaseTimedAction.new(self, character)
     o.tap = tap
