@@ -8,7 +8,7 @@ import random
 
 from mathutils import Matrix, Quaternion, Vector
 
-from kit import beam, box, circle, cylinder, group, heading, lathe, material, profile_radius, stain, text, tube
+from kit import beam, box, circle, cylinder, group, heading, lathe, material, parts, profile_radius, stain, text, tube
 
 
 def M(name):
@@ -359,8 +359,7 @@ def tank_stand(col, barrel=None, tarp=False):
             box(col, "Stand_Nail", M("nail"), (0.01, 0.01, 0.002),
                 at=(x, sy * (LEG_AT + LEG_RADIUS + JOIST[0] / 2), DECK_TOP))
     if barrel:
-        parts = rain_barrel(col, closed=barrel == "closed", tarp=tarp)
-        group(col, "Stand_Barrel", parts, at=(0, 0, DECK_TOP))
+        group(col, "Stand_Barrel", parts(col, rain_barrel, closed=barrel == "closed", tarp=tarp), at=(0, 0, DECK_TOP))
 
 
 def _quarter_turn():
@@ -392,9 +391,7 @@ def _barrel_shell(col):
 def rain_barrel(col, closed=False, tarp=False):
     """The game's rain barrel standing on z = 0: staves, hoops and a dark core showing between the
     staves; a garbage bag (or, with `tarp`, a tarp) lining it, gathered over the rim in folds and
-    tied round under it, the cord's ends sticking out; `closed` puts a lid of boards over the liner.
-    Returns its parts, to be moved as one."""
-    before = set(col.objects)
+    tied round under it, the cord's ends sticking out; `closed` puts a lid of boards over the liner."""
     _barrel_shell(col)
     liner = M("tarp" if tarp else "bag")
     rng = random.Random(124 if tarp else 122)
@@ -434,7 +431,6 @@ def rain_barrel(col, closed=False, tarp=False):
         for offset in (-0.18, -0.06, 0.06, 0.18):
             half = math.sqrt(max(0.0, 0.345 ** 2 - offset ** 2))
             box(col, "Barrel_LidSeam", M("barrelinside"), (0.012, 2 * half - 0.01, 0.001), at=(offset, 0, lid_z + 0.03))
-    return [obj for obj in col.objects if obj not in before and obj.parent is None]
 
 
 # The sand filters ----------------------------------------------------------------------------------
@@ -592,17 +588,14 @@ CROCK_PROFILE = [(0, 0), (0.07, 0), (0.078, 0.006), (0.095, 0.03), (0.11, 0.07),
 
 def filter_crock(col, fired=True):
     """The Filter Crock standing on z = 0: a round-bellied pot on a narrow foot, its shoulder drawn in
-    to a short neck and a rolled rim, terracotta once `fired`, raw clay before. Returns its parts, to
-    be moved as one."""
-    before = set(col.objects)
+    to a short neck and a rolled rim, terracotta once `fired`, raw clay before."""
     lathe(col, "Crock", M("terracotta" if fired else "rawclay"), CROCK_PROFILE, segments=36)
-    return [obj for obj in col.objects if obj not in before and obj.parent is None]
 
 
 def crock_icon(col, fired=True):
     """The Filter Crock tipped onto its side towards the viewer's right, its mouth up and out, as the
     game draws its clay jars' icons."""
-    group(col, "Crock_Tipped", filter_crock(col, fired), rotate=(0, 40, 0))
+    group(col, "Crock_Tipped", parts(col, filter_crock, fired), rotate=(0, 40, 0))
 
 
 PAIL_HEIGHT = 0.23
@@ -649,7 +642,7 @@ def crock_in_bucket(col):
              for t in (math.radians(d) for d in range(0, 181, 10))]
     bail.append(centre - pivot * (reach - 0.008))
     tube(col, "Pail_Bail", M("galvanised"), bail, PAIL_WIRE, sides=8)
-    group(col, "Pail_Crock", filter_crock(col), at=(0, 0, PAIL_FLOOR))
+    group(col, "Pail_Crock", parts(col, filter_crock), at=(0, 0, PAIL_FLOOR))
 
 
 # The boilers ---------------------------------------------------------------------------------------
@@ -680,8 +673,7 @@ DRUM_TAP = (15, 0.09)
 def metal_drum(col):
     """The game's Metal Drum standing on z = 0: grey steel, its lid's chime rolled over, a rolled seam
     round it studded with rivets, a welded seam up its side, two bungs in its lid, its foot sooted by
-    the fire under it. Returns its parts, to be moved as one."""
-    before = set(col.objects)
+    the fire under it."""
     r, h = DRUM_RADIUS, DRUM_HEIGHT
     lathe(col, "Drum_Shell", M("drum"), [(0, 0.004), (r - 0.012, 0.004), (r - 0.003, 0), (r, 0.012), (r, h - 0.014),
                                          (r + 0.004, h - 0.006), (r - 0.002, h), (r - 0.014, h - 0.004),
@@ -696,7 +688,6 @@ def metal_drum(col):
                  segments=6)
     at = heading(DRUM_WELD) * r
     box(col, "Drum_Weld", M("drumdark"), (0.006, 0.03, h - 0.05), at=(at.x, at.y, 0.025), rotate=(0, 0, DRUM_WELD))
-    return [obj for obj in col.objects if obj not in before and obj.parent is None]
 
 
 def _stub(col, start, angle, length):
@@ -714,7 +705,7 @@ def _stub(col, start, angle, length):
 def _boiler_drum(col):
     """The Metal Drum resting on the firebox's walls, an inlet stub near its top and a tap near its
     foot, its spout hanging past the firebox's east side."""
-    group(col, "Boiler_Drum", metal_drum(col), at=(0, 0, FIREBOX_HEIGHT))
+    group(col, "Boiler_Drum", parts(col, metal_drum), at=(0, 0, FIREBOX_HEIGHT))
     wall = DRUM_RADIUS - 0.01
     angle, z = DRUM_INLET
     _stub(col, heading(angle) * wall + Vector((0, 0, FIREBOX_HEIGHT + z)), angle, 0.06)

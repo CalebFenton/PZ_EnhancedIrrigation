@@ -508,6 +508,13 @@ def group(collection, name, objects, at=(0, 0, 0), rotate=None):
     return empty
 
 
+def parts(collection, build, *args, **options):
+    """Runs `build(collection, ...)` and returns the top-level objects it added, for `group`."""
+    before = set(collection.objects)
+    build(collection, *args, **options)
+    return [obj for obj in collection.objects if obj not in before and obj.parent is None]
+
+
 # Stage and pixels ---------------------------------------------------------------------------------
 
 

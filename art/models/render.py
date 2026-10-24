@@ -94,10 +94,7 @@ def setup():
 
 def build(stage, layers):
     for spec in layers:
-        before = set(stage.objects)
-        spec["build"](stage, **spec["options"])
-        new = [obj for obj in stage.objects if obj not in before and obj.parent is None]
-        kit.group(stage, "Layer", new, rotate=(0, 0, spec["turn"]))
+        kit.group(stage, "Layer", kit.parts(stage, spec["build"], **spec["options"]), rotate=(0, 0, spec["turn"]))
     bpy.context.view_layer.update()
 
 
