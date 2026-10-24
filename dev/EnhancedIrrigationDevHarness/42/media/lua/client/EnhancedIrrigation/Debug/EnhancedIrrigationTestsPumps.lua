@@ -46,8 +46,8 @@ local function read(self, pump, label, extra)
     T.read(self, "pumps.state", T.at(pump, extra), label)
 end
 
-local function readUntil(self, pump, label, done, extra)
-    T.readUntil(self, "pumps.state", T.at(pump, extra), label, done)
+local function readUntil(self, pump, label, done)
+    T.readUntil(self, "pumps.state", T.at(pump), label, done)
 end
 
 -- Queues working the pump for each of `hours` on the server, with `fields` set first and the

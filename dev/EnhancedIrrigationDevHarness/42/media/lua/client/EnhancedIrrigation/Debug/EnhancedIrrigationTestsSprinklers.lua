@@ -64,7 +64,7 @@ local function changes(before, after)
     local list = {}
     for i, square in ipairs(after) do
         list[i] = { water = (square.water or 0) - (before[i].water or 0), soak = square.soak - before[i].soak,
-            health = (square.health or 0) - (before[i].health or 0), after = square }
+            health = (square.health or 0) - (before[i].health or 0) }
     end
     return list
 end
@@ -125,7 +125,6 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
         if not squares then return end
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
         if not spots then return end
-        self.squares = squares
         local north, middle, south = squares[indexOf(0, -1)], squares[indexOf(0, 0)], squares[indexOf(0, 1)]
         middle.fields = { sprinkler = NEW }
         T.placeLine(self, { north, middle, south }, "iron")

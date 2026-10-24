@@ -93,7 +93,6 @@ T.test("irrigation_valves_fit_and_take_off", {
     run = function(self)
         local line = tappedLine(self)
         if not line then return end
-        self.line = line
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
         local function tap() return T.lineObject(line.tap) end
         local function fit(context) return T.jobOption(context, "line", LineJobs.FIT_VALVE) end

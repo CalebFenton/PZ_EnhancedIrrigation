@@ -1,6 +1,5 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "ISUI/ISWorldObjectContextMenu"
-require "TimedActions/ISToggleClothingWasher"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
@@ -71,8 +70,8 @@ local function update(self, house, label, extra)
     T.read(self, "pumpHouse.update", at(house, extra), label)
 end
 
-local function readUntil(self, house, label, done, extra)
-    T.readUntil(self, "pumpHouse.state", at(house, extra), label, done)
+local function readUntil(self, house, label, done)
+    T.readUntil(self, "pumpHouse.state", at(house), label, done)
 end
 
 local function partWord(part, condition)
@@ -337,7 +336,7 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 3, 0 } }, { bare = true })
         if not spots then return end
         self.generator = spots[4]
-        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
+        T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
         self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
@@ -382,7 +381,7 @@ T.test("irrigation_pump_house_pays_its_debt_switched_off", {
         if not spots then return end
         self.generator = spots[2]
         self.payer = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
-        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
+        T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
         self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
         T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
@@ -422,7 +421,7 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 3, 0 } }, { bare = true })
         if not spots then return end
         self.generator = spots[4]
-        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = burns(APPLIANCE, FUEL_HOURS) }), "generator")
+        T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = burns(APPLIANCE, FUEL_HOURS) }))
         self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
@@ -456,7 +455,7 @@ T.test("irrigation_pump_house_runs_a_storey_up", {
             end })
         if not spots then return end
         self.generator = spots[4]
-        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
+        T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
         local above = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
         self.house = T.placePump(self, above, WOOD, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "wellAbove")
@@ -824,8 +823,8 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
         T.linkPump(self, self.house, self.tank)
         self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, WOOD, APPLIANCE)
-        update(self, self.house, "lit", {})
-        update(self, self.lineHouse, "line lit", {})
+        T.server(self, "pumpHouse.update", at(self.house))
+        T.server(self, "pumpHouse.update", at(self.lineHouse))
         T.reload(self, T.at(self.house), function()
             update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
             update(self, self.lineHouse, "line away", { hoursAgo = AWAY_HOURS, fields = { on = true } })

@@ -44,11 +44,6 @@ local function placeUnit(self, handle, entity, opts)
     return unit
 end
 
--- Queues the server's view of the unit, with the tank's if given, into self.reads[label].
-local function read(self, unit, label, tank)
-    T.read(self, "treatment.state", T.at(unit, { tank = tank and T.at(tank) }), label)
-end
-
 local function readUntil(self, unit, label, done, tank)
     T.readUntil(self, "treatment.state", T.at(unit, { tank = tank and T.at(tank) }), label, done)
 end
