@@ -1,11 +1,6 @@
 -- Development only; dev/run-debug-client.sh --art runs it instead of the tests. It checks the art
--- from art/models in the world: it lays every pipe material dry and wet, a tap, crops over pipes, a
--- line along a wall, and the Tank Stand bare and with each raised barrel beside vanilla's rain
--- barrel, then the Barrel and Brick Filters and the Filter Crock, in a row of their own the boilers
--- lit and unlit either side of vanilla's lit barrel fire, in another the hand pumps and Pump Houses
--- between vanilla's well and rain barrel, and south of them a sprinkler on a plastic and on a clay
--- line, on one open lot, and saves each shot to <cachedir>/Screenshots as <name>.png, the boilers'
--- last also at night, by their fires.
+-- from art/models in the world: it stages the mod's tiles beside vanilla's on one open lot and
+-- saves each shot to <cachedir>/Screenshots as <name>.png.
 -- Single player only: it lays the lines through the authority's LineSystem.
 
 require "EnhancedIrrigation/Sprites"
@@ -24,12 +19,9 @@ local VANILLA_BARREL = "carpentry_02_122"
 local VANILLA_BARREL_FIRE = "crafted_01_26"
 local VANILLA_WELL = "camping_01_16"
 
--- The lot, in squares east and south of its north-west corner. Each material takes a band: a block
--- dry (corners, tees and the cross) with a tail east of its middle row (a straight and an end),
--- then the same wet, with a column between left free for the character. The stands stand in a row
--- below the bands, beside vanilla's rain barrel, and east of them a line runs round the inside of
--- a wall corner. The boilers stand in a row further south, out of the stands' shots, and the pumps
--- and sprinklers further south still.
+-- The lot, in squares east and south of its north-west corner. A column between each material's
+-- dry and wet blocks is left free for the character, and the boilers stand far enough south to
+-- stay out of the stands' shots.
 local AREA = { w = 10, h = 29 }
 -- Ground cover this far round the lot goes too, so none of it stands in front of the shots.
 local MARGIN = 3
