@@ -207,20 +207,6 @@ def material(name, color, roughness=0.6, metallic=0.0, grime=0.12, scale=40.0, e
     return mat
 
 
-def holdout():
-    """Hides what is behind it and leaves its own pixels transparent: an overlay tile renders its
-    base object with this, so the overlay keeps only what the base doesn't cover."""
-    if "Holdout" in _MATERIALS:
-        return _MATERIALS["Holdout"]
-    mat = bpy.data.materials.new("Holdout")
-    nodes, bsdf = _principled(mat)
-    out = nodes.get("Material Output")
-    hold = nodes.new("ShaderNodeHoldout")
-    mat.node_tree.links.new(hold.outputs[0], out.inputs["Surface"])
-    _MATERIALS["Holdout"] = mat
-    return mat
-
-
 def _periodic_noise(nodes, links, axes, scale, detail, variant):
     """Noise over a tile's floor that repeats every metre along X and Y, so it matches itself
     across the edge between two tiles, as long as `variant` is 0. Each axis is wrapped round a

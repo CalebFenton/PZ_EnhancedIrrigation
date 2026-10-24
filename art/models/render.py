@@ -97,14 +97,8 @@ def build(stage, layers):
     for spec in layers:
         before = set(stage.objects)
         spec["build"](stage, **spec["options"])
-        new = [obj for obj in stage.objects if obj not in before]
-        placed = kit.group(stage, "Layer", [obj for obj in new if obj.parent is None], at=spec["at"], rotate=(0, 0, spec["turn"]))
-        placed.scale = (spec["scale"],) * 3
-        if spec["holdout"]:
-            for obj in new:
-                if obj.type == "MESH":
-                    for i in range(len(obj.data.materials)):
-                        obj.data.materials[i] = kit.holdout()
+        new = [obj for obj in stage.objects if obj not in before and obj.parent is None]
+        kit.group(stage, "Layer", new, rotate=(0, 0, spec["turn"]))
     bpy.context.view_layer.update()
 
 
@@ -262,7 +256,7 @@ def render_icons(camera, stage):
         if stale.startswith(("Item_EnhancedIrrigation_", "EnhancedIrrigation_Build_")):
             os.remove(os.path.join(ICON_DIR, stale))
     for name, spec in items.ITEMS.items():
-        render_icon(camera, stage, [tiles.layer(spec.get("icon", spec["model"]), turn=spec.get("icon_turn", 0))],
+        render_icon(camera, stage, [tiles.layer(spec["model"], turn=spec.get("icon_turn", 0))],
                     spec.get("icon_elevation", 30), ICON_SIZE, os.path.join(ICON_DIR, "Item_EnhancedIrrigation_%s.png" % name))
         print("icon %s" % name)
     for name, layers in tiles.BUILD_ICONS.items():
