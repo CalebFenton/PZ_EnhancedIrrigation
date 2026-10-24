@@ -52,20 +52,23 @@ local function summaryOf(house)
     return copy and Pumps.summaryOf(copy)
 end
 
--- The record's fields of a new part fitted: `part` (a full type) at full condition.
-local function fitted(part, fields)
-    local all = { part = part, partCondition = Parts.CONDITION, partCeiling = Parts.CONDITION }
-    for key, value in pairs(fields or {}) do
-        all[key] = value
+-- What a house is placed with: `part` (a full type) fitted as Fit Pump fits it, from an item new but
+-- for what `item` gives ({ condition, ceiling, fraction } of a point past its condition), then
+-- `fields` set on its record.
+local function fitted(part, fields, item)
+    local fitting = { type = part }
+    for key, value in pairs(item or {}) do
+        fitting[key] = value
     end
-    return all
+    return { part = fitting, fields = fields }
 end
 
---- Queues placing the Pump House `entity` at `handle` with `fields` on its record, and a wait for
---- this client's copy and its summary. Returns its handle.
-local function placeHouse(self, handle, entity, fields)
+--- Queues placing the Pump House `entity` at `handle` with what `with` (fitted) puts in it, and a
+--- wait for this client's copy and its summary. Returns its handle.
+local function placeHouse(self, handle, entity, with)
     local house = { x = handle.x, y = handle.y, z = handle.z, sprite = SPRITES[entity], square = handle.square }
-    T.server(self, "pumps.place", T.at(house, { sprite = house.sprite, fields = fields }))
+    T.server(self, "pumps.place", T.at(house, { sprite = house.sprite, part = with and with.part,
+        fields = with and with.fields }))
     T.waitFor(self, function() return summaryOf(house) ~= nil end, "this client's copy of the " .. entity)
     return house
 end
@@ -279,7 +282,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { partCondition = WORN + FRACTION }))
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
         useMenu(self, self.house, "take out", job(PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
@@ -598,7 +601,7 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true, partCondition = LAST_CONDITION }))
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }, { condition = LAST_CONDITION }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
         waitForSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
         readMenu(self, function() return copyOf(self.house) end, "burnt")

@@ -70,8 +70,10 @@ end
 
 -- Places the pump tile `args.sprite` at x, y, z as the build menu builds it, on a new square where
 -- there is none, as on a floor above open ground, its record made as its OnCreate makes it, then
--- sends it to the clients, with `args.fields` set on the record. Answers its state. Removed, with
--- its links and record, when the test ends.
+-- sends it to the clients. A Pump House is given `args.part` ({ type, condition, ceiling,
+-- fraction }, each but the type as a new one's unless given) as Fit Pump fits that item. Then
+-- `args.fields` are set on the record. Answers its state. Removed, with its links and record, when
+-- the test ends.
 handler("pumps.place", function(player, args, defer)
     local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
     if not square then
@@ -93,6 +95,20 @@ handler("pumps.place", function(player, args, defer)
     local record = recordAt(args)
     if not record then
         return nil, "the pump's record after its OnCreate"
+    end
+    if args.part then
+        local item = instanceItem(args.part.type)
+        if not item then
+            return nil, "the part " .. tostring(args.part.type)
+        end
+        if args.part.condition then
+            item:setCondition(args.part.condition)
+        end
+        if args.part.ceiling then
+            mod().Parts.setCeiling(item, args.part.ceiling)
+        end
+        item:getModData()[mod().Pumps.FRACTION_KEY] = args.part.fraction
+        record:fitPart(item)
     end
     setFields(record, args.fields)
     record:sendSummary()
