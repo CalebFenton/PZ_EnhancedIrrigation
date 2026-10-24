@@ -177,8 +177,7 @@ end
 
 --- The square the outlet of the pump on the square `at` delivers to, or nil without an outlet.
 function Pumps.outletEnd(at)
-    local outlet = Pumps.outletOf(at)
-    return outlet and select(2, Links.ends(outlet)) or nil
+    return Links.farEnd(at, "pump")
 end
 
 --- The outlet link of a pump that feeds the line of `tiles` (Lines.component), or nil.

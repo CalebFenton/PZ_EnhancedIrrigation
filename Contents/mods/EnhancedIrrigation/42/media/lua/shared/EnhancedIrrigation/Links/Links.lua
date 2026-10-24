@@ -124,6 +124,12 @@ function Links.roleAt(at, role)
     return nil
 end
 
+--- The far end of the `role` link whose object stands on the square `at`, or nil without one.
+function Links.farEnd(at, role)
+    local link = Links.roleAt(at, role)
+    return link and select(2, Links.ends(link)) or nil
+end
+
 --- The other end of `link` from the square `at`, or nil when `at` is neither end.
 function Links.otherEnd(link, at)
     if EnhancedIrrigation.sameSquare(link.a, at) then

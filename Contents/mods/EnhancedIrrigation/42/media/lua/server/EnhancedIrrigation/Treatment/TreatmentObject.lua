@@ -78,11 +78,10 @@ function TreatmentObject:fill(litres, tainted)
     self.headTainted = self.headTainted or tainted == true
 end
 
---- The tank at the far end of the unit's `role` link ("inlet" or "outlet"), while it is loaded and
---- water runs that way between it and `unit` (Treatment.runsFor); or nil.
-function TreatmentObject:tankOf(unit, role)
-    local link = Links.roleAt(self, role)
-    local at = link and Links.otherEnd(link, self)
+-- The tank at the far end of `record`'s `role` link ("inlet" or "outlet"), while it is loaded and
+-- water runs that way between it and `unit` (Treatment.runsFor); or nil.
+local function tankOf(record, unit, role)
+    local at = Links.farEnd(record, role)
     local tank = at and Tanks.tankAt(at.x, at.y, at.z)
     if tank and Treatment.runsFor(role, tank, unit) then
         return tank
@@ -240,7 +239,7 @@ function TreatmentObject:advance(hours)
         if kind.begin then
             kind.begin(self, unit, hours)
         end
-        local inlet, outlet = self:tankOf(unit, "inlet"), self:tankOf(unit, "outlet")
+        local inlet, outlet = tankOf(self, unit, "inlet"), tankOf(self, unit, "outlet")
         while hours > 0 do
             local step = math.min(1, hours)
             if inlet and self:draw(inlet, step) then
@@ -258,14 +257,13 @@ function TreatmentObject:advance(hours)
     end
 end
 
---- Whether the far end of the unit's inlet or outlet is in a chunk this side hasn't loaded: its
---- tank may hold the water, or the room, that would have kept the unit running, which can't be
---- known until it loads. A loaded square with no tank on it feeds and takes nothing, and the unit
---- runs on.
-function TreatmentObject:endsUnloaded()
+-- Whether the far end of `record`'s inlet or outlet is in a chunk this side hasn't loaded: its
+-- tank may hold the water, or the room, that would have kept the unit running, which can't be
+-- known until it loads. A loaded square with no tank on it feeds and takes nothing, and the unit
+-- runs on.
+local function endsUnloaded(record)
     for _, role in ipairs({ "inlet", "outlet" }) do
-        local link = Links.roleAt(self, role)
-        local at = link and Links.otherEnd(link, self)
+        local at = Links.farEnd(record, role)
         if at and not EnhancedIrrigation.chunkLoaded(at.x, at.y, at.z) then
             return true
         end
@@ -277,7 +275,7 @@ end
 --- far ends too; otherwise it keeps its lastHour, so the whole gap is caught up once all load (at
 --- most LONGEST_PASS), the pipes running through the gap as they would have.
 function TreatmentObject:catchUp()
-    if self:getIsoObject() and not self:endsUnloaded() then
+    if self:getIsoObject() and not endsUnloaded(self) then
         EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
     end
 end
