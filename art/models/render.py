@@ -28,17 +28,16 @@ sys.path.insert(0, HERE)
 import items  # noqa: E402
 import kit  # noqa: E402
 import tiles  # noqa: E402
+from sprites import COLUMNS, ROWS, TILESET  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(HERE))
 MEDIA = os.path.join(REPO, "Contents/mods/EnhancedIrrigation/common/media")
 TILE_DIR = os.path.join(REPO, "tools/tiles")
 ICON_DIR = os.path.join(REPO, "tools/textures")
-DEPTH_FILE = os.path.join(MEDIA, "depthmaps/DEPTH_enhanced_irrigation_01.png")
-TILESET = "enhanced_irrigation_01"
+DEPTH_FILE = os.path.join(MEDIA, "depthmaps/DEPTH_%s.png" % TILESET)
 SCRATCH = os.path.join(tempfile.gettempdir(), "enhanced-irrigation-render")
 
 TILE_W, TILE_H = 128, 256
-COLUMNS = 8  # the game reads tilesets and their depth maps eight tiles wide
 PIXELS_PER_METRE = 64 * math.sqrt(2)
 STOREY = 2.44949
 ICON_SIZE = 32
@@ -170,8 +169,7 @@ def depth_map(camera, alpha):
 def render_tiles(camera, stage, only=None):
     """Every tile, or with `only` those tile numbers, over the sprites and depth map already written."""
     os.makedirs(TILE_DIR, exist_ok=True)
-    rows = max(tiles.TILES) // COLUMNS + 1
-    atlas = np.zeros((rows * TILE_H, COLUMNS * TILE_W, 4), dtype=np.float32)
+    atlas = np.zeros((ROWS * TILE_H, COLUMNS * TILE_W, 4), dtype=np.float32)
     if only:
         if os.path.exists(DEPTH_FILE):
             # The depth map as last written, grown to rows tiles added since.

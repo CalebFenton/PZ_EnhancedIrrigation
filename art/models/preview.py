@@ -28,6 +28,7 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "dev", "harness", "check"))
 import items  # noqa: E402
 import kit  # noqa: E402
+import sprites  # noqa: E402
 import tiles  # noqa: E402
 from packs import read_index  # noqa: E402
 
@@ -119,14 +120,14 @@ def garden(material, wet):
             continue
         shape = sum(bit for bit, (dx, dy) in ((1, (0, -1)), (2, (1, 0)), (4, (0, 1)), (8, (-1, 0)))
                     if (x + dx, y + dy) in cells)
-        place(x, y, tile(tiles.pipe_index(material, wet, shape)))
+        place(x, y, tile(sprites.pipe_index(material, wet, shape)))
         if (x, y) == TAP_AT:
-            place(x, y, tile(tiles.TAP))
+            place(x, y, tile(sprites.TAP))
     return sheet
 
 
 def lines_sheets():
-    for material in tiles.PIPE_MATERIALS:
+    for material in sprites.PIPE_MATERIALS:
         dry, wet = garden(material, False), garden(material, True)
         sheet = np.concatenate([dry, wet], axis=1)
         kit.save_pixels(os.path.join(OUT, "lines_%s.png" % material), enlarge(sheet, 2))
@@ -158,25 +159,25 @@ def vanilla_sprite(name):
 def stands_sheet():
     cells = []
 
-    def add(*sprites):
+    def add(*layers):
         cell = floor_diamond(fill=GRASS)
-        for pixels in sprites:
+        for pixels in layers:
             over(cell, pixels, 0, 0)
         cells.append(cell)
 
     barrel = vanilla_sprite("carpentry_02_122")
     if barrel is not None:
         add(barrel)
-    add(tile(tiles.pipe_index("plastic", False, 10)), tile(tiles.TAP))
+    add(tile(sprites.pipe_index("plastic", False, 10)), tile(sprites.TAP))
     for material in ("plastic", "clay"):
-        add(tile(tiles.pipe_index(material, False, 10)), tile(tiles.SPRINKLER))
-    for index in list(range(tiles.STAND, tiles.STAND + 5)) + [tiles.BARREL_FILTER, tiles.BRICK_FILTER, tiles.FILTER_CROCK,
-                                                              tiles.BOILER_STONE, tiles.BOILER_WELDED]:
+        add(tile(sprites.pipe_index(material, False, 10)), tile(sprites.SPRINKLER))
+    for index in [sprites.STAND, *sprites.RAISED_BARRELS, sprites.BARREL_FILTER, sprites.BRICK_FILTER,
+                  sprites.FILTER_CROCK, sprites.BOILER_STONE, sprites.BOILER_WELDED]:
         add(tile(index))
     well = vanilla_sprite("camping_01_16")
     if well is not None:
         add(well)
-    for index in (tiles.WOODEN_HAND_PUMP, tiles.IRON_HAND_PUMP, tiles.PUMP_HOUSE_WOOD, tiles.PUMP_HOUSE_METAL):
+    for index in (sprites.WOODEN_HAND_PUMP, sprites.IRON_HAND_PUMP, sprites.PUMP_HOUSE_WOOD, sprites.PUMP_HOUSE_METAL):
         add(tile(index))
     if barrel is not None:
         add(barrel)

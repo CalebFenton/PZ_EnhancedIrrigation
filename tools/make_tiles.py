@@ -3,9 +3,8 @@ tileGeometry.txt.
 
     python3 tools/make_tiles.py
 
-Tile numbers match art/models/tiles.py, which renders them, and
-media/lua/shared/EnhancedIrrigation/Sprites.lua, which names them for Lua. Property names and
-values follow the vanilla tile definitions (newtiledefinitions.tiles).
+Tile numbers come from art/models/sprites.py. Property names and values follow the vanilla tile
+definitions (newtiledefinitions.tiles).
 
 - Pipe tiles and the tap, sprinkler, valve and Pump House timer overlays have none. Nothing that
   blocks (solid, solidtrans), since a line runs under plants and feet. Never canBeRemoved,
@@ -48,21 +47,15 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "dev", "harness", "check"))
+sys.path.insert(0, os.path.join(HERE, "..", "art", "models"))
 import tiledefs  # noqa: E402
+from sprites import (BARREL_FILTER, BOILER_STONE, BOILER_WELDED, BRICK_FILTER, COLUMNS, FILTER_CROCK,  # noqa: E402
+                     IRON_HAND_PUMP, PUMP_HOUSE_METAL, PUMP_HOUSE_WOOD, RAISED_BARRELS, ROWS, STAND, TILESET,
+                     WOODEN_HAND_PUMP)
 
 MEDIA = os.path.join(HERE, "..", "Contents", "mods", "EnhancedIrrigation", "common", "media")
 TILES_FILE = os.path.join(MEDIA, "enhanced_irrigation.tiles")
 GEOMETRY_FILE = os.path.join(MEDIA, "tileGeometry.txt")
-TILESET = "enhanced_irrigation_01"
-COLUMNS, ROWS = 8, 19
-
-STAND = 129
-RAISED_BARRELS = (130, 131, 132, 133)
-BARREL_FILTER, BRICK_FILTER = 134, 135
-FILTER_CROCK = 136
-BOILER_STONE, BOILER_WELDED = 137, 138
-WOODEN_HAND_PUMP, IRON_HAND_PUMP = 139, 140
-PUMP_HOUSE_WOOD, PUMP_HOUSE_METAL = 141, 142
 
 
 def stand_like(name, **props):
@@ -84,6 +77,7 @@ TILES[PUMP_HOUSE_METAL] = stand_like("Pump House", Material="Metal")
 
 
 def main():
+    assert max(TILES) < COLUMNS * ROWS, "a tile past sprites.ROWS: raise it to the last tile's"
     tiles = [sorted(TILES.get(index, {}).items(), key=lambda prop: prop[0].lower())
              for index in range(COLUMNS * ROWS)]
     # The only tileset in the file, so number 1.

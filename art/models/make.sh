@@ -10,8 +10,8 @@
 #                of each pipe laid out as the game draws neighbouring tiles, the stand and barrels
 #                beside the game's own rain barrel, and the icons
 #
-# Tile numbers are a contract with media/lua/shared/EnhancedIrrigation/Sprites.lua: keep tiles.py,
-# tools/make_tiles.py and Sprites.lua in step. To work on a few tiles, render only those, then pack:
+# Tile numbers live in sprites.py, which media/lua/shared/EnhancedIrrigation/Sprites.lua must match.
+# To work on a few tiles, render only those, then pack:
 #
 #   blender -b --factory-startup --python-use-system-env -P render.py -- tiles 129 130
 #

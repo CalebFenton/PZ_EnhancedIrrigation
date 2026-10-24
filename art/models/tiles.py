@@ -1,27 +1,18 @@
-"""What each tile of enhanced_irrigation_01 shows, built from the builders in items.py.
-
-The index of each entry is the tile's number, which Lua reads through
-media/lua/shared/EnhancedIrrigation/Sprites.lua and tools/make_tiles.py gives properties; keep the
-three in step. A tile is a list of layers.
+"""What each tile of enhanced_irrigation_01 shows, by its number in sprites.py, built from the
+builders in items.py. A tile is a list of layers.
 
 Tile coordinates are a square one metre wide centred on the origin: its north edge is y = +0.5 and
 its west edge x = -0.5 (see kit.py).
 """
 import items
+from sprites import (BARREL_FILTER, BOILER_STONE, BOILER_WELDED, BRICK_FILTER, COLUMNS, FILTER_CROCK, HOUSE_TIMER,
+                     IRON_HAND_PUMP, PIPE_MATERIALS, PUMP_HOUSE_METAL, PUMP_HOUSE_WOOD, RAISED_BARRELS, ROWS, SHAPES,
+                     SPRINKLER, STAND, TAP, TAP_SPRINKLER_TIMER, TAP_TIMER_VALVE, TAP_WIND_UP, WOODEN_HAND_PUMP,
+                     pipe_index)
 
 
 def layer(build, turn=0, **options):
     return {"build": build, "options": options, "turn": turn}
-
-
-# Pipe tiles: a block of 32 per material in Sprites.PIPE_MATERIALS' order, the dry shapes then the
-# wet ones, each numbered by its shape (the bits of the neighbours it joins).
-PIPE_MATERIALS = ("plastic", "iron", "lead", "clay")
-SHAPES = 16
-
-
-def pipe_index(material, wet, shape):
-    return PIPE_MATERIALS.index(material) * 32 + (SHAPES if wet else 0) + shape
 
 
 TILES = {}
@@ -32,57 +23,29 @@ for material in PIPE_MATERIALS:
 
 # The tap: an overlay on any pipe tile, standing on the tile's middle, where every shape but a lone
 # piece has pipe.
-TAP = 128
 TILES[TAP] = [layer(items.tap)]
 
-# The Tank Stand, then with the game's rain barrels on it: open, lidded, the tarp barrel open and
-# lidded (carpentry_02_122, _126, _124 and _127).
-STAND = 129
+# The game's rain barrels on the stand: carpentry_02_122, _126, _124 and _127.
 TILES[STAND] = [layer(items.tank_stand)]
-for index, barrel, tarp in ((130, "open", False), (131, "closed", False), (132, "open", True), (133, "closed", True)):
+for index, (barrel, tarp) in zip(RAISED_BARRELS, (("open", False), ("closed", False), ("open", True), ("closed", True))):
     TILES[index] = [layer(items.tank_stand, barrel=barrel, tarp=tarp)]
-
-# The sand filters.
-BARREL_FILTER = 134
-BRICK_FILTER = 135
 TILES[BARREL_FILTER] = [layer(items.barrel_filter)]
 TILES[BRICK_FILTER] = [layer(items.brick_filter)]
-
-# The Filter Crock in its bucket.
-FILTER_CROCK = 136
 TILES[FILTER_CROCK] = [layer(items.crock_in_bucket)]
-
-# The boilers: a Metal Drum on a brick firebox, then on a welded one.
-BOILER_STONE = 137
-BOILER_WELDED = 138
 TILES[BOILER_STONE] = [layer(items.boiler_stone)]
 TILES[BOILER_WELDED] = [layer(items.boiler_welded)]
-
-# The hand pumps, wooden and iron, then the Pump Houses, a plank box and a sheet-steel one.
-WOODEN_HAND_PUMP = 139
-IRON_HAND_PUMP = 140
-PUMP_HOUSE_WOOD = 141
-PUMP_HOUSE_METAL = 142
 TILES[WOODEN_HAND_PUMP] = [layer(items.wooden_hand_pump)]
 TILES[IRON_HAND_PUMP] = [layer(items.iron_hand_pump)]
 TILES[PUMP_HOUSE_WOOD] = [layer(items.pump_house_wood)]
 TILES[PUMP_HOUSE_METAL] = [layer(items.pump_house_metal)]
-
 # The lawn sprinkler: an overlay on a line tile, as the tap is, standing on the tile's middle.
-SPRINKLER = 143
 TILES[SPRINKLER] = [layer(items.sprinkler)]
-
-# The valves fitted to a tap, each an overlay drawn with the tap's, hung off its spout: the Wind-up
-# Valve, the Timer Valve and the Sprinkler Timer; then a timer fitted to a Pump House, an overlay on
-# either house by its plug.
-TAP_WIND_UP = 144
-TAP_TIMER_VALVE = 145
-TAP_SPRINKLER_TIMER = 146
-HOUSE_TIMER = 147
+# Overlays drawn with the tap's, hung off its spout, then one on either Pump House by its plug.
 TILES[TAP_WIND_UP] = [layer(items.tap_wind_up_valve)]
 TILES[TAP_TIMER_VALVE] = [layer(items.tap_timer_valve)]
 TILES[TAP_SPRINKLER_TIMER] = [layer(items.tap_sprinkler_timer)]
 TILES[HOUSE_TIMER] = [layer(items.house_timer)]
+assert max(TILES) < COLUMNS * ROWS, "a tile past sprites.ROWS: raise it to the last tile's"
 
 # Build-menu icons by the name after EnhancedIrrigation_Build_: each thing as it stands built.
 BUILD_ICONS = {
