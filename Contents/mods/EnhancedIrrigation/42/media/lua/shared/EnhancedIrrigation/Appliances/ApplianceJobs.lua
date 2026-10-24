@@ -11,7 +11,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceJobs = {}
 EnhancedIrrigation.ApplianceJobs = ApplianceJobs
 
-local Jobs = EnhancedIrrigation.Jobs
+local Jobs, Materials = EnhancedIrrigation.Jobs, EnhancedIrrigation.Materials
 local Appliances = EnhancedIrrigation.Appliances
 
 ApplianceJobs.SALVAGE_PUMP = "SalvagePump"
@@ -25,14 +25,10 @@ ApplianceJobs.SALVAGE_MINUTES = 30
 -- The condition an Appliance Pump comes out at, at random between these: a used part.
 ApplianceJobs.SALVAGED_CONDITION = { 60, 100 }
 
--- The screwdriver Salvage Pump holds.
-local function screwdriver(character)
-    return character:getInventory():getFirstTagEvalRecurse(ItemTag.SCREWDRIVER, EnhancedIrrigation.Materials.notBroken)
-end
-
 ApplianceJobs.JOBS = {
     [ApplianceJobs.SALVAGE_PUMP] = {
-        minutes = ApplianceJobs.SALVAGE_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
+        minutes = ApplianceJobs.SALVAGE_MINUTES, position = "Low", sound = "Screwdriver",
+        equip = Materials.holds(Materials.SCREWDRIVER),
         blocker = function(character, appliance)
             if not Appliances.hasPumpTile(appliance) then
                 return Jobs.UNKNOWN
@@ -42,7 +38,7 @@ ApplianceJobs.JOBS = {
         materials = {
             { recipe = ApplianceJobs.RECIPE },
             { skill = "Electricity", level = 2 },
-            { tool = "SCREWDRIVER", item = "Base.Screwdriver" },
+            Materials.SCREWDRIVER,
             { tool = "PLIERS", item = "Base.Pliers" },
         },
     },

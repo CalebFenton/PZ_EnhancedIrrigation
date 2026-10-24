@@ -37,9 +37,8 @@ TreatmentJobs.CLEAN_TOOLS = { ItemTag.TAKE_DIRT, ItemTag.MASONS_TROWEL }
 
 --- The tool `character` cleans a filter with, or nil to work by hand.
 function TreatmentJobs.cleaningTool(character)
-    local inventory = character:getInventory()
     for _, tag in ipairs(TreatmentJobs.CLEAN_TOOLS) do
-        local tool = inventory:getFirstTagEvalRecurse(tag, EnhancedIrrigation.Materials.notBroken)
+        local tool = EnhancedIrrigation.Materials.workingTool(character, tag)
         if tool then
             return tool
         end

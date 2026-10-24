@@ -42,30 +42,18 @@ LineJobs.SET_VALVE_TIMER = "SetValveTimer"
 -- How long winding or setting a valve takes: a turn of a knob, as long as a Pump House's switch.
 LineJobs.VALVE_MINUTES = 1
 
-local function firstTagged(tag)
-    return function(character)
-        return character:getInventory():getFirstTagEvalRecurse(ItemTag[tag], EnhancedIrrigation.Materials.notBroken)
-    end
-end
-
-local function firstOfType(fullType)
-    return function(character)
-        return character:getInventory():getFirstTypeRecurse(fullType)
-    end
-end
-
 -- What makes a hole, in the order Drill Holes picks among those carried: the tools that cut before
 -- the ones that punch. `reach`: the hardest pipe it gets into (Pipes.KINDS hardness). `punches`: it
--- may split brittle pipe (LineJobs.mayCrack). `materials`: what it takes, the tool itself first.
--- `hold`: the item held while drilling.
+-- may split brittle pipe (LineJobs.mayCrack). `materials`: what it takes, the tool itself first,
+-- which is held while drilling.
 LineJobs.HOLE_TOOLS = {
-    { reach = 3, hold = firstTagged("DRILL_METAL"), materials = { { tool = "DRILL_METAL", item = "Base.HandDrill" } } },
-    { reach = 2, hold = firstOfType("Base.OldDrill"), materials = { { item = "Base.OldDrill", keep = true } } },
-    { reach = 1, hold = firstTagged("AWL"), materials = { { tool = "AWL", item = "Base.Awl" } } },
-    { reach = 2, punches = true, hold = firstOfType("Base.StoneDrill"), materials = { { item = "Base.StoneDrill", keep = true } } },
+    { reach = 3, materials = { { tool = "DRILL_METAL", item = "Base.HandDrill" } } },
+    { reach = 2, materials = { { item = "Base.OldDrill", keep = true } } },
+    { reach = 1, materials = { { tool = "AWL", item = "Base.Awl" } } },
+    { reach = 2, punches = true, materials = { { item = "Base.StoneDrill", keep = true } } },
     -- One nail is driven through and pulled out bent.
     {
-        reach = 2, punches = true, hold = firstTagged("HAMMER"),
+        reach = 2, punches = true,
         materials = { { tool = "HAMMER", item = "Base.Hammer" }, { item = "Base.Nails", need = 1 } },
     },
 }
@@ -86,12 +74,21 @@ function LineJobs.mayCrack(tool, material)
     return tool.punches == true and Pipes.KINDS[material].punchCracks == true
 end
 
+-- The hole tool Drill Holes would use at `object`, and the item of it the character holds.
 local function holeToolAt(character, object)
     local state = Lines.stateOf(object)
-    return state and LineJobs.holeTool(character, state.material)
+    local tool = state and LineJobs.holeTool(character, state.material)
+    if not tool then
+        return nil
+    end
+    local material = tool.materials[1]
+    if material.tool then
+        return tool, Materials.workingTool(character, ItemTag[material.tool])
+    end
+    return tool, character:getInventory():getFirstTypeRecurse(material.item)
 end
 
-local holdWrench = firstTagged("PIPE_WRENCH")
+local holdWrench = Materials.holds(Pipes.WRENCH)
 
 -- Draining lets the line's water out where it's opened: longer lines take longer.
 local DRAIN_MINUTES = 2
@@ -209,8 +206,8 @@ LineJobs.JOBS = {
     [LineJobs.DRILL] = {
         minutes = 2,
         equip = function(character, object)
-            local tool = holeToolAt(character, object)
-            return tool and tool.hold(character)
+            local _, held = holeToolAt(character, object)
+            return held
         end,
         blocker = atLine(function(character, object, state)
             if state.holed then

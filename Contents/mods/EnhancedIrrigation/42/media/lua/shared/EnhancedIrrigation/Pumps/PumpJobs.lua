@@ -133,12 +133,8 @@ local function fittedBlocker(pump)
     return not summary.part and "Tooltip_EnhancedIrrigation_NoPumpFitted" or nil, summary
 end
 
--- The screwdriver the jobs at a pump hold.
-local function screwdriver(character)
-    return character:getInventory():getFirstTagEvalRecurse(ItemTag.SCREWDRIVER, EnhancedIrrigation.Materials.notBroken)
-end
-
-local SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
+local SCREWDRIVER = EnhancedIrrigation.Materials.SCREWDRIVER
+local screwdriver = EnhancedIrrigation.Materials.holds(SCREWDRIVER)
 
 local function isPart(item)
     return Pumps.partSpec(item:getFullType()) ~= nil

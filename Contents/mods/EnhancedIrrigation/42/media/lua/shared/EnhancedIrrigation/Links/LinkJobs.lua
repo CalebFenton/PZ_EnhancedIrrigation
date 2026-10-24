@@ -44,9 +44,7 @@ LinkJobs.RECIPE = "EnhancedIrrigation_PlumbToTank"
 -- What Plumb takes before the pipe, which the menu checks before it lists the tanks in reach.
 LinkJobs.PLUMB_TOOLS = { Pipes.WRENCH, { recipe = LinkJobs.RECIPE } }
 
-local function pipeWrench(character)
-    return character:getInventory():getFirstTagEvalRecurse(ItemTag.PIPE_WRENCH, EnhancedIrrigation.Materials.notBroken)
-end
+local pipeWrench = EnhancedIrrigation.Materials.holds(Pipes.WRENCH)
 
 -- The tiles of pipe from `tank` to the square `with` names, 0 when it names none.
 local function runTiles(tank, with)

@@ -168,9 +168,24 @@ function Materials.notBroken(item)
     return not item:isBroken()
 end
 
+-- The screwdriver the jobs at pumps and appliances take, as Pipes.WRENCH is the plumbing jobs'.
+Materials.SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
+
+--- The first working tool with `tag` (an ItemTag value) `character` carries, bags included, or nil.
+function Materials.workingTool(character, tag)
+    return character:getInventory():getFirstTagEvalRecurse(tag, Materials.notBroken)
+end
+
 --- Whether `character` carries a working tool with `tag` (an ItemTag value), bags included.
 function Materials.hasWorkingTool(character, tag)
-    return character:getInventory():containsTagEvalRecurse(tag, Materials.notBroken)
+    return Materials.workingTool(character, tag) ~= nil
+end
+
+--- A job row's `equip` (EnhancedIrrigationAction) holding the tool the material `tool` names.
+function Materials.holds(tool)
+    return function(character)
+        return Materials.workingTool(character, ItemTag[tool.tool])
+    end
 end
 
 -- A job's needs are a list of what it takes of the character, each { have, need } with what it
