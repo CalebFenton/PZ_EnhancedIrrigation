@@ -2,9 +2,8 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsFixtures.lua:
--- fixtures placed, read, plumbed and run on the authority. Only registers handlers, so a --stay
--- rerun loads it again.
+-- Development only, not published. Test handlers for fixtures placed, read, plumbed and run on the
+-- authority. Only registers handlers, so a --stay rerun loads it again.
 --
 -- What these place is removed by its square when the test ends, not by the object: a test that
 -- unloads and reloads the square leaves the first object behind as a stale copy.

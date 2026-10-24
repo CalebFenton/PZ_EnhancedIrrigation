@@ -9,9 +9,9 @@ require "EnhancedIrrigation/UI/FixtureMenu"
 -- Plumbed fixtures: plumbing a sink to a tank from its menu and through vanilla's own Plumb, the
 -- buffer that tank refills and the engine serves vanilla's drink, fill and wash from, taint and all,
 -- the town's water winning while it runs, converting a fixture vanilla plumbed, and the washer's
--- switch. Fixtures are placed and read by the server's fixture handlers; refills run there in one
--- call, so the clock doesn't decide them. In a room the town's water wins until the shutoff, so
--- tests of a buffer's own water there set the shutoff to day 0.
+-- switch. Refills run on the server in one call, so the clock doesn't decide them. In a room the
+-- town's water wins until the shutoff, so tests of a buffer's own water there set the shutoff to
+-- day 0.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -196,8 +196,9 @@ T.test("irrigation_fixtures_refill_from_the_tank", {
     end,
 })
 
--- Whether this client's own copy of the list, which the server's commands set in single player too,
--- holds a link plumbing the fixture at `handle` (Links.roleAt reads the server's list there).
+-- Whether this client's own copy of the list holds a link plumbing the fixture at `handle`. Reads
+-- clientSystem, which the server's commands set in single player too, since Links.roleAt reads the
+-- server's list there.
 local function viewedFixtureLink(handle)
     local at = T.at(handle)
     for _, link in ipairs(Links.clientSystem.links) do
@@ -369,7 +370,8 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
         end)
     end,
     validate = function(self)
-        -- Without this the test can't tell the old check from the new.
+        -- Unless vanilla prefers the full barrel, plumbing to the empty one can't show the job
+        -- accepts a barrel other than vanilla's choice.
         expect(self.preferred and EnhancedIrrigation.sameSquare(self.preferred, T.at(self.full)),
             "vanilla's plumbing doesn't prefer the barrel holding water")
         expect(self.emptyRefusal == nil, "Plumb Above toward the empty barrel is refused: " .. tostring(self.emptyRefusal))
