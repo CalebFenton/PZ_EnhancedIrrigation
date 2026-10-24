@@ -29,7 +29,6 @@ local Sprites, Pumps, PumpJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.
 local ApplianceJobs, Lines, LineJobs = EnhancedIrrigation.ApplianceJobs, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Parts = EnhancedIrrigation.Parts
 
-local LITRES = 0.05
 local WOOD, METAL = "EnhancedIrrigation_PumpHouseWood", "EnhancedIrrigation_PumpHouseMetal"
 local APPLIANCE, UTILITY = Pumps.APPLIANCE_PUMP, Pumps.UTILITY_PUMP
 -- A raised barrel's water: vanilla's round rain barrel's.
@@ -261,7 +260,7 @@ T.test("irrigation_pump_house_refuses_the_grid_in_the_open", {
         T.expectRefused(self, "on", "IGUI_RadioRequiresPowerNearby")
         expect(self.reads.forced.done == false, "the server switched the unpowered house on")
         local after = self.reads.hour.after
-        expectNear("the tank after an hour unpowered", after.tank.litres, 0, LITRES)
+        expectNear("the tank after an hour unpowered", after.tank.litres, 0, T.LITRES)
         expect(not after.summary.running, "the unpowered house runs")
     end,
 })
@@ -313,7 +312,7 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
         local hour = self.reads.hour
         -- From the state before, in the same call: a ten-minute pass may have run the house since
         -- Turn On.
-        expectNear("the barrel after an hour", hour.after.tank.litres - hour.before.tank.litres, lifts(APPLIANCE, 1), LITRES)
+        expectNear("the barrel after an hour", hour.after.tank.litres - hour.before.tank.litres, lifts(APPLIANCE, 1), T.LITRES)
         expect(not hour.after.tank.tainted, "the well's water came out tainted")
         expectNear("the part after an hour", hour.before.record.partCondition - hour.after.record.partCondition,
             Pumps.PARTS[APPLIANCE].wearPerHour, 0.001)
@@ -357,7 +356,7 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
         local payer = hours.after.record.payer
         expect(payer and payer.x == self.generator.x and payer.y == self.generator.y, "the house's payer is "
             .. (payer and payer.x .. "," .. payer.y or "nothing"))
-        expectNear("the barrel after the hours", hours.after.tank.litres, BARREL_LITRES, LITRES)
+        expectNear("the barrel after the hours", hours.after.tank.litres, BARREL_LITRES, T.LITRES)
         expect(hours.after.summary.running, "the house stopped at the full barrel")
         expectNear("the part after the hours", hours.before.record.partCondition - hours.after.record.partCondition,
             Pumps.PARTS[UTILITY].wearPerHour * GENERATOR_HOURS, 0.001)
@@ -436,7 +435,7 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
         local before, after = self.reads.spent.before, self.reads.spent.after
         -- The fuel read in the same call: the generator burns its own at each hour's turn.
         expectNear("the barrel after the fuel ran out", after.tank.litres - before.tank.litres,
-            lifts(APPLIANCE, before.generator.fuel / burns(APPLIANCE, 1)), LITRES)
+            lifts(APPLIANCE, before.generator.fuel / burns(APPLIANCE, 1)), T.LITRES)
         expect(after.generator.fuel == 0 and not after.generator.running, "the generator is left at "
             .. after.generator.fuel .. (after.generator.running and ", running" or ", off"))
         T.expectWord(self, "spent", getText("IGUI_EnhancedIrrigation_NoPower"))
@@ -468,7 +467,7 @@ T.test("irrigation_pump_house_runs_a_storey_up", {
     validate = function(self)
         local hour = self.reads.hour
         expectNear("the barrel after an hour a storey up", hour.after.tank.litres - hour.before.tank.litres,
-            lifts(APPLIANCE, 1), LITRES)
+            lifts(APPLIANCE, 1), T.LITRES)
     end,
 })
 
@@ -495,7 +494,7 @@ T.test("irrigation_pump_house_dry_source_wears_it_fast", {
         -- was placed.
         expectNear("the part after two dry hours", dry.before.record.partCondition - dry.after.record.partCondition,
             2 * Pumps.PARTS[APPLIANCE].wearPerHour * Pumps.DRY_WEAR, 0.001)
-        expectNear("the outlet's barrel after two dry hours", dry.after.tank.litres, 0, LITRES)
+        expectNear("the outlet's barrel after two dry hours", dry.after.tank.litres, 0, T.LITRES)
     end,
 })
 
@@ -570,7 +569,7 @@ T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
     end,
     validate = function(self)
         local after = self.reads.burnt.after
-        expectNear("the barrel when the part burnt out", after.tank.litres, BARREL_LITRES, LITRES)
+        expectNear("the barrel when the part burnt out", after.tank.litres, BARREL_LITRES, T.LITRES)
         expect(after.record.partCondition == 0, "the part is left at " .. after.record.partCondition)
     end,
 })
@@ -671,7 +670,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.expectOffered(self, "set")
         expect(self.reads.set.record.timer.start == self.start, "the timer starts at " .. tostring(self.reads.set.record.timer.start))
         local hours = self.reads.hours
-        expectNear("the barrel after its window", hours.after.tank.litres - hours.before.tank.litres, lifts(APPLIANCE, 0.5), LITRES)
+        expectNear("the barrel after its window", hours.after.tank.litres - hours.before.tank.litres, lifts(APPLIANCE, 0.5), T.LITRES)
         expectNear("the part after its window", hours.before.record.partCondition - hours.after.record.partCondition,
             Pumps.PARTS[APPLIANCE].wearPerHour * 0.5, 0.001)
         expect(not hours.after.record.running, "the house runs outside its timer's window")
@@ -784,7 +783,7 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
             expectNear("crop " .. i .. "'s water", half.after.squares[i].water - half.before.squares[i].water,
                 each * Lines.POINTS_PER_LITRE, 0.05)
         end
-        expectNear("the barrel's water drawn", half.before.tank.litres - half.after.tank.litres, 2 * each, LITRES)
+        expectNear("the barrel's water drawn", half.before.tank.litres - half.after.tank.litres, 2 * each, T.LITRES)
         expectNear("the part's wear", half.before.record.partCondition - half.after.record.partCondition,
             Pumps.PARTS[UTILITY].wearPerHour * HALF_HOUR, 0.001)
         expect(self.reads.off.done, "Turn Off wasn't done")
@@ -847,12 +846,12 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         local away, back = self.reads.away, self.reads.back
         expect(away.after.record.lastHour == away.before.record.lastHour, "the barrel's house ran while away")
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
-        expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), LITRES)
+        expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), T.LITRES)
         local lineAway, lineBack = self.reads["line away"], self.reads["line back"]
         expect(lineAway.after.record.lastHour == lineAway.before.record.lastHour, "the line's house ran while away")
         local perHour = 2 * Lines.HOLE_RATE * Pumps.PARTS[APPLIANCE].push
         expectNear("the line's barrel drawn, back", SOURCE_LITRES - lineBack.after.tank.litres,
-            perHour * (lineBack.now - (lineAway.now - AWAY_HOURS)), LITRES)
+            perHour * (lineBack.now - (lineAway.now - AWAY_HOURS)), T.LITRES)
         for i = 1, 2 do
             expect((lineBack.after.squares[i].water or 0) > 0, "crop " .. i .. " got no water from the gap")
         end

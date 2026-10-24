@@ -14,7 +14,6 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Links, LinkJobs, Pipes = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes
 
-local LITRES = 0.05
 -- What a link pass carries at the link's full rate (links.flow): less than the tests' tanks hold,
 -- so the rate shows before the water levels.
 local PASS_LITRES = 60
@@ -51,7 +50,7 @@ local function placeAmphora(self, handle, litres)
     T.server(self, "tanks.place", T.at(tank, { sprite = AMPHORA, litres = litres }))
     T.waitFor(self, function()
         local copy = T.copyOf(tank)
-        return copy ~= nil and math.abs(copy:getFluidContainer():getAmount() - litres) < LITRES
+        return copy ~= nil and math.abs(copy:getFluidContainer():getAmount() - litres) < T.LITRES
     end, "this client's copy of the amphora")
     return tank
 end
@@ -316,8 +315,8 @@ T.test("irrigation_links_levels_tanks_on_one_level", {
         for i, pass in ipairs(passes) do
             local moved = math.min(PASS_LITRES, a - evenA)
             a, b = a - moved, b + moved
-            expectNear("the fuller tank after pass " .. i, pass.a.litres, a, LITRES)
-            expectNear("the emptier tank after pass " .. i, pass.b.litres, b, LITRES)
+            expectNear("the fuller tank after pass " .. i, pass.a.litres, a, T.LITRES)
+            expectNear("the emptier tank after pass " .. i, pass.b.litres, b, T.LITRES)
         end
     end,
 })
@@ -352,15 +351,15 @@ T.test("irrigation_links_fills_downhill_never_uphill", {
             for i, pass in ipairs(down) do
                 local moved = math.min(PASS_LITRES, high)
                 high, low = high - moved, low + moved
-                expectNear("the raised barrel after pass " .. i, pass.a.litres, high, LITRES)
-                expectNear("the ground barrel after pass " .. i, pass.b.litres, low, LITRES)
+                expectNear("the raised barrel after pass " .. i, pass.a.litres, high, T.LITRES)
+                expectNear("the ground barrel after pass " .. i, pass.b.litres, low, T.LITRES)
             end
             expect(down[1].b.tainted, "the clean barrel the tainted one filled isn't tainted")
         end
         local up = self.reads.uphill.passes
         if expect(#up == 1, "the uphill flow ran " .. #up .. " passes") then
-            expectNear("the ground barrel linked to a raised one", up[1].a.litres, self.high, LITRES)
-            expectNear("the raised barrel linked to a ground one", up[1].b.litres, 0, LITRES)
+            expectNear("the ground barrel linked to a raised one", up[1].a.litres, self.high, T.LITRES)
+            expectNear("the raised barrel linked to a ground one", up[1].b.litres, 0, T.LITRES)
         end
     end,
 })
@@ -405,7 +404,7 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
         expect(self.reads.linked.links == 1, "the link wasn't made")
         local bare = self.reads.bare
         expect(bare.links == 1, "the link went with its tank")
-        expectNear("the tank left, after a pass with no tank at the other end", bare.litres, self.start, LITRES)
+        expectNear("the tank left, after a pass with no tank at the other end", bare.litres, self.start, T.LITRES)
         T.expectOffered(self, "unplumb the bare end")
         local want = buriedPipeEast(self.apart)
         local named = self.menu["unplumb the bare end"].name
@@ -415,8 +414,8 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
         expect(forced.done == false and forced.links == 1, "the server laid a second pipe between the same squares: "
             .. tostring(forced.links) .. " links")
         local joined, moved = self.reads.joined, math.min(PASS_LITRES, self.start / 2)
-        expectNear("the tank left, once a tank stands at the other end again", joined.litres, self.start - moved, LITRES)
-        expectNear("the tank set on the bare end", joined.other.litres, moved, LITRES)
+        expectNear("the tank left, once a tank stands at the other end again", joined.litres, self.start - moved, T.LITRES)
+        expectNear("the tank set on the bare end", joined.other.litres, moved, T.LITRES)
     end,
 })
 

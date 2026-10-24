@@ -22,7 +22,9 @@ local Pumps = EnhancedIrrigation.Pumps
 -- How long this client may take to show what the server changed.
 T.SYNC_MS = 5000
 -- How near this client's copy of a tank's water must come to what the server put in it.
-local LITRES = 0.01
+local COPY_LITRES = 0.01
+-- How near the litres a test reads of a tank, basin or fixture must come to its sums.
+T.LITRES = 0.05
 -- Vanilla's house wall on a square's west edge.
 T.WALL_WEST = "walls_exterior_house_01_0"
 
@@ -607,7 +609,7 @@ function T.placeTank(self, handle, kind, litres, tainted)
         local square = getSquare(tank.x, tank.y, tank.z)
         local copy = T.objectWithSprite(square, tank.sprite)
         tank.square = square
-        return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < LITRES)
+        return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < COPY_LITRES)
     end, "this client's copy of the " .. kind)
     return tank
 end

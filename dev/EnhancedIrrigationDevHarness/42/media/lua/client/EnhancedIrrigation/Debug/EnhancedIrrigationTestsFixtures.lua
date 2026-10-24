@@ -18,7 +18,6 @@ local expect, expectNear = T.expect, T.expectNear
 local Links, LinkJobs, Fixtures = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Fixtures
 local LinkMenu = EnhancedIrrigation.LinkMenu
 
-local LITRES = 0.05
 -- A white bathroom sink and a washing machine: vanilla flags both waterPiped.
 local SINK = "fixtures_sinks_01_0"
 local WASHER = "appliances_laundry_01_0"
@@ -79,7 +78,7 @@ local function placeFixture(self, handle, sprite, extra)
     T.server(self, "fixtures.place", args)
     local litres = extra and extra.buffer and extra.buffer.litres
     waitForCopy(self, fixture, function(state)
-        return not litres or (state.buffer and math.abs(state.inBuffer - litres) < LITRES)
+        return not litres or (state.buffer and math.abs(state.inBuffer - litres) < T.LITRES)
     end, "this client's copy of the " .. sprite)
     return fixture
 end
@@ -99,15 +98,15 @@ local function expectFixture(who, state, want)
         return
     end
     expect(state.buffer, who .. ": the fixture has no buffer")
-    expectNear(who .. ": the fixture's water", state.amount, want.litres, LITRES)
+    expectNear(who .. ": the fixture's water", state.amount, want.litres, T.LITRES)
     expect(state.tainted == want.tainted, who .. ": the fixture's water is " .. (state.tainted and "tainted" or "clean"))
-    expectNear(who .. ": the fixture's buffer", state.inBuffer, want.litres, LITRES)
+    expectNear(who .. ": the fixture's buffer", state.inBuffer, want.litres, T.LITRES)
     expect(not state.external, who .. ": the fixture still draws on vanilla's rooftop plumbing")
 end
 
 local function expectTankLitres(who, state, litres)
     if expect(state and state.found, who .. ": no tank") then
-        expectNear(who .. ": the tank's water", state.litres, litres, LITRES)
+        expectNear(who .. ": the tank's water", state.litres, litres, T.LITRES)
     end
 end
 
@@ -130,7 +129,7 @@ T.test("irrigation_fixtures_plumb_to_tank_fills_and_keeps_taint", {
         local with = Links.encode(T.at(self.tank), "iron")
         T.useMenu(self, self.sink, "plumb", T.job("link", LinkJobs.PLUMB_FIXTURE, with), true)
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
-        waitForCopy(self, self.sink, function(state) return state.buffer and state.amount > sinkLitres() - LITRES end,
+        waitForCopy(self, self.sink, function(state) return state.buffer and state.amount > sinkLitres() - T.LITRES end,
             "this client's copy of the filled sink")
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
     end,
@@ -188,11 +187,11 @@ T.test("irrigation_fixtures_refill_from_the_tank", {
     end,
     validate = function(self)
         local refill = self.reads.refill
-        expectNear("the drawn sink's water", refill.drawn.amount, 0, LITRES)
+        expectNear("the drawn sink's water", refill.drawn.amount, 0, T.LITRES)
         local half, full = refill.passes[1], refill.passes[2]
-        expectNear("the sink's water after a short pass", half.amount, sinkLitres() / 2, LITRES)
+        expectNear("the sink's water after a short pass", half.amount, sinkLitres() / 2, T.LITRES)
         expectTankLitres("after a short pass", half.tank, 4 * TANK_LITRES - sinkLitres() - sinkLitres() / 2)
-        expectNear("the sink's water after a long pass", full.amount, sinkLitres(), LITRES)
+        expectNear("the sink's water after a long pass", full.amount, sinkLitres(), T.LITRES)
         expectTankLitres("after a long pass", full.tank, 4 * TANK_LITRES - 2 * sinkLitres())
     end,
 })
@@ -228,7 +227,7 @@ T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
         T.count(self, "left", { "Base.MetalPipe" })
         T.read(self, "fixtures.refill", T.at(self.sink, { litres = sinkLitres(), passes = { 1 } }), "refill")
         waitForCopy(self, self.sink, function(state)
-            return state.inBuffer < LITRES and math.abs(state.amount - sinkLitres()) < LITRES
+            return state.inBuffer < T.LITRES and math.abs(state.amount - sinkLitres()) < T.LITRES
         end, "this client's copy of the drawn sink, its reserve back")
     end,
     validate = function(self)
@@ -239,10 +238,10 @@ T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
             .. " iron pipe, not 1")
         local after = self.reads.refill.passes[1]
         expect(after.buffer, "the unplumbed sink lost its buffer")
-        expectNear("the unplumbed sink's buffer after a pass", after.inBuffer, 0, LITRES)
+        expectNear("the unplumbed sink's buffer after a pass", after.inBuffer, 0, T.LITRES)
         for who, state in pairs({ ["the server"] = after, ["this client"] = clientState(self.sink) }) do
             if expect(state ~= nil, who .. " has no sink") then
-                expectNear(who .. ": the unplumbed sink's reserve", state.amount, sinkLitres(), LITRES)
+                expectNear(who .. ": the unplumbed sink's reserve", state.amount, sinkLitres(), T.LITRES)
                 expect(not state.tainted, who .. ": the unplumbed sink's reserve is tainted")
             end
         end
@@ -430,10 +429,10 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
             context:hideAndChildren()
         end)
         local left = sinkLitres() - 10
-        readUntil(self, self.sink, nil, "drawn", function(state) return state.amount < left + LITRES end)
+        readUntil(self, self.sink, nil, "drawn", function(state) return state.amount < left + T.LITRES end)
         T.waitFor(self, function()
             local bucket = self.items.items and self.items.items[1]
-            return bucket ~= nil and bucket:getFluidContainer():getAmount() > 10 - LITRES
+            return bucket ~= nil and bucket:getFluidContainer():getAmount() > 10 - T.LITRES
         end, "this client's copy of the filled bucket")
     end,
     validate = function(self)
@@ -444,7 +443,7 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
         expect(self.wash, "the sink's menu offers no Wash for the dirty rag")
         expectFixture("the server, drawn", self.reads.drawn, { litres = sinkLitres() - 10, tainted = true })
         local water = self.items.items[1]:getFluidContainer()
-        expectNear("the bucket's water", water:getAmount(), 10, LITRES)
+        expectNear("the bucket's water", water:getAmount(), 10, T.LITRES)
         expect(water:isTainted(), "the bucket filled from a tainted sink holds clean water")
     end,
 })
@@ -463,7 +462,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
         self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
         T.server(self, "fixtures.plumb", T.at(self.sink, { tank = T.at(self.tank) }))
         T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = 0, passes = { 1 } }), "refill")
-        waitForCopy(self, self.sink, function(state) return state.inBuffer < LITRES end,
+        waitForCopy(self, self.sink, function(state) return state.inBuffer < T.LITRES end,
             "this client's copy of the emptied buffer")
         T.goNextTo(self, spots[1].square)
         T.step(function()
@@ -482,7 +481,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
                 expect(state.amount > TANK_LITRES and state.hasWater and not state.tainted,
                     who .. ": the plumbed sink doesn't give the town's clean water (" .. state.amount .. " L"
                     .. (state.tainted and ", tainted)" or ")"))
-                expectNear(who .. ": the plumbed sink's buffer", state.inBuffer, 0, LITRES)
+                expectNear(who .. ": the plumbed sink's buffer", state.inBuffer, 0, T.LITRES)
             end
         end
         expectTankLitres("the server", after.tank, TANK_LITRES)

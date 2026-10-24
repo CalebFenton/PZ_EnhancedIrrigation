@@ -17,7 +17,6 @@ local BARREL = T.TANKS.lidded.sprite
 -- What a player is given to place it, and the type the item then has in hand (Stands.BARRELS).
 local BARREL_ITEM = "Moveables." .. BARREL
 local BARREL_HELD = "Base." .. BARREL
-local LITRES = 0.05
 
 -- Queues a vanilla barrel moveable at `handle` put down and picked up again as a player does, so
 -- the character carries the item vanilla's pickup gives.
@@ -69,7 +68,7 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         local raised, z = self.reads.raised, self.stand.z
         expect(raised.isRaised and raised.isTank, "the barrel on the stand isn't a raised tank")
         expect(raised.level == z + 1, "the raised barrel's level is " .. tostring(raised.level) .. ", not " .. (z + 1))
-        expectNear("the raised barrel's water", raised.litres, 0, LITRES)
+        expectNear("the raised barrel's water", raised.litres, 0, T.LITRES)
         expect(T.counted(self, BARREL_HELD) == 0, "setting the barrel on the stand left " .. T.counted(self, BARREL_HELD)
             .. " barrels carried")
         expect(self.clientLevel == z + 1, "this client sees the raised barrel at level " .. tostring(self.clientLevel))
@@ -152,7 +151,7 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         local forced = self.reads.forced
         expect(forced.done == false, "the server took down a barrel holding water")
         expect(forced.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
-        expectNear("the refused barrel's water", forced.litres, self.litres, LITRES)
+        expectNear("the refused barrel's water", forced.litres, self.litres, T.LITRES)
         expect(T.counted(self, BARREL_HELD) == 0, "a refused Take Barrel Down gave " .. T.counted(self, BARREL_HELD) .. " barrels")
     end,
 })
@@ -195,8 +194,8 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
             expect(barrel[key] == vanilla[1][key], "a carried barrel's " .. key .. " is " .. tostring(barrel[key])
                 .. ", vanilla's " .. tostring(vanilla[1][key]))
         end
-        expectNear("a carried barrel's weight", barrel.weight, vanilla[1].weight, LITRES)
-        expectNear("a carried barrel's capacity", barrel.capacity, vanilla[1].capacity, LITRES)
-        expectNear("a carried barrel's water", barrel.litres, 0, LITRES)
+        expectNear("a carried barrel's weight", barrel.weight, vanilla[1].weight, T.LITRES)
+        expectNear("a carried barrel's capacity", barrel.capacity, vanilla[1].capacity, T.LITRES)
+        expectNear("a carried barrel's water", barrel.litres, 0, T.LITRES)
     end,
 })

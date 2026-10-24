@@ -24,7 +24,6 @@ local Pumps, Sprinklers, PlantInfo = EnhancedIrrigation.Pumps, EnhancedIrrigatio
 local Parts = EnhancedIrrigation.Parts
 
 local POINTS = 0.05
-local LITRES = 0.05
 local IRON = "EnhancedIrrigation_IronHandPump"
 local LEATHER = "Base.LeatherStrips"
 local MINUTE = 1 / 60
@@ -157,7 +156,7 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
             expectNear("the crop at " .. offset .. " after a minute", change.water, i <= INSIDE and each or 0, POINTS)
         end
         expectNear("the seal's wear after a minute", minute.steps[1].record.sealWear - minute.before.record.sealWear,
-            Sprinklers.RATE * MINUTE, LITRES)
+            Sprinklers.RATE * MINUTE, T.LITRES)
         local soaked = self.reads.soaked
         for i, square in ipairs(soaked.steps[1].squares) do
             local offset = NORTH_SOUTH[i][1] .. "," .. NORTH_SOUTH[i][2]
@@ -234,7 +233,7 @@ T.test("irrigation_sprinklers_do_nothing_on_a_tapped_line", {
             expectNear("crop " .. i .. " by the sprinkler", changed[i].water, 0, POINTS)
             expectNear("the soak under crop " .. i .. " by the sprinkler", changed[i].soak, 0, POINTS)
         end
-        expectNear("the barrel's water drawn", hour.drawn, Lines.HOLE_RATE, LITRES)
+        expectNear("the barrel's water drawn", hour.drawn, Lines.HOLE_RATE, T.LITRES)
     end,
 })
 

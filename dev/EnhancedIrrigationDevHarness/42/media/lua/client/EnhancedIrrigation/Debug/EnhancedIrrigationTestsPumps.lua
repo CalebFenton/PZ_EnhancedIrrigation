@@ -25,7 +25,6 @@ local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
 
-local LITRES = 0.05
 local WOODEN, IRON = "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump"
 local LEATHER, PLUNGER = "Base.LeatherStrips", "Base.Plunger"
 -- What vanilla's Leather Strips leave once used (their ReplaceOnUse), which a seal must not.
@@ -173,7 +172,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         read(self, self.pump, "after", { tank = T.at(self.tank), well = T.at(self.well) })
         T.waitFor(self, function()
             local copy = T.copyOf(self.tank)
-            return copy ~= nil and copy:getFluidContainer():getAmount() > BARREL_LITRES - LITRES
+            return copy ~= nil and copy:getFluidContainer():getAmount() > BARREL_LITRES - T.LITRES
         end, "this client's copy of the full barrel")
         T.useOption(self, function() return T.copyOf(self.pump) end, "full", pumpOption, false)
     end,
@@ -181,12 +180,12 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         T.expectOffered(self, "outlet")
         T.expectOffered(self, "pump")
         local before, after = self.reads.before, self.reads.after
-        expectNear("the barrel's water", after.tank.litres, BARREL_LITRES, LITRES)
+        expectNear("the barrel's water", after.tank.litres, BARREL_LITRES, T.LITRES)
         expect(not after.tank.tainted, "the well's water came out tainted")
         expect(before.wellLitres ~= nil and after.wellLitres == before.wellLitres, "the well's own container went from "
             .. tostring(before.wellLitres) .. " to " .. tostring(after.wellLitres))
         local spec = self.pump.spec
-        expectNear("the seal's wear", after.record.sealWear, ROOM, LITRES)
+        expectNear("the seal's wear", after.record.sealWear, ROOM, T.LITRES)
         expectNear("the pump's condition", after.record.condition, Pumps.BODY_CONDITION - ROOM / spec.wearLitres, 0.001)
         expect(after.endurance < self.endurance, "pumping left the server's endurance at " .. after.endurance)
         expect(self.clientEndurance < self.endurance, "pumping left this client's endurance at " .. self.clientEndurance)
@@ -285,11 +284,11 @@ T.test("irrigation_pumps_one_worker_per_pump", {
         expect(self.reads.other.held, "the other player couldn't hold the free pump")
         T.expectRefused(self, "while held", "Tooltip_EnhancedIrrigation_PumpInUse")
         expectNear("the tank's water while another player held the pump", self.reads.refused.tank.litres,
-            BARREL_LITRES - ROOM, LITRES)
+            BARREL_LITRES - ROOM, T.LITRES)
         T.expectOffered(self, "freed")
         expect(self.heldByMe, "the pump wasn't held for this character while it ran")
         local after = self.reads["let go"]
-        expectNear("the tank once this character's work stopped", after.tank.litres, BARREL_LITRES, LITRES)
+        expectNear("the tank once this character's work stopped", after.tank.litres, BARREL_LITRES, T.LITRES)
         expect(after.summary.heldBy == nil, "the pump is still held by " .. tostring(after.summary.heldBy)
             .. " after this character's work stopped")
     end,
@@ -325,10 +324,10 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         local rate = self.pump.spec.rate
         local ran = self.reads.ran
         local minute, hour = ran.steps[1], ran.steps[2]
-        expectNear("the tank after a minute", minute.tank.litres, rate, LITRES)
+        expectNear("the tank after a minute", minute.tank.litres, rate, T.LITRES)
         expect(minute.tank.tainted, "the barrel's tainted water came out clean")
-        expectNear("the barrel after a minute", minute.source.litres, SOURCE_LITRES - rate, LITRES)
-        expectNear("the tank after the barrel ran dry", hour.tank.litres, SOURCE_LITRES, LITRES)
+        expectNear("the barrel after a minute", minute.source.litres, SOURCE_LITRES - rate, T.LITRES)
+        expectNear("the tank after the barrel ran dry", hour.tank.litres, SOURCE_LITRES, T.LITRES)
         expect(hour.source and hour.source.dry, "the emptied barrel isn't the pump's dry source")
         expect(hour.stopped == "Tooltip_EnhancedIrrigation_NoWaterToDraw", "the pump stopped for "
             .. tostring(hour.stopped))
@@ -363,7 +362,7 @@ T.test("irrigation_pumps_river_intake_gives_tainted_water", {
         local intake = step.record.intake
         expect(intake and intake.x == self.river.x and intake.y == self.river.y, "the hose drinks at "
             .. (intake and intake.x .. "," .. intake.y or "nothing"))
-        expectNear("the tank after a minute", step.tank.litres, self.pump.spec.rate, LITRES)
+        expectNear("the tank after a minute", step.tank.litres, self.pump.spec.rate, T.LITRES)
         expect(step.tank.tainted, "the river's water came out clean")
     end,
 })
@@ -528,7 +527,7 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
             expectNear("crop " .. i .. "'s water", after.squares[i].water - before.squares[i].water,
                 each * Lines.POINTS_PER_LITRE, 0.05)
         end
-        expectNear("the seal's wear", after.record.sealWear - before.record.sealWear, 2 * each, LITRES)
+        expectNear("the seal's wear", after.record.sealWear - before.record.sealWear, 2 * each, T.LITRES)
         expectNear("the pump's wear", before.record.condition - after.record.condition,
             2 * each / Pumps.UNITS[WOODEN].wearLitres, 0.0001)
         T.expectOffered(self, "pump")
@@ -578,7 +577,7 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
     end,
     validate = function(self)
         local worn = self.reads.worn.steps[1]
-        expectNear("the tank after the seal's last litres", worn.tank.litres, SEAL_LEFT, LITRES)
+        expectNear("the tank after the seal's last litres", worn.tank.litres, SEAL_LEFT, T.LITRES)
         expect(worn.stopped == "Tooltip_EnhancedIrrigation_SealWornOut", "the pump stopped for " .. tostring(worn.stopped))
         T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_SealWornOut"))
         T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_SealWornOut")
@@ -639,7 +638,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
     end,
     validate = function(self)
         local worn = self.reads.worn.steps[1]
-        expectNear("the tank after the body's last litres", worn.tank.litres, BODY_LEFT * self.pump.spec.wearLitres, LITRES)
+        expectNear("the tank after the body's last litres", worn.tank.litres, BODY_LEFT * self.pump.spec.wearLitres, T.LITRES)
         expect(worn.stopped == "Tooltip_EnhancedIrrigation_PumpWornOut", "the pump stopped for " .. tostring(worn.stopped))
         T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_PumpWornOut"))
         T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_PumpWornOut")
