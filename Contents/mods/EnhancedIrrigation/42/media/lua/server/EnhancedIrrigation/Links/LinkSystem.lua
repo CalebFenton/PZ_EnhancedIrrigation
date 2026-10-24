@@ -83,7 +83,7 @@ function LinkSystem:removeLink(link)
             table.remove(self.links, i)
             self:sendLinks()
             local _, line = Links.ends(link)
-            if link.pump and EnhancedIrrigation.Lines.recordAt(line.x, line.y, line.z) then
+            if link.pump then
                 EnhancedIrrigation.LineSystem.showRunning(line.x, line.y, line.z, false)
             end
             return

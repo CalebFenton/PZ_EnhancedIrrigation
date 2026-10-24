@@ -67,9 +67,7 @@ end
 -- A line split by a tile taken away is no longer known to run, each part until its pump says so.
 local function forgetRunningAround(x, y, z)
     for _, step in ipairs(Lines.STEPS) do
-        if Lines.recordAt(x + step.dx, y + step.dy, z) then
-            LineSystem.showRunning(x + step.dx, y + step.dy, z, false)
-        end
+        LineSystem.showRunning(x + step.dx, y + step.dy, z, false)
     end
 end
 

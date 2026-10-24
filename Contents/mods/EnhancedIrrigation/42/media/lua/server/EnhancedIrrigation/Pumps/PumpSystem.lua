@@ -34,7 +34,7 @@ PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
 function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
     local b = self:isValidIsoObject(isoObject) and Pumps.outletEnd(EnhancedIrrigation.squareOf(isoObject))
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
-    if b and Lines.recordAt(b.x, b.y, b.z) then
+    if b then
         EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, false)
     end
 end

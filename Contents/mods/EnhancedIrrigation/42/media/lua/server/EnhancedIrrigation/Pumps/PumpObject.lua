@@ -222,7 +222,7 @@ function PumpObject:afterChange()
     self:show()
     self:sendSummary()
     local b = Pumps.outletEnd(self)
-    if b and EnhancedIrrigation.Lines.recordAt(b.x, b.y, b.z) then
+    if b then
         EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, self:isRunning())
     end
 end

@@ -125,8 +125,9 @@ local function receivedAt(x, y, z)
     return globalObject and globalObject:getModData().summary or nil
 end
 
---- The tile at x, y, z as this side knows it: on the authority its record, loaded or not; on a
---- multiplayer client the summary it has. Nil where there is no line tile. Read only.
+--- The tile at x, y, z as this side knows it: on the authority its record, loaded or not, which
+--- the line's own modules may change; on a multiplayer client the summary it has, read only. Nil
+--- where there is no line tile.
 function Lines.stateAt(x, y, z)
     return Lines.recordAt(x, y, z) or receivedAt(x, y, z)
 end
@@ -147,7 +148,8 @@ function Lines.summaryAt(x, y, z)
 end
 
 --- The tiles of the line through x, y, z, the start first and the rest in the order water reaches
---- them from it: a list of { x, y, z, state }. Empty when x, y, z holds no line tile.
+--- them from it: a list of { x, y, z, state }, `state` as Lines.stateAt gives it. Empty when x, y,
+--- z holds no line tile.
 function Lines.component(x, y, z)
     local list, seen = {}, {}
     local start = Lines.stateAt(x, y, z)
