@@ -152,17 +152,20 @@ handler("pumps.water", function(_, args, defer)
     return { water = square:getProperties():has(IsoFlagType.water) }
 end)
 
--- Sets the character's endurance to `args.value` and tells its client, until the test ends.
+-- Sets the character's endurance to `args.value` and fatigue to `args.fatigue`, and tells its
+-- client, until the test ends.
 handler("pumps.endurance", function(player, args, defer)
     local stats = player:getStats()
-    local before = stats:get(CharacterStat.ENDURANCE)
-    local function set(value)
-        stats:set(CharacterStat.ENDURANCE, value)
+    local before = { endurance = stats:get(CharacterStat.ENDURANCE), fatigue = stats:get(CharacterStat.FATIGUE) }
+    local function set(values)
+        stats:set(CharacterStat.ENDURANCE, values.endurance)
+        stats:set(CharacterStat.FATIGUE, values.fatigue)
         if isServer() then
-            syncPlayerStats(player, SyncPlayerStatsPacket.getBitMaskForStat(CharacterStat.ENDURANCE))
+            syncPlayerStats(player, SyncPlayerStatsPacket.getBitMaskForStat(CharacterStat.ENDURANCE)
+                + SyncPlayerStatsPacket.getBitMaskForStat(CharacterStat.FATIGUE))
         end
     end
-    set(args.value)
+    set({ endurance = args.value, fatigue = args.fatigue })
     defer(function() set(before) end)
     return { endurance = stats:get(CharacterStat.ENDURANCE) }
 end)

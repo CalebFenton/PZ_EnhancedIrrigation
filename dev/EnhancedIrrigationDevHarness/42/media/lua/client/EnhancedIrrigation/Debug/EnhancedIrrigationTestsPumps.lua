@@ -151,10 +151,15 @@ end
 
 -- How near this client's endurance comes to what the server set, a frame or two of rest later.
 local ENDURANCE_SLACK = 0.01
+-- The fatigue the tests' character works the pump at: standing still gives endurance back per
+-- frame scaled by the clock's speed, which on a multiplayer server at the tests' speed outpaces
+-- the world hours it counts and so the work's cost; a tired character gets a fraction of it
+-- back (IsoPlayer.updateEndurance).
+local FATIGUE = 0.9
 
--- Queues the character's endurance set to `value` on both sides until the test ends.
+-- Queues the character's endurance set to `value`, tired, on both sides until the test ends.
 local function setEndurance(self, value)
-    T.server(self, "pumps.endurance", { value = value })
+    T.server(self, "pumps.endurance", { value = value, fatigue = FATIGUE })
     -- Near, not exact: standing still gives some back before this client looks.
     T.waitFor(self, function()
         return math.abs(T.player():getStats():get(CharacterStat.ENDURANCE) - value) < ENDURANCE_SLACK
