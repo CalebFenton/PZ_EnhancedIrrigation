@@ -32,15 +32,46 @@ local function counted(self, fullType)
     return self.counts.left and self.counts.left[fullType] or 0
 end
 
--- The links with an end on the handle's square, as the menus see them: in single player that is the
--- server's list, so only a multiplayer run waits here on this client's copy.
-local function clientLinks(handle)
-    return Links.linksAt(T.at(handle))
+-- How many links with an end on the handle's square this client's own copy of the list holds, which
+-- the server's commands set in single player too (Links.linksAt reads the server's list there).
+local function viewedLinks(handle)
+    local at, count = T.at(handle), 0
+    for _, link in ipairs(Links.clientSystem.links) do
+        if Links.otherEnd(link, at) then
+            count = count + 1
+        end
+    end
+    return count
 end
 
--- The lengths a run of `tiles` tiles on one level takes.
+-- The fewest whole lengths that cover a run of `tiles` tiles on one level, counted length by length
+-- rather than worked out as Links.lengthsFor does.
 local function lengthsFor(tiles)
-    return math.ceil(tiles / Links.TILES_PER_LENGTH)
+    local lengths = 0
+    while lengths * Links.TILES_PER_LENGTH < tiles do
+        lengths = lengths + 1
+    end
+    return lengths
+end
+
+-- Vanilla's closed amphora: a tank smaller than the barrels, so equal fill isn't equal litres.
+local AMPHORA = "crafted_04_32"
+
+-- Queues placing the amphora at `handle` holding `litres`, as T.placeTank places its kinds, and a
+-- wait for this client's copy. Returns its handle.
+local function placeAmphora(self, handle, litres)
+    local tank = { x = handle.x, y = handle.y, z = handle.z, sprite = AMPHORA, square = handle.square }
+    T.server(self, "tanks.place", T.at(tank, { sprite = AMPHORA, litres = litres }))
+    T.waitFor(self, function()
+        local copy = T.tankCopy(tank)
+        return copy ~= nil and math.abs(copy:getFluidContainer():getAmount() - litres) < LITRES
+    end, "this client's copy of the amphora")
+    return tank
+end
+
+-- A tank's capacity from this client's copy, which its entity script gives it.
+local function capacityOf(handle)
+    return T.tankCopy(handle):getFluidContainer():getCapacity()
 end
 
 -- How Unplumb names buried pipe to an empty spot `tiles` tiles east.
@@ -148,7 +179,8 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
         T.useOption(self, low, "at the limit", job(LinkJobs.PLUMB, with), true)
         T.readUntil(self, "links.read", T.at(self.low), "links", function(reply) return #reply.links > 0 end)
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
-        T.waitFor(self, function() return #clientLinks(self.low) > 0 end, "this client's copy of the link")
+        T.waitFor(self, function() return viewedLinks(self.low) > 0 end, "this client's copy of the link")
+        T.step(function() self.viewed = viewedLinks(self.low) end)
         T.useOption(self, low, "unplumb", job(LinkJobs.UNPLUMB, Links.encode(T.at(self.high))), false)
         T.useOption(self, low, "plumb again", job(LinkJobs.PLUMB, with), false)
     end,
@@ -165,6 +197,7 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
                 .. self.lengths .. " of iron")
         end
         expect(counted(self, "Base.MetalPipe") == 0, "plumbing left " .. counted(self, "Base.MetalPipe") .. " iron pipe")
+        expect(self.viewed == 1, "this client's copy of the list has " .. tostring(self.viewed) .. " links at the tank")
         expect(counted(self, "Base.PipeWrench") == 1, "plumbing used up the pipe wrench")
         expect(self.menu.unplumb.found, "Unplumb doesn't list the plumbed tank")
         expect(not self.menu["plumb again"].found, "Plumb to Tank still lists a tank already plumbed to")
@@ -240,19 +273,24 @@ T.test("irrigation_links_unplumb_gives_back_the_pipe", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", items)
         useMenu(self, self.a, "plumb", job(LinkJobs.PLUMB, Links.encode(T.at(self.b), "iron")), true)
-        T.waitFor(self, function() return #clientLinks(self.a) > 0 and #ironConditions() == 0 end,
+        T.waitFor(self, function() return viewedLinks(self.a) > 0 and #ironConditions() == 0 end,
             "this client's copy of the link, the pipe gone into it")
+        T.step(function() self.viewedPlumbed = viewedLinks(self.a) end)
         T.useOption(self, function() return T.tankCopy(self.a) end, "unplumb",
             job(LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
         T.readUntil(self, "links.read", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
         T.waitFor(self, function() return #ironConditions() == count end, "this client's copy of the pipe given back")
-        T.waitFor(self, function() return #clientLinks(self.a) == 0 end, "this client to drop the link")
+        T.waitFor(self, function() return viewedLinks(self.a) == 0 end, "this client to drop the link")
+        T.step(function() self.viewedUnplumbed = viewedLinks(self.a) end)
     end,
     validate = function(self)
         T.expectOffered(self, "plumb")
         T.expectOffered(self, "unplumb")
         local links = self.reads.links.links
         expect(#links == 0, "the server still has " .. #links .. " links after Unplumb")
+        expect(self.viewedPlumbed == 1, "this client's copy had " .. tostring(self.viewedPlumbed) .. " links once plumbed")
+        expect(self.viewedUnplumbed == 0, "this client's copy kept " .. tostring(self.viewedUnplumbed)
+            .. " links after Unplumb")
         local back = ironConditions()
         for i, condition in ipairs(self.laid) do
             expect(back[i] == condition, "length " .. i .. " came back at condition " .. tostring(back[i])
@@ -263,26 +301,33 @@ T.test("irrigation_links_unplumb_gives_back_the_pipe", {
 
 -- Link flow --------------------------------------------------------------------------------------
 
--- Two tanks on one level fill toward equal, no faster than the link carries. Catches a link that
--- overshoots, or ignores its rate.
+-- Two tanks of different sizes on one level fill toward equal fill, no faster than the link
+-- carries. Catches water levelled by litres rather than by fill, a link that overshoots, or one
+-- that ignores its rate.
 T.test("irrigation_links_levels_tanks_on_one_level", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
         if not spots then return end
-        self.start = 300
+        -- Most of the amphora full, so levelling takes more passes than equal litres would.
         -- Not in a T.batch: the flow call would go out across these waits for this client's
         -- copies, and move the water before they see it.
-        self.a = T.placeTank(self, spots[1], "lidded", self.start)
+        self.a = placeAmphora(self, spots[1], 4 * PASS_LITRES)
         self.b = T.placeTank(self, spots[2], "lidded")
+        T.step(function()
+            self.start = T.tankCopy(self.a):getFluidContainer():getAmount()
+            self.ca, self.cb = capacityOf(self.a), capacityOf(self.b)
+        end)
         T.read(self, "links.flow", T.at(self.a, { to = T.at(self.b), litres = PASS_LITRES, passes = 3 }), "flow")
     end,
     validate = function(self)
         local passes = self.reads.flow.passes
         if not expect(#passes == 3, "the flow ran " .. #passes .. " passes") then return end
-        -- The same barrels: equal fill is equal litres.
+        expect(self.ca ~= self.cb, "the two tanks hold the same, so fill can't tell from litres")
+        -- At equal fill each tank holds its share of the water by capacity.
+        local evenA = self.start * self.ca / (self.ca + self.cb)
         local a, b = self.start, 0
         for i, pass in ipairs(passes) do
-            local moved = math.min(PASS_LITRES, (a - b) / 2)
+            local moved = math.min(PASS_LITRES, a - evenA)
             a, b = a - moved, b + moved
             expectNear("the fuller tank after pass " .. i, pass.a.litres, a, LITRES)
             expectNear("the emptier tank after pass " .. i, pass.b.litres, b, LITRES)
@@ -428,18 +473,6 @@ T.test("irrigation_links_unplumb_from_the_bare_floor", {
 })
 
 -- This client's list ------------------------------------------------------------------------------
-
--- How many links with an end on the handle's square this client's own copy of the list holds, which
--- the server's commands set in single player too.
-local function viewedLinks(handle)
-    local at, count = T.at(handle), 0
-    for _, link in ipairs(Links.clientSystem.links) do
-        if Links.otherEnd(link, at) then
-            count = count + 1
-        end
-    end
-    return count
-end
 
 -- A list of links overtaken on its way here, which lands after the newer one, changes nothing.
 -- Catches this client dropping links on a stale list.
