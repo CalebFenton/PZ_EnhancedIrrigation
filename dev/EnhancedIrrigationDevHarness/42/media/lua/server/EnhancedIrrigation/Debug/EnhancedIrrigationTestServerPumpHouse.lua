@@ -100,12 +100,13 @@ handler("pumpHouse.bankDraw", function(_, args)
     return { draws = draws }
 end)
 
--- Sets a vanilla generator down on x, y, z, connected, with `args.fuel` in it, and starts it.
--- Answers its fuel. Switched off and taken away when the test ends.
+-- Sets a vanilla generator down on x, y, z, connected, with `args.fuel` in it, and starts it: on a
+-- new square where there is none, as on a floor above open ground, whose square only comes to be
+-- with it. Answers its fuel. Switched off and taken away when the test ends.
 handler("pumpHouse.generator", function(_, args, defer)
-    local square = Server.squareAt(args)
+    local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
     if not square then
-        return nil, "a loaded square for the generator at " .. args.x .. "," .. args.y
+        return nil, "a square for the generator at " .. args.x .. "," .. args.y
     end
     local generator = IsoGenerator.new(instanceItem("Base.Generator"), square:getCell(), square)
     defer(function() PZHarness.Fixtures.removePlaced(generator) end)

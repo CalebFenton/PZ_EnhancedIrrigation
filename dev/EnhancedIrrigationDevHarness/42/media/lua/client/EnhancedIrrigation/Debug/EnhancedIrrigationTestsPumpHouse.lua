@@ -396,14 +396,11 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
 
 -- Hours the generator test runs: long enough that its bill stands well clear of the float's slack.
 local GENERATOR_HOURS = 2
--- Fuel the generator test's house owes from a time its generator wasn't loaded.
-local OWED = 0.5
 
 -- The grid off, a generator a few tiles off running: Turn On is offered and runs a Utility Pump,
 -- and two hours burn its draw at the sandbox's rate from the generator, whose reach pays for it, the
--- full barrel stopping the water but not the pump. Fuel the house owes is taken once its generator
--- is loaded. Catches a generator that runs a house for nothing, a full tank that stops the bill, or
--- a debt never paid.
+-- full barrel stopping the water but not the pump. Catches a generator that runs a house for
+-- nothing, or a full tank that stops the bill.
 T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
     instant = true,
     run = function(self)
@@ -421,7 +418,6 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
         useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         update(self, self.house, "hours", { hoursAgo = GENERATOR_HOURS, tank = self.tank, generator = self.generator })
-        update(self, self.house, "owed", { fields = { owedFuel = OWED }, generator = self.generator })
     end,
     validate = function(self)
         T.expectOffered(self, "on")
@@ -433,34 +429,51 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
             .. (payer and payer.x .. "," .. payer.y or "nothing"))
         expectNear("the barrel after the hours", hours.after.tank.litres, BARREL_LITRES, LITRES)
         expect(hours.after.summary.running, "the house stopped at the full barrel")
-        local owed = self.reads.owed
-        expectNear("the generator's fuel once the debt is paid", owed.after.generator.fuel,
-            owed.before.generator.fuel - OWED, FUEL)
-        expect(owed.after.record.owedFuel == nil, "the house still owes " .. tostring(owed.after.record.owedFuel))
     end,
 })
 
--- A house switched off, still owing fuel from a time its generator wasn't loaded, pays it at its
--- next pass with the generator loaded. Catches a debt that waits until the house runs off the grid
--- again.
+-- The fuel the debt test's payer had when the house last saw it: more than an hour's bill.
+local PAYER_FUEL = 5
+
+-- The grid off, a running Utility Pump's house powered by a generator in reach, its payer the
+-- generator it last saw, on a square that isn't loaded, as one in a chunk the character left: an
+-- hour bills that payer, the house owing it the hour's fuel, and the generator in reach burns none.
+-- Switched off, it pays the debt once its payer is loaded again. Catches hours run on an away
+-- payer's power for nothing or billed to another generator, or a debt that waits until the house
+-- runs again. The payer stands a storey up, where a square exists only once something stands there.
 T.test("irrigation_pump_house_pays_its_debt_switched_off", {
     instant = true,
     run = function(self)
         T.setGrid(self, false)
-        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true, accept = function(squares)
+            return getSquare(squares[1]:getX(), squares[1]:getY(), squares[1]:getZ() + 1) == nil
+        end })
         if not spots then return end
         self.generator = spots[2]
+        self.payer = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
         T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
         self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
-        update(self, self.house, "owed", { fields = { payer = T.at(self.generator), owedFuel = OWED },
-            generator = self.generator })
+        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(copyOf(self.house)) end,
+            "this client's power from the generator")
+        update(self, self.house, "away", { hoursAgo = 1, generator = self.generator,
+            fields = { on = true, payer = T.at(self.payer), payerFuel = PAYER_FUEL } })
+        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
+        readUntil(self, self.house, "owing", function(state) return not state.record.on end)
+        T.read(self, "pumpHouse.generator", T.at(self.payer, { fuel = PAYER_FUEL }), "payer")
+        update(self, self.house, "paid", { generator = self.payer })
     end,
     validate = function(self)
-        local owed = self.reads.owed
-        expect(not owed.after.record.on, "the house switched itself on")
-        expectNear("the generator's fuel once the debt is paid", owed.after.generator.fuel,
-            owed.before.generator.fuel - OWED, FUEL)
-        expect(owed.after.record.owedFuel == nil, "the house still owes " .. tostring(owed.after.record.owedFuel))
+        local away = self.reads.away
+        expectNear("the fuel the house owes its away payer", (away.after.record.owedFuel or 0)
+            - (away.before.record.owedFuel or 0), burns(UTILITY, 1), FUEL)
+        expectNear("the fuel of the generator in reach", away.after.generator.fuel, away.before.generator.fuel, FUEL)
+        local owing = self.reads.owing.record
+        expect(self.reads.off.done and not owing.on, "Turn Off left the house switched on")
+        -- From the payer's fuel as set down: the house's next pass, its own or the test's, pays.
+        local paid = self.reads.paid.after
+        expectNear("the payer's fuel once the debt is paid", paid.generator.fuel,
+            self.reads.payer.fuel - (owing.owedFuel or 0), FUEL)
+        expect(paid.record.owedFuel == nil, "the house still owes " .. tostring(paid.record.owedFuel))
     end,
 })
 
