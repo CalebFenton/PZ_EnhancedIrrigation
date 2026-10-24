@@ -3,7 +3,8 @@
 -- water carried, its kind's own jobs, and on a unit that takes pipe Plumb Inlet and Plumb Outlet,
 -- with submenus of the tanks in reach, and Unplumb. Each is greyed out saying why when its job
 -- would be refused (TreatmentJobs, LinkJobs). The basin is vanilla's: its fluid menu drinks,
--- fills and empties it, and offers no pour into it, as it is input-locked.
+-- fills and empties it, and offers no pour into it, as it is input-locked. A boiler's options go in
+-- the submenu vanilla's fire menu (ISBBQMenu) has already made for it, under its fuel and fire.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -31,6 +32,7 @@ local KIND_JOBS = {
         { job = TreatmentJobs.SCRUB_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_ScrubCrock" },
         { job = TreatmentJobs.TAKE_DOWN_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_TakeDownCrock" },
     },
+    boiler = { { job = TreatmentJobs.PATCH_DRUM, nameKey = "ContextMenu_EnhancedIrrigation_PatchDrum" } },
 }
 
 -- Each end of a unit's pipe: the job and the option's ContextMenu key.
@@ -87,6 +89,15 @@ local function addPlumbing(menu, playerNum, character, unit)
     TankMenu.addUnplumbOptions(menu, playerNum, character, unit)
 end
 
+-- The submenu for `unit`: for a fireplace, the one of its name that vanilla's fire menu, which the
+-- game fills before this event, made; else a new one.
+local function unitMenu(context, unit)
+    local name = TankMenu.objectName(unit)
+    local option = unit:isFireInteractionObject() and context:getOptionFromName(name)
+    local submenu = option and option.subOption and context:getSubMenu(option.subOption)
+    return submenu or Needs.addSubMenu(context, name)
+end
+
 function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
     local character = getSpecificPlayer(playerNum)
     if not character or character:getVehicle() then return end
@@ -94,10 +105,10 @@ function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
     if not unit then return end
     if test then return ISWorldObjectContextMenu.setTest() end
     local spec = Treatment.specOf(unit)
-    local menu = Needs.addSubMenu(context, TankMenu.objectName(unit))
+    local menu = unitMenu(context, unit)
     local summary = Treatment.currentSummary(unit)
     if summary then
-        menu:addOption(Treatment.statusText(spec, summary)).notAvailable = true
+        menu:addOption(Treatment.statusText(unit, spec, summary)).notAvailable = true
     end
     addPourIn(menu, playerNum, character, unit)
     for _, entry in ipairs(KIND_JOBS[spec.kind] or {}) do

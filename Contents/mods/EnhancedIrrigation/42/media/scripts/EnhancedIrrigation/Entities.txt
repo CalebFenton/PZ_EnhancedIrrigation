@@ -1,11 +1,12 @@
 /*
-    The Tank Stand and the sand filters the build menu builds, and the raised rain barrels a stand
-    becomes when a barrel is set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with
-    the mod's prefix, as craftRecipes are, since magazines and research look recipes up by bare
-    name. A DisplayName is looked up, without its spaces, in Recipes.json.
+    The Tank Stand and the treatment units the build menu builds (the sand filters, the Filter
+    Crock and the Boilers), and the raised rain barrels a stand becomes when a barrel is set on it
+    (shared/EnhancedIrrigation/Stands.lua). In module Base with the mod's prefix, as craftRecipes
+    are, since magazines and research look recipes up by bare name. A DisplayName is looked up,
+    without its spaces, in Recipes.json.
 
-    The stand and the filters are taught by Cisterns for Kentucky or learned with a skill; vanilla
-    applies an entity recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
+    Each build is taught by Cisterns for Kentucky, a skill or research; vanilla applies an entity
+    recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
 */
 module Base
 {
@@ -34,6 +35,18 @@ module Base
             LuaWindowClass = ISEntityWindow,
             DisplayName = EnhancedIrrigation_FilterCrock,
             Icon = EnhancedIrrigation_Build_FilterCrock,
+        }
+        entity ES_EnhancedIrrigation_BoilerStone
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_BoilerStone,
+            Icon = EnhancedIrrigation_Build_BoilerStone,
+        }
+        entity ES_EnhancedIrrigation_BoilerWelded
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_BoilerWelded,
+            Icon = EnhancedIrrigation_Build_BoilerWelded,
         }
         /* Vanilla's barrel icons: the raised barrels are never built from a menu. */
         entity ES_EnhancedIrrigation_RaisedBarrel
@@ -255,6 +268,120 @@ module Base
             {
                 item 1 [EnhancedIrrigation.FilterCrock],
                 item 1 tags[base:bucket] flags[IsEmpty;ItemCount],
+            }
+        }
+    }
+
+    /*
+        The Boilers: a Metal Drum over a firebox. The OnCreate swaps the built object for a vanilla
+        fireplace with this entity's components, as vanilla's Barrel Oven becomes one, so the game's
+        own Add Fuel, Light and Put Out run it, burn its fuel down and sync it; raw water poured or
+        piped into the drum comes out boiled into this FluidContainer while the fire keeps it hot,
+        locked and rainless as a filter's basin is, and the drum's size. The OnIsValid keeps it
+        outdoors and clear of walls. A pipe in for the raw water and a tap out for the boiled.
+
+        The stone firebox takes bricks or stone blocks, cement to set them and the wrench for the
+        pipe fittings; the welded one takes sheet metal, screws and welding as vanilla's Barrel Oven
+        does, its torch and rods by uses.
+    */
+    entity EnhancedIrrigation_BoilerStone
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_BoilerStone,
+            uiEnabled = false,
+        }
+        component FluidContainer
+        {
+            ContainerName = Boiler,
+            Capacity = 200.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+            InputLocked = true,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.TreatmentSystem.onCreate,
+            OnIsValid = EnhancedIrrigation.Treatment.canPlaceBoiler,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_137,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = Make_With_Brick,
+            time = 300,
+            category = Outdoors,
+            NeedToBeLearn = true,
+            AutoLearnAny = Masonry:4,
+            SkillRequired = Masonry:2,
+            xpAward = Masonry:30,
+            Tooltip = Tooltip_EnhancedIrrigation_Boiler,
+            inputs
+            {
+                item 1 tags[base:masonstrowel] mode:keep flags[Prop1;MayDegradeLight],
+                item 1 tags[base:pipewrench] mode:keep flags[MayDegradeLight],
+                item 1 [Base.MetalDrum],
+                item 12 [Base.ClayBrick;Base.StoneBlock],
+                item 2 tags[base:concrete] flags[DontRecordInput],
+                item 2 [Base.MetalPipe],
+            }
+        }
+    }
+
+    entity EnhancedIrrigation_BoilerWelded
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_BoilerWelded,
+            uiEnabled = false,
+        }
+        component FluidContainer
+        {
+            ContainerName = Boiler,
+            Capacity = 200.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+            InputLocked = true,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.TreatmentSystem.onCreate,
+            OnIsValid = EnhancedIrrigation.Treatment.canPlaceBoiler,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_138,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildMetalStructureMedium,
+            time = 200,
+            category = Outdoors,
+            Tags = Welding,
+            NeedToBeLearn = true,
+            AutoLearnAny = MetalWelding:5,
+            SkillRequired = MetalWelding:3,
+            xpAward = MetalWelding:30,
+            Tooltip = Tooltip_EnhancedIrrigation_Boiler,
+            inputs
+            {
+                item 1 tags[base:weldingmask] mode:keep,
+                item 4 [Base.BlowTorch] flags[DontRecordInput],
+                item 4 [Base.WeldingRods] flags[DontRecordInput],
+                item 1 [Base.MetalDrum],
+                item 4 [Base.SmallSheetMetal],
+                item 4 [Base.Screws],
+                item 2 [Base.MetalPipe],
             }
         }
     }

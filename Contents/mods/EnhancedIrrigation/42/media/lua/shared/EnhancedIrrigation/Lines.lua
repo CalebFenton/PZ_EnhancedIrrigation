@@ -79,8 +79,8 @@ Lines.STEPS = {
 -- frame and a door add none, so a line runs through a doorway. The square drops HoppableN (W)
 -- when anything on that edge can't be hopped (IsoGridSquare.RecalcProperties), so a hoppable edge
 -- holds only fences and low walls, which a pipe is laid over. Vanilla's isWallTo would block
--- those and pass a glazed window.
-local function wallOn(square, north)
+-- those and pass a glazed window. A boiler keeps clear of the same walls (Treatment.wallNear).
+function Lines.wallOn(square, north)
     local props = square:getProperties()
     if north then
         return props:has(IsoFlagType.collideN) and not props:has(IsoFlagType.HoppableN)
@@ -96,7 +96,7 @@ end
 --- loaded.
 function Lines.joins(x, y, z, step)
     local square = getCell():getGridSquare(x + step.edgeDx, y + step.edgeDy, z)
-    return square == nil or not wallOn(square, step.dy ~= 0)
+    return square == nil or not Lines.wallOn(square, step.dy ~= 0)
 end
 
 function Lines.isLine(isoObject)

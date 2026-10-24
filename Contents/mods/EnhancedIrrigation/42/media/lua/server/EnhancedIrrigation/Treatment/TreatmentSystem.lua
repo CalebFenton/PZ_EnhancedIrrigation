@@ -33,23 +33,44 @@ TreatmentSystem.System = EnhancedIrrigation.ObjectSystem.define({
     isObject = Treatment.isUnit,
 })
 
+--- Swaps the built `thumpable` for a vanilla fireplace of its tile, given its entity's components
+--- (its basin, and the name that makes it a unit), as vanilla's Barrel Oven's OnCreate makes one
+--- (BuildRecipeCode.barrelOven): the game's fire menus, burn-down and sync then run its fire.
+--- Returns the fireplace.
+function TreatmentSystem.makeFireplace(thumpable)
+    local square = thumpable:getSquare()
+    local fireplace = IsoFireplace.new(getCell(), square, thumpable:getSprite())
+    GameEntityFactory.CreateIsoObjectEntity(fireplace, thumpable:getEntityScript(), true)
+    square:AddTileObject(fireplace)
+    thumpable:removeFromWorld()
+    thumpable:removeFromSquare()
+    thumpable:setSquare(nil)
+    return fireplace
+end
+
 --- The SpriteConfig OnCreate of every unit's entity (Entities.txt), which the build menu calls on
 --- the authority once the unit stands on its square (ISBuildIsoEntity:setInfo): its record, at
 --- once, as nothing else announces a built entity to the system (OnObjectAdded fires only on a
---- multiplayer client). Returns nothing, so the build menu sends the unit on as it is. A crock's
---- record also notes which bucket the build took (the build menu's chosen inputs), for Take Down.
+--- multiplayer client). A boiler becomes a fireplace first, which the build menu sends on in the
+--- built object's place; other units go as they are. A crock's record also notes which bucket the
+--- build took (the build menu's chosen inputs), for Take Down.
 function TreatmentSystem.onCreate(params)
-    TreatmentSystem.System.instance:loadIsoObject(params.thumpable)
-    local record = Treatment.recordOf(params.thumpable)
-    if not (record and record:spec().kind == "crock" and params.craftRecipeData) then
-        return
+    local unit, result = params.thumpable, nil
+    if Treatment.specOf(unit).kind == "boiler" then
+        unit = TreatmentSystem.makeFireplace(unit)
+        result = { replaceObject = true, object = unit }
     end
-    local used = params.craftRecipeData:getAllConsumedItems()
-    for i = 0, used:size() - 1 do
-        if used:get(i):hasTag(ItemTag.BUCKET) then
-            record.bucket = used:get(i):getFullType()
+    TreatmentSystem.System.instance:loadIsoObject(unit)
+    local record = Treatment.recordOf(unit)
+    if record and record:spec().kind == "crock" and params.craftRecipeData then
+        local used = params.craftRecipeData:getAllConsumedItems()
+        for i = 0, used:size() - 1 do
+            if used:get(i):hasTag(ItemTag.BUCKET) then
+                record.bucket = used:get(i):getFullType()
+            end
         end
     end
+    return result
 end
 
 -- Jobs -----------------------------------------------------------------------------------------------
@@ -89,6 +110,10 @@ local DO = {
         if not cracked then
             EnhancedIrrigation.giveItems(character, Treatment.CROCK_ITEM)
         end
+        return true
+    end,
+    [TreatmentJobs.PATCH_DRUM] = function(character, unit)
+        Treatment.recordOf(unit):patch()
         return true
     end,
 }

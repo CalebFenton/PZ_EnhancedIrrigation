@@ -1,8 +1,9 @@
 -- The hands-on jobs at a treatment unit (Treatment.lua), done on the authority by
 -- server/EnhancedIrrigation/Treatment/TreatmentSystem.lua: Pour In, from a carried container of
 -- water into the unit's head; Clean Filter, on a clogged sand filter; Scrub Crock, on a clogged
--- Filter Crock; and Take Down, lifting a crock out of its bucket. Pour In's `with` is the
--- container. A unit's inlet and outlet links are LinkJobs'.
+-- Filter Crock; Take Down, lifting a crock out of its bucket; and Patch Drum, welding a patch on a
+-- boiler's worn drum. Pour In's `with` is the container. A unit's inlet and outlet links are
+-- LinkJobs'. A boiler's fire is vanilla's (ISBBQMenu).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
@@ -18,10 +19,13 @@ TreatmentJobs.POUR_IN = "PourIn"
 TreatmentJobs.CLEAN_FILTER = "CleanFilter"
 TreatmentJobs.SCRUB_CROCK = "ScrubCrock"
 TreatmentJobs.TAKE_DOWN_CROCK = "TakeDownCrock"
+TreatmentJobs.PATCH_DRUM = "PatchDrum"
 
 -- Minutes to scrub the clogged skin off a crock by hand, and to lift it out of its bucket.
 TreatmentJobs.SCRUB_MINUTES = 15
 TreatmentJobs.TAKE_DOWN_MINUTES = 2
+-- Minutes to weld a patch on a boiler's drum.
+TreatmentJobs.PATCH_MINUTES = 30
 
 -- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand: a shovel, a
 -- garden trowel (both base:takedirt) or a mason's trowel.
@@ -61,6 +65,25 @@ function TreatmentJobs.isCrock(unit)
     return spec ~= nil and spec.kind == "crock" and Treatment.isUnit(unit)
 end
 
+--- Whether `unit` is a boiler.
+function TreatmentJobs.isBoiler(unit)
+    local spec = Treatment.specOf(unit)
+    return spec ~= nil and spec.kind == "boiler" and Treatment.isUnit(unit)
+end
+
+--- The welding torch with the most fuel `character` carries, or nil.
+function TreatmentJobs.weldingTorch(character)
+    local best = nil
+    local torches = character:getInventory():getAllTypeRecurse("Base.BlowTorch")
+    for i = 0, torches:size() - 1 do
+        local torch = torches:get(i)
+        if not best or torch:getCurrentUses() > best:getCurrentUses() then
+            best = torch
+        end
+    end
+    return best
+end
+
 TreatmentJobs.JOBS = {
     [TreatmentJobs.POUR_IN] = {
         minutes = function(unit, item)
@@ -83,6 +106,9 @@ TreatmentJobs.JOBS = {
             local summary = Treatment.currentSummary(unit)
             if summary and summary.cracked then
                 return "Tooltip_EnhancedIrrigation_CrockCracked"
+            end
+            if summary and summary.burntThrough then
+                return "Tooltip_EnhancedIrrigation_BurntThrough"
             end
             if headRoom(unit) <= 0 then
                 return "Tooltip_EnhancedIrrigation_HeadFull"
@@ -127,6 +153,33 @@ TreatmentJobs.JOBS = {
         blocker = function(character, unit)
             return not TreatmentJobs.isCrock(unit) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
         end,
+    },
+    -- A small sheet welded over the worn steel, as vanilla mends metal: each patch restores less.
+    [TreatmentJobs.PATCH_DRUM] = {
+        minutes = TreatmentJobs.PATCH_MINUTES,
+        anim = "BlowTorch", position = "Mid", sound = "BlowTorch",
+        equip = function(character) return TreatmentJobs.weldingTorch(character) end,
+        blocker = function(character, unit)
+            if not TreatmentJobs.isBoiler(unit) then
+                return "Tooltip_EnhancedIrrigation_UnknownJob"
+            end
+            local summary = Treatment.currentSummary(unit)
+            if not summary then
+                return "Tooltip_EnhancedIrrigation_UnknownJob"
+            end
+            local restores = summary.ceiling - Treatment.PATCH_LOSS
+            if restores <= 0 then
+                return "Tooltip_EnhancedIrrigation_DrumWornOut"
+            end
+            return summary.condition >= restores and "Tooltip_EnhancedIrrigation_DrumSound" or nil
+        end,
+        materials = {
+            { skill = "MetalWelding", level = 2 },
+            { tool = "WELDING_MASK", item = "Base.WeldingMask" },
+            { item = "Base.SmallSheetMetal", need = 1 },
+            { types = { "Base.BlowTorch" }, uses = 2, labelKey = "IGUI_EnhancedIrrigation_WeldingTorch" },
+            { types = { "Base.WeldingRods" }, uses = 1, labelKey = "IGUI_EnhancedIrrigation_WeldingRods" },
+        },
     },
 }
 

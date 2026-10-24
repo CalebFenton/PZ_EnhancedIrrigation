@@ -28,5 +28,12 @@
     "IGUI_EnhancedIrrigation_Ripe": "ripe",
     "IGUI_EnhancedIrrigation_Ripening": "ripening, %1 hours to go",
     "IGUI_EnhancedIrrigation_Clogged": "Clogged",
-    "IGUI_EnhancedIrrigation_DryFor": "dry for %1 hours"
+    "IGUI_EnhancedIrrigation_DryFor": "dry for %1 hours",
+    "IGUI_EnhancedIrrigation_Cold": "cold",
+    "IGUI_EnhancedIrrigation_Heating": "heating",
+    "IGUI_EnhancedIrrigation_Hot": "hot",
+    "IGUI_EnhancedIrrigation_Drum": "drum %1%%",
+    "IGUI_EnhancedIrrigation_BurntThrough": "burnt through",
+    "IGUI_EnhancedIrrigation_WeldingTorch": "Welding Torch",
+    "IGUI_EnhancedIrrigation_WeldingRods": "Welding Rods"
 }

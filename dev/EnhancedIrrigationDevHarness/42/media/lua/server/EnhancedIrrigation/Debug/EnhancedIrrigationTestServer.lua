@@ -101,9 +101,10 @@ end
 --- Builds the object of the tile `sprite` on `square` as the build menu builds one
 --- (ISBuildIsoEntity:setInfo): a thumpable with the entity that owns the tile, holding `litres` of
 --- water (tainted when `tainted`), without its OnCreate. Sends it to the clients with its water: a
---- sync sent after can reach a client before the object does, which drops it. Returns it, or nil
---- and what is missing.
-function Server.build(square, sprite, litres, tainted)
+--- sync sent after can reach a client before the object does, which drops it. With `unsent`, the
+--- caller sends it, or what its OnCreate replaces it with, as the build menu does after the
+--- OnCreate. Returns it, or nil and what is missing.
+function Server.build(square, sprite, litres, tainted, unsent)
     local script = mod().tileEntity(sprite)
     if not script then
         return nil, "the entity of the tile " .. tostring(sprite)
@@ -114,7 +115,9 @@ function Server.build(square, sprite, litres, tainted)
         thumpable:getFluidContainer():addFluid(tainted and FluidType.TaintedWater or FluidType.Water, litres)
     end
     square:AddSpecialObject(thumpable)
-    thumpable:transmitCompleteItemToClients()
+    if not unsent then
+        thumpable:transmitCompleteItemToClients()
+    end
     return thumpable
 end
 

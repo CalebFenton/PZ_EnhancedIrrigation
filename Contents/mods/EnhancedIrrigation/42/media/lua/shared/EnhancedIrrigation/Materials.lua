@@ -11,6 +11,8 @@
 --   { item = fullType, need = n }             items of a type, taken; `keep` needs it but takes
 --                                             nothing
 --   { recipe = name }                         a craftRecipe the character knows
+--   { skill = "Perk", level = n }             the skill (a Perks name) at n or above, as a
+--                                             recipe's SkillRequired; takes nothing
 
 require "EnhancedIrrigation/Utilities"
 
@@ -62,6 +64,8 @@ end
 local function haveOf(character, material)
     if material.recipe then
         return character:isRecipeActuallyKnown(material.recipe) and 1 or 0
+    elseif material.skill then
+        return character:getPerkLevel(Perks[material.skill])
     elseif material.tool then
         return EnhancedIrrigation.hasWorkingTool(character, ItemTag[material.tool]) and 1 or 0
     elseif isDrainable(material) then
@@ -79,9 +83,11 @@ end
 function Materials.needs(character, list)
     local needs = {}
     for _, material in ipairs(list) do
-        local need = { have = haveOf(character, material), need = material.uses or material.need or 1 }
+        local need = { have = haveOf(character, material), need = material.uses or material.need or material.level or 1 }
         if material.recipe then
             need.recipe = getScriptManager():getCraftRecipe(material.recipe)
+        elseif material.skill then
+            need.perk = Perks[material.skill]
         elseif material.tool then
             need.tool, need.item = material.tool, material.item
         elseif isDrainable(material) then

@@ -3,7 +3,8 @@
 -- tank and treats it into the basin as its kind says (KINDS); Pour In and the jobs
 -- (TreatmentSystem.lua) change the rest. Unlike a line tile's, a unit's record waits while its chunk
 -- is unloaded, as the basin it fills lives on the unit, and catches up the whole gap when it loads,
--- its inlet feeding it through the gap as it would have loaded.
+-- its inlet feeding it through the gap as it would have loaded. A boiler's fire is vanilla's
+-- fireplace, which the record reads, never runs.
 
 if isClient() then return end
 
@@ -32,10 +33,12 @@ local LEAST_DRAWN = 0.01
 -- a key of Treatment.UNITS, so the record knows its numbers unloaded too; head: litres of raw water
 -- waiting; headTainted: whether any of it is tainted; passed: litres treated since the last
 -- cleaning; ripeHours: wet hours the sand's film has grown; dryHours: hours since the head ran dry;
--- cracked: a crock frost split; bucket: the full type of the bucket a crock stands in; lastHour:
--- when time last reached it.
+-- cracked: a crock frost split; bucket: the full type of the bucket a crock stands in; hotHours: a
+-- boiler drum's heat, as hours of fire; condition and ceiling: its drum's condition and what it was
+-- last built or patched up to; fireLit and fuel: its fire as it was at lastHour, whether lit and
+-- its fuel's minutes; lastHour: when time last reached it.
 TreatmentObject.SAVED_FIELDS = { "unit", "head", "headTainted", "passed", "ripeHours", "dryHours", "cracked",
-    "bucket", "lastHour" }
+    "bucket", "hotHours", "condition", "ceiling", "fireLit", "fuel", "lastHour" }
 
 function TreatmentObject:initNew()
     self.head = 0
@@ -48,9 +51,14 @@ function TreatmentObject:initNew()
 end
 
 -- A unit without a record: a fresh one, or one whose record was lost with the system's save file.
+-- Its kind sets up what only it keeps.
 function TreatmentObject:stateFromIsoObject(isoObject)
     self:initNew()
     self.unit = EnhancedIrrigation.entityName(isoObject)
+    local kind = TreatmentObject.KINDS[self:spec().kind]
+    if kind.init then
+        kind.init(self)
+    end
     self.summary = self:buildSummary()
 end
 
@@ -79,11 +87,16 @@ function TreatmentObject:inletTank(unit)
     return nil
 end
 
+--- Whether a boiler's drum has burnt through: a hole that holds nothing.
+function TreatmentObject:isBurntThrough()
+    return self.condition ~= nil and self.condition <= 0
+end
+
 --- Tops the head up from `tank` with what a link carries in `hours`, while the tank holds water and
---- nothing else; the taint goes with it. Returns whether any moved.
+--- nothing else and the head can hold it; the taint goes with it. Returns whether any moved.
 function TreatmentObject:draw(tank, hours)
     local fluid = tank:getFluidContainer()
-    if not Treatment.isWater(fluid) then
+    if self:isBurntThrough() or not Treatment.isWater(fluid) then
         return false
     end
     -- Read when called: LinkSystem.lua requires this file.
@@ -183,26 +196,102 @@ TreatmentObject.KINDS.crock = {
     end,
 }
 
+-- A drum this close to HOT_HOURS counts as hot: heat added up in ten-minute passes falls short of a
+-- whole hour by a rounding.
+local HOT_SLACK = 1e-6
+
+--- Whether a boiler's drum is hot enough to make its water safe.
+function TreatmentObject:isHot()
+    return (self.hotHours or 0) >= Treatment.HOT_HOURS - HOT_SLACK
+end
+
+-- How much of `lit` hours of fire then `unlit` hours without a drum of heat `hotHours` spends hot,
+-- and its heat after: the fire warms it an hour of heat an hour up to HEAT_MAX_HOURS, and it cools
+-- COOLING times as fast. Worked through within the step, so ten-minute passes and an hour's
+-- catch-up pass the same water.
+local function heat(hotHours, lit, unlit)
+    local hot = math.max(0, lit - math.max(0, Treatment.HOT_HOURS - hotHours))
+    hotHours = math.min(Treatment.HEAT_MAX_HOURS, hotHours + lit)
+    hot = hot + math.min(unlit, math.max(0, (hotHours - Treatment.HOT_HOURS) / Treatment.COOLING))
+    return hot, math.max(0, hotHours - Treatment.COOLING * unlit)
+end
+
+-- The longest a fire lit since the last pass can have burned: the ten-minute pass's span, as a
+-- player can light one only while the boiler is loaded, where the passes run.
+local PASS_HOURS = 10 / 60
+
+-- The boiler's fire is the fireplace's: vanilla burns its fuel down a minute a minute while its
+-- square is loaded, catches a reloaded one up from the world's clock as it loads, and puts it out
+-- when the fuel runs out. The record notes the fire after every pass and, catching up, burns what
+-- it noted down the same way: a fire lit at lastHour burned from the gap's start for as long as
+-- its fuel then lasted, whatever order the game's catch-up and the record's run in after a reload.
+-- A fire burning now that wasn't then, or was refuelled since, burned at least the last pass's
+-- span. The fire heats the drum (heat); while hot it passes clean water at its rate. Fire wears
+-- the drum, slowly while water carries the heat off and fast run dry; burnt through, its water
+-- runs out and it holds and passes nothing.
+TreatmentObject.KINDS.boiler = {
+    init = function(record)
+        record.hotHours = 0
+        record.condition = Treatment.DRUM_CONDITION
+        record.ceiling = Treatment.DRUM_CONDITION
+        record.fireLit = false
+        record.fuel = 0
+    end,
+    begin = function(record, unit, hours)
+        local noted = record.fireLit and record.fuel / 60 or 0
+        record.burnLeft = math.min(hours, unit:isLit() and math.max(noted, PASS_HOURS) or noted)
+    end,
+    step = function(record, unit, spec, hours)
+        local lit = math.min(hours, record.burnLeft)
+        record.burnLeft = record.burnLeft - lit
+        if record:isBurntThrough() then
+            return
+        end
+        local wear = record.head > 0 and Treatment.WEAR_WET or Treatment.WEAR_DRY
+        record.condition = math.max(0, record.condition - wear * lit)
+        local hot
+        hot, record.hotHours = heat(record.hotHours, lit, hours - lit)
+        if record:isBurntThrough() then
+            record.head = 0
+            record.headTainted = false
+            return
+        end
+        record:pass(unit, spec.rate * hot, FluidType.Water)
+    end,
+    finish = function(record, unit)
+        record.fireLit, record.fuel, record.burnLeft = unit:isLit(), unit:getFuelAmount(), nil
+    end,
+}
+
 -- Time -----------------------------------------------------------------------------------------------
 
 --- `hours` of time on the unit, in steps of an hour at most, the inlet topping the head up before
 --- each, so a long catch-up drains the head and then dries the sand in order, unless the inlet keeps
---- it wet. Does nothing while the unit is unloaded.
+--- it wet. A kind may look at the unit before the steps (`begin`) and, however short the time, after
+--- (`finish`). Does nothing while the unit is unloaded.
 function TreatmentObject:advance(hours)
     local unit = self:getIsoObject()
     local spec = unit and Treatment.specOf(unit)
-    if not spec or hours <= 0 then
+    if not spec then
         return
     end
     local kind = TreatmentObject.KINDS[spec.kind]
-    local tank = self:inletTank(unit)
-    while hours > 0 do
-        local step = math.min(1, hours)
-        if tank and self:draw(tank, step) then
-            self.drewFrom = tank
+    if hours > 0 then
+        if kind.begin then
+            kind.begin(self, unit, hours)
         end
-        kind.step(self, unit, spec, step)
-        hours = hours - step
+        local tank = self:inletTank(unit)
+        while hours > 0 do
+            local step = math.min(1, hours)
+            if tank and self:draw(tank, step) then
+                self.drewFrom = tank
+            end
+            kind.step(self, unit, spec, step)
+            hours = hours - step
+        end
+    end
+    if kind.finish then
+        kind.finish(self, unit)
     end
 end
 
@@ -256,6 +345,12 @@ function TreatmentObject:scrub()
     self.passed = 0
 end
 
+--- Patch Drum: the patch restores the drum to a little less than the last one did.
+function TreatmentObject:patch()
+    self.ceiling = self.ceiling - Treatment.PATCH_LOSS
+    self.condition = self.ceiling
+end
+
 -- What every client keeps: the head and the state the menu words, rounded, so a pass that changes
 -- nothing a player sees sends nothing.
 function TreatmentObject:buildSummary()
@@ -267,6 +362,10 @@ function TreatmentObject:buildSummary()
         dryHours = math.floor(self.dryHours),
         clogged = spec ~= nil and self:isClogged(spec),
         cracked = self.cracked == true,
+        hot = self:isHot(),
+        condition = self.condition and math.ceil(self.condition),
+        ceiling = self.ceiling,
+        burntThrough = self:isBurntThrough(),
     }
 end
 

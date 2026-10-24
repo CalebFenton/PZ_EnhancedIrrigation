@@ -5,11 +5,14 @@
 -- FluidContainer, from which vanilla's menus drink, fill and empty. The basin is input-locked, so
 -- water reaches it only through the unit. Water reaches the head by Pour In (TreatmentJobs.lua) or
 -- an inlet link from a tank; an outlet link takes the basin's water on to a tank (Links.lua). What
--- a kind does is in its rows here and in TreatmentObject.KINDS, not spread through the code.
+-- a kind does is in its rows here and in TreatmentObject.KINDS, not spread through the code. The
+-- sand filters and the Filter Crock are entities; a boiler is also a vanilla fireplace, which the
+-- game's own fire menus fuel, light and put out.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
+require "EnhancedIrrigation/Lines"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Treatment = {}
@@ -19,7 +22,8 @@ Treatment.SYSTEM_NAME = "enhanced_irrigation_treatment"
 
 -- Every unit's tile, for load hooks.
 Treatment.SPRITES = { EnhancedIrrigation.Sprites.BARREL_FILTER, EnhancedIrrigation.Sprites.BRICK_FILTER,
-    EnhancedIrrigation.Sprites.FILTER_CROCK }
+    EnhancedIrrigation.Sprites.FILTER_CROCK, EnhancedIrrigation.Sprites.BOILER_STONE,
+    EnhancedIrrigation.Sprites.BOILER_WELDED }
 
 -- Slow sand filters ----------------------------------------------------------------------------------
 
@@ -34,6 +38,23 @@ Treatment.DRY_DEATH_HOURS = 48
 -- A clogged filter's share of its rate: a trickle, in one visible step rather than a fade.
 Treatment.CLOGGED_FACTOR = 0.1
 
+-- Boilers --------------------------------------------------------------------------------------------
+
+-- Hours of fire that bring a cold drum's water to a safe heat (held at 60 °C for half an hour or
+-- boiled), and the most heat it banks: a drum that hot stays safe a while after the fire dies.
+Treatment.HOT_HOURS = 1
+Treatment.HEAT_MAX_HOURS = 2
+-- How many times faster an unlit drum loses its heat than a fire gives it: a drum of water in the
+-- open air cools fast.
+Treatment.COOLING = 2
+-- A new drum's condition, and what an hour of fire takes of it: with water in it the water carries
+-- the heat off, run dry the steel scorches.
+Treatment.DRUM_CONDITION = 100
+Treatment.WEAR_WET = 0.5
+Treatment.WEAR_DRY = 10
+-- What each Patch Drum takes off the condition a patch restores, as vanilla's repairs fall short.
+Treatment.PATCH_LOSS = 10
+
 -- Pour In ---------------------------------------------------------------------------------------------
 
 -- Litres a minute poured from a carried container, about vanilla's pour.
@@ -45,11 +66,14 @@ Treatment.POUR_LITRES_PER_MINUTE = 4
 -- links. Its basin's size is its entity's FluidContainer's. A Barrel Filter's rate is a household's
 -- daily water in a day (design, Starting numbers); a Brick Filter's bigger bed of sand scales its
 -- numbers. A Filter Crock seeps one person's drinking and cooking water in a day; it holds about
--- what a bucket does.
+-- what a bucket does. A boiler's head is its Metal Drum, and its rate fast clean water for a
+-- woodpile; the firebox under it changes only what building it takes.
 Treatment.UNITS = {
     EnhancedIrrigation_BarrelFilter = { kind = "sand", head = 50, rate = 4, clogLitres = 2000, plumbed = true },
     EnhancedIrrigation_BrickFilter = { kind = "sand", head = 200, rate = 16, clogLitres = 8000, plumbed = true },
     EnhancedIrrigation_FilterCrock = { kind = "crock", head = 8, rate = 10 / 24, clogLitres = 300 },
+    EnhancedIrrigation_BoilerStone = { kind = "boiler", head = 200, rate = 30, plumbed = true },
+    EnhancedIrrigation_BoilerWelded = { kind = "boiler", head = 200, rate = 30, plumbed = true },
 }
 
 -- The crock Take Down gives back, and the bucket it gives back when its record never learned which
@@ -101,9 +125,34 @@ function Treatment.linkOf(at, role)
     return nil
 end
 
+--- Whether a wall (Lines.wallOn) stands on any edge of `square` or of the eight squares around it:
+--- a fire wants a clear square on every side. Squares this side hasn't loaded count as clear.
+function Treatment.wallNear(square)
+    local x, y, z = square:getX(), square:getY(), square:getZ()
+    -- The north edges of the three columns and the west edges of the three rows, from the row and
+    -- column before the block to the one after it, which holds the block's south and east edges.
+    for dx = -1, 2 do
+        for dy = -1, 2 do
+            local near = getCell():getGridSquare(x + dx, y + dy, z)
+            if near and ((dx <= 1 and EnhancedIrrigation.Lines.wallOn(near, true))
+                    or (dy <= 1 and EnhancedIrrigation.Lines.wallOn(near, false))) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+--- The SpriteConfig OnIsValid of the boilers (Entities.txt), which the build cursor asks of each
+--- square: a fire goes outdoors and clear of walls, the rule vanilla's fires leave to the player.
+function Treatment.canPlaceBoiler(params)
+    local square = params.square
+    return square ~= nil and square:isOutside() and not Treatment.wallNear(square)
+end
+
 -- What the menu says ---------------------------------------------------------------------------------
 
--- Each kind's words for its state, from its summary, as a list of texts.
+-- Each kind's words for its state, from its summary and the unit, as a list of texts.
 Treatment.KINDS = {
     sand = {
         words = function(summary)
@@ -132,12 +181,24 @@ Treatment.KINDS = {
             return summary.clogged and { getText("IGUI_EnhancedIrrigation_Clogged") } or {}
         end,
     },
+    -- Whether the drum is hot from the record, which counts the hours of fire; whether it is
+    -- heating from the fire as vanilla shows it on this side.
+    boiler = {
+        words = function(summary, unit)
+            if summary.burntThrough then
+                return { getText("IGUI_EnhancedIrrigation_BurntThrough") }
+            end
+            local heat = summary.hot and "IGUI_EnhancedIrrigation_Hot"
+                or unit:isLit() and "IGUI_EnhancedIrrigation_Heating" or "IGUI_EnhancedIrrigation_Cold"
+            return { getText(heat), getText("IGUI_EnhancedIrrigation_Drum", summary.condition) }
+        end,
+    },
 }
 
---- The menu's line for a unit of `spec` with `summary`: the raw water waiting, then its state.
-function Treatment.statusText(spec, summary)
+--- The menu's line for `unit` of `spec` with `summary`: the raw water waiting, then its state.
+function Treatment.statusText(unit, spec, summary)
     local text = getText("IGUI_EnhancedIrrigation_Head", math.floor(summary.head + 0.5), spec.head)
-    local words = Treatment.KINDS[spec.kind].words(summary)
+    local words = Treatment.KINDS[spec.kind].words(summary, unit)
     return #words > 0 and text .. ", " .. table.concat(words, ", ") or text
 end
 

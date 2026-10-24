@@ -2,7 +2,7 @@
 
 How the mod's systems work, for players who want more than the Workshop page tells them, and where to start looking for the gear. Figures assume the default sandbox settings and vanilla's own plant figures: 1 L of water is 50 water points, a plant holds 100, and a plant uses about 5 a day.
 
-This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, and sand filters and a filter crock that make rain water safe to drink. Pumps, boilers and timers are planned, but they aren't in the game yet.
+This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, and sand filters, a filter crock and boilers that make rain water safe to drink. Pumps and timers are planned, but they aren't in the game yet.
 
 ## Mechanics
 
@@ -94,30 +94,35 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 |---|---|
 | Building a filter | In the build menu, beside the rain collectors. **Barrel Filter**: Carpentry 2; 6 planks, 5 nails, a gravel bag, 2 sand bags, 5 charcoal, one plastic, iron or lead pipe and one use of glue, epoxy or duct tape; a hammer and a shovel, which you keep. **Brick Filter**: Masonry 3; 24 clay bricks, a bucket of cement or concrete (4 uses), 2 gravel bags, 6 sand bags, 15 charcoal and an iron pipe; a mason's trowel and a shovel, which you keep. Each emptied bag gives its sack back. Both give XP. You learn them from *Cisterns for Kentucky*, or at Carpentry 6 and Masonry 5. |
 | How it works | Raw water waits on top of the sand and seeps through into the filter's basin below, about 4 L an hour in a Barrel Filter (about 100 L a day) and 16 L an hour in a Brick Filter. The top holds 50 L in a barrel and 200 L in brick; so does the basin. Once the basin is full, the water waits on top. The menu's first line says how much is waiting and how the sand is. |
-| Pour In | Right-click the filter or crock, then **Pour In** and the container. Any container of water or tainted water in your main inventory; nothing else goes in. It takes a minute for every 4 L, and the container keeps what doesn't fit. |
+| Pour In | Right-click the filter, crock or boiler, then **Pour In** and the container. Any container of water or tainted water in your main inventory; nothing else goes in. It takes a minute for every 4 L, and the container keeps what doesn't fit. |
 | Ripening | A new filter passes water as tainted as it came in for its first 3 days of use (72 hours with water on the sand), then clean. Check the basin with vanilla's tooltip, and Empty it before plumbing its outlet to a clean tank, or the first batch taints the tank. |
 | Keeping it alive | The sand's film needs water. Two days with nothing on the sand kill it, and it ripens again from scratch. So does a hard freeze (-7 °C or colder) while water stands on the sand, and nothing passes that hour. An empty filter, or one in a heated room, rides out the frost. |
 | Clogging | After 2000 L through a Barrel Filter, or 8000 L through a Brick Filter, it slows to a tenth of its rate and its menu says **Clogged**. **Clean Filter** takes 60 minutes by hand, or 30 with a shovel, garden trowel or mason's trowel. After a cleaning the filter passes tainted water for a day while it ripens again. |
-| Drinking from it | The basin, or the crock's bucket, works with vanilla's own actions: drink, fill a container, or empty it. Vanilla won't pour into it, so water only reaches it through the sand or the clay. |
-| Plumb Inlet | From the filter's menu, to a tank in reach. Reach, pipe, joints, time and learning are the same as Plumb to Tank. The tank must stand at least level with the filter. Every ten minutes it tops the filter up, as long as the tank holds nothing but water. Taint goes with it. |
-| Plumb Outlet | From the filter's menu, to a tank that stands no higher than the filter. Every ten minutes it empties the basin into the tank. Use a lidded tank so rain can't taint it. A filter has one inlet and one outlet, to different tanks. |
-| Unplumb | From the filter, the tank, or the bare floor where either stood, as for tanks. |
+| Drinking from it | The basin, the crock's bucket or the boiler's tap works with vanilla's own actions: drink, fill a container, or empty it. Vanilla won't pour into it, so water only reaches it through the sand, the clay or the fire. |
+| Plumb Inlet | From the filter's or boiler's menu, to a tank in reach. Reach, pipe, joints, time and learning are the same as Plumb to Tank. The tank must stand at least level with it. Every ten minutes it tops the filter or drum up, as long as the tank holds nothing but water. Taint goes with it. If you come back to a filter or boiler whose inlet tank is still out of range, it waits for the tank before catching up. |
+| Plumb Outlet | From the filter's or boiler's menu, to a tank that stands no higher than it. Every ten minutes it empties the basin into the tank. Use a lidded tank so rain can't taint it. A filter or boiler has one inlet and one outlet, to different tanks. |
+| Unplumb | From the filter or boiler, the tank, or the bare floor where either stood, as for tanks. |
 | Making a Filter Crock | Shape it at a pottery wheel: **Shape Filter Crock** takes Pottery 4, 4 clay, 2 charcoal and half a litre of water from any container you carry, which you keep, and gives Pottery XP. Then fire it at a kiln: **Fire Filter Crock**, also Pottery 4, takes the unfired crock, something to light the fire and a log or charcoal. Pottery 5 teaches both, and so does researching a Clay Jar or a Filter Crock. |
 | Setting the crock up | In the build menu, beside the rain collectors: a Filter Crock and an empty bucket of any kind. No skill; you learn it with the crock's recipes. |
 | How the crock works | Pour In up to 8 L of raw water. It seeps through the clay into the bucket below, clean however tainted it went in, at about 10 L a day. There's nothing to ripen and nothing to plumb. Whatever bucket it stands in, it fills to a common bucket's 10 L; once that's full, the water waits in the crock. |
 | Scrub Crock | After 300 L the crock slows to a tenth of its rate and its menu says **Clogged**. **Scrub Crock** takes 15 minutes by hand and brings the full rate back at once. |
 | Frost and the crock | A hard freeze (-7 °C or colder) with any water in the crock cracks it. The water runs out, it passes nothing more, Pour In is refused and its menu says **cracked**. An empty crock, or one in a heated room, is safe. |
 | Take Down | 2 minutes, from the crock's menu. You get back the bucket it stood in, with whatever water the bucket holds, and the crock unless it's cracked. Raw water still in the crock spills. |
+| Building a boiler | In the build menu, beside the rain collectors, outdoors only and with no wall on the boiler's square or the eight around it. **Boiler (Stone Firebox)**: Masonry 2; a Metal Drum, 12 clay bricks or stone blocks, 2 uses of cement or concrete and 2 iron pipes; a mason's trowel and a pipe wrench, which you keep. **Boiler (Welded Firebox)**: Welding 3; a Metal Drum, 4 small steel sheets, 4 screws and 2 iron pipes, with 4 uses of a welding torch and of welding rods; a welder mask, which you keep. Both give XP. Masonry 4 teaches the stone one and Welding 5 the welded one; researching a Metal Drum teaches each you have the skill to research (Masonry 1, Welding 2). Both work the same. |
+| Its fire | The boiler is a vanilla fire, like the Barrel Oven: its menu holds vanilla's fuel line, **Add Fuel**, **Light** and **Put Out**, and it burns its fuel down, lights and warms the area like one. Like vanilla's fireplaces, it never spreads fire. |
+| How it works | Raw water waits in the drum, up to 200 L. Lit, the drum is hot after an hour; while hot, it passes about 30 L an hour into its tap, clean however tainted it went in, until the tap holds 200 L. The fire banks up to two hours of heat: put out after that, the drum stays hot about half an hour, then passes nothing. A boiler that never got hot passes nothing. The menu's line says how much is waiting, whether the drum is cold, heating or hot, and its condition. |
+| Wear | Every hour of fire wears the drum a little while it holds water, so a drum lasts about 200 hours of fire. Run dry, it scorches fast: 10 hours of fire with nothing in the drum burn it through. A burnt-through drum holds and passes nothing, Pour In is refused, the inlet draws nothing, and its menu says **burnt through**. |
+| Patch Drum | From the boiler's menu: Welding 2, a small steel sheet, 2 uses of a welding torch and 1 of welding rods, and a welder mask; 30 minutes. Each patch restores the drum 10% less than the last: to 90%, then 80%, and so on. It's refused while the drum is already in better shape than the patch would leave it, and once there's nothing left to patch; then build a new boiler. |
 
 ### Learning and options
 
 | Mechanic | How it works |
 |---|---|
-| *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures and filters) and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
-| Skills | Carpentry 5 teaches the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Pottery 5 the Filter Crock (shaping, firing and setting it up); Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
-| Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. |
-| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Pour In, Clean Filter, Scrub Crock and Take Down. |
-| XP | Building the Tank Stand and the Barrel Filter give Carpentry XP; the Brick Filter gives Masonry XP; shaping a Filter Crock gives Pottery XP. |
+| *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures, filters and boilers) and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
+| Skills | Carpentry 5 teaches the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 5 the welded-firebox Boiler, Pottery 5 the Filter Crock (shaping, firing and setting it up); Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
+| Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. Researching a Metal Drum teaches the stone-firebox Boiler from Masonry 1 and the welded-firebox Boiler from Welding 2. |
+| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Pour In, Clean Filter, Scrub Crock, Take Down and Patch Drum. |
+| XP | Building the Tank Stand and the Barrel Filter give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler gives Welding XP; shaping a Filter Crock gives Pottery XP. |
 | Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. **Plumbing keeps taint** (on by default): vanilla's Plumb makes the mod's connection and old plumbed fixtures change over; off, vanilla's plumbing is untouched and a rooftop barrel's water comes out clean. |
 | Adding to a save | The pamphlet turns up only in containers nobody has opened yet. Barrels already in your world count as tanks straight away. |
 
@@ -133,9 +138,11 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Filter Crock (Unfired) | Item, weight 0.5 | Pottery 4 at a pottery wheel: 4 clay, 2 charcoal, 0.5 L of water | Fired at a kiln into a Filter Crock |
 | Filter Crock | Item, weight 0.5 | Fired at a kiln: the unfired crock and fuel | Set in a bucket |
 | Filter Crock in a bucket | Built | A Filter Crock and an empty bucket | About 10 L of clean water a day |
+| Boiler (Stone Firebox) | Built | Masonry 2: Metal Drum, 12 clay bricks or stone blocks, 2 uses of cement, 2 iron pipes; mason's trowel, pipe wrench | About 30 L of clean water an hour while its fire keeps it hot |
+| Boiler (Welded Firebox) | Built | Welding 3: Metal Drum, 4 small steel sheets, 4 screws, 2 iron pipes, 4 uses of torch and rods; welder mask | The same |
 | Garden line tile | Laid | One tile of pipe and its joint | Carries water; holed, it waters the plant on its square |
 | Tap | Fitted to a line tile | A Pipe Wrench, one length of pipe and its joint | Where you run the line |
-| Buried pipe | Plumbed between tanks, from a tank to a fixture, or into and out of a filter | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, or through a filter |
+| Buried pipe | Plumbed between tanks, from a tank to a fixture, or into and out of a filter or boiler | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, or through a filter or boiler |
 | Plumbed fixture | A vanilla sink, bath, shower, toilet or washer | Plumb to Tank, or vanilla's Plumb | Holds its tank's water for vanilla's drink, fill, wash and washer |
 
 Everything else is vanilla:
@@ -144,15 +151,19 @@ Everything else is vanilla:
 |---|---|
 | Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet |
 | Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack; the Barrel Filter's outlet |
-| Bucket of Clay Cement or Concrete | Joints in clay pipe; the Brick Filter |
-| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Plumb Inlet and Outlet, vanilla's Plumb, Unplumb |
+| Bucket of Clay Cement or Concrete | Joints in clay pipe; the Brick Filter; the stone-firebox Boiler |
+| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Plumb Inlet and Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler |
 | Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes |
 | Rain barrel | Set on a Tank Stand |
 | Sand Bag, Gravel Bag, Charcoal, Clay Bricks | The filters |
 | Clay, Charcoal; a pottery wheel and a kiln | Making the Filter Crock |
 | Bucket, of any kind | Under the Filter Crock |
 | Clay Jar | Research it to learn the Filter Crock |
-| Shovel, garden trowel, mason's trowel | Building the filters; Clean Filter |
+| Metal Drum | The boiler's drum; research it to learn the boilers |
+| Clay Bricks or Stone Blocks, Iron Pipe | The stone-firebox Boiler |
+| Small Steel Sheet, Screws, Welding Torch, Welding Rods, Welder Mask | The welded-firebox Boiler; Patch Drum |
+| Logs, planks and anything else vanilla burns; a lighter or matches and tinder | Fuelling and lighting a boiler, as any vanilla fire |
+| Shovel, garden trowel, mason's trowel | Building the filters and the stone-firebox Boiler; Clean Filter |
 
 ## Where to look
 

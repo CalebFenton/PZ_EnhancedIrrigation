@@ -4,12 +4,13 @@ require "ISUI/ISInventoryPaneContextMenu"
 require "Entity/ISEntityUI"
 
 -- How the character learns the mod's recipes, the build-menu ones (the Tank Stand, the Barrel and
--- Brick Filters and setting up a Filter Crock), the crock's wheel and kiln recipes, and Plumb to
--- Tank (knowledge with nothing to craft, Recipes.txt), and where the pamphlet that teaches some of
--- them turns up. Reading and researching go through vanilla's actions, levels through the
--- authority's XP award, which fires LevelPerk; the lists are vanilla's own windows and menus. Each
--- side's copy of the character is checked: the authority's decides the builds and the plumbing,
--- this client's the menus. EnhancedIrrigationTestServerLearning.lua holds the server's half.
+-- Brick Filters, setting up a Filter Crock and the two Boilers), the crock's wheel and kiln
+-- recipes, and Plumb to Tank (knowledge with nothing to craft, Recipes.txt), and where the pamphlet
+-- that teaches some of them turns up. Reading and researching go through vanilla's actions, levels
+-- through the authority's XP award, which fires LevelPerk; the lists are vanilla's own windows and
+-- menus. Each side's copy of the character is checked: the authority's decides the builds and the
+-- plumbing, this client's the menus. EnhancedIrrigationTestServerLearning.lua holds the server's
+-- half.
 
 local T = EnhancedIrrigationTest
 local test, expect = T.test, T.expect
@@ -18,9 +19,10 @@ local PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
 local STAND, PLUMB = "EnhancedIrrigation_TankStand", "EnhancedIrrigation_PlumbToTank"
 local CROCK = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
     "EnhancedIrrigation_FilterCrock" }
-local BUILDS = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter", CROCK[3] }
+local BOILERS = { "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded" }
+local BUILDS = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter", CROCK[3], BOILERS[1], BOILERS[2] }
 local PAMPHLET_RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB }
-local RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB, CROCK[1], CROCK[2], CROCK[3] }
+local RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB, CROCK[1], CROCK[2], CROCK[3], BOILERS[1], BOILERS[2] }
 
 -- Each of `names` marked true.
 local function marked(names)
@@ -125,6 +127,36 @@ test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
     validate = function(self)
         expect(self.offered, "the Clay Jar's menu offers no Research")
         expectKnown(self, "researching a Clay Jar", marked(CROCK))
+    end,
+})
+
+-- A character at the research level of both boilers (two-thirds of each one's skill: Masonry for
+-- the stone firebox, MetalWelding for the welded) researches a Metal Drum, which vanilla's script
+-- doesn't make researchable, and learns both boilers, on both sides, and nothing else. Catches the
+-- drum's research added on one side only, or not at all.
+test("irrigation_learning_researching_a_metal_drum_teaches_the_boilers", {
+    instant = true,
+    hour = 12,
+    run = function(self)
+        T.knowRecipes(self, RECIPES, false)
+        T.setPerk(self, Perks.Masonry, 1)
+        T.setPerk(self, Perks.MetalWelding, 2)
+        T.give(self, "drum", { { type = "Base.MetalDrum" } })
+        T.step(function()
+            local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items.drum[1] }, 0, 0)
+            if not T.need(self, type(context) == "table" and context, "the Metal Drum's right-click menu") then return end
+            local research = T.findNamed(context, context, getText("ContextMenu_ResearchCraft"))
+            self.offered = T.offered(research)
+            if self.offered then
+                T.choose(research)
+            end
+            context:hideAndChildren()
+        end)
+        awaitKnown(self, marked(BOILERS))
+    end,
+    validate = function(self)
+        expect(self.offered, "the Metal Drum's menu offers no Research")
+        expectKnown(self, "researching a Metal Drum", marked(BOILERS))
     end,
 })
 

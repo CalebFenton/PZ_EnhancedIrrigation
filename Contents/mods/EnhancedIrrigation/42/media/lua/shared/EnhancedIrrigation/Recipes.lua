@@ -14,7 +14,7 @@ EnhancedIrrigation.Recipes = Recipes
 Recipes.AUTO_LEARN = {
     "EnhancedIrrigation_TankStand", "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter",
     "EnhancedIrrigation_PlumbToTank", "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
-    "EnhancedIrrigation_FilterCrock",
+    "EnhancedIrrigation_FilterCrock", "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded",
 }
 
 -- Vanilla items that teach the mod's recipes when researched, by full type: what a player who
@@ -24,6 +24,9 @@ Recipes.RESEARCH = {
     -- A potter who studies a jar sees how to throw a porous one.
     ["Base.ClayJar"] = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
         "EnhancedIrrigation_FilterCrock" },
+    -- A drum is half a boiler: whoever studies one sees how to set it over a fire, in brick or plate,
+    -- as far as their skill reaches.
+    ["Base.MetalDrum"] = { "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded" },
 }
 
 --- Adds RESEARCH to the vanilla items' scripts through their own parser (Item.DoParam), which keeps

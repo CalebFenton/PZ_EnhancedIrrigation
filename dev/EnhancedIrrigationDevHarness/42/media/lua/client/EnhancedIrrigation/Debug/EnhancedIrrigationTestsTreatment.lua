@@ -6,16 +6,20 @@ require "EnhancedIrrigation/Treatment"
 require "EnhancedIrrigation/TreatmentJobs"
 require "EnhancedIrrigation/UI/TankMenu"
 require "EnhancedIrrigation/UI/TreatmentMenu"
+require "ISUI/ISBBQMenu"
+require "Camping/ISCampingMenu"
 
--- The sand filters and the Filter Crock (Treatment.lua, TreatmentJobs.lua, TreatmentObject.lua,
--- TreatmentSystem.lua, TreatmentMenu.lua, the inlet and outlet jobs of LinkJobs, their entities in
--- Entities.txt, the crock's items and recipes): building them from the build menu, Pour In, what
--- passes into the basin ripe and unripe, the film dying dry or frozen, clogging and Clean Filter,
--- the inlet and outlet links and their heights, the basin in vanilla's menus, and the record
--- catching up after its chunk reloads; the crock shaped and fired, set in a bucket, seeping clean
--- water, clogged and scrubbed, cracked by frost and taken down. Units are placed, read and run by
--- EnhancedIrrigationTestServerTreatment.lua; time runs there through the record's own advance for
--- set hours, so the clock doesn't decide it.
+-- The sand filters, the Filter Crock and the Boilers (Treatment.lua, TreatmentJobs.lua,
+-- TreatmentObject.lua, TreatmentSystem.lua, TreatmentMenu.lua, the inlet and outlet jobs of
+-- LinkJobs, their entities in Entities.txt, the crock's items and recipes): building them from the
+-- build menu, Pour In, what passes into the basin ripe and unripe, the film dying dry or frozen,
+-- clogging and Clean Filter, the inlet and outlet links and their heights, the basin in vanilla's
+-- menus, and the record catching up after its chunk reloads; the crock shaped and fired, set in a
+-- bucket, seeping clean water, clogged and scrubbed, cracked by frost and taken down; the boiler
+-- placed only outdoors and clear of walls, fuelled, lit and put out through vanilla's fire menu,
+-- passing clean water only while hot, scorching dry, burning through and patched, and plumbed.
+-- Units are placed, read and run by EnhancedIrrigationTestServerTreatment.lua; time runs there
+-- through the record's own advance for set hours, so the clock doesn't decide it.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -26,7 +30,9 @@ local Treatment, TreatmentJobs, TankMenu = EnhancedIrrigation.Treatment, Enhance
 local LITRES = 0.05
 local BARREL, BRICK = "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter"
 local CROCK = "EnhancedIrrigation_FilterCrock"
-local SPRITES = { [BARREL] = Sprites.BARREL_FILTER, [BRICK] = Sprites.BRICK_FILTER, [CROCK] = Sprites.FILTER_CROCK }
+local STONE, WELDED = "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded"
+local SPRITES = { [BARREL] = Sprites.BARREL_FILTER, [BRICK] = Sprites.BRICK_FILTER, [CROCK] = Sprites.FILTER_CROCK,
+    [STONE] = Sprites.BOILER_STONE, [WELDED] = Sprites.BOILER_WELDED }
 -- The empty sack a bag of sand or gravel leaves (its ReplaceOnDeplete).
 local SACK = "Base.EmptySandbag"
 
@@ -590,15 +596,19 @@ end
 
 -- The basin offers vanilla's Drink, Fill and Empty, but no pour into it, though the character
 -- carries water; a bucket filled from it holds its water as it was. A Barrel Filter's basin holds
--- tainted water, and Drink warns of it; a crock's, clean, and Drink doesn't. Catches a basin vanilla
--- can't reach, one it can pour into past the sand or the clay, or a taint lost or made up. The
--- crock's bucket holds no more than the one carried, so that one starts half full: a Fill that
--- empties its source ends in an invalid action on a multiplayer client, which clears the queue.
+-- tainted water, and Drink warns of it; a crock's or a boiler's, clean, and Drink doesn't; the
+-- boiler is a vanilla fireplace, whose fire menu stands beside the fluid menu. Catches a basin
+-- vanilla can't reach, one it can pour into past the sand, the clay or the fire, or a taint lost or
+-- made up. The crock's bucket holds no more than the one carried, so that one starts half full: a
+-- Fill that empties its source ends in an invalid action on a multiplayer client, which clears the
+-- queue.
 for _, case in ipairs({
     { name = "irrigation_treatment_vanilla_menu_drinks_fills_and_empties_the_basin", entity = BARREL, litres = 20,
         tainted = true, inBucket = 0 },
     { name = "irrigation_treatment_crock_vanilla_menu_drinks_fills_and_empties_the_basin", entity = CROCK, litres = 8,
         tainted = false, inBucket = 5 },
+    { name = "irrigation_treatment_boiler_vanilla_menu_drinks_fills_and_empties_the_basin", entity = STONE, litres = 20,
+        tainted = false, inBucket = 0 },
 }) do
     T.test(case.name, {
         instant = true,
@@ -955,5 +965,345 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
         expectNear("the whole crock's bucket", forged.litres, 6, LITRES)
         expect(not forged.tainted, "the whole crock's bucket came back tainted")
         expectNear("the cracked crock's bucket", plain.litres, 3, LITRES)
+    end,
+})
+
+-- The Boilers ------------------------------------------------------------------------------------------
+
+-- A west wall tile, which stands on its square's west edge.
+local WALL_WEST = "walls_exterior_house_01_0"
+
+-- The squares round a boiler's that Treatment.wallNear reads, its own first: those around it and,
+-- for their east and south edges, the row and column beyond.
+local CLEAR = { { 0, 0 } }
+for dx = -1, 2 do
+    for dy = -1, 2 do
+        if dx ~= 0 or dy ~= 0 then
+            table.insert(CLEAR, { dx, dy })
+        end
+    end
+end
+
+-- The handle of a bare outdoor square with nothing on the squares around it to put a wall near it,
+-- or nil.
+local function clearSpot(self)
+    local spots = T.layout(self, CLEAR, { bare = true })
+    return spots and spots[1]
+end
+
+-- Whether the build cursor of `entity` would take `square` (ISBuildIsoEntity:isValid, the
+-- entity's OnIsValid among it). Server Lua, loaded after this file, so reached at call time.
+local function placeable(entity, square)
+    local player = T.player()
+    local build = ISBuildIsoEntity:new(player, T.buildEntry("Base." .. entity), 1,
+        ISInventoryPaneContextMenu.getContainers(player))
+    build.player = player:getPlayerNum()
+    return build:isValid(square)
+end
+
+-- The option in the unit's menu running vanilla's `handler`, for T.useOption.
+local function running(handler)
+    return function(context) return optionRunning(context, handler) end
+end
+
+-- Queues the boiler's fire set on the authority (treatment.fire: `fuel` minutes if given, lit or
+-- not) and a wait for this client's copy to show it, as vanilla's own fire actions leave it.
+local function setFire(self, unit, label, lit, fuel)
+    T.read(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }), label)
+    T.waitFor(self, function()
+        local copy = copyOf(unit)
+        return copy ~= nil and copy:isLit() == lit
+    end, "this client's copy of the boiler " .. (lit and "lit" or "out"))
+end
+
+-- Fuel for the tests' fires, in minutes: longer than any test runs one.
+local FUEL = 600
+
+-- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
+-- on both sides, with its record at once, its drum taken. Its menu holds vanilla's Add Fuel and
+-- Light beside its own line, which reads the empty drum cold and sound. Catches a recipe the build
+-- menu can't build, a boiler that isn't a fire or has no record, or its menu split from the fire's.
+for _, entity in ipairs({ STONE, WELDED }) do
+    T.test("irrigation_treatment_boiler_" .. (entity == STONE and "stone" or "welded") .. "_built_from_build_menu", {
+        instant = true,
+        run = function(self)
+            local spot = clearSpot(self)
+            if not spot then return end
+            self.unit = T.buildFromMenu(self, "Base." .. entity, spot, SPRITES[entity])
+            if not self.unit then return end
+            self.unit.spec = Treatment.UNITS[entity]
+            readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
+            T.count(self, "left", { "Base.MetalDrum" })
+            T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
+                "this client's summary of the built boiler")
+            readMenu(self, self.unit, "built")
+            T.step(function()
+                local copy = copyOf(self.unit)
+                self.clientFire = copy ~= nil and instanceof(copy, "IsoFireplace")
+            end)
+        end,
+        validate = function(self)
+            expect(self.canBuild and self.validSquare, "the build menu can't build the boiler from its materials on a clear square")
+            local built = self.reads.built
+            expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
+            expect(built.fireplace, "the built boiler isn't a vanilla fireplace on the server")
+            expect(self.clientFire, "this client's copy of the boiler isn't a vanilla fireplace")
+            expect(built.record and built.record.head == 0, "the built boiler has no record, or water in its head")
+            expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the built boiler's basin isn't empty and locked")
+            expect(self.counts.left["Base.MetalDrum"] == 0, "building left the Metal Drum")
+            expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, self.unit.spec.head))
+            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Cold"))
+            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
+            expectLine(self, "built", campingText.addFuel)
+            expectLine(self, "built", campingText.lightCampfire)
+        end,
+    })
+end
+
+-- The build cursor takes a boiler on a clear outdoor square, but not indoors, nor once a wall stands
+-- on an edge of the square. Catches a fire built in a house or against its wall.
+T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
+    instant = true,
+    run = function(self)
+        local clear = clearSpot(self)
+        local indoors = clear and T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
+        if not indoors then return end
+        T.step(function()
+            self.clear = placeable(STONE, clear.square)
+            self.indoors = placeable(STONE, indoors[1].square)
+        end)
+        local east = { x = clear.x + 1, y = clear.y, z = clear.z }
+        T.server(self, "treatment.wall", T.at(east, { sprite = WALL_WEST }))
+        T.waitFor(self, function()
+            return getSquare(east.x, east.y, east.z):getProperties():has(IsoFlagType.collideW)
+        end, "this client's copy of the wall")
+        T.step(function() self.walled = placeable(WELDED, clear.square) end)
+    end,
+    validate = function(self)
+        expect(self.clear, "the build cursor refuses a boiler on a clear outdoor square")
+        expect(not self.indoors, "the build cursor takes a boiler indoors")
+        expect(not self.walled, "the build cursor takes a boiler beside a wall")
+    end,
+})
+
+-- Queues placing a stone boiler on a bare square and adding fuel from vanilla's fire menu on it, as
+-- self.unit and self.reads.fuelled. A box of tissues burns a use at a time: a fuel item used up
+-- whole leaves vanilla's Add Fuel invalid on a multiplayer client (ISBBQAddFuel:isValid), which
+-- clears the queue the test waits in.
+local function fuelled(self)
+    local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+    if not spots then return false end
+    self.unit = placeUnit(self, spots[1], STONE)
+    T.give(self, "fire", { { type = "Base.TissueBox" }, { type = "Base.Splinters" }, { type = "Base.Lighter" } })
+    useMenu(self, self.unit, "add fuel", running(ISCampingMenu.onAddFuel), true)
+    readUntil(self, self.unit, "fuelled", function(state) return (state.fuel or 0) > 0 end)
+    return true
+end
+
+-- Queues a wait for this client's copy of the boiler burning with vanilla's flames on it, then
+-- reads its menu into "burning".
+local function burning(self)
+    T.waitFor(self, function()
+        local copy = copyOf(self.unit)
+        return copy ~= nil and copy:isLit() and copy:hasAnimatedAttachments()
+    end, "this client's copy of the boiler burning, with vanilla's flames")
+    readMenu(self, self.unit, "burning")
+end
+
+-- Vanilla's fire menu on the boiler adds fuel and offers to light it; lit as vanilla's Light leaves
+-- it, this client draws vanilla's flames on it, the boiler's own line says it's heating and the fire
+-- menu offers Put Out. Catches a boiler vanilla's fire menu can't fuel, one that burns without
+-- flames, or a fire the boiler's line doesn't see.
+T.test("irrigation_treatment_boiler_vanilla_fuels_it_and_draws_its_flames", {
+    instant = true,
+    run = function(self)
+        if not fuelled(self) then return end
+        useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), false)
+        setFire(self, self.unit, "lit", true, FUEL)
+        burning(self)
+        useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), false)
+    end,
+    validate = function(self)
+        T.expectOffered(self, "add fuel")
+        expect(self.reads.fuelled.fuel > 0, "Add Fuel gave the boiler no fuel")
+        T.expectOffered(self, "light")
+        expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
+        T.expectOffered(self, "put out")
+    end,
+})
+
+-- Vanilla's Light, with splinters and a lighter, lights the fuelled boiler, and its Put Out puts
+-- it out. Catches a boiler vanilla's own fire actions can't run.
+T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
+    spOnly = "on a multiplayer client vanilla's Light and Put Out end invalid when the server's change "
+        .. "to the fire arrives first (ISBBQLightFromLiterature and ISBBQExtinguish check the fire's "
+        .. "state), which clears the queue the test waits in; the fire's sync is the other boiler tests'",
+    instant = true,
+    run = function(self)
+        if not fuelled(self) then return end
+        useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), true)
+        readUntil(self, self.unit, "lit", function(state) return state.lit end)
+        burning(self)
+        useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), true)
+        readUntil(self, self.unit, "out", function(state) return not state.lit end)
+    end,
+    validate = function(self)
+        T.expectOffered(self, "light")
+        expect(self.reads.lit.lit, "Light didn't light the boiler")
+        expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
+        T.expectOffered(self, "put out")
+        expect(not self.reads.out.lit, "Put Out left the boiler burning")
+    end,
+})
+
+-- Raw water poured in waits in a lit boiler's drum for its first hour, while the drum heats and its
+-- menu says so; the next hour, hot, the boiler passes clean water at its rate, and its menu says
+-- so. Put out, the hot drum passes on while it cools, then nothing, and its menu says it's cold; a
+-- boiler never lit passes nothing. Catches water passed before it's safe, a boiler that never
+-- passes, one that keeps passing cold, or the taint carried through.
+T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
+        if not spots then return end
+        self.unit = placeUnit(self, spots[1], STONE)
+        self.cold = placeUnit(self, spots[2], WELDED)
+        T.give(self, "carried", { { type = "Base.Bucket" } })
+        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 10 })
+        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 10 - LITRES end,
+            "this client's copy of the filled bucket")
+        useMenu(self, self.unit, "pour", function(context)
+            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
+        end, true)
+        readUntil(self, self.unit, "poured", function(state) return state.record and state.record.head > 10 - LITRES end)
+        setFire(self, self.unit, "lit", true, FUEL)
+        readMenu(self, self.unit, "heating")
+        -- More than three hours of the boiler's water, so the head lasts the test. Each run starts
+        -- the drum at the heat the steps before left it, which a ten-minute pass in between would
+        -- have moved on a little.
+        self.head = self.unit.spec.rate * 4
+        run(self, self.unit, "heating", { 1 }, { head = self.head, headTainted = true, hotHours = 0 })
+        run(self, self.unit, "hot", { 1 })
+        waitForServer(self, self.unit, "hot", "hot")
+        readMenu(self, self.unit, "hot")
+        setFire(self, self.unit, "out", false)
+        run(self, self.unit, "cooling", { 1, 1 }, { hotHours = Treatment.HEAT_MAX_HOURS })
+        waitForServer(self, self.unit, "cooling", "hot")
+        readMenu(self, self.unit, "cooled")
+        run(self, self.cold, "cold", { 2 }, { head = self.head, headTainted = true })
+        readMenu(self, self.cold, "cold")
+    end,
+    validate = function(self)
+        local rate = self.unit.spec.rate
+        T.expectOffered(self, "pour")
+        expectNear("the head after pouring", self.reads.poured.record.head, 10, LITRES)
+        local heating = self.reads.heating
+        expectNear("the first hour's water", heating.steps[1].basin.litres - heating.before.basin.litres, 0, LITRES)
+        expectWord(self, "heating", getText("IGUI_EnhancedIrrigation_Heating"))
+        local hot = self.reads.hot
+        expectBasin("the hot hour's water", hot.steps[1], hot.before.basin.litres + rate, false)
+        expectWord(self, "hot", getText("IGUI_EnhancedIrrigation_Hot"))
+        expectWord(self, "hot", getText("IGUI_EnhancedIrrigation_Drum",
+            Treatment.DRUM_CONDITION - 2 * Treatment.WEAR_WET))
+        local cooling = self.reads.cooling
+        expectNear("the first hour put out", cooling.steps[1].basin.litres - cooling.before.basin.litres,
+            rate * (Treatment.HEAT_MAX_HOURS - Treatment.HOT_HOURS) / Treatment.COOLING, LITRES)
+        expectNear("the second hour put out", cooling.steps[2].basin.litres - cooling.steps[1].basin.litres, 0, LITRES)
+        expectWord(self, "cooled", getText("IGUI_EnhancedIrrigation_Cold"))
+        expectNear("a boiler never lit", self.reads.cold.steps[1].basin.litres, 0, LITRES)
+        expectWord(self, "cold", getText("IGUI_EnhancedIrrigation_Cold"))
+    end,
+})
+
+-- A boiler lit with nothing in its drum scorches it fast; burnt through, its menu says so, Pour In
+-- is refused, and water in it passes nothing however hot. Patch Drum, put out and with a welder's
+-- kit, restores it to less than new, and its menu says how much; a second patch would leave it no
+-- better and is refused. Catches a dry fire that doesn't wear, a holed drum still working, or a
+-- patch that restores it new.
+T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        self.unit = placeUnit(self, spots[1], WELDED)
+        setFire(self, self.unit, "lit", true, FUEL)
+        run(self, self.unit, "scorched", { 1 })
+        run(self, self.unit, "burnt", { Treatment.DRUM_CONDITION / Treatment.WEAR_DRY - 1 })
+        run(self, self.unit, "holed", { 1 }, { head = 50 })
+        waitForServer(self, self.unit, "holed", "burntThrough")
+        readMenu(self, self.unit, "burnt")
+        T.give(self, "carried", { { type = "Base.Bucket" } })
+        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
+        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
+            "this client's copy of the filled bucket")
+        useMenu(self, self.unit, "pour", function(context)
+            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
+        end, false)
+        setFire(self, self.unit, "out", false)
+        T.setPerk(self, Perks.MetalWelding, 2)
+        T.give(self, "kit", { { type = "Base.WeldingMask" }, { type = "Base.SmallSheetMetal" }, { type = "Base.BlowTorch" },
+            { type = "Base.WeldingRods" } })
+        useMenu(self, self.unit, "patch", job(TreatmentJobs.PATCH_DRUM), true)
+        readUntil(self, self.unit, "patched", function(state) return not state.summary.burntThrough end)
+        waitForServer(self, self.unit, "patched", "condition")
+        readMenu(self, self.unit, "patched")
+        useMenu(self, self.unit, "again", job(TreatmentJobs.PATCH_DRUM), false)
+        T.count(self, "used", { "Base.SmallSheetMetal" })
+    end,
+    validate = function(self)
+        expect(self.reads.scorched.steps[1].summary.condition == Treatment.DRUM_CONDITION - Treatment.WEAR_DRY,
+            "an hour burning dry left the drum at " .. tostring(self.reads.scorched.steps[1].summary.condition))
+        local holed = self.reads.holed
+        expectNear("a burnt-through boiler's hour", holed.steps[1].basin.litres, holed.before.basin.litres, LITRES)
+        expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_BurntThrough"))
+        T.expectRefused(self, "pour", "Tooltip_EnhancedIrrigation_BurntThrough")
+        T.expectOffered(self, "patch")
+        expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Drum",
+            Treatment.DRUM_CONDITION - Treatment.PATCH_LOSS))
+        T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_DrumSound")
+        expect(self.counts.used["Base.SmallSheetMetal"] == 0, "Patch Drum left the sheet metal")
+    end,
+})
+
+-- Plumb Inlet from a raw tank on the boiler's level and Plumb Outlet to a clean one, from the
+-- boiler's menu: lit, its first hour fills the drum from the raw tank, its second passes clean water
+-- at its rate, and a link pass carries that on into the clean tank. Catches a boiler the pipes
+-- can't reach, water lost or made on the way, or the taint carried into the clean tank.
+T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
+        if not spots then return end
+        self.raw = 100
+        self.unit = placeUnit(self, spots[1], STONE)
+        self.tank = T.placeTank(self, spots[2], "lidded", self.raw, true)
+        self.clean = T.placeTank(self, spots[3], "lidded")
+        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
+        useMenu(self, self.unit, "inlet", linkJob(LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
+        readUntil(self, self.unit, "inlet plumbed", function(state) return state.inlet end)
+        T.useOption(self, function() return copyOf(self.unit) end, "outlet",
+            linkJob(LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.clean), "iron")), true)
+        readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
+        setFire(self, self.unit, "lit", true, FUEL)
+        -- From a cold drum, which a ten-minute pass since the fire was lit would have warmed a little.
+        run(self, self.unit, "hours", { 1, 1 }, { hotHours = 0 }, self.tank)
+        T.read(self, "treatment.pass", T.at(self.unit, { hours = 1, tank = T.at(self.clean) }), "drained")
+    end,
+    validate = function(self)
+        T.expectOffered(self, "inlet")
+        T.expectOffered(self, "outlet")
+        local rate = self.unit.spec.rate
+        local before, first, second = self.reads.hours.before, self.reads.hours.steps[1], self.reads.hours.steps[2]
+        expectNear("the drum after the first hour", first.record.head + first.basin.litres, self.raw, LITRES)
+        expectNear("the first hour's water", first.basin.litres - before.basin.litres, 0, LITRES)
+        expectBasin("the second hour's water", second, before.basin.litres + rate, false)
+        expectNear("the raw tank", second.tank.litres, 0, LITRES)
+        local drained = self.reads.drained
+        expectNear("the basin after a pass", drained.basin.litres, 0, LITRES)
+        -- At least the second hour's water: a ten-minute pass before the link pass may add more.
+        expect(drained.tank.litres > rate - LITRES, "the clean tank after a pass holds " .. drained.tank.litres
+            .. " L, expected the " .. rate .. " L the basin held")
+        expect(not drained.tank.tainted, "the clean tank's water is tainted")
     end,
 })

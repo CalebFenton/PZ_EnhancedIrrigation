@@ -23,5 +23,6 @@
     "ContextMenu_EnhancedIrrigation_PlumbInlet": "Plumb Inlet",
     "ContextMenu_EnhancedIrrigation_PlumbOutlet": "Plumb Outlet",
     "ContextMenu_EnhancedIrrigation_ScrubCrock": "Scrub Crock",
-    "ContextMenu_EnhancedIrrigation_TakeDownCrock": "Take Down"
+    "ContextMenu_EnhancedIrrigation_TakeDownCrock": "Take Down",
+    "ContextMenu_EnhancedIrrigation_PatchDrum": "Patch Drum"
 }
