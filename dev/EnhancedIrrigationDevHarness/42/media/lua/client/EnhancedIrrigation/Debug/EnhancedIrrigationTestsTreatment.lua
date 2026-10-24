@@ -141,14 +141,6 @@ local function clientBasin(unit)
     return basin and { basin = { litres = basin:getAmount(), tainted = basin:isTainted() } } or nil
 end
 
--- The option of the submenu named by `nameKey` in `context` for which `matches(option)` holds, or
--- nil.
-local function inSubmenu(context, nameKey, matches)
-    local parent = T.findNamed(context, context, getText(nameKey))
-    local sub = parent and parent.subOption and context:getSubMenu(parent.subOption)
-    return sub and T.findOption(context, sub, matches) or nil
-end
-
 -- Building ----------------------------------------------------------------------------------------------
 
 -- The build menu builds each filter from its recipe on a bare square, with its record at once:
@@ -428,7 +420,7 @@ T.test("irrigation_treatment_inlet_refuses_a_lower_tank", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         T.useOption(self, function() return T.copyOf(self.unit) end, "lower tank", function(context)
             local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.tank))
-            return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbInlet", function(option)
+            return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbInlet", function(option)
                 return option.name == label
             end)
         end, false)
@@ -459,7 +451,7 @@ T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         T.useMenu(self, self.unit, "higher tank", function(context)
             local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.high))
-            return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option)
+            return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option)
                 return option.name == label
             end)
         end, false)
@@ -590,14 +582,6 @@ end
 
 -- Vanilla's menus ----------------------------------------------------------------------------------------
 
--- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
--- its handler as its first parameter.
-local function optionRunning(context, handler)
-    return T.findOption(context, context, function(option)
-        return option.onSelect == handler or option.param1 == handler
-    end)
-end
-
 -- The basin offers vanilla's Drink, Fill and Empty, but no pour into it, though the character
 -- carries water; a bucket filled from it holds its water as it was. A Barrel Filter's basin holds
 -- tainted water, and Drink warns of it; a crock's or a boiler's, clean, and Drink doesn't; the
@@ -636,11 +620,11 @@ for _, case in ipairs({
                 local copy = T.copyOf(self.unit)
                 local context = T.need(self, copy and T.worldMenu(copy), "a world menu for the unit")
                 if not context then return end
-                local drink = optionRunning(context, ISWorldObjectContextMenu.onDrink)
-                local fill = optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
+                local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
+                local fill = T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
                 self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
                 self.fill = T.offered(fill)
-                self.empty = T.offered(optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
+                self.empty = T.offered(T.optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
                 self.pour = T.findNamed(context, context, getText("ContextMenu_AddFluidFromItem")) ~= nil
                 if fill then
                     T.choose(fill)
@@ -973,9 +957,6 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
 
 -- The Boilers ------------------------------------------------------------------------------------------
 
--- A west wall tile, which stands on its square's west edge.
-local WALL_WEST = "walls_exterior_house_01_0"
-
 -- The squares round a boiler's that Treatment.wallNear reads, its own first: those around it and,
 -- for their east and south edges, the row and column beyond.
 local CLEAR = { { 0, 0 } }
@@ -1005,7 +986,7 @@ local function placeable(entity, square)
 end
 
 local function running(handler)
-    return function(context) return optionRunning(context, handler) end
+    return function(context) return T.optionRunning(context, handler) end
 end
 
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
@@ -1063,7 +1044,7 @@ T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
             end
         end)
         local east = { x = clear.x + 1, y = clear.y, z = clear.z }
-        T.server(self, "treatment.wall", T.at(east, { sprite = WALL_WEST }))
+        T.server(self, "treatment.wall", T.at(east, { sprite = T.WALL_WEST }))
         T.waitFor(self, function()
             return getSquare(east.x, east.y, east.z):getProperties():has(IsoFlagType.collideW)
         end, "this client's copy of the wall")

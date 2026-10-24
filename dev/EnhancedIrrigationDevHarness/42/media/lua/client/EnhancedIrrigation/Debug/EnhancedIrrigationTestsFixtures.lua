@@ -84,16 +84,8 @@ local function placeFixture(self, handle, sprite, extra)
     return fixture
 end
 
--- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
--- its handler as its first parameter.
-local function optionRunning(context, handler)
-    return T.findOption(context, context, function(option)
-        return option.onSelect == handler or option.param1 == handler
-    end)
-end
-
 local function vanillaPlumb(context)
-    return optionRunning(context, ISWorldObjectContextMenu.onPlumbItem)
+    return T.optionRunning(context, ISWorldObjectContextMenu.onPlumbItem)
 end
 
 -- Queues the server's view of the fixture, with the tank's, into self.reads[label] once
@@ -427,8 +419,8 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
             local sink = T.copyOf(self.sink)
             local context = T.need(self, sink and T.worldMenu(sink), "a world menu for the sink")
             if not context then return end
-            local drink = optionRunning(context, ISWorldObjectContextMenu.onDrink)
-            local fill = optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
+            local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
+            local fill = T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
             self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
             self.fill = T.offered(fill)
             self.wash = T.offered(T.findNamed(context, context, getText("ContextMenu_Wash")))
@@ -478,7 +470,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
             self.client = clientState(self.sink)
             local context = T.need(self, T.copyOf(self.sink) and T.worldMenu(T.copyOf(self.sink)), "a world menu for the sink")
             if not context then return end
-            local drink = optionRunning(context, ISWorldObjectContextMenu.onDrink)
+            local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
             self.drink, self.drinkTooltip = T.offered(drink), drink and T.tooltipOf(drink) or ""
             context:hideAndChildren()
         end)

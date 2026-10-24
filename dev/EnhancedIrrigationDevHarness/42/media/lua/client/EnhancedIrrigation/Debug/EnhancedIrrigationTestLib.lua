@@ -23,6 +23,8 @@ local Pumps = EnhancedIrrigation.Pumps
 T.SYNC_MS = 5000
 -- How near this client's copy of a tank's water must come to what the server put in it.
 local LITRES = 0.01
+-- Vanilla's house wall on a square's west edge.
+T.WALL_WEST = "walls_exterior_house_01_0"
 
 -- Waits and reads -----------------------------------------------------------------------------------
 
@@ -157,6 +159,22 @@ function T.job(feature, job, with)
     return function(context) return T.jobOption(context, feature, job, with) end
 end
 
+--- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
+--- its handler as its first parameter.
+function T.optionRunning(context, handler)
+    return T.findOption(context, context, function(option)
+        return option.onSelect == handler or option.param1 == handler
+    end)
+end
+
+--- The option of the submenu named by `nameKey` in `context` for which `matches(option)` holds, or
+--- nil.
+function T.inSubmenu(context, nameKey, matches)
+    local parent = T.findNamed(context, context, getText(nameKey))
+    local sub = parent and parent.subOption and context:getSubMenu(parent.subOption)
+    return sub and T.findOption(context, sub, matches) or nil
+end
+
 --- Queues T.useOption on this client's copy of the line tile at `handle` for the line job `job`.
 function T.useLineJob(self, handle, job, label, choose)
     T.useOption(self, function() return T.lineObject(handle) end, label, T.job("line", job), choose)
@@ -209,6 +227,11 @@ function T.expectRefused(self, label, tooltipKey)
                 label .. ": the tooltip doesn't say " .. getText(tooltipKey) .. ": " .. seen.tooltip)
         end
     end
+end
+
+--- How many of `fullType` T.count noted as "left", 0 if it noted none.
+function T.counted(self, fullType)
+    return self.counts.left and self.counts.left[fullType] or 0
 end
 
 -- Recipes -------------------------------------------------------------------------------------------

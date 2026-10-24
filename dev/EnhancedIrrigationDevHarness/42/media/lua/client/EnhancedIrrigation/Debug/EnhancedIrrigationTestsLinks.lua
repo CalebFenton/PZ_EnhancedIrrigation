@@ -19,10 +19,6 @@ local LITRES = 0.05
 -- so the rate shows before the water levels.
 local PASS_LITRES = 60
 
-local function counted(self, fullType)
-    return self.counts.left and self.counts.left[fullType] or 0
-end
-
 -- How many links with an end on the handle's square this client's own copy of the list holds, which
 -- the server's commands set in single player too (Links.linksAt reads the server's list there).
 local function viewedLinks(handle)
@@ -112,8 +108,8 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
         local forced = self.reads.forced
         expect(forced.done == false, "the server plumbed for a character who doesn't know how")
         expect(forced.links == 0, "the refused plumbing left " .. tostring(forced.links) .. " links")
-        expect(counted(self, "Base.MetalPipe") == self.pipes, "the refused plumbing took pipe: "
-            .. counted(self, "Base.MetalPipe") .. " left")
+        expect(T.counted(self, "Base.MetalPipe") == self.pipes, "the refused plumbing took pipe: "
+            .. T.counted(self, "Base.MetalPipe") .. " left")
     end,
 })
 
@@ -187,9 +183,9 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
                 "the link is " .. tostring(links[1].lengths) .. " lengths of " .. tostring(links[1].kind) .. ", not "
                 .. self.lengths .. " of iron")
         end
-        expect(counted(self, "Base.MetalPipe") == 0, "plumbing left " .. counted(self, "Base.MetalPipe") .. " iron pipe")
+        expect(T.counted(self, "Base.MetalPipe") == 0, "plumbing left " .. T.counted(self, "Base.MetalPipe") .. " iron pipe")
         expect(self.viewed == 1, "this client's copy of the list has " .. tostring(self.viewed) .. " links at the tank")
-        expect(counted(self, "Base.PipeWrench") == 1, "plumbing used up the pipe wrench")
+        expect(T.counted(self, "Base.PipeWrench") == 1, "plumbing used up the pipe wrench")
         expect(self.menu.unplumb.found, "Unplumb doesn't list the plumbed tank")
         expect(not self.menu["plumb again"].found, "Plumb to Tank still lists a tank already plumbed to")
     end,
@@ -233,8 +229,8 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
             expect(links[1].kind == "lead", "the link is " .. tostring(links[1].kind) .. " pipe, not the lead chosen")
         end
         local iron, lead = Pipes.KINDS.iron.item, Pipes.KINDS.lead.item
-        expect(counted(self, lead) == 0, "plumbing left " .. counted(self, lead) .. " lead pipe")
-        expect(counted(self, iron) == self.ironCount, "plumbing with lead took iron pipe: " .. counted(self, iron) .. " left")
+        expect(T.counted(self, lead) == 0, "plumbing left " .. T.counted(self, lead) .. " lead pipe")
+        expect(T.counted(self, iron) == self.ironCount, "plumbing with lead took iron pipe: " .. T.counted(self, iron) .. " left")
     end,
 })
 

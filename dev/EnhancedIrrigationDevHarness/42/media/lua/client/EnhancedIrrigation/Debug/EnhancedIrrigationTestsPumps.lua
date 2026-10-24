@@ -63,13 +63,6 @@ local function pumpOption(context)
     end)
 end
 
--- The option of the submenu named by `nameKey` in `context` naming `label`, or nil.
-local function inSubmenu(context, nameKey, label)
-    local parent = T.findNamed(context, context, getText(nameKey))
-    local sub = parent and parent.subOption and context:getSubMenu(parent.subOption)
-    return sub and T.findNamed(context, sub, label) or nil
-end
-
 -- How near this client's endurance comes to what the server set, a frame or two of rest later.
 local ENDURANCE_SLACK = 0.01
 -- The fatigue the tests' character works the pump at, and vanilla's slowest Endurance Regen
@@ -391,8 +384,7 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
         T.useMenu(self, self.wooden, "wooden", function(context)
-            return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
-                LinkMenu.tankLabel(T.at(self.wooden), T.at(self.tank)))
+            return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option) return option.name == LinkMenu.tankLabel(T.at(self.wooden), T.at(self.tank)) end)
         end, false)
         T.read(self, "tanks.perform", T.at(self.wooden, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
@@ -448,8 +440,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
         T.useMenu(self, self.pump, "tapped", function(context)
-            return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
-                LinkMenu.lineLabel(T.at(self.pump), T.at(tapped)))
+            return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option) return option.name == LinkMenu.lineLabel(T.at(self.pump), T.at(tapped)) end)
         end, false)
         T.read(self, "tanks.perform", T.at(self.pump, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(tapped), "iron") }), "forced")

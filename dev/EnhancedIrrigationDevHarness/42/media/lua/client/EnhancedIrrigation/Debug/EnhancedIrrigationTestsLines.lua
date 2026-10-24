@@ -22,8 +22,7 @@ local POINTS = 0.05
 -- A crop's water as read, give or take vanilla's own ten-minute drying (SFarmingSystem.checkWater)
 -- landing between placing the crop and reading it.
 local CROP_POINTS = 0.25
--- Vanilla's house wall on a square's west edge, and the door frame of that wall.
-local WALL_WEST = "walls_exterior_house_01_0"
+-- The door frame of vanilla's house wall on a square's west edge (T.WALL_WEST).
 local DOOR_FRAME_WEST = "walls_exterior_house_01_10"
 local TANK_LITRES = 100
 local IRON_PUMP = "EnhancedIrrigation_IronHandPump"
@@ -357,7 +356,7 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
         self.tiles = { behind, inside, doorway }
         T.trackLines(self, self.tiles)
         -- The wall stands on the middle square's west edge, the door frame on the east square's.
-        T.placeTile(self, inside.square, WALL_WEST)
+        T.placeTile(self, inside.square, T.WALL_WEST)
         T.placeTile(self, doorway.square, DOOR_FRAME_WEST)
         T.placeLine(self, { inside }, "iron", { holed = true })
         T.give(self, "pipes", { { type = "Base.MetalPipe", count = 2 }, { type = "Base.PipeWrench" } })

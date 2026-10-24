@@ -28,10 +28,6 @@ local function pickUpVanillaBarrel(self, handle)
         "the barrel vanilla's pickup gives")
 end
 
-local function counted(self, fullType)
-    return self.counts.left and self.counts.left[fullType] or 0
-end
-
 -- The build menu builds a Tank Stand from its recipe on a bare square. Catches a recipe or entity
 -- the build menu can't place.
 T.test("irrigation_stands_stand_built_from_build_menu", {
@@ -74,7 +70,7 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         expect(raised.isRaised and raised.isTank, "the barrel on the stand isn't a raised tank")
         expect(raised.level == z + 1, "the raised barrel's level is " .. tostring(raised.level) .. ", not " .. (z + 1))
         expectNear("the raised barrel's water", raised.litres, 0, LITRES)
-        expect(counted(self, BARREL_HELD) == 0, "setting the barrel on the stand left " .. counted(self, BARREL_HELD)
+        expect(T.counted(self, BARREL_HELD) == 0, "setting the barrel on the stand left " .. T.counted(self, BARREL_HELD)
             .. " barrels carried")
         expect(self.clientLevel == z + 1, "this client sees the raised barrel at level " .. tostring(self.clientLevel))
     end,
@@ -157,7 +153,7 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         expect(forced.done == false, "the server took down a barrel holding water")
         expect(forced.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
         expectNear("the refused barrel's water", forced.litres, self.litres, LITRES)
-        expect(counted(self, BARREL_HELD) == 0, "a refused Take Barrel Down gave " .. counted(self, BARREL_HELD) .. " barrels")
+        expect(T.counted(self, BARREL_HELD) == 0, "a refused Take Barrel Down gave " .. T.counted(self, BARREL_HELD) .. " barrels")
     end,
 })
 
