@@ -43,6 +43,13 @@ function T.waitFor(self, condition, what, ms)
     T.step(function() T.need(self, held, what) end)
 end
 
+--- Queues a wait until it is light where the character stands. The game refuses a craft or build
+--- in the dark (CraftRecipeData.canPerform), and the light lags the clock the previous test put
+--- back by some frames, as T.craftTest's own wait allows for.
+function T.waitForLight(self)
+    T.waitFor(self, function() return not T.player():tooDarkToRead() end, "light where the character stands")
+end
+
 --- Queues the server handler `name` with `args` and puts its answer in self.reads[label], the one
 --- store of what the tests read from the server.
 function T.read(self, name, args, label)
@@ -289,6 +296,7 @@ function T.craft(self, name, from, counted, opts)
     if opts.ready then
         opts.ready(self)
     end
+    T.waitForLight(self)
     T.step(function()
         local item = T.need(self, T.player():getInventory():getFirstTypeRecurse(from), "a " .. from .. " to craft from")
         if not item then return end
@@ -356,6 +364,7 @@ function T.buildFromMenu(self, entity, handle, sprite, prefer)
     -- Stands first: the character's current square follows a teleport only on its next update, and
     -- the cursor walks a character it can't see beside the site (luautils.walkAdjSquares).
     T.goNextTo(self, handle.square)
+    T.waitForLight(self)
     T.step(function()
         local player = T.player()
         local build = ISBuildIsoEntity:new(player, info, 1, ISInventoryPaneContextMenu.getContainers(player))
