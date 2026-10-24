@@ -278,6 +278,53 @@ handler("tanks.perform", function(player, args)
     return state
 end)
 
+-- Treatment units -----------------------------------------------------------------------------------
+
+--- The treatment unit at args' x, y, z, or nil.
+function Server.treatmentUnitAt(args)
+    return mod().Treatment.unitAt(args.x, args.y, args.z)
+end
+
+--- The treatment unit record at args' x, y, z, or nil.
+function Server.treatmentRecordAt(args)
+    return mod().Treatment.recordAt(args.x, args.y, args.z)
+end
+
+--- The unit at args' x, y, z as plain values: whether its square is `loaded` and it stands there,
+--- its record's fields and summary (`record`, `summary`, nil without one), what its basin holds,
+--- whether it has an `inlet` and an `outlet`, whether it is a vanilla `fireplace` and its fire
+--- (`lit`, `fuel` in minutes), and the tanks at `args.tank` and `args.into` ({ x, y, z }) if given,
+--- as Server.stateAt sees them.
+function Server.treatmentStateAt(args)
+    local square = Server.squareAt(args)
+    local unit = square and Server.treatmentUnitAt(args)
+    local record = Server.treatmentRecordAt(args)
+    local here = { x = args.x, y = args.y, z = args.z }
+    local state = {
+        loaded = square ~= nil, found = unit ~= nil,
+        inlet = mod().Links.roleAt(here, "inlet") ~= nil, outlet = mod().Links.roleAt(here, "outlet") ~= nil,
+    }
+    if record then
+        state.record = Server.fieldsOf(record, mod().TreatmentObject.SAVED_FIELDS)
+        state.summary = record:buildSummary()
+    end
+    if unit then
+        local basin = unit:getFluidContainer()
+        state.entity = mod().entityName(unit)
+        state.fireplace = instanceof(unit, "IsoFireplace")
+        if state.fireplace then
+            state.lit, state.fuel = unit:isLit(), unit:getFuelAmount()
+        end
+        state.basin = {
+            litres = basin:getAmount(), capacity = basin:getCapacity(), tainted = basin:isTainted(),
+            locked = basin:isInputLocked(),
+        }
+    end
+    state.tank = args.tank and Server.stateAt(args.tank) or nil
+    state.into = args.into and Server.stateAt(args.into) or nil
+    return state
+end
+
 -- Items ---------------------------------------------------------------------------------------------
 
 -- Every item of `args.type` the server's copy of the character carries, bags included: its

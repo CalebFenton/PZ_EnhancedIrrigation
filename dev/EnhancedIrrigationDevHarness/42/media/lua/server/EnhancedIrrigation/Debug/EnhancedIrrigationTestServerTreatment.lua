@@ -1,10 +1,10 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsTreatment.lua. Time
--- runs here through the record's own advance, or its update after a set gap, all in one call, so
--- the clock and the ten-minute event don't decide what a test sees. Only registers handlers, so a
--- --stay rerun loads it again.
+-- Development only, not published. The server's half of the treatment unit tests: placing units,
+-- reading them and running their records. Time runs here through the record's own advance, or its
+-- update after a set gap, all in one call, so the clock and the ten-minute event don't decide what a
+-- test sees. Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 
@@ -12,48 +12,7 @@ local function mod()
     return EnhancedIrrigation
 end
 
-local function unitAt(args)
-    return mod().Treatment.unitAt(args.x, args.y, args.z)
-end
-
-local function recordAt(args)
-    return mod().Treatment.recordAt(args.x, args.y, args.z)
-end
-
---- The unit at args' x, y, z as plain values: whether its square is `loaded` and it stands there,
---- its record's fields and summary (`record`, `summary`, nil without one), what its basin holds,
---- whether it has an `inlet` and an `outlet`, whether it is a vanilla `fireplace` and its fire
---- (`lit`, `fuel` in minutes), and the tanks at `args.tank` and `args.into` ({ x, y, z }) if given,
---- as Server.stateAt sees them.
-local function stateAt(args)
-    local square = Server.squareAt(args)
-    local unit = square and unitAt(args)
-    local record = recordAt(args)
-    local here = { x = args.x, y = args.y, z = args.z }
-    local state = {
-        loaded = square ~= nil, found = unit ~= nil,
-        inlet = mod().Links.roleAt(here, "inlet") ~= nil, outlet = mod().Links.roleAt(here, "outlet") ~= nil,
-    }
-    if record then
-        state.record = Server.fieldsOf(record, mod().TreatmentObject.SAVED_FIELDS)
-        state.summary = record:buildSummary()
-    end
-    if unit then
-        local basin = unit:getFluidContainer()
-        state.entity = mod().entityName(unit)
-        state.fireplace = instanceof(unit, "IsoFireplace")
-        if state.fireplace then
-            state.lit, state.fuel = unit:isLit(), unit:getFuelAmount()
-        end
-        state.basin = {
-            litres = basin:getAmount(), capacity = basin:getCapacity(), tainted = basin:isTainted(),
-            locked = basin:isInputLocked(),
-        }
-    end
-    state.tank = args.tank and Server.stateAt(args.tank) or nil
-    state.into = args.into and Server.stateAt(args.into) or nil
-    return state
-end
+local recordAt, stateAt = Server.treatmentRecordAt, Server.treatmentStateAt
 
 -- Places the unit tile `args.sprite` at x, y, z as the build menu builds it, its record made as its
 -- OnCreate makes it (a boiler's fireplace too), then sends what stands there to the clients, on a
@@ -98,47 +57,6 @@ end)
 
 handler("treatment.state", function(_, args)
     return stateAt(args)
-end)
-
--- Sets the fire of the boiler at x, y, z as vanilla's Add Fuel, Light and Put Out leave it:
--- `args.fuel` minutes of fuel if given, then lit or put out as `args.lit` says, told to the
--- clients as vanilla tells them (IsoFireplace's STATE change). Then runs the record's ten-minute
--- pass, which notes the fire, as one does within ten minutes of a player's lighting it. Answers
--- the state.
-handler("treatment.fire", function(_, args)
-    local unit, record = unitAt(args), recordAt(args)
-    if not (unit and record and instanceof(unit, "IsoFireplace")) then
-        return nil, "the boiler at " .. args.x .. "," .. args.y
-    end
-    if args.fuel then
-        unit:setFuelAmount(args.fuel)
-    end
-    if args.lit then
-        unit:turnOn()
-    else
-        unit:extinguish()
-    end
-    unit:sendObjectChange(IsoObjectChange.STATE)
-    record:update()
-    return stateAt(args)
-end)
-
--- Puts a wall tile `args.sprite` on x, y, z, sent to the clients, its edge's flags on the square
--- at once. Taken away when the test ends.
-handler("treatment.wall", function(_, args, defer)
-    local square = Server.squareAt(args)
-    if not square then
-        return nil, "a loaded square at " .. args.x .. "," .. args.y
-    end
-    local wall = PZHarness.Fixtures.newTile(square, args.sprite)
-    square:RecalcAllWithNeighbours(true)
-    defer(function()
-        if wall:getObjectIndex() ~= -1 then
-            square:transmitRemoveItemFromSquare(wall)
-            square:RecalcAllWithNeighbours(true)
-        end
-    end)
-    return {}
 end)
 
 -- Advances the unit's record by each of `args.hours` as time passing does, after setting
