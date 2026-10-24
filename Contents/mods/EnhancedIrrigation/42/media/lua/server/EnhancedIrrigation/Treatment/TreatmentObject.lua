@@ -128,11 +128,16 @@ function TreatmentObject:pass(unit, litres, fluid)
     self.head = self.head - litres
     self.passed = self.passed + litres
     if self.head < EMPTY_HEAD then
-        self.head = 0
-        self.headTainted = false
+        self:spill()
     end
     self.basinChanged = true
     return litres
+end
+
+--- Empties the head: the raw water waiting runs out, and its taint with it.
+function TreatmentObject:spill()
+    self.head = 0
+    self.headTainted = false
 end
 
 -- Kinds ---------------------------------------------------------------------------------------------
@@ -148,6 +153,11 @@ end
 --- Whether the sand has passed its litres since the last cleaning.
 function TreatmentObject:isClogged(spec)
     return spec.clogLitres ~= nil and self.passed >= spec.clogLitres
+end
+
+--- The litres an hour the unit treats: its spec's rate, a trickle once clogged.
+function TreatmentObject:rate(spec)
+    return spec.rate * (self:isClogged(spec) and Treatment.CLOGGED_FACTOR or 1)
 end
 
 -- The film grows while water stands on the sand and dies once the sand has stood dry long enough
@@ -169,8 +179,7 @@ TreatmentObject.KINDS.sand = {
             end
         end
         local fluid = (record:isRipe() or not record.headTainted) and FluidType.Water or FluidType.TaintedWater
-        local rate = spec.rate * (record:isClogged(spec) and Treatment.CLOGGED_FACTOR or 1)
-        record:pass(unit, rate * hours, fluid)
+        record:pass(unit, record:rate(spec) * hours, fluid)
     end,
 }
 
@@ -184,12 +193,10 @@ TreatmentObject.KINDS.crock = {
         end
         if record.head > 0 and Frost.isHard(record) then
             record.cracked = true
-            record.head = 0
-            record.headTainted = false
+            record:spill()
             return
         end
-        local rate = spec.rate * (record:isClogged(spec) and Treatment.CLOGGED_FACTOR or 1)
-        record:pass(unit, rate * hours, FluidType.Water)
+        record:pass(unit, record:rate(spec) * hours, FluidType.Water)
     end,
 }
 
@@ -253,8 +260,7 @@ TreatmentObject.KINDS.boiler = {
         local hot
         hot, record.hotHours = heat(record.hotHours, lit, hours - lit)
         if record:isBurntThrough() then
-            record.head = 0
-            record.headTainted = false
+            record:spill()
             return
         end
         record:pass(unit, spec.rate * hot, FluidType.Water)

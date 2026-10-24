@@ -58,11 +58,6 @@ Treatment.WEAR_DRY = 10
 -- What each Patch Drum takes off the condition a patch restores, as vanilla's repairs fall short.
 Treatment.PATCH_LOSS = 10
 
--- Pour In ---------------------------------------------------------------------------------------------
-
--- Litres a minute poured from a carried container, about vanilla's pour.
-Treatment.POUR_LITRES_PER_MINUTE = 4
-
 -- Each unit's entity script name: `kind`, the row of KINDS (and of TreatmentObject.KINDS) that says
 -- how it treats; `head`, the litres of raw water it holds; `rate`, the litres an hour it treats;
 -- `clogLitres`, the litres it passes before it clogs; `plumbed`, whether it takes inlet and outlet

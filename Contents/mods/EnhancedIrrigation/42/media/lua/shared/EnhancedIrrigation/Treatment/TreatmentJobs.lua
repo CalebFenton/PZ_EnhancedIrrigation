@@ -24,6 +24,8 @@ TreatmentJobs.PATCH_DRUM = "PatchDrum"
 local SCRUB_MINUTES = 15
 local TAKE_DOWN_MINUTES = 2
 local PATCH_MINUTES = 30
+-- Litres a minute poured from a carried container, about vanilla's pour.
+local POUR_LITRES_PER_MINUTE = 4
 
 -- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand: a shovel or a
 -- garden trowel, or a mason's trowel.
@@ -96,7 +98,7 @@ end
 TreatmentJobs.JOBS = {
     [TreatmentJobs.POUR_IN] = {
         minutes = function(unit, item)
-            return math.max(1, math.ceil(pourLitres(unit, item) / Treatment.POUR_LITRES_PER_MINUTE))
+            return math.max(1, math.ceil(pourLitres(unit, item) / POUR_LITRES_PER_MINUTE))
         end,
         position = "Mid", sound = "PourWaterIntoObject",
         equip = function(character, unit, item) return item end,
