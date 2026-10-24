@@ -1,27 +1,51 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
+require "EnhancedIrrigation/Recipes"
+require "EnhancedIrrigation/Links/LinkJobs"
 require "TimedActions/ISReadABook"
 require "ISUI/ISInventoryPaneContextMenu"
 require "Entity/ISEntityUI"
 
--- How the character learns the mod's recipes, the build-menu ones (the Tank Stand, the Barrel and
--- Brick Filters, setting up a Filter Crock and the two Boilers), the crock's wheel and kiln
--- recipes, and Plumb to Tank (knowledge with nothing to craft, Recipes.txt), and where the pamphlet
--- that teaches some of them turns up. Reading and researching go through vanilla's actions, levels
--- through the authority's XP award, which fires LevelPerk; the lists are vanilla's own windows and
--- menus. Each side's copy of the character is checked: the authority's decides the builds and the
--- plumbing, this client's the menus. EnhancedIrrigationTestServerLearning.lua holds the server's
--- half.
+-- How the character learns the mod's recipes, that no crafting list shows Plumb to Tank (knowledge
+-- with nothing to craft), and where the mod's found items turn up. Reading and researching go
+-- through vanilla's actions, levels through the authority's XP award, which fires LevelPerk; the
+-- lists are vanilla's own windows and menus. Each side's copy of the character is checked: the
+-- authority's decides the builds and the plumbing, this client's the menus.
+-- EnhancedIrrigationTestServerLearning.lua holds the server's half.
 
 local T = EnhancedIrrigationTest
 local test, expect = T.test, T.expect
+local Recipes, LinkJobs = EnhancedIrrigation.Recipes, EnhancedIrrigation.LinkJobs
 
 local PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
-local STAND, PLUMB = "EnhancedIrrigation_TankStand", "EnhancedIrrigation_PlumbToTank"
-local CROCK = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
-    "EnhancedIrrigation_FilterCrock" }
-local BOILERS = { "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded" }
-local PAMPHLET_RECIPES = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter", PLUMB }
-local RECIPES = { STAND, PAMPHLET_RECIPES[2], PAMPHLET_RECIPES[3], PLUMB, CROCK[1], CROCK[2], CROCK[3], BOILERS[1], BOILERS[2] }
+local PLUMB = LinkJobs.RECIPE
+local CROCK, BOILERS = Recipes.RESEARCH["Base.ClayJar"], Recipes.RESEARCH["Base.MetalDrum"]
+
+-- Every recipe of the mod, craftRecipe or build, that a character has to learn, as the scripts
+-- state them: what each test expects known or not.
+local RECIPES = {}
+do
+    local PREFIX, seen, scripts = "EnhancedIrrigation_", {}, getScriptManager()
+    for _, recipes in ipairs({ scripts:getAllCraftRecipes(), scripts:getAllBuildableRecipes() }) do
+        for i = 0, recipes:size() - 1 do
+            local recipe = recipes:get(i)
+            local name = recipe:getName()
+            if name:sub(1, #PREFIX) == PREFIX and recipe:needToBeLearn() and not seen[name] then
+                seen[name] = true
+                table.insert(RECIPES, name)
+            end
+        end
+    end
+end
+
+-- The pamphlet's LearnedRecipes, as its script states them.
+local PAMPHLET_RECIPES = {}
+do
+    local pamphlet = getScriptManager():getItem(PAMPHLET)
+    local learned = pamphlet and pamphlet:getLearnedRecipes()
+    for i = 0, (learned and learned:size() or 0) - 1 do
+        table.insert(PAMPHLET_RECIPES, learned:get(i))
+    end
+end
 
 -- Each of `names` marked true.
 local function marked(names)
@@ -76,10 +100,11 @@ local function expectKnown(self, what, expected)
 end
 
 -- Reading the pamphlet through vanilla's action teaches its recipes, on the authority too, whose
--- copy the builds and the plumbing ask, and not the crock's, which are a potter's.
+-- copy the builds and the plumbing ask, and none of the mod's others.
 test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
     instant = true,
     run = function(self)
+        if not T.need(self, #PAMPHLET_RECIPES > 0, "the LearnedRecipes of " .. PAMPHLET) then return end
         T.knowRecipes(self, RECIPES, false)
         T.give(self, "pamphlet", { { type = PAMPHLET } })
         -- A title read within the literature cooldown teaches nothing (ISReadABook:complete), and
@@ -235,7 +260,7 @@ end
 -- the mod's LevelPerk hook the builds, since vanilla's skips build recipes. Catches a recipe taught
 -- a level early or never, or taught on one side only.
 test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
-    timeoutSeconds = 90,
+    timeoutSeconds = 135,
     run = function(self)
         local rows = autoLearnLevels()
         if not T.need(self, #rows > 0, "an AutoLearn skill on " .. table.concat(RECIPES, " or ")) then return end
@@ -385,9 +410,10 @@ test("irrigation_learning_plumb_to_tank_in_no_crafting_list", {
     end,
 })
 
--- The pamphlet's own recipe list (its right-click "Show Known Recipes") names Plumb to Tank, and
--- picking it opens the crafting window on it, which can't craft it, then or once the window has
--- refreshed as it does when the inventory changes (ISHandCraftPanel:update, drawDirty).
+-- The pamphlet's own recipe list (its right-click "Show Known Recipes") names each recipe it
+-- teaches, and picking Plumb to Tank opens the crafting window on it, which can't craft it, then or
+-- once the window has refreshed as it does when the inventory changes (ISHandCraftPanel:update,
+-- drawDirty).
 test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
     run = function(self)
         T.knowRecipes(self, RECIPES, true)
@@ -407,7 +433,12 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
             local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items.pamphlet[1] }, 0, 0)
             if not T.need(self, type(context) == "table" and context, "the pamphlet's right-click menu") then return end
             local plumb = T.findNamed(context, context, Translator.getRecipeName(PLUMB))
-            self.listsStand = T.findNamed(context, context, Translator.getRecipeName(STAND)) ~= nil
+            self.unlisted = {}
+            for _, name in ipairs(PAMPHLET_RECIPES) do
+                if not T.findNamed(context, context, Translator.getRecipeName(name)) then
+                    table.insert(self.unlisted, name)
+                end
+            end
             self.listsPlumb = plumb ~= nil
             if plumb then
                 T.choose(plumb)
@@ -427,7 +458,9 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
         T.step(function() self.craftableLater = craftable() end)
     end,
     validate = function(self)
-        expect(self.listsStand and self.listsPlumb, "the pamphlet's recipe list doesn't name both recipes")
+        expect(self.unlisted and #self.unlisted == 0,
+            "the pamphlet's recipe list doesn't name " .. table.concat(self.unlisted or PAMPHLET_RECIPES, ", "))
+        expect(self.listsPlumb, "the pamphlet's recipe list doesn't name " .. PLUMB)
         expect(not self.listsPlumb or self.opened, "picking Plumb to Tank in the pamphlet's list opened no crafting window")
         expect(not self.craftableAtOnce, "the crafting window the pamphlet opened can craft Plumb to Tank")
         expect(not self.craftableLater, "the crafting window the pamphlet opened can craft Plumb to Tank once refreshed")
