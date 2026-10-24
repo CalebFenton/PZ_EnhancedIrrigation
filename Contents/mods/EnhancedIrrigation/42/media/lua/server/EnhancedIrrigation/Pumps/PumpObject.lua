@@ -196,8 +196,8 @@ local function endsLoaded(record)
     if not EnhancedIrrigation.loadedAround(record.x, record.y, record.z) then
         return false
     end
-    local outlet = Pumps.outletOf(record)
-    return outlet == nil or EnhancedIrrigation.chunkLoaded(outlet.b.x, outlet.b.y, outlet.b.z)
+    local into = Pumps.outletEnd(record)
+    return into == nil or EnhancedIrrigation.chunkLoaded(into.x, into.y, into.z)
 end
 
 --- `hours` of time on the pump up to now, in steps of an hour at most, as its kind says. Does
@@ -267,8 +267,7 @@ end
 function PumpObject:afterChange()
     self:show()
     self:sendSummary()
-    local outlet = Pumps.outletOf(self)
-    local b = outlet and outlet.b
+    local b = Pumps.outletEnd(self)
     if b and EnhancedIrrigation.Lines.recordAt(b.x, b.y, b.z) then
         EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, self:isRunning())
     end

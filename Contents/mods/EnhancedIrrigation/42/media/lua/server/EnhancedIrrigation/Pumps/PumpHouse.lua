@@ -206,7 +206,7 @@ end
 --- water go, or what the line its outlet feeds takes of it, and wears the part, ten times as fast
 --- for the time its source is dry. Stops where the part burns out. Returns the hours it ran.
 function PumpHouse.run(record, pump, part, hours)
-    local source = Pumps.sourceOf(pump, record.intake, (Pumps.outletOf(record) or {}).b)
+    local source = Pumps.sourceOf(pump, record.intake, Pumps.outletEnd(record))
     local into = PumpJobs.deliveryOf(pump, part, record.intake)
     local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
     -- The litres an hour it lifts while it has water, and how many its outlet takes at most.

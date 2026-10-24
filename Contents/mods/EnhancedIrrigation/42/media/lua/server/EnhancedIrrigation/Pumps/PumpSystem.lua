@@ -35,9 +35,8 @@ PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
 
 -- A pump taken away, smashed or by another mod, no longer runs the line its outlet fed.
 function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
-    local outlet = self:isValidIsoObject(isoObject) and Pumps.outletOf(EnhancedIrrigation.squareOf(isoObject))
+    local b = self:isValidIsoObject(isoObject) and Pumps.outletEnd(EnhancedIrrigation.squareOf(isoObject))
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
-    local b = outlet and outlet.b
     if b and Lines.recordAt(b.x, b.y, b.z) then
         EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, false)
     end

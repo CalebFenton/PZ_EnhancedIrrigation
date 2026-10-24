@@ -189,20 +189,22 @@ end
 
 --- The outlet link of the pump on the square `at` ({ x, y, z }), or nil.
 function Pumps.outletOf(at)
-    for _, link in ipairs(Links.all()) do
-        if link.pump and EnhancedIrrigation.sameSquare(link.a, at) then
-            return link
-        end
-    end
-    return nil
+    return Links.roleAt(at, "pump")
+end
+
+--- The square the outlet of the pump on the square `at` delivers to, or nil without an outlet.
+function Pumps.outletEnd(at)
+    local outlet = Pumps.outletOf(at)
+    return outlet and select(2, Links.ends(outlet)) or nil
 end
 
 --- The outlet link of a pump that feeds the line of `tiles` (Lines.component), or nil.
 function Pumps.pumpFeeding(tiles)
     for _, link in ipairs(Links.all()) do
         if link.pump then
+            local _, into = Links.ends(link)
             for _, tile in ipairs(tiles) do
-                if EnhancedIrrigation.sameSquare(link.b, tile) then
+                if EnhancedIrrigation.sameSquare(into, tile) then
                     return link
                 end
             end
@@ -390,19 +392,19 @@ end
 --- The menu's line for `pump` with `summary`: where it draws; a hand pump's seal and body, or a Pump
 --- House's part and switch; the tank it fills or the line it feeds.
 function Pumps.statusText(pump, summary)
-    local outlet = Pumps.outletOf(EnhancedIrrigation.squareOf(pump))
-    local words = { Pumps.sourceName(Pumps.sourceOf(pump, summary.intake, outlet and outlet.b)) }
+    local into = Pumps.outletEnd(EnhancedIrrigation.squareOf(pump))
+    local words = { Pumps.sourceName(Pumps.sourceOf(pump, summary.intake, into)) }
     if Pumps.isHouse(pump) then
         houseWords(words, summary)
     else
         handWords(words, summary)
     end
-    local tank = outlet and Tanks.tankAt(outlet.b.x, outlet.b.y, outlet.b.z)
-    if not outlet then
+    local tank = into and Tanks.tankAt(into.x, into.y, into.z)
+    if not into then
         table.insert(words, getText("IGUI_EnhancedIrrigation_NoOutlet"))
     elseif tank then
         table.insert(words, getText("IGUI_EnhancedIrrigation_OutletTo", tank:getFluidContainer():getTranslatedContainerName()))
-    elseif Lines.lineAt(outlet.b.x, outlet.b.y, outlet.b.z) then
+    elseif Lines.lineAt(into.x, into.y, into.z) then
         table.insert(words, getText("IGUI_EnhancedIrrigation_OutletToLine"))
     end
     return table.concat(words, ", ")

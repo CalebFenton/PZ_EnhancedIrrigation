@@ -64,11 +64,10 @@ end
 --- hose's `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of
 --- why it lifts nothing.
 function PumpJobs.deliveryOf(pump, spec, intake)
-    local outlet = Pumps.outletOf(EnhancedIrrigation.squareOf(pump))
-    if not outlet then
+    local b = Pumps.outletEnd(EnhancedIrrigation.squareOf(pump))
+    if not b then
         return nil, "Tooltip_EnhancedIrrigation_NoOutlet"
     end
-    local b = outlet.b
     local into = Tanks.tankAt(b.x, b.y, b.z) or Lines.lineAt(b.x, b.y, b.z)
     if not into then
         return nil, "Tooltip_EnhancedIrrigation_OutletGone"

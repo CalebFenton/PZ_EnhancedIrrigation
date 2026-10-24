@@ -543,7 +543,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
         readMenu(self, self.pump, "plumbed")
         T.step(function()
-            local b = Pumps.outletOf(T.at(self.pump)).b
+            local b = Pumps.outletEnd(T.at(self.pump))
             self.unplumbLabel = LinkMenu.linkLabel(T.at(self.pump), b)
         end)
         T.useOption(self, function() return copyOf(self.pump) end, "unplumb", function(context)
