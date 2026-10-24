@@ -27,8 +27,8 @@ local Pumps = EnhancedIrrigation.Pumps
 
 LinkJobs.PLUMB = "PlumbToTank"
 LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
--- Vanilla's Plumb, which needs no pipe and no learning: a fixture to the tank vanilla's plumbing
--- would draw on.
+-- Vanilla's Plumb, which needs no pipe and no learning: a fixture to a tank where vanilla's plumbing
+-- looks for its water.
 LinkJobs.PLUMB_ABOVE = "PlumbAbove"
 LinkJobs.PLUMB_INLET = "PlumbInlet"
 LinkJobs.PLUMB_OUTLET = "PlumbOutlet"
@@ -208,6 +208,23 @@ local function unitPlumbJob(role)
     return plumbJobFor(function(unit, with) return LinkJobs.unitBlocker(unit, with, role) end)
 end
 
+-- Whether the square `at` is where vanilla's plumbing looks for `fixture`'s water
+-- (IsoObject.FindExternalWaterSource): on the floor above, within a tile of any cell of the
+-- fixture's sprite grid, or of its own square `here` without one. Which tank there vanilla prefers
+-- shifts with what each holds, so it is the menu's choice, not a condition of the job.
+local function isAbove(fixture, here, at)
+    if at.z ~= here.z + 1 then
+        return false
+    end
+    local grid, sprite = fixture:getSpriteGrid(), fixture:getSprite()
+    local x, y, width, height = here.x, here.y, 1, 1
+    if grid then
+        x, y = here.x - grid:getSpriteGridPosX(sprite), here.y - grid:getSpriteGridPosY(sprite)
+        width, height = grid:getWidth(), grid:getHeight()
+    end
+    return at.x >= x - 1 and at.x <= x + width and at.y >= y - 1 and at.y <= y + height
+end
+
 LinkJobs.JOBS = {
     [LinkJobs.PLUMB] = plumbJobFor(tankBlocker),
     [LinkJobs.PLUMB_FIXTURE] = plumbJobFor(LinkJobs.fixtureBlocker),
@@ -218,17 +235,11 @@ LinkJobs.JOBS = {
             if not Fixtures.plumbingKeepsTaint() then
                 return Jobs.UNKNOWN
             end
-            local blocker, _, other = LinkJobs.fixtureBlocker(fixture, with)
+            local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
             if blocker then
                 return blocker
             end
-            -- Vanilla searches the floor above every tile of the fixture's sprite grid, so a bath reaches
-            -- a tank over its far half.
-            local source = fixture:FindExternalWaterSource()
-            if not (source and EnhancedIrrigation.sameSquare(EnhancedIrrigation.squareOf(source), other)) then
-                return "Tooltip_EnhancedIrrigation_OutOfReach"
-            end
-            return nil
+            return not isAbove(fixture, here, other) and "Tooltip_EnhancedIrrigation_OutOfReach" or nil
         end,
         materials = { Pipes.WRENCH },
     },
