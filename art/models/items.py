@@ -313,21 +313,19 @@ def tank_stand(col, barrel=None, tarp=False):
     legs' tops and a deck of planks across them; with `barrel` ("open" or "closed") the game's rain
     barrel on it, lined with a bag or, with `tarp`, a tarp."""
     top = DECK_TOP - DECK_BOARD
-    joist_top = top
-    leg_top = joist_top
     for sx in (-1, 1):
         for sy in (-1, 1):
-            leg = cylinder(col, "Stand_Leg", M("bark"), LEG_RADIUS, leg_top, at=(sx * LEG_AT, sy * LEG_AT, 0), segments=10)
+            leg = cylinder(col, "Stand_Leg", M("bark"), LEG_RADIUS, top, at=(sx * LEG_AT, sy * LEG_AT, 0), segments=10)
             leg.rotation_euler.z = math.radians(17 * (sx + 2 * sy))
-            cylinder(col, "Stand_LegEnd", M("logend"), LEG_RADIUS - 0.004, 0.002, at=(sx * LEG_AT, sy * LEG_AT, leg_top), segments=10)
+            cylinder(col, "Stand_LegEnd", M("logend"), LEG_RADIUS - 0.004, 0.002, at=(sx * LEG_AT, sy * LEG_AT, top), segments=10)
     # Joists along the north and south rows of legs, nailed to their outer faces.
     for sy in (-1, 1):
         y = sy * (LEG_AT + LEG_RADIUS + JOIST[0] / 2)
-        box(col, "Stand_Joist", M("planksdark"), (2 * LEG_AT + 0.2, JOIST[0], JOIST[1]), at=(0, y, joist_top - JOIST[1]), bevel=0.004)
+        box(col, "Stand_Joist", M("planksdark"), (2 * LEG_AT + 0.2, JOIST[0], JOIST[1]), at=(0, y, top - JOIST[1]), bevel=0.004)
         for sx in (-1, 1):
-            box(col, "Stand_Nail", M("nail"), (0.012, 0.004, 0.012), at=(sx * LEG_AT, y - sy * (JOIST[0] / 2 + 0.002), joist_top - 0.06))
+            box(col, "Stand_Nail", M("nail"), (0.012, 0.004, 0.012), at=(sx * LEG_AT, y - sy * (JOIST[0] / 2 + 0.002), top - 0.06))
     # Cross braces up each side, from near the foot of one leg to near the top of the other.
-    low, high = 0.18, joist_top - JOIST[1] - 0.06
+    low, high = 0.18, top - JOIST[1] - 0.06
     out = LEG_AT + LEG_RADIUS + BRACE[1] / 2
     for side in range(4):
         for k, (a, b) in enumerate(((-1, 1), (1, -1))):
