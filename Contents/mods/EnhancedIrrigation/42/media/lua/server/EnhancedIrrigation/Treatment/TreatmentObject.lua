@@ -206,10 +206,19 @@ function TreatmentObject:advance(hours)
     end
 end
 
---- Brings the record up to now while its unit is loaded; an unloaded one keeps its lastHour, so the
---- whole gap is caught up once it loads (at most LONGEST_PASS).
+--- Whether the unit's inlet runs from a square this side hasn't loaded: its tank may hold water
+--- that would have kept the head topped up, which can't be known until it loads. A loaded square
+--- with no tank on it feeds nothing, and the unit runs on.
+function TreatmentObject:inletUnloaded()
+    local link = Treatment.linkOf(self, "inlet")
+    return link ~= nil and getCell():getGridSquare(link.a.x, link.a.y, link.a.z) == nil
+end
+
+--- Brings the record up to now while its unit is loaded, and its inlet's tank too if it has one;
+--- otherwise it keeps its lastHour, so the whole gap is caught up once both load (at most
+--- LONGEST_PASS), the inlet feeding it through the gap as it would have.
 function TreatmentObject:catchUp()
-    if self:getIsoObject() then
+    if self:getIsoObject() and not self:inletUnloaded() then
         self:advance(self:elapsedHours())
     end
 end

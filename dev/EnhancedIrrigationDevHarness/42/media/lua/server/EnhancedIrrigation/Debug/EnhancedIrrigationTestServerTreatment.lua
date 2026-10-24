@@ -160,6 +160,13 @@ handler("treatment.pass", function(_, args)
     return stateAt(args)
 end)
 
+-- Drops every link with an end on x, y, z without giving its pipe back: for an end that can't be
+-- reached to unplumb, such as one on a square no chunk has loaded.
+handler("treatment.unlink", function(_, args)
+    Server.unlinkAt(args.x, args.y, args.z)
+    return {}
+end)
+
 -- Fills the first carried item of `args.type` with `args.litres` of `args.fluid` (a FluidType
 -- name), emptied first, and sends it to the client.
 handler("treatment.fillCarried", function(player, args)

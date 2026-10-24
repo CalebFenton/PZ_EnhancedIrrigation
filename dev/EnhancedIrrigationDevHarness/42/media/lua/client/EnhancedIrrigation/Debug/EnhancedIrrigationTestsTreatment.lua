@@ -547,6 +547,37 @@ T.test("irrigation_treatment_inlet_keeps_the_film_through_an_absence", {
     end,
 })
 
+-- A plumbed filter whose inlet's tank stands where no chunk is loaded waits for it: however long
+-- ago it last ran, its pass leaves the head and basin as they were, since the tank might have kept
+-- it wet. With that pipe gone, its next pass treats the whole gap at its rate, so the wait lost no
+-- time. The far end is far past any loaded chunk, as a tank beyond the edge of the loaded area is
+-- when the filter's chunk loads first; so this runs in multiplayer too. Catches a filter that runs
+-- the gap dry, its film lost, before its tank loads.
+T.test("irrigation_treatment_waits_for_an_unloaded_inlet_tank", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        self.gap, self.head = 5, 40
+        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = self.head, ripeHours = Treatment.RIPE_HOURS } })
+        local far = { x = self.unit.x + 3000, y = self.unit.y, z = self.unit.z }
+        T.server(self, "links.make", T.at(far, { to = T.at(self.unit), kind = "iron", lengths = 1, role = "inlet" }))
+        T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap, tank = far }), "waiting")
+        T.server(self, "treatment.unlink", far)
+        T.read(self, "treatment.update", T.at(self.unit), "back")
+    end,
+    validate = function(self)
+        local waiting, back = self.reads.waiting, self.reads.back
+        expect(waiting.after.inlet and not waiting.after.tank.loaded, "the inlet's far end isn't plumbed, or is loaded")
+        expectNear("the head while its inlet's tank is away", waiting.after.record.head, self.head, LITRES)
+        expectNear("the basin while its inlet's tank is away", waiting.after.basin.litres, 0, LITRES)
+        -- From the clock wound back to the pass after the pipe went, whichever pass ran it.
+        local litres = self.unit.spec.rate * (back.now - (waiting.now - self.gap))
+        expectBasin("the filter after its inlet went", back.after, litres, false)
+        expectNear("the head after its inlet went", back.after.record.head, self.head - litres, LITRES)
+    end,
+})
+
 -- Vanilla's menus ----------------------------------------------------------------------------------------
 
 -- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
