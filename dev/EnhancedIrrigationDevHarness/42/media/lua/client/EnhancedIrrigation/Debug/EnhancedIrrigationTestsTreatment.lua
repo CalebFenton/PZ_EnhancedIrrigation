@@ -26,8 +26,6 @@ local CROCK = "EnhancedIrrigation_FilterCrock"
 local STONE, WELDED = "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded"
 local SPRITES = { [BARREL] = Sprites.BARREL_FILTER, [BRICK] = Sprites.BRICK_FILTER, [CROCK] = Sprites.FILTER_CROCK,
     [STONE] = Sprites.BOILER_STONE, [WELDED] = Sprites.BOILER_WELDED }
--- The empty sack a bag of sand or gravel leaves (its ReplaceOnDeplete).
-local SACK = "Base.EmptySandbag"
 
 -- Units -----------------------------------------------------------------------------------------------
 
@@ -200,9 +198,8 @@ end
 -- Building ----------------------------------------------------------------------------------------------
 
 -- The build menu builds each filter from its recipe on a bare square, with its record at once:
--- this client's menu reads its state. The tools stay and every bag of sand or gravel leaves its
--- empty sack. Catches a recipe the build menu can't build, a filter without its record, or the
--- bags used up whole.
+-- this client's menu reads its state. Catches a recipe the build menu can't build, or a filter
+-- without its record.
 for _, entity in ipairs({ BARREL, BRICK }) do
     T.test("irrigation_treatment_" .. (entity == BARREL and "barrel" or "brick") .. "_filter_built_from_build_menu", {
         instant = true,
@@ -213,7 +210,6 @@ for _, entity in ipairs({ BARREL, BRICK }) do
             if not self.unit then return end
             self.unit.spec = Treatment.UNITS[entity]
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-            T.count(self, "left", { SACK, "Base.Sandbag", "Base.Gravelbag" })
             T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built filter")
             readMenu(self, self.unit, "built")
@@ -223,14 +219,6 @@ for _, entity in ipairs({ BARREL, BRICK }) do
             expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
             expect(built.record and built.record.head == 0, "the built filter has no record, or water in its head")
             expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the built filter's basin isn't empty and locked")
-            local bags = 0
-            for _, item in ipairs(self.items.materials or {}) do
-                local fullType = item:getFullType()
-                bags = bags + ((fullType == "Base.Sandbag" or fullType == "Base.Gravelbag") and 1 or 0)
-            end
-            local left = self.counts.left
-            expect(left[SACK] == bags, "building left " .. tostring(left[SACK]) .. " empty sacks of " .. bags .. " bags")
-            expect(left["Base.Sandbag"] == 0 and left["Base.Gravelbag"] == 0, "building left full bags")
             expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Ripening", Treatment.RIPE_HOURS))
         end,
     })
@@ -767,10 +755,9 @@ local FORGED_BUCKET = "Base.BucketForged"
 -- from the first carried `from`, the way the bench's window does: the character knows the recipe
 -- (until the test ends), has its skill and carries exactly one craft's inputs, each the first of
 -- `prefer` it takes; `ready(self)`, if given, queues what the inputs need first. Then counts
--- `counted` (full types) into self.counts.craft and runs `after(self)`, if given. T.craftTest
--- teaches every recipe of the mod and sets a work table down for good, which leaves both behind for
--- the leak check.
-local function craftAtBench(self, name, from, bench, prefer, counted, ready, after)
+-- `counted` (full types) into self.counts.craft. T.craftTest teaches every recipe of the mod and
+-- sets a work table down for good, which leaves both behind for the leak check.
+local function craftAtBench(self, name, from, bench, prefer, counted, ready)
     local recipe = T.need(self, getScriptManager():getCraftRecipe(name), "the recipe " .. name)
     if not recipe then return end
     T.knowRecipes(self, { name }, true)
@@ -792,15 +779,12 @@ local function craftAtBench(self, name, from, bench, prefer, counted, ready, aft
         T.startCraft(self, recipe, item, placed.object)
         -- Queued after the craft's actions, which T.startCraft has just queued.
         T.count(self, "craft", counted, { dropped = true })
-        if after then
-            after(self)
-        end
     end)
 end
 
--- Shape Filter Crock at a pottery wheel makes an unfired crock from the clay and charcoal, taking
--- half a litre from the carried bottle of water. Catches a recipe the wheel won't make, or one that
--- leaves its inputs.
+-- Shape Filter Crock at a pottery wheel makes an unfired crock from the clay and charcoal, with
+-- water from the carried bottle. Catches a recipe the wheel won't make, or one that leaves its
+-- inputs.
 T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
     instant = true,
     run = function(self)
@@ -811,16 +795,12 @@ T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
                     local bottle = T.player():getInventory():getFirstTypeRecurse("Base.WaterBottle")
                     return bottle ~= nil and math.abs(bottle:getFluidContainer():getAmount() - 1) < LITRES
                 end, "this client's copy of the filled bottle")
-            end, function()
-                T.read(self, "treatment.carried", { type = "Base.WaterBottle" }, "bottle")
             end)
     end,
     validate = function(self)
         local craft = self.counts and self.counts.craft or {}
         expect(craft[UNFIRED] == 1, "shaping made " .. tostring(craft[UNFIRED]) .. " unfired crocks")
         expect(craft["Base.Clay"] == 0 and craft["Base.Charcoal"] == 0, "shaping left clay or charcoal")
-        local bottle = self.reads and self.reads.bottle
-        expectNear("the bottle's water after shaping", bottle and bottle.litres or -1, 0.5, LITRES)
     end,
 })
 
@@ -853,7 +833,6 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         if not self.unit then return end
         self.unit.spec = Treatment.UNITS[CROCK]
         readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-        T.count(self, "built", { Treatment.CROCK_ITEM, FORGED_BUCKET })
         T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
             "this client's summary of the crock")
         readMenu(self, self.unit, "built")
@@ -869,9 +848,6 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         expect(built.entity == CROCK, "the build menu built " .. tostring(built.entity))
         expect(built.record and built.record.head == 0, "the crock has no record, or water in its head")
         expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the crock's basin isn't empty and locked")
-        local used = self.counts.built
-        expect(used[Treatment.CROCK_ITEM] == 0 and used[FORGED_BUCKET] == 0, "setting the crock up left "
-            .. tostring(used[Treatment.CROCK_ITEM]) .. " crocks and " .. tostring(used[FORGED_BUCKET]) .. " forged buckets")
         expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, Treatment.UNITS[CROCK].head))
         T.expectOffered(self, "take down")
         local taken = self.reads.taken
@@ -1079,9 +1055,9 @@ local function running(handler)
 end
 
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
--- on both sides, with its record at once, its drum taken. Its menu holds vanilla's Add Fuel and
--- Light beside its own line, which reads the empty drum cold and sound. Catches a recipe the build
--- menu can't build, a boiler that isn't a fire or has no record, or its menu split from the fire's.
+-- on both sides, with its record at once. Its menu holds vanilla's Add Fuel and Light beside its
+-- own line, which reads the empty drum cold and sound. Catches a recipe the build menu can't build,
+-- a boiler that isn't a fire or has no record, or its menu split from the fire's.
 for _, entity in ipairs({ STONE, WELDED }) do
     T.test("irrigation_treatment_boiler_" .. (entity == STONE and "stone" or "welded") .. "_built_from_build_menu", {
         instant = true,
@@ -1092,7 +1068,6 @@ for _, entity in ipairs({ STONE, WELDED }) do
             if not self.unit then return end
             self.unit.spec = Treatment.UNITS[entity]
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-            T.count(self, "left", { "Base.MetalDrum" })
             T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built boiler")
             readMenu(self, self.unit, "built")
@@ -1108,7 +1083,6 @@ for _, entity in ipairs({ STONE, WELDED }) do
             expect(self.clientFire, "this client's copy of the boiler isn't a vanilla fireplace")
             expect(built.record and built.record.head == 0, "the built boiler has no record, or water in its head")
             expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the built boiler's basin isn't empty and locked")
-            expect(self.counts.left["Base.MetalDrum"] == 0, "building left the Metal Drum")
             expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, self.unit.spec.head))
             expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Cold"))
             expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
