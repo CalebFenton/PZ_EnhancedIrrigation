@@ -41,15 +41,6 @@ local function recordOf(self, label, i)
     return tiles and tiles[i] and tiles[i].record
 end
 
-local function hasOverlay(names, name)
-    for _, overlay in ipairs(names or {}) do
-        if overlay == name then
-            return true
-        end
-    end
-    return false
-end
-
 -- The shape (Sprites.pipe) a pipe tile's name draws, or nil for any other name.
 local function shapeOf(spriteName)
     local material, _, shape = Sprites.pipeOf(spriteName)
@@ -512,16 +503,6 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
 
 -- Taps ---------------------------------------------------------------------------------------------
 
-local function hasTapRiser(line)
-    local attached = line and line:getAttachedAnimSprite()
-    for i = 0, (attached and attached:size() or 0) - 1 do
-        if attached:get(i):getName() == Sprites.TAP then
-            return true
-        end
-    end
-    return false
-end
-
 -- Fit Tap wants a tank reaching the tile a storey above the line: under a well, whose water stands
 -- underground, and beside a barrel on the ground it's refused, saying so; beside a barrel on a stand
 -- it fits with a length of the tile's own pipe, whatever else is carried, and shows the riser on
@@ -543,7 +524,8 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         T.placeTank(self, east, "raised", 0)
         T.useLineJob(self, tile, LineJobs.TAP, "beside a raised barrel", true)
         readUntil(self, { tile }, "tapped", function(tiles) return tiles[1].record.tap == true end)
-        T.waitFor(self, function() return hasTapRiser(T.lineObject(tile)) end, "this client's copy of the tap's riser")
+        T.waitFor(self, function() return T.hasOverlay(T.overlaysOf(T.lineObject(tile)), Sprites.TAP) end,
+            "this client's copy of the tap's riser")
         T.count(self, "left", { Pipes.KINDS.iron.item, Pipes.KINDS.lead.item, "Base.PipeWrench" })
     end,
     validate = function(self)
@@ -553,7 +535,7 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         local record = recordOf(self, "tapped", 1)
         expect(record.tap and record.tapMaterial == "lead", "the tap fitted: " .. tostring(record.tap) .. ", of "
             .. tostring(record.tapMaterial) .. " pipe, not the lead tile's own")
-        expect(hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
+        expect(T.hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
         local iron, lead = Pipes.KINDS.iron.item, Pipes.KINDS.lead.item
         expect(self.counts.left[lead] == 0, "the tap took no lead pipe")
         expect(self.counts.left[iron] == 1, "the tap on lead pipe took iron pipe")

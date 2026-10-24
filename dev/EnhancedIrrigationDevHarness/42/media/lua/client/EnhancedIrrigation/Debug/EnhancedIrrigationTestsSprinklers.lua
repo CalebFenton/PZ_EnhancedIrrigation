@@ -240,16 +240,6 @@ T.test("irrigation_sprinklers_do_nothing_on_a_tapped_line", {
 
 -- Setting and taking --------------------------------------------------------------------------------
 
-local function hasSprinkler(line)
-    local attached = line and line:getAttachedAnimSprite()
-    for i = 0, (attached and attached:size() or 0) - 1 do
-        if attached:get(i):getName() == Sprites.SPRINKLER then
-            return true
-        end
-    end
-    return false
-end
-
 -- A sprinkler made from pipe, worn: its condition and the ceiling its item carries.
 local WORN = { condition = 70, ceiling = Sprinklers.MADE_CEILING }
 
@@ -276,13 +266,15 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         T.readUntil(self, "lines.read", { tiles = { T.at(tile) } }, "set", function(reply)
             return reply.tiles[1].record.sprinkler ~= nil
         end)
-        T.waitFor(self, function() return hasSprinkler(T.lineObject(tile)) end, "this client's copy of the sprinkler")
+        T.waitFor(self, function() return T.hasOverlay(T.overlaysOf(T.lineObject(tile)), Sprites.SPRINKLER) end,
+            "this client's copy of the sprinkler")
         T.useLineJob(self, tile, LineJobs.TAP, "tap on it", false)
         T.useLineJob(self, tile, LineJobs.TAKE_SPRINKLER, "take", true)
         T.readUntil(self, "lines.read", { tiles = { T.at(tile) } }, "taken", function(reply)
             return reply.tiles[1].record.sprinkler == nil
         end)
-        T.waitFor(self, function() return not hasSprinkler(T.lineObject(tile)) end, "this client's copy of the bare tile")
+        T.waitFor(self, function() return not T.hasOverlay(T.overlaysOf(T.lineObject(tile)), Sprites.SPRINKLER) end,
+            "this client's copy of the bare tile")
         T.read(self, "items.carried", { type = Sprinklers.ITEM }, "carried")
     end,
     validate = function(self)
@@ -294,11 +286,7 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         expect(sprinkler and sprinkler.condition == WORN.condition and sprinkler.ceiling == WORN.ceiling,
             "the sprinkler went on at " .. tostring(sprinkler and sprinkler.condition) .. " of "
             .. tostring(sprinkler and sprinkler.ceiling))
-        local drawn = false
-        for _, name in ipairs(set.overlays or {}) do
-            drawn = drawn or name == Sprites.SPRINKLER
-        end
-        expect(drawn, "the server doesn't draw the sprinkler")
+        expect(T.hasOverlay(set.overlays, Sprites.SPRINKLER), "the server doesn't draw the sprinkler")
         T.expectRefused(self, "tap on it", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
         T.expectOffered(self, "take")
         local taken = self.reads.taken.tiles[1].record

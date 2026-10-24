@@ -640,16 +640,8 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = Valves.TIMER } })
         T.useMenu(self, self.house, "fit", T.job("pump", PumpJobs.FIT_TIMER), true)
         readUntil(self, self.house, "fitted", function(state) return state.record.timer ~= nil end)
-        T.waitFor(self, function()
-            local copy = T.copyOf(self.house)
-            local attached = copy and copy:getAttachedAnimSprite()
-            for i = 0, (attached and attached:size() or 0) - 1 do
-                if attached:get(i):getName() == Sprites.HOUSE_TIMER then
-                    return true
-                end
-            end
-            return false
-        end, "this client's copy of the house showing its timer")
+        T.waitFor(self, function() return T.hasOverlay(T.overlaysOf(T.copyOf(self.house)), Sprites.HOUSE_TIMER) end,
+            "this client's copy of the house showing its timer")
         self.start = (math.floor(getGameTime():getTimeOfDay()) - 2) % 24
         T.useMenu(self, self.house, "set", function(context)
             return T.findOption(context, context, function(option) return option.onSelect == PumpMenu.openTimer end)

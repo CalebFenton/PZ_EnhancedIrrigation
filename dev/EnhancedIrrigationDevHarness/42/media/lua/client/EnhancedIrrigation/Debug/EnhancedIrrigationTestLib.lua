@@ -595,6 +595,26 @@ function T.copyOf(handle, sprite)
     return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), sprite or handle.sprite)
 end
 
+--- The names of the overlays drawn over `object` (its attached sprites), none for nil.
+function T.overlaysOf(object)
+    local names = {}
+    local attached = object and object:getAttachedAnimSprite()
+    for i = 0, (attached and attached:size() or 0) - 1 do
+        table.insert(names, attached:get(i):getName())
+    end
+    return names
+end
+
+--- Whether the list of overlay names `names` (T.overlaysOf, or a server read's) holds `name`.
+function T.hasOverlay(names, name)
+    for _, overlay in ipairs(names or {}) do
+        if overlay == name then
+            return true
+        end
+    end
+    return false
+end
+
 --- This client's level of the tank on the handle's square, or nil without one.
 function T.clientLevel(handle)
     local tank = Tanks.tankOn(getSquare(handle.x, handle.y, handle.z))

@@ -113,11 +113,8 @@ T.test("irrigation_valves_fit_and_take_off", {
         T.expectOffered(self, "fit")
         expect(self.reads.fitted.valve.item == Valves.WIND_UP, "the tap's valve is " .. tostring(self.reads.fitted.valve.item))
         local overlays = self.reads.shown.tiles[1].overlays or {}
-        local shown = false
-        for _, name in ipairs(overlays) do
-            shown = shown or name == Sprites.TAP_VALVES[Valves.WIND_UP]
-        end
-        expect(shown, "the tap shows no valve: " .. table.concat(overlays, ", "))
+        expect(T.hasOverlay(overlays, Sprites.TAP_VALVES[Valves.WIND_UP]), "the tap shows no valve: "
+            .. table.concat(overlays, ", "))
         expect(#self.reads.carriedFitted.items == 0, "the fitted valve is still carried")
         T.expectOffered(self, "takeOff")
         expect(self.reads.off.valve.item == nil, "the tap still has its " .. tostring(self.reads.off.valve.item) .. " after Take Off Valve")
