@@ -4,8 +4,7 @@ local QA = require "EnhancedIrrigationDevQA"
 -- Listed in the SCENARIOS panel on the main menu when the game runs with -debug
 -- (DebugScenarios.lua). Starts a zombie-free world in Muldraugh, among houses, since fixtures and
 -- vanilla plumbing work only in a room. A work table beside the start, set down before any test
--- so the leak checks take it as the world's, is the surface the table crafts use, as in
--- Renewable Energy's scenario.
+-- so the leak checks take it as the world's, is the surface the table crafts use.
 debugScenarios = debugScenarios or {}
 
 debugScenarios.EnhancedIrrigationScenario = {
