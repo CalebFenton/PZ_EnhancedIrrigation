@@ -4,6 +4,7 @@ require "TimedActions/ISToggleClothingWasher"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
+require "EnhancedIrrigation/Power"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -410,7 +411,8 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
         link(self, self.house, self.tank)
-        T.waitFor(self, function() return Pumps.powered(copyOf(self.house)) end, "this client's power from the generator")
+        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(copyOf(self.house)) end,
+            "this client's power from the generator")
         useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         update(self, self.house, "hours", { hoursAgo = GENERATOR_HOURS, tank = self.tank, generator = self.generator })

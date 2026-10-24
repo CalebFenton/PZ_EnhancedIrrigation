@@ -28,6 +28,7 @@ require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Timers"
+require "EnhancedIrrigation/Power"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
@@ -35,16 +36,9 @@ EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
 local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
-local Timers = EnhancedIrrigation.Timers
+local Timers, Power = EnhancedIrrigation.Timers, EnhancedIrrigation.Power
 
 -- Power ----------------------------------------------------------------------------------------------
-
---- The world hour after which the grid is off (SandboxOptions.doesPowerGridExist): ElecShutModifier
---- days into the apocalypse, which the world joined TimeSinceApo months in.
-function PumpHouse.shutoffHour()
-    local options = getSandboxOptions()
-    return (options:getElecShutModifier() - (options:getTimeSinceApo() - 1) * 30) * 24
-end
 
 -- Whether `generator` is a Renewable Energy battery bank, which is a generator too; none without
 -- that mod.
@@ -175,14 +169,9 @@ end
 -- How many of the `hours` from the world hour `from` the record's pump has power for, as things
 -- stand now, and the share of them the grid gives free; and who pays for the rest.
 local function poweredHours(record, pump, part, hours, from)
-    local gridHours = 0
-    if Pumps.gridPowered(pump) then
-        gridHours = hours
-    elseif record.grid then
-        gridHours = math.max(0, math.min(hours, PumpHouse.shutoffHour() - from))
-    end
+    local gridHours = Power.gridPowered(pump) and hours or Power.gridHours(record.grid, from, from + hours)
     local rest = hours - gridHours
-    if rest <= 0 or not Pumps.powered(pump) then
+    if rest <= 0 or not Power.powered(pump) then
         return gridHours, gridHours, nil
     end
     local payer = PumpHouse.payerOf(record)
@@ -314,13 +303,13 @@ function PumpHouse.settle(record, pump)
     if record.owedFuel and record.payer then
         PumpHouse.payerOf(record)
     end
-    record.grid = Pumps.gridPowered(pump)
+    record.grid = Power.gridPowered(pump)
     if record:isBurntOut() then
         record.on = nil
     end
     local part = Pumps.partSpec(record.part)
     local wanted = record.on == true or PumpHouse.timerOpen(record, EnhancedIrrigation.now())
-    local running = part ~= nil and not record:isBurntOut() and wanted and Pumps.powered(pump)
+    local running = part ~= nil and not record:isBurntOut() and wanted and Power.powered(pump)
     if running and not record.grid then
         local fuel = fuelLeft(record, PumpHouse.payerOf(record))
         running = fuel == nil or fuel > 0

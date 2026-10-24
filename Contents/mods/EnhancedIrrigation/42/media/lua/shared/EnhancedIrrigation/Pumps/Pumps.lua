@@ -166,18 +166,6 @@ function Pumps.onMadePump(craftRecipeData, character)
     pump:syncItemFields()
 end
 
---- Whether the grid powers `pump` now: before the shutoff, and in a room or beside one
---- (ItemContainer.isSquarePowered), as it powers a washer.
-function Pumps.gridPowered(pump)
-    return ItemContainer.isObjectPowered(pump, false)
-end
-
---- Whether anything powers `pump` now: the grid, or a running generator or Renewable Energy bank in
---- reach (IsoGridSquare.haveElectricity).
-function Pumps.powered(pump)
-    return ItemContainer.isObjectPowered(pump, true)
-end
-
 --- The pump on `square`, or nil. Takes a nil square.
 function Pumps.pumpOn(square)
     return EnhancedIrrigation.findObjectOn(square, Pumps.isPump)

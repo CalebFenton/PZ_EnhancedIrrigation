@@ -19,7 +19,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Taps"
-require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Power"
 require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/Lines/Flow"
@@ -28,8 +28,8 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local ValveSystem = {}
 EnhancedIrrigation.ValveSystem = ValveSystem
 
-local Lines, Taps, Pumps, Valves = EnhancedIrrigation.Lines, EnhancedIrrigation.Taps, EnhancedIrrigation.Pumps,
-    EnhancedIrrigation.Valves
+local Lines, Taps, Valves, Power = EnhancedIrrigation.Lines, EnhancedIrrigation.Taps, EnhancedIrrigation.Valves,
+    EnhancedIrrigation.Power
 local Flow, Timers = EnhancedIrrigation.Flow, EnhancedIrrigation.Timers
 
 -- The records of the taps with a valve, found again each ten minutes, and added to as one is fitted.
@@ -40,31 +40,20 @@ function ValveSystem.track(record)
     valved[record] = true
 end
 
--- The stretches of [from, to], as { from, to } world hours in order, the valve of `record` at the
--- tap `tap` held the tap open.
-local function openStretches(record, tap, from, to)
+-- The hours of each stretch of the world hours [from, to], in order, that the valve of `record` at
+-- the tap `tap` held the tap open and, for a timer, had power for.
+local function openHours(record, tap, from, to)
     local valve = record.valve
-    local kind = Valves.kindOf(valve.item)
-    if kind == "windup" then
+    if Valves.kindOf(valve.item) == "windup" then
         local untilHour = valve.untilHour or from
-        return untilHour > from and { { from = from, to = math.min(to, untilHour) } } or {}
+        return untilHour > from and { math.min(to, untilHour) - from } or {}
     end
-    local stretches = Timers.openHours(from, to, valve.start, valve.minutes)
-    if Pumps.powered(tap) then
-        return stretches
+    local powered = Power.powered(tap)
+    local hours = {}
+    for _, stretch in ipairs(Timers.openHours(from, to, valve.start, valve.minutes)) do
+        table.insert(hours, powered and stretch.to - stretch.from or Power.gridHours(valve.grid, stretch.from, stretch.to))
     end
-    if not valve.grid then
-        return {}
-    end
-    -- Read when called: PumpHouse.lua needs LineSystem.lua, which needs this file.
-    local shutoff = EnhancedIrrigation.PumpHouse.shutoffHour()
-    local powered = {}
-    for _, stretch in ipairs(stretches) do
-        if stretch.from < shutoff then
-            table.insert(powered, { from = stretch.from, to = math.min(stretch.to, shutoff) })
-        end
-    end
-    return powered
+    return hours
 end
 
 -- Whether the valve of `record` at `tap` holds the tap open now: wound and not run down, or a timer
@@ -78,7 +67,7 @@ local function isOpen(record, tap, now)
     if Valves.kindOf(valve.item) == "windup" then
         open = (valve.untilHour or now) > now
     else
-        open = Timers.isOpenAt(now, valve.start, valve.minutes) and Pumps.powered(tap)
+        open = Timers.isOpenAt(now, valve.start, valve.minutes) and Power.powered(tap)
     end
     return open and Taps.tankFor(tap) ~= nil
 end
@@ -97,19 +86,21 @@ function ValveSystem.update(record)
     local now = EnhancedIrrigation.now()
     local from = now - EnhancedIrrigation.hoursSince(valve)
     if not record.holder then
-        for _, stretch in ipairs(openStretches(record, tap, from, now)) do
+        for _, hours in ipairs(openHours(record, tap, from, now)) do
             local tank = Taps.tankFor(tap)
             if not tank then
                 break
             end
-            Flow.run(record, Flow.fromTank(tank, tap:getZ()), stretch.to - stretch.from)
+            if hours > 0 then
+                Flow.run(record, Flow.fromTank(tank, tap:getZ()), hours)
+            end
         end
     end
     if valve.untilHour and valve.untilHour <= now then
         valve.untilHour = nil
     end
     if Valves.kindOf(valve.item) == "timer" then
-        valve.grid = Pumps.gridPowered(tap)
+        valve.grid = Power.gridPowered(tap)
     end
     record.valveOpen = isOpen(record, tap, now) or nil
     -- Flow.run told the clients of every tile it ran; this tells them whether the valve runs now,

@@ -115,7 +115,7 @@ handler("pumpHouse.shutoff", function(_, args, defer)
     local saved = option:getValue()
     defer(function() option:setValue(saved) end)
     option:setValue(math.floor(getGameTime():getWorldAgeDaysSinceBegin()))
-    return { shutoff = mod().PumpHouse.shutoffHour(), now = mod().now(), grid = getSandboxOptions():doesPowerGridExist() }
+    return { shutoff = mod().Power.shutoffHour(), now = mod().now(), grid = getSandboxOptions():doesPowerGridExist() }
 end)
 
 -- The appliance drawn as `args.sprite` at x, y, z: whether it runs, whether a washer-dryer is set to

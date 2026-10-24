@@ -9,6 +9,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Power"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpJobs = {}
@@ -220,7 +221,7 @@ PumpJobs.JOBS = {
             if summary.burntOut then
                 return "Tooltip_EnhancedIrrigation_PumpBurntOut"
             end
-            return not Pumps.powered(pump) and "IGUI_RadioRequiresPowerNearby" or nil
+            return not EnhancedIrrigation.Power.powered(pump) and "IGUI_RadioRequiresPowerNearby" or nil
         end,
     },
     [PumpJobs.TURN_OFF] = {
