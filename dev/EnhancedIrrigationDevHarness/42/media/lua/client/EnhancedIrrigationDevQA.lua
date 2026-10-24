@@ -6,6 +6,8 @@
 -- Single player only: it sows through the authority's SFarmingSystem.
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Stands/Stands"
+require "EnhancedIrrigation/Lines/LineJobs"
+require "EnhancedIrrigation/Lines/Valves"
 local Stage = require "EnhancedIrrigationDevStage"
 
 local QA = {}
@@ -73,20 +75,27 @@ local FIRST_ITEM_ROW = 11
 local LINE_TILES = 24
 local SPARE_LENGTHS = 5
 local LENGTHS = LINE_TILES + SPARE_LENGTHS
--- Each kind of pipe, and the items a length of it takes (Pipes.KINDS).
-local PIPES = { { "Base.Pipe", 1 }, { "Base.MetalPipe", 1 }, { "Base.LeadPipe", 1 }, { "Base.ClayPipeSegment", 2 } }
+local Pipes, LineJobs, Valves = EnhancedIrrigation.Pipes, EnhancedIrrigation.LineJobs, EnhancedIrrigation.Valves
+-- Each kind of pipe, and the items a length of it takes.
+local PIPES = {}
+for _, kind in ipairs(Pipes.ORDER) do
+    local spec = Pipes.KINDS[kind]
+    table.insert(PIPES, { spec.item, spec.perLength })
+end
 -- What joins plastic, and what joins clay; enough of each one alone for every length.
 local JOINTS = { "Base.Glue", "Base.Epoxy", "Base.DuctTape", "Base.BucketConcreteFull", "Base.BucketClayCement" }
--- The pipe wrench and every tool that drills a hole (LineJobs.HOLE_TOOLS), with a nail for each
--- tile's hole by hammer, and the hammer and saw the Tank Stand keeps.
-local TOOLS = {
-    { "Base.PipeWrench", 1 }, { "Base.HandDrill", 1 }, { "Base.OldDrill", 1 }, { "Base.Awl", 1 },
-    { "Base.StoneDrill", 1 }, { "Base.Hammer", 1 }, { "Base.Nails", LINE_TILES }, { "Base.Saw", 1 },
-}
+-- The pipe wrench and everything each hole tool takes, what it uses up enough for every tile's
+-- hole, and the saw the Tank Stand keeps besides the hammer among them.
+local TOOLS = { { Pipes.WRENCH.item, 1 } }
+for _, tool in ipairs(LineJobs.HOLE_TOOLS) do
+    for _, material in ipairs(tool.materials) do
+        table.insert(TOOLS, { material.item, material.need and material.need * LINE_TILES or 1 })
+    end
+end
+table.insert(TOOLS, { "Base.Saw", 1 })
 local READING = { { "EnhancedIrrigation.CisternsForKentucky", 1 }, { "Base.WateredCan", 1, FluidType.Water } }
 -- One of each valve, to fit to the lines' taps.
-local VALVES = { { "EnhancedIrrigation.WindUpValve", 1 }, { "EnhancedIrrigation.TimerValve", 1 },
-    { "EnhancedIrrigation.SprinklerTimer", 1 } }
+local VALVES = { { Valves.WIND_UP, 1 }, { Valves.TIMER, 1 }, { Valves.SPRINKLER_TIMER, 1 } }
 
 -- The mod's build-menu recipes, which PZHarness.Test.learnRecipes doesn't teach: it teaches only
 -- craftRecipes.
