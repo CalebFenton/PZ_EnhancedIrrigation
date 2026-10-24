@@ -154,17 +154,19 @@ handler("lines.age", function(player, args)
     return reply
 end)
 
--- Runs the line tapped at x, y, z for `args.hours` (Flow.run) from the tank its tap draws on
--- (Taps.tankFor), then reads `args.tiles`. Answers the litres `drawn`, or `stopped`, why no
--- water could run.
+-- Runs the line tapped at x, y, z for `args.hours` as Water from Tank does (TapSystem.run), then
+-- reads `args.tiles`. Answers the litres `drawn` from the tank its tap drew on, nil if none could
+-- feed it, and `stopped`, why the water stops, if it does.
 handler("lines.flow", function(player, args)
-    local record, missing = recordOrMissing(args)
-    if not record then return nil, missing end
-    local Flow = EnhancedIrrigation.Flow
-    local tank, stopped = EnhancedIrrigation.Taps.tankFor(EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z))
-    local drawn = tank and Flow.run(record, Flow.fromTank(tank, args.z), args.hours) or nil
+    local tap = EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z)
+    if not tap then return nil, "a loaded line tile at " .. args.x .. "," .. args.y .. "," .. args.z end
+    local Tanks = EnhancedIrrigation.Tanks
+    local tank = EnhancedIrrigation.Taps.tankFor(tap)
+    local before = tank and Tanks.litres(tank)
+    local stopped = EnhancedIrrigation.TapSystem.run(tap, args.hours)
     local reply = readTiles(args.tiles or {})
-    reply.drawn, reply.stopped = drawn, stopped
+    reply.drawn = tank and before - Tanks.litres(tank) or nil
+    reply.stopped = stopped
     return reply
 end)
 
