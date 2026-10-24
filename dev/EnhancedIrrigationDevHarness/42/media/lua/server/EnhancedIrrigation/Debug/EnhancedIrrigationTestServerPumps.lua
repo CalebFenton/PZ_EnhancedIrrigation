@@ -2,10 +2,7 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsPumps.lua: pumps
--- placed as the build menu leaves them, read, worked for set hours and plumbed on the authority,
--- a square of river water laid by one, the character's endurance set, and the multiplayer Pump
--- action's run interval shortened. Pumping for set hours runs the authority's own sum
+-- Development only, not published. Pumping for set hours runs the authority's own sum
 -- (PumpSystem.pump) in one call, so the clock doesn't decide it. Only registers handlers, so a
 -- --stay rerun loads it again.
 
@@ -137,9 +134,9 @@ handler("pumps.run", function(player, args)
     return reply
 end)
 
--- Lays a square of river water (blends_natural_02_0, the game's own water floor) as an object on
--- x, y, z, which marks the square water at once, sent to the clients; taken away when the test
--- ends. No river is near the test world's spawn.
+-- Lays a square of river water (the game's own water floor) as an object on x, y, z, which marks
+-- the square water at once, sent to the clients; taken away when the test ends. No river is near
+-- the test world's spawn.
 handler("pumps.water", function(_, args, defer)
     local square = Server.squareAt(args)
     if not square then
