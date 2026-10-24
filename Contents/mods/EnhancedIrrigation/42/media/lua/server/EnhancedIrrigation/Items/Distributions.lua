@@ -3,9 +3,10 @@ if isClient() then return end
 require "Items/Distributions"
 require "Items/ProceduralDistributions"
 
--- Where Cisterns for Kentucky turns up: wherever a 1993 extension leaflet on farm water would
--- have been left, a find rather than a given. apply() puts it into the game's loot lists in
--- OnInitGlobalModData, scaled by the PamphletLoot sandbox option.
+-- Where the mod's found items turn up: Cisterns for Kentucky wherever a 1993 extension leaflet on
+-- farm water would have been left, and the Utility Pump wherever tools and garage kit are, each a
+-- find rather than a given. apply() puts them into the game's loot lists in OnInitGlobalModData,
+-- each scaled by its sandbox option.
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Distributions = {}
@@ -14,6 +15,7 @@ EnhancedIrrigation.Distributions = Distributions
 local procLists = ProceduralDistributions.list
 
 Distributions.PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
+Distributions.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
 
 -- { ProceduralDistributions list, weight } before the option. A weight w spawns with
 -- ceil(w x 100 x the literature loot rarity) in 10,000 per roll, and each of these lists rolls
@@ -45,6 +47,26 @@ Distributions.PAMPHLET_LISTS = {
     { "PostOfficeMagazines", 1 },
 }
 
+-- The same for the Utility Pump, at the Blower Fan's weight in a hardware store's tools, the
+-- nearest vanilla part, and half that where tools are kept at home; worn ones in old tool crates
+-- (an isWorn list, which wears what shows its condition).
+Distributions.UTILITY_PUMP_LISTS = {
+    -- Hardware stores and the Gigamart: sump and utility pumps sat by the drills and wrenches.
+    { "ToolStoreTools", 1 },
+    { "GigamartTools", 1 },
+    -- Garages and sheds, and the tool crates of garages and basements.
+    { "GarageTools", 0.5 },
+    { "CrateTools", 0.5 },
+    -- Old tool crates, in sheds and basements: a pump that has seen use.
+    { "CrateToolsOld", 1 },
+}
+
+-- Each found item: its full type, its lists and the sandbox option that scales their weights.
+Distributions.LOOT = {
+    { item = Distributions.PAMPHLET, lists = Distributions.PAMPHLET_LISTS, option = "PamphletLoot" },
+    { item = Distributions.UTILITY_PUMP, lists = Distributions.UTILITY_PUMP_LISTS, option = "PartsLoot" },
+}
+
 -- Items lists are flat name, weight pairs.
 local function removeItem(items, fullType)
     for i = #items - 1, 1, -2 do
@@ -55,22 +77,24 @@ local function removeItem(items, fullType)
     end
 end
 
---- Puts the pamphlet into each of PAMPHLET_LISTS at its weight times the PamphletLoot option,
---- replacing what an earlier call put there. At 0 it leaves the pamphlet out altogether, since a
---- zero weight could still spawn through the zombie density bonus. ItemPickerJava reads the Lua
---- tables only when it parses them, so ItemPickerJava.Parse() has to run afterwards.
+--- Puts each item of LOOT into each of its lists at its weight times its option, replacing what an
+--- earlier call put there. At 0 it leaves the item out altogether, since a zero weight could still
+--- spawn through the zombie density bonus. ItemPickerJava reads the Lua tables only when it parses
+--- them, so ItemPickerJava.Parse() has to run afterwards.
 function Distributions.apply()
-    local multiplier = SandboxVars.EnhancedIrrigation.PamphletLoot
-    for _, entry in ipairs(Distributions.PAMPHLET_LISTS) do
-        local list = procLists[entry[1]]
-        if list and list.items then
-            removeItem(list.items, Distributions.PAMPHLET)
-            if multiplier > 0 then
-                table.insert(list.items, Distributions.PAMPHLET)
-                table.insert(list.items, entry[2] * multiplier)
+    for _, loot in ipairs(Distributions.LOOT) do
+        local multiplier = SandboxVars.EnhancedIrrigation[loot.option]
+        for _, entry in ipairs(loot.lists) do
+            local list = procLists[entry[1]]
+            if list and list.items then
+                removeItem(list.items, loot.item)
+                if multiplier > 0 then
+                    table.insert(list.items, loot.item)
+                    table.insert(list.items, entry[2] * multiplier)
+                end
+            else
+                print("EnhancedIrrigation: no loot list " .. entry[1] .. " for " .. loot.item .. ", skipped")
             end
-        else
-            print("EnhancedIrrigation: no loot list " .. entry[1] .. " for " .. Distributions.PAMPHLET .. ", skipped")
         end
     end
 end

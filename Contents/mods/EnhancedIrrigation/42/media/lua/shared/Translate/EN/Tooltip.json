@@ -59,5 +59,16 @@
     "Tooltip_EnhancedIrrigation_SealWornOut": "The seal is worn out: the pump squeals and lifts nothing. Replace Seal.",
     "Tooltip_EnhancedIrrigation_PumpWornOut": "The pump is worn out. Knock it down with a sledgehammer and build a new one.",
     "Tooltip_EnhancedIrrigation_NoSeal": "Needs a seal: Leather Strips, a Tire Piece, a Tarp Piece or a Plunger.",
-    "Tooltip_EnhancedIrrigation_Exhausted": "Too exhausted to work the pump."
+    "Tooltip_EnhancedIrrigation_Exhausted": "Too exhausted to work the pump.",
+    "Tooltip_EnhancedIrrigation_PumpHouse": "A box wired for one pump. Fit an Appliance Pump or a Utility Pump, build it beside a well, a barrel or a trough or within 3 tiles of a river for its hose, plumb its outlet to a tank, and switch it on: it runs while it has power from the grid (in or beside a room, before the shutoff) or a generator, which burns fuel for it.",
+    "Tooltip_EnhancedIrrigation_AppliancePump": "A washing machine's drain pump. Fit it in a Pump House: about 6 L a minute, a storey up. It wasn't made to run for long.",
+    "Tooltip_EnhancedIrrigation_UtilityPump": "An electric utility pump. Fit it in a Pump House: about 20 L a minute, up to two storeys up.",
+    "Tooltip_EnhancedIrrigation_MakeUtilityPump": "A Blower Fan's motor driving a welded steel impeller in a screwed housing. It won't come out as good as a bought one.",
+    "Tooltip_EnhancedIrrigation_NoPumpFitted": "Fit an Appliance Pump or a Utility Pump first.",
+    "Tooltip_EnhancedIrrigation_PumpFitted": "A pump is already fitted. Take it out first.",
+    "Tooltip_EnhancedIrrigation_NoPumpPart": "Needs an Appliance Pump or a Utility Pump in your inventory.",
+    "Tooltip_EnhancedIrrigation_PumpBurntOut": "The pump is burnt out. Repair it, or take it out and fit another.",
+    "Tooltip_EnhancedIrrigation_PumpTooRepaired": "The pump has been repaired too often to take another. Fit a new one.",
+    "Tooltip_EnhancedIrrigation_PumpSound": "The pump is sounder than a repair would leave it.",
+    "Tooltip_EnhancedIrrigation_PumpSalvaged": "Its pump has been salvaged."
 }

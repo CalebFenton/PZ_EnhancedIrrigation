@@ -1,6 +1,7 @@
 -- The authority's side of pumps (shared/EnhancedIrrigation/Pumps.lua): their Global Object System,
--- a record for each pump built, the jobs of PumpJobs done for real, who holds each pump, and the
--- water a pump lifts from its source into its outlet's tank.
+-- a record for each pump built, the jobs of PumpJobs done for real, who holds each hand pump, and
+-- the water a hand pump lifts from its source into its outlet's tank. A Pump House runs in its
+-- record's own time (Pumps/PumpHouse.lua).
 
 if isClient() then return end
 
@@ -11,6 +12,7 @@ require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
+require "EnhancedIrrigation/Pumps/PumpHouse"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -30,7 +32,7 @@ PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
 --- The SpriteConfig OnCreate of every pump's entity (Entities.txt), which the build menu calls on
 --- the authority once the pump stands on its square (ISBuildIsoEntity:setInfo): its record, at
 --- once, as nothing else announces a built entity to the system, with the seal the build took (the
---- build menu's chosen inputs) fitted new.
+--- build menu's chosen inputs) fitted new. A Pump House is built empty.
 function PumpSystem.onCreate(params)
     local pump = params.thumpable
     PumpSystem.System.instance:loadIsoObject(pump)
@@ -55,6 +57,33 @@ end
 local DO = {
     [PumpJobs.REPLACE_SEAL] = function(character, pump, item)
         Pumps.recordOf(pump):fitSeal(item:getFullType())
+        return true
+    end,
+    [PumpJobs.FIT_PUMP] = function(character, pump, item)
+        EnhancedIrrigation.takeItem(character, item)
+        Pumps.recordOf(pump):fitPart(item)
+        return true
+    end,
+    [PumpJobs.TAKE_OUT_PUMP] = function(character, pump)
+        EnhancedIrrigation.giveItems(character, Pumps.recordOf(pump):takeOutPart())
+        return true
+    end,
+    -- The time before it was switched on did nothing, so it counts from now.
+    [PumpJobs.TURN_ON] = function(character, pump)
+        local record = Pumps.recordOf(pump)
+        record.on = true
+        record.lastHour = EnhancedIrrigation.now()
+        EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
+    end,
+    [PumpJobs.TURN_OFF] = function(character, pump)
+        local record = Pumps.recordOf(pump)
+        record.on = nil
+        EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
+    end,
+    [PumpJobs.REPAIR_PUMP] = function(character, pump)
+        Pumps.recordOf(pump):repairPart()
         return true
     end,
 }
@@ -146,19 +175,6 @@ Events.EveryOneMinute.Add(function() letGoWhere(lapsed) end)
 
 -- Pumping --------------------------------------------------------------------------------------------
 
--- Moves `litres` from `source` (Pumps.sourceOf) into `fluid` (a FluidContainer) and returns the
--- litres moved. A well's or river's water comes from its tile, which is endless (vanilla's own
--- draw, IsoObject.transferFluidTo), never from a well's own container, which vanilla never draws
--- either; a tank or trough gives its mixture, taint and all, and syncs. A river whose square isn't
--- loaded is still water, always tainted.
-local function draw(source, fluid, litres)
-    if source.object then
-        return source.object:transferFluidTo(fluid, litres)
-    end
-    fluid:addFluid(FluidType.TaintedWater, litres)
-    return litres
-end
-
 -- Takes the endurance `hours` of hard work at a hand pump cost from `character`, and on a
 -- multiplayer server tells its client, which doesn't learn of a server's change to a stat by
 -- itself.
@@ -192,7 +208,7 @@ function PumpSystem.pump(character, pump, hours)
     end
     litres = record:canLift(litres)
     if litres > 0 then
-        local moved = draw(source, fluid, litres)
+        local moved = EnhancedIrrigation.PumpObject.draw(source, fluid, litres)
         record:lift(moved)
         Tanks.sync(tank)
     end

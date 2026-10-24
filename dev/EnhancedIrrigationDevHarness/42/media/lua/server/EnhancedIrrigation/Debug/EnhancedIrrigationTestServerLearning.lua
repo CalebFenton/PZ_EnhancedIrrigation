@@ -10,8 +10,6 @@ require "PZHarness/Checks"
 local handler = PZHarness.serverHandler
 local Fixtures = PZHarness.Fixtures
 
-local PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
-
 -- `names` as a set of whether the character knows each.
 local function knownOf(player, names)
     local known = {}
@@ -110,44 +108,56 @@ local function forEachItemsList(fn)
     walk(VehicleDistributions, "VehicleDistributions", 0)
 end
 
--- Sets the PamphletLoot option to `value` and applies it, as a load with that option does; returns
+-- The entry of Distributions.LOOT for the item `fullType`, or nil, failing.
+local function lootOf(D, fullType, expect)
+    for _, loot in ipairs(D.LOOT) do
+        if loot.item == fullType then
+            return loot
+        end
+    end
+    expect(false, "Distributions.LOOT has no " .. tostring(fullType))
+    return nil
+end
+
+-- Sets `loot`'s sandbox option to `value` and applies it, as a load with that option does; returns
 -- the function that puts the save's option and loot back, deferred too in case the check throws.
-local function withPamphletLoot(D, defer)
+local function withLootOption(D, loot, defer)
     local options = SandboxVars.EnhancedIrrigation
-    local saved = options.PamphletLoot
+    local saved = options[loot.option]
     local restored = false
     local function restore()
         if restored then return end
         restored = true
-        options.PamphletLoot = saved
+        options[loot.option] = saved
         D.apply()
         ItemPickerJava.Parse()
     end
     defer(restore)
     return function(value)
-        options.PamphletLoot = value
+        options[loot.option] = value
         D.apply()
     end, restore
 end
 
--- Every list the pamphlet goes into is one a room picks from, and holds the pamphlet once, at its
--- weight times the save's PamphletLoot option, since the merge at load. Each of `args.multipliers`
--- scales every weight, applied twice as a second load applies it; at 0 the pamphlet is in no loot
--- list at all, since a zero weight still spawns through the zombie density bonus.
+-- Every list the item `args.item` goes into is one a room picks from, and holds the item once, at
+-- its weight times the save's value of its option, since the merge at load. Each of
+-- `args.multipliers` scales every weight, applied twice as a second load applies it; at 0 the item
+-- is in no loot list at all, since a zero weight still spawns through the zombie density bonus.
 handler("learning.lootLists", function(player, args, defer)
     local expect, expectNear, failures = PZHarness.Checks.new()
     local D = distributions(expect)
-    if not D then
+    local loot = D and lootOf(D, args.item, expect)
+    if not loot then
         return { failures = failures }
     end
     local users = procListUsers()
     local function checkAt(multiplier, label)
-        for _, entry in ipairs(D.PAMPHLET_LISTS) do
+        for _, entry in ipairs(loot.lists) do
             local name, weight = entry[1], entry[2]
             local list = ProceduralDistributions.list[name]
-            local where = label .. ": the pamphlet in " .. name
+            local where = label .. ": " .. loot.item .. " in " .. name
             if expect(list ~= nil and list.items ~= nil, where .. ": no such list") then
-                local count, got = Fixtures.countPairs(list.items, PAMPHLET)
+                local count, got = Fixtures.countPairs(list.items, loot.item)
                 if multiplier == 0 then
                     expect(count == 0, where .. " " .. count .. " times")
                 elseif expect(count == 1, where .. " " .. count .. " times") then
@@ -162,16 +172,16 @@ handler("learning.lootLists", function(player, args, defer)
         end
         if multiplier == 0 then
             forEachItemsList(function(items, path)
-                expect(Fixtures.countPairs(items, PAMPHLET) == 0, label .. ": the pamphlet is still in " .. path)
+                expect(Fixtures.countPairs(items, loot.item) == 0, label .. ": " .. loot.item .. " is still in " .. path)
             end)
         end
     end
-    checkAt(SandboxVars.EnhancedIrrigation.PamphletLoot, "as loaded")
-    local set, restore = withPamphletLoot(D, defer)
+    checkAt(SandboxVars.EnhancedIrrigation[loot.option], "as loaded")
+    local set, restore = withLootOption(D, loot, defer)
     for _, multiplier in ipairs(args.multipliers) do
         set(multiplier)
         set(multiplier)
-        checkAt(multiplier, "at PamphletLoot " .. multiplier)
+        checkAt(multiplier, "at " .. loot.option .. " " .. multiplier)
     end
     restore()
     return { failures = failures }
@@ -186,16 +196,18 @@ local function forgetItems(container, processItems)
     end
 end
 
--- Each list hands out the pamphlet through the game's own roll of a container that picks it
--- (ItemPickerJava.rollItem), within `args.fills` fills, with PamphletLoot and the recipe resource
--- loot rarity at their highest, so the rarest weight spawns about one fill in four.
+-- Each list of the item `args.item` hands it out through the game's own roll of a container that
+-- picks it (ItemPickerJava.rollItem), within `args.fills` fills, with its option and the loot
+-- rarity option of its kind, `args.rarity`, at their highest, so the rarest weight spawns about one
+-- fill in four.
 handler("learning.lootRolls", function(player, args, defer)
     local expect, _, failures = PZHarness.Checks.new()
     local D = distributions(expect)
-    if not D then
+    local loot = D and lootOf(D, args.item, expect)
+    if not loot then
         return { failures = failures }
     end
-    local rarity = getSandboxOptions():getOptionByName("RecipeResourceLoot")
+    local rarity = getSandboxOptions():getOptionByName(args.rarity)
     local savedRarity = rarity:getValue()
     -- In debug mode ItemPickInfo logs every roll into a container that isn't on a square.
     local generalLog = DebugType.General:getLogSeverity()
@@ -205,17 +217,17 @@ handler("learning.lootRolls", function(player, args, defer)
         ItemPickerJava.InitSandboxLootSettings()
     end
     defer(restoreLoot)
-    local set, restore = withPamphletLoot(D, defer)
+    local set, restore = withLootOption(D, loot, defer)
     set(4)
     ItemPickerJava.Parse()
-    -- The option's highest value (SandboxOptions.recipeResourceLoot).
+    -- The rarity options' highest value (SandboxOptions).
     rarity:setValue(4)
     ItemPickerJava.InitSandboxLootSettings()
     DebugType.General:setLogSeverity(LogSeverity.Off)
     local users = procListUsers()
     local container = ItemContainer.new("crate", nil, nil)
     local processItems = getCell():getProcessItems()
-    for _, entry in ipairs(D.PAMPHLET_LISTS) do
+    for _, entry in ipairs(loot.lists) do
         local name = entry[1]
         local user = users[name]
         local list = user and ItemPickerJava.getItemContainer(user.room, user.container, name, false)
@@ -224,14 +236,14 @@ handler("learning.lootRolls", function(player, args, defer)
             for _ = 1, args.fills do
                 container:removeAllItems()
                 ItemPickerJava.rollItem(list, container, true, nil, nil)
-                found = container:getFirstTypeRecurse(PAMPHLET) ~= nil
+                found = container:getFirstTypeRecurse(loot.item) ~= nil
                 forgetItems(container, processItems)
                 if found then
                     break
                 end
             end
             container:removeAllItems()
-            expect(found, name .. " never handed out the pamphlet in " .. args.fills .. " fills")
+            expect(found, name .. " never handed out " .. loot.item .. " in " .. args.fills .. " fills")
         end
     end
     restoreLoot()

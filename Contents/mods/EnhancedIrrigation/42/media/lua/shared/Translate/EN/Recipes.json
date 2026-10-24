@@ -11,5 +11,9 @@
     "EnhancedIrrigation_BoilerStone": "Boiler (Stone Firebox)",
     "EnhancedIrrigation_BoilerWelded": "Boiler (Welded Firebox)",
     "EnhancedIrrigation_WoodenHandPump": "Wooden Hand Pump",
-    "EnhancedIrrigation_IronHandPump": "Iron Hand Pump"
+    "EnhancedIrrigation_IronHandPump": "Iron Hand Pump",
+    "EnhancedIrrigation_PumpHouseWood": "Pump House (Wood)",
+    "EnhancedIrrigation_PumpHouseMetal": "Pump House (Sheet Metal)",
+    "EnhancedIrrigation_SalvagePump": "Salvage Pump",
+    "EnhancedIrrigation_MakeUtilityPump": "Make Utility Pump"
 }

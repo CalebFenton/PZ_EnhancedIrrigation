@@ -3,9 +3,11 @@
 -- fullest tank or trough beside it, or natural water its hose reaches; and it delivers through one
 -- outlet, a link with `pump` set from its square to a tank (Links.lua), which it may fill up to
 -- its lift above its floor whatever the filling rule says. Water moves only while something runs
--- it: a hand pump while a character works it (TimedActions/EnhancedIrrigationPumpAction.lua). The
--- authority keeps a record of each pump (server/EnhancedIrrigation/Pumps/PumpObject.lua): its seal
--- and how worn it and the pump are, and where its hose drinks.
+-- it: a hand pump while a character works it (TimedActions/EnhancedIrrigationPumpAction.lua), a
+-- Pump House while it is switched on, has a pump part fitted and has power. The authority keeps a
+-- record of each pump (server/EnhancedIrrigation/Pumps/PumpObject.lua): a hand pump's seal and how
+-- worn it and the pump are, a Pump House's part, its switch and who pays for its power, and where
+-- its hose drinks.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -22,7 +24,8 @@ local Tanks, Links = EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 Pumps.SYSTEM_NAME = "enhanced_irrigation_pump"
 
 -- Every pump's tile, for load hooks.
-Pumps.SPRITES = { EnhancedIrrigation.Sprites.WOODEN_HAND_PUMP, EnhancedIrrigation.Sprites.IRON_HAND_PUMP }
+Pumps.SPRITES = { EnhancedIrrigation.Sprites.WOODEN_HAND_PUMP, EnhancedIrrigation.Sprites.IRON_HAND_PUMP,
+    EnhancedIrrigation.Sprites.PUMP_HOUSE_WOOD, EnhancedIrrigation.Sprites.PUMP_HOUSE_METAL }
 
 -- Each pump's entity script name: `kind`, the row of PumpObject.KINDS that says what runs it;
 -- `lift`, the storeys above its floor it fills a tank to; `rate`, the litres a game minute it
@@ -40,10 +43,43 @@ Pumps.UNITS = {
         kind = "hand", lift = 2, rate = 8, push = 2, wearLitres = 1500,
         noise = { radius = 8, volume = 8 },
     },
+    -- A Pump House is a box for one pump part (PARTS), which gives it its numbers; empty, it lifts
+    -- nothing.
+    EnhancedIrrigation_PumpHouseWood = { kind = "house" },
+    EnhancedIrrigation_PumpHouseMetal = { kind = "house" },
 }
 
 -- A new pump's body condition; at none it is worn out and lifts nothing until rebuilt.
 Pumps.BODY_CONDITION = 100
+
+Pumps.APPLIANCE_PUMP = "EnhancedIrrigation.AppliancePump"
+Pumps.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
+
+-- The pump parts a Pump House takes, by full type: `lift`, `rate`, `push` and `noise` as UNITS';
+-- `wearPerHour`, the condition an hour of running takes; `draw`, the generator fuel an hour of
+-- running burns in vanilla's own units, before the GeneratorFuelConsumption option (IsoGenerator):
+-- a washer's for the pump out of one. A washer's pump is made for a drum's few minutes of draining,
+-- so it lifts little and burns out within a week of running; a utility pump is made to run, and
+-- empties a rain barrel in half an hour (design, Starting numbers).
+Pumps.PARTS = {
+    [Pumps.APPLIANCE_PUMP] = { lift = 1, rate = 6, push = 2, wearPerHour = 1, draw = 0.09,
+        noise = { radius = 10, volume = 10 } },
+    [Pumps.UTILITY_PUMP] = { lift = 2, rate = 20, push = 3, wearPerHour = 0.5, draw = 0.2,
+        noise = { radius = 20, volume = 20 } },
+}
+
+-- How many times as fast a pump part wears running with nothing to draw: the water it moves is what
+-- cools its seal and bearings.
+Pumps.DRY_WEAR = 10
+
+-- A pump part's condition new, the most a repair restores; the item modData key of a lower ceiling
+-- a part carries, made or repaired, absent at that; what each Repair Pump takes off the ceiling, as
+-- vanilla's repairs fall short; and the ceiling of a Utility Pump made from a Blower Fan, as a
+-- home-made pump falls short of a bought one.
+Pumps.PART_CONDITION = 100
+Pumps.CEILING_KEY = "EnhancedIrrigation_ceiling"
+Pumps.REPAIR_LOSS = 10
+Pumps.MADE_CEILING = 80
 
 -- The seals a hand pump takes, best first, and the litres each lifts before it is worn through:
 -- leather holds a cup's shape longest, a plunger's rubber cup least (design, Pumps).
@@ -84,6 +120,57 @@ end
 
 function Pumps.isPump(isoObject)
     return Pumps.specOf(isoObject) ~= nil
+end
+
+function Pumps.isHouse(isoObject)
+    local spec = Pumps.specOf(isoObject)
+    return spec ~= nil and spec.kind == "house"
+end
+
+--- The row of PARTS of the pump part `part` (a full type), or nil when it is none.
+function Pumps.partSpec(part)
+    return part and Pumps.PARTS[part] or nil
+end
+
+--- The numbers `pump` lifts by, as this side sees it: a hand pump's own row of UNITS, a Pump House's
+--- fitted part's row of PARTS, or nil for a Pump House with none.
+function Pumps.liftingSpec(pump)
+    local spec = Pumps.specOf(pump)
+    if spec and spec.kind == "house" then
+        local summary = Pumps.currentSummary(pump)
+        return summary and Pumps.partSpec(summary.part) or nil
+    end
+    return spec
+end
+
+--- The most condition a repair brings the pump part `item` back to.
+function Pumps.ceilingOf(item)
+    return item:getModData()[Pumps.CEILING_KEY] or Pumps.PART_CONDITION
+end
+
+--- Gives the pump part `item` the ceiling `ceiling`, which travels with it.
+function Pumps.setCeiling(item, ceiling)
+    item:getModData()[Pumps.CEILING_KEY] = ceiling < Pumps.PART_CONDITION and ceiling or nil
+end
+
+--- OnCreate of Make Utility Pump (Recipes.txt): the pump comes out at its lower ceiling.
+function Pumps.onMadePump(craftRecipeData, character)
+    local pump = craftRecipeData:getFirstCreatedItem()
+    Pumps.setCeiling(pump, Pumps.MADE_CEILING)
+    pump:setCondition(Pumps.MADE_CEILING)
+    pump:syncItemFields()
+end
+
+--- Whether the grid powers `pump` now: before the shutoff, and in a room or beside one
+--- (ItemContainer.isSquarePowered), as it powers a washer.
+function Pumps.gridPowered(pump)
+    return ItemContainer.isObjectPowered(pump, false)
+end
+
+--- Whether anything powers `pump` now: the grid, or a running generator or Renewable Energy bank in
+--- reach (IsoGridSquare.haveElectricity).
+function Pumps.powered(pump)
+    return ItemContainer.isObjectPowered(pump, true)
 end
 
 --- The pump on `square`, or nil. Takes a nil square.
@@ -231,10 +318,8 @@ function Pumps.sourceName(source)
         or source.kind == "trough" and "IGUI_EnhancedIrrigation_SourceTrough" or "IGUI_EnhancedIrrigation_SourceRiver")
 end
 
---- The menu's line for `pump` with `summary`: where it draws, its seal, its body, where it fills.
-function Pumps.statusText(pump, summary)
-    local outlet = Pumps.outletOf(EnhancedIrrigation.squareOf(pump))
-    local words = { Pumps.sourceName(Pumps.sourceOf(pump, summary.intake, outlet and outlet.b)) }
+-- The words of a hand pump's `summary`: its seal, then its body.
+local function handWords(words, summary)
     if not summary.seal then
         table.insert(words, getText("IGUI_EnhancedIrrigation_NoSeal"))
     elseif summary.sealWorn then
@@ -244,6 +329,32 @@ function Pumps.statusText(pump, summary)
     end
     table.insert(words, summary.wornOut and getText("IGUI_EnhancedIrrigation_PumpWornOut")
         or getText("IGUI_EnhancedIrrigation_PumpCondition", summary.condition))
+end
+
+-- The words of a Pump House's `summary`: its part and how worn, then whether it runs, is off or is
+-- switched on with no power.
+local function houseWords(words, summary)
+    if not summary.part then
+        table.insert(words, getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
+        return
+    end
+    local name = getItemNameFromFullType(summary.part)
+    table.insert(words, summary.burntOut and getText("IGUI_EnhancedIrrigation_PartBurntOut", name)
+        or getText("IGUI_EnhancedIrrigation_PartCondition", name, summary.partCondition))
+    table.insert(words, getText(summary.running and "IGUI_EnhancedIrrigation_Running"
+        or summary.on and "IGUI_EnhancedIrrigation_NoPower" or "IGUI_EnhancedIrrigation_SwitchedOff"))
+end
+
+--- The menu's line for `pump` with `summary`: where it draws; a hand pump's seal and body, or a Pump
+--- House's part and switch; where it fills.
+function Pumps.statusText(pump, summary)
+    local outlet = Pumps.outletOf(EnhancedIrrigation.squareOf(pump))
+    local words = { Pumps.sourceName(Pumps.sourceOf(pump, summary.intake, outlet and outlet.b)) }
+    if Pumps.isHouse(pump) then
+        houseWords(words, summary)
+    else
+        handWords(words, summary)
+    end
     local tank = outlet and Tanks.tankAt(outlet.b.x, outlet.b.y, outlet.b.z)
     if not outlet then
         table.insert(words, getText("IGUI_EnhancedIrrigation_NoOutlet"))

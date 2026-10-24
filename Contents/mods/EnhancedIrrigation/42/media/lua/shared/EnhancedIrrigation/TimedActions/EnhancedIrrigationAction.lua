@@ -11,9 +11,11 @@ require "EnhancedIrrigation/Treatment"
 require "EnhancedIrrigation/TreatmentJobs"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
+require "EnhancedIrrigation/Appliances"
+require "EnhancedIrrigation/ApplianceJobs"
 
--- Every hands-on job of fixed length at one of the mod's objects (StandJobs, LinkJobs, LineJobs,
--- TreatmentJobs, PumpJobs).
+-- Every hands-on job of fixed length at one of the mod's objects, or at an appliance (StandJobs,
+-- LinkJobs, LineJobs, TreatmentJobs, PumpJobs, ApplianceJobs).
 -- In multiplayer the client runs start() and perform() and the server rebuilds the action from
 -- new()'s parameters and runs complete(), which does the job; single player runs both. A global,
 -- as the server finds the class by its Type (NetTimedAction.parse).
@@ -61,6 +63,11 @@ local FEATURES = {
         isTarget = Pumps.isPump,
         jobs = EnhancedIrrigation.PumpJobs,
         perform = function(...) return EnhancedIrrigation.PumpSystem.perform(...) end,
+    },
+    appliance = {
+        isTarget = EnhancedIrrigation.Appliances.hasPumpTile,
+        jobs = EnhancedIrrigation.ApplianceJobs,
+        perform = function(...) return EnhancedIrrigation.ApplianceSystem.perform(...) end,
     },
 }
 

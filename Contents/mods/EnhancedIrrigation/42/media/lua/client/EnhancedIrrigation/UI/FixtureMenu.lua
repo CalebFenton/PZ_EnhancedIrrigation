@@ -10,6 +10,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Fixtures"
+require "EnhancedIrrigation/Appliances"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/UI/TankMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
@@ -55,8 +56,9 @@ end
 -- The washer's switch ------------------------------------------------------------------------------
 
 -- Turn On or Off for a washer with a buffer, as vanilla offers it on one drawing the town's water
--- (ISWorldObjectContextMenuLogic.toggleClothingWasher): greyed out without power or water. A
--- washer-dryer keeps vanilla's own switch, which the menu gives it either way.
+-- (ISWorldObjectContextMenuLogic.toggleClothingWasher): greyed out without power or water, or with
+-- its pump salvaged (Appliances.lua). A washer-dryer keeps vanilla's own switch, which the menu
+-- gives it either way.
 local function addWasherSwitch(context, playerNum, worldobjects, washer)
     if not (instanceof(washer, "IsoClothingWasher") and washer:getContainer() and washer:getFluidContainer()) then
         return
@@ -64,7 +66,9 @@ local function addWasherSwitch(context, playerNum, worldobjects, washer)
     local key = washer:isActivated() and "ContextMenu_Turn_Off" or "ContextMenu_Turn_On"
     local option = context:addGetUpOption(getText(key), worldobjects, ISWorldObjectContextMenu.onToggleClothingWasher,
         washer, playerNum)
-    if not washer:getContainer():isPowered() then
+    if EnhancedIrrigation.Appliances.refusesSwitchOn(washer) then
+        Needs.refuse(option, "Tooltip_EnhancedIrrigation_PumpSalvaged")
+    elseif not washer:getContainer():isPowered() then
         Needs.refuse(option, "IGUI_RadioRequiresPowerNearby")
     elseif washer:getFluidAmount() <= 0 then
         Needs.refuse(option, "IGUI_RequiresWaterSupply")

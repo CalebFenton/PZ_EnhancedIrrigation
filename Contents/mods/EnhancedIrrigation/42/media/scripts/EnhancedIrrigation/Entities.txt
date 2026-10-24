@@ -1,9 +1,9 @@
 /*
     The Tank Stand, the treatment units the build menu builds (the sand filters, the Filter Crock
-    and the Boilers), the hand pumps, and the raised rain barrels a stand becomes when a barrel is
-    set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with the mod's prefix, as
-    craftRecipes are, since magazines and research look recipes up by bare name. A DisplayName is
-    looked up, without its spaces, in Recipes.json.
+    and the Boilers), the hand pumps, the Pump Houses, and the raised rain barrels a stand becomes
+    when a barrel is set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with the
+    mod's prefix, as craftRecipes are, since magazines and research look recipes up by bare name. A
+    DisplayName is looked up, without its spaces, in Recipes.json.
 
     Each build is taught by Cisterns for Kentucky, a skill or research; vanilla applies an entity
     recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
@@ -59,6 +59,18 @@ module Base
             LuaWindowClass = ISEntityWindow,
             DisplayName = EnhancedIrrigation_IronHandPump,
             Icon = EnhancedIrrigation_Build_IronHandPump,
+        }
+        entity ES_EnhancedIrrigation_PumpHouseWood
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_PumpHouseWood,
+            Icon = EnhancedIrrigation_Build_PumpHouseWood,
+        }
+        entity ES_EnhancedIrrigation_PumpHouseMetal
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_PumpHouseMetal,
+            Icon = EnhancedIrrigation_Build_PumpHouseMetal,
         }
         /* Vanilla's barrel icons: the raised barrels are never built from a menu. */
         entity ES_EnhancedIrrigation_RaisedBarrel
@@ -495,6 +507,94 @@ module Base
                 item 4 [Base.Screws],
                 item 1 [Base.RubberHose],
                 item 1 [Base.LeatherStrips;Base.TirePiece;Base.TarpPiece] mode:destroy,
+            }
+        }
+    }
+
+    /*
+        The Pump Houses (shared/EnhancedIrrigation/Pumps.lua): a box, of planks or of screwed sheet
+        steel, wired for one pump part, built empty. Fit Pump puts an Appliance or Utility Pump in;
+        switched on with power it lifts water from a source beside it into the tank its outlet is
+        plumbed to. The OnCreate gives it its record at once. No container: the water goes straight
+        through. Taught by Cisterns for Kentucky or by researching a pump part; no skill alone.
+    */
+    entity EnhancedIrrigation_PumpHouseWood
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_PumpHouseWood,
+            uiEnabled = false,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.PumpSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_141,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildWoodenStructureSmall,
+            time = 150,
+            category = Outdoors,
+            Tags = Carpentry,
+            NeedToBeLearn = true,
+            SkillRequired = Woodwork:2;Electricity:1,
+            xpAward = Woodwork:15;Electricity:10,
+            Tooltip = Tooltip_EnhancedIrrigation_PumpHouse,
+            inputs
+            {
+                item 1 tags[base:hammer] mode:keep flags[Prop1;MayDegradeVeryLight],
+                item 1 tags[base:screwdriver] mode:keep flags[MayDegradeLight],
+                item 4 [Base.Plank],
+                item 4 [Base.Nails],
+                item 2 [Base.ElectricWire],
+                item 2 [Base.RubberHose],
+            }
+        }
+    }
+
+    entity EnhancedIrrigation_PumpHouseMetal
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_PumpHouseMetal,
+            uiEnabled = false,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.PumpSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_142,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildMetalStructureSmall,
+            time = 150,
+            category = Outdoors,
+            Tags = Welding,
+            NeedToBeLearn = true,
+            SkillRequired = MetalWelding:1;Electricity:1,
+            xpAward = MetalWelding:15;Electricity:10,
+            Tooltip = Tooltip_EnhancedIrrigation_PumpHouse,
+            inputs
+            {
+                item 1 tags[base:screwdriver] mode:keep flags[Prop1;MayDegradeLight],
+                item 2 [Base.SmallSheetMetal],
+                item 4 [Base.Screws],
+                item 2 [Base.ElectricWire],
+                item 2 [Base.RubberHose],
             }
         }
     }

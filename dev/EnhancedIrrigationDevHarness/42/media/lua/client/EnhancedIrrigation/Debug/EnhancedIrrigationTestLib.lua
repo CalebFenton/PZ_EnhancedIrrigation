@@ -316,8 +316,9 @@ end
 
 --- Handles of the squares at `offsets` ({ { dx, dy }, ... }) from an origin around the character,
 --- on its level, at least `opts.minDistance` (1 unless given) away: each fits (bare or able to take a
---- line tile, indoors or out, as `opts` says), and with `opts.joined` no wall between any two one
---- step apart. Nil, and missing, when there is no such place.
+--- line tile, indoors or out, as `opts` says), with `opts.joined` no wall between any two one step
+--- apart, and with `opts.accept`, `opts.accept(squares)` holds of them. Nil, and missing, when there
+--- is no such place.
 function T.layout(self, offsets, opts)
     opts = opts or {}
     local centre = T.player():getCurrentSquare()
@@ -332,7 +333,8 @@ function T.layout(self, offsets, opts)
                 end
                 squares[i] = square
             end
-            if #squares == #offsets and (not opts.joined or joined(squares, offsets)) then
+            if #squares == #offsets and (not opts.joined or joined(squares, offsets))
+                    and (not opts.accept or opts.accept(squares)) then
                 local handles = {}
                 for i, square in ipairs(squares) do
                     self.used[square] = true

@@ -467,15 +467,24 @@ local function expectNoFailures(answer)
     end
 end
 
--- The pamphlet sits once in each list Distributions.lua names, as loaded and at each PamphletLoot
--- value, at its weight times the option, and nowhere at 0.
-test("irrigation_loot_pamphlet_in_its_lists_scaled_by_the_option", {
-    run = function(self) T.server(self, "learning.lootLists", { multipliers = { 2.5, 0, 1 } }) end,
-    validate = function(self) expectNoFailures(self.server["learning.lootLists"]) end,
-})
+-- Each found item, with its test name and the loot rarity option of its kind
+-- (ItemPickerJava.getLootType): the pamphlet is a recipe resource, the pump an electronic part.
+local LOOT = {
+    { item = "EnhancedIrrigation.CisternsForKentucky", name = "pamphlet", rarity = "RecipeResourceLoot" },
+    { item = "EnhancedIrrigation.UtilityPump", name = "utility_pump", rarity = "OtherLootNew" },
+}
 
--- Each of those lists hands the pamphlet out through the game's own roll.
-test("irrigation_loot_pamphlet_rolls_from_each_list", {
-    run = function(self) T.server(self, "learning.lootRolls", { fills = 100 }) end,
-    validate = function(self) expectNoFailures(self.server["learning.lootRolls"]) end,
-})
+for _, loot in ipairs(LOOT) do
+    -- The item sits once in each list Distributions.lua names for it, as loaded and at each value of
+    -- its option, at its weight times the option, and nowhere at 0.
+    test("irrigation_loot_" .. loot.name .. "_in_its_lists_scaled_by_the_option", {
+        run = function(self) T.server(self, "learning.lootLists", { item = loot.item, multipliers = { 2.5, 0, 1 } }) end,
+        validate = function(self) expectNoFailures(self.server["learning.lootLists"]) end,
+    })
+
+    -- Each of those lists hands the item out through the game's own roll.
+    test("irrigation_loot_" .. loot.name .. "_rolls_from_each_list", {
+        run = function(self) T.server(self, "learning.lootRolls", { item = loot.item, rarity = loot.rarity, fills = 100 }) end,
+        validate = function(self) expectNoFailures(self.server["learning.lootRolls"]) end,
+    })
+end

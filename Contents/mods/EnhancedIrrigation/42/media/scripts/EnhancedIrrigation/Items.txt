@@ -12,10 +12,10 @@ module EnhancedIrrigation
 
     /*
         A University of Kentucky extension leaflet on storing, moving and filtering farm water: the
-        Tank Stand, the Wooden and Iron Hand Pumps and the Barrel and Brick Filters (build-menu
-        recipes) and plumbing tanks together (a knowledge-only recipe, Recipes.txt). The skills
-        teach them too. Drawn with vanilla's magazine models, as the game's own recipe magazines
-        are.
+        Tank Stand, the Wooden and Iron Hand Pumps, the Pump Houses and the Barrel and Brick Filters
+        (build-menu recipes) and plumbing tanks together (a knowledge-only recipe, Recipes.txt). The
+        skills teach them too. Drawn with vanilla's magazine models, as the game's own recipe
+        magazines are.
     */
     item CisternsForKentucky
     {
@@ -27,7 +27,7 @@ module EnhancedIrrigation
         WorldStaticModel = MagazineGround,
         BoredomChange = -10,
         StressChange = -5,
-        LearnedRecipes = EnhancedIrrigation_TankStand;EnhancedIrrigation_PlumbToTank;EnhancedIrrigation_WoodenHandPump;EnhancedIrrigation_IronHandPump;EnhancedIrrigation_BarrelFilter;EnhancedIrrigation_BrickFilter,
+        LearnedRecipes = EnhancedIrrigation_TankStand;EnhancedIrrigation_PlumbToTank;EnhancedIrrigation_WoodenHandPump;EnhancedIrrigation_IronHandPump;EnhancedIrrigation_PumpHouseWood;EnhancedIrrigation_PumpHouseMetal;EnhancedIrrigation_BarrelFilter;EnhancedIrrigation_BrickFilter,
         Tooltip = Tooltip_EnhancedIrrigation_CisternsForKentucky,
         OnCreate = ItemCodeOnCreate.onCreateRecipeMagazine,
         Tags = base:magazine;base:ignorezombiedensity,
@@ -59,5 +59,41 @@ module EnhancedIrrigation
         WorldStaticModel = ClayJar,
         Tooltip = Tooltip_EnhancedIrrigation_FilterCrockItem,
         ResearchableRecipes = EnhancedIrrigation_ShapeFilterCrock;EnhancedIrrigation_FireFilterCrock;EnhancedIrrigation_FilterCrock,
+    }
+
+    /*
+        The pump parts a Pump House takes (shared/EnhancedIrrigation/Pumps.lua, PARTS): the drain
+        pump salvaged from a washer or dishwasher, and a utility pump found in tool stores and
+        garages or made from a Blower Fan (Recipes.txt). Their condition shows, so loot can wear
+        them (ItemPickerJava), and goes into the Pump House with them; a made or repaired one
+        carries its lower ceiling in its modData. Researching either teaches the Pump Houses, and a
+        Utility Pump also Make Utility Pump. Drawn with vanilla's nearest models: a scrap of
+        electronics and a Blower Fan's motor.
+    */
+    item AppliancePump
+    {
+        DisplayCategory = Electronics,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = EnhancedIrrigation_AppliancePump,
+        ConditionMax = 100,
+        WorldStaticModel = ElectronicsScrap,
+        Tooltip = Tooltip_EnhancedIrrigation_AppliancePump,
+        Tags = base:showcondition,
+        ResearchableRecipes = EnhancedIrrigation_PumpHouseWood;EnhancedIrrigation_PumpHouseMetal,
+    }
+
+    item UtilityPump
+    {
+        DisplayCategory = Electronics,
+        ItemType = base:normal,
+        Weight = 6.0,
+        Icon = EnhancedIrrigation_UtilityPump,
+        ConditionMax = 100,
+        StaticModel = BlowerFan,
+        WorldStaticModel = BlowerFan,
+        Tooltip = Tooltip_EnhancedIrrigation_UtilityPump,
+        Tags = base:showcondition;base:ignorezombiedensity,
+        ResearchableRecipes = EnhancedIrrigation_PumpHouseWood;EnhancedIrrigation_PumpHouseMetal;EnhancedIrrigation_MakeUtilityPump,
     }
 }

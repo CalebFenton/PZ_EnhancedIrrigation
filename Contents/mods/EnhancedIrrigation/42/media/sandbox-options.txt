@@ -12,6 +12,19 @@ option EnhancedIrrigation.PamphletLoot
     translation = EnhancedIrrigation_PamphletLoot,
 }
 
+/* Times every loot weight of the Utility Pump (server/EnhancedIrrigation/Items/Distributions.lua);
+   0 keeps it out of loot, and Make Utility Pump and salvaged Appliance Pumps still run a Pump
+   House. */
+option EnhancedIrrigation.PartsLoot
+{
+    type = double,
+    min = 0,
+    max = 4,
+    default = 1,
+    page = EnhancedIrrigation,
+    translation = EnhancedIrrigation_PartsLoot,
+}
+
 /* Whether vanilla's Plumb makes the mod's link, which keeps the tank's taint, and fixtures vanilla
    plumbed are moved onto one as their area loads (server/EnhancedIrrigation/Fixtures/
    FixtureSystem.lua); off leaves vanilla's rooftop plumbing, which serves every drop clean. */

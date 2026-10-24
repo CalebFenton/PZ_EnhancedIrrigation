@@ -2,15 +2,16 @@
     craftRecipes, in module Base with the mod's prefix: magazines and research look recipes up by
     bare name, which resolves only in Base.
 
-    EnhancedIrrigation_PlumbToTank is knowledge, not a craft: the tank menu offers Plumb to Tank
-    once the character knows it (isRecipeActuallyKnown). Reading Cisterns for Kentucky teaches
-    it, and vanilla's AutoLearn check (ScriptManager.checkAutoLearn, at world load and on every
-    level up) learns it from the skills; shared/EnhancedIrrigation/Recipes.lua checks it too and
-    sends a multiplayer server's lesson to the client. It has nothing to craft and is never offered:
-    - its only tag is one no crafting bench or window asks for, so no recipe query finds it and
-      it needs a workstation that doesn't exist (CraftRecipe.requiresSpecificWorkstation);
+    EnhancedIrrigation_PlumbToTank and EnhancedIrrigation_SalvagePump are knowledge, not crafts:
+    the tank menu offers Plumb to Tank, and an appliance's menu Salvage Pump, once the character
+    knows it (isRecipeActuallyKnown). Reading Cisterns for Kentucky teaches Plumb to Tank, and
+    vanilla's AutoLearn check (ScriptManager.checkAutoLearn, at world load and on every level up)
+    learns either from the skills; shared/EnhancedIrrigation/Recipes.lua checks them too and sends
+    a multiplayer server's lesson to the client. They have nothing to craft and are never offered:
+    - their only tag is one no crafting bench or window asks for, so no recipe query finds them and
+      they need a workstation that doesn't exist (CraftRecipe.requiresSpecificWorkstation);
     - the crafting window that lists every recipe ("*", the main window and the magazines'
-      recipe lists) drops it through OnAddToMenu, a plain global
+      recipe lists) drops them through OnAddToMenu, a plain global
       (shared/EnhancedIrrigation/Recipes.lua).
 */
 module Base
@@ -22,6 +23,52 @@ module Base
         NeedToBeLearn = true,
         AutoLearnAny = Woodwork:4;MetalWelding:3,
         OnAddToMenu = EnhancedIrrigation_NeverInMenu,
+    }
+
+    craftRecipe EnhancedIrrigation_SalvagePump
+    {
+        icon = Screwdriver,
+        Tags = EnhancedIrrigationKnowledge,
+        NeedToBeLearn = true,
+        AutoLearnAny = Electricity:2,
+        OnAddToMenu = EnhancedIrrigation_NeverInMenu,
+    }
+
+    /*
+        A Utility Pump made from a Blower Fan: the fan's motor drives an impeller cut and welded
+        from sheet steel in a screwed housing, wired and fitted with a hose. Made in hand, its torch
+        and rods taken by uses, as vanilla welds sheet metal (MakeSmallMetalSheet). It comes out at
+        a lower ceiling than a found one (Pumps.onMadePump). Learned at Electricity 6 or by
+        researching a Utility Pump.
+    */
+    craftRecipe EnhancedIrrigation_MakeUtilityPump
+    {
+        timedAction = Welding,
+        time = 300,
+        Tags = InHandCraft;Welding,
+        category = Electrical,
+        NeedToBeLearn = true,
+        AutoLearnAny = Electricity:6,
+        SkillRequired = Electricity:3;MetalWelding:2,
+        xpAward = Electricity:30;MetalWelding:15,
+        Tooltip = Tooltip_EnhancedIrrigation_MakeUtilityPump,
+        OnCreate = EnhancedIrrigation.Pumps.onMadePump,
+        inputs
+        {
+            item 1 tags[base:weldingmask] mode:keep,
+            item 1 tags[base:screwdriver] mode:keep flags[MayDegradeLight],
+            item 2 [Base.BlowTorch],
+            item 1 [Base.WeldingRods],
+            item 1 [Base.BlowerFan],
+            item 2 [Base.SmallSheetMetal],
+            item 4 [Base.Screws],
+            item 2 [Base.ElectricWire],
+            item 1 [Base.RubberHose],
+        }
+        outputs
+        {
+            item 1 EnhancedIrrigation.UtilityPump,
+        }
     }
 
     /*

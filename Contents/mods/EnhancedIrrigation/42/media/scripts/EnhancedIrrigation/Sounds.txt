@@ -14,4 +14,16 @@ module Base
             event = Object/WoodDoor/Creak,
         }
     }
+
+    /* A running Pump House's motor: the hum of a filling station's pump, the nearest the game has,
+       looped on each client while the house runs (client/EnhancedIrrigation/Pumps/PumpClient.lua). */
+    sound EnhancedIrrigationPumpHouseRunning
+    {
+        category = Object,
+        loop = true,
+        clip
+        {
+            event = World/Object/GasPump,
+        }
+    }
 }

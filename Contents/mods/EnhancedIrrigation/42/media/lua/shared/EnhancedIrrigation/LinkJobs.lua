@@ -148,12 +148,16 @@ end
 
 --- Why the pump `pump`'s outlet can't be plumbed to the tank on the square `with` names, as far as
 --- both ends go, a Tooltip key, or nil; and the two squares. A pump fills a tank up to its lift
---- above its floor, whatever the filling rule says (Pumps.lifts).
+--- above its floor, whatever the filling rule says (Pumps.lifts); a Pump House's lift is its part's,
+--- so it is plumbed once one is fitted.
 function LinkJobs.pumpBlocker(pump, with)
     local here, other = endsOf(pump, with)
-    local spec = Pumps.specOf(pump)
-    if not (here and spec) then
+    if not (here and Pumps.isPump(pump)) then
         return "Tooltip_EnhancedIrrigation_UnknownJob"
+    end
+    local spec = Pumps.liftingSpec(pump)
+    if not spec then
+        return "Tooltip_EnhancedIrrigation_NoPumpFitted"
     end
     local tank = Tanks.tankAt(other.x, other.y, other.z)
     if not tank then

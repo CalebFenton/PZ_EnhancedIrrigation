@@ -46,5 +46,11 @@
     "IGUI_EnhancedIrrigation_PumpCondition": "pump %1%%",
     "IGUI_EnhancedIrrigation_PumpWornOut": "pump worn out",
     "IGUI_EnhancedIrrigation_OutletTo": "fills the %1",
-    "IGUI_EnhancedIrrigation_NoOutlet": "no outlet"
+    "IGUI_EnhancedIrrigation_NoOutlet": "no outlet",
+    "IGUI_EnhancedIrrigation_NoPumpFitted": "no pump fitted",
+    "IGUI_EnhancedIrrigation_PartCondition": "%1 %2%%",
+    "IGUI_EnhancedIrrigation_PartBurntOut": "%1 burnt out",
+    "IGUI_EnhancedIrrigation_Running": "running",
+    "IGUI_EnhancedIrrigation_NoPower": "no power",
+    "IGUI_EnhancedIrrigation_SwitchedOff": "off"
 }

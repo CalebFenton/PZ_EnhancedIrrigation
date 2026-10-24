@@ -26,5 +26,9 @@
     "ContextMenu_EnhancedIrrigation_TakeDownCrock": "Take Down",
     "ContextMenu_EnhancedIrrigation_PatchDrum": "Patch Drum",
     "ContextMenu_EnhancedIrrigation_Pump": "Pump",
-    "ContextMenu_EnhancedIrrigation_ReplaceSeal": "Replace Seal"
+    "ContextMenu_EnhancedIrrigation_ReplaceSeal": "Replace Seal",
+    "ContextMenu_EnhancedIrrigation_FitPump": "Fit Pump",
+    "ContextMenu_EnhancedIrrigation_TakeOutPump": "Take Out Pump",
+    "ContextMenu_EnhancedIrrigation_RepairPump": "Repair Pump",
+    "ContextMenu_EnhancedIrrigation_SalvagePump": "Salvage Pump"
 }
