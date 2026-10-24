@@ -152,10 +152,6 @@ function Pumps.liftingSpec(pump)
     return spec
 end
 
-Pumps.ceilingOf = EnhancedIrrigation.Parts.ceilingOf
-Pumps.setCeiling = EnhancedIrrigation.Parts.setCeiling
-Pumps.CEILING_KEY = EnhancedIrrigation.Parts.CEILING_KEY
-
 --- OnCreate of Make Utility Pump (Recipes.txt).
 function Pumps.onMadePump(craftRecipeData)
     EnhancedIrrigation.Parts.made(craftRecipeData, Pumps.MADE_CEILING)
