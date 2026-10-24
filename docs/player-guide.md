@@ -2,7 +2,7 @@
 
 How the mod's systems work, for players who want more than the Workshop page tells them, and where to start looking for the gear. Figures assume the default sandbox settings and vanilla's own plant figures: 1 L of water is 50 water points, a plant holds 100, and a plant uses about 5 a day.
 
-This version has raised tanks, tanks plumbed together and garden lines. Pumps, plumbed sinks and baths, filters, boilers and timers are planned, but they aren't in the game yet.
+This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, and garden lines. Pumps, filters, boilers and timers are planned, but they aren't in the game yet.
 
 ## Mechanics
 
@@ -39,6 +39,20 @@ This version has raised tanks, tanks plumbed together and garden lines. Pumps, p
 | Cisterns | A tank can be plumbed to several others, so a deck of barrels on one level acts as one big tank. |
 | Buried pipe | The pipe runs out of sight, through walls and under floors, and never freezes or wears. It stays in the ground when a tank leaves its end, and a tank placed on that square is connected again. |
 | Unplumb | From either tank, or from the bare floor where a tank stood. It takes 10 minutes and a Pipe Wrench. Every length comes back in the condition it went in; the joints are used up. |
+
+### Sinks, baths, toilets and washers
+
+| Mechanic | How it works |
+|---|---|
+| Plumb to Tank on a fixture | Right-click a sink, bath, shower, toilet or washing machine for **Plumb to Tank**. It lists the tanks in reach, with the same reach, pipe, joints, time and learning as plumbing two tanks. The fixture doesn't need to be in a room, so a cabin you built yourself works. Each fixture has one tank; a tank can feed many fixtures. |
+| Height | The tank must stand at least a level above the fixture, as for a tap. One on the fixture's own level is greyed out, saying so. |
+| Vanilla's Plumb | Vanilla's **Plumb**, on a fixture in a room under a barrel one storey up, still works without learning and takes no pipe, only a Pipe Wrench. It makes the same connection as Plumb to Tank, so the barrel's water stays tainted. A rooftop barrel no longer purifies. Sandbox: **Plumbing keeps taint**. |
+| The fixture's water | A plumbed fixture holds its own water: 20 L for a sink, toilet, shower or washer, 100 L for a bath. It fills from the tank at once, then refills up to 20 L every ten minutes while the tank has water and the height. Drink, fill, wash and the washer use vanilla's own actions on it. |
+| Taint | The fixture holds the tank's water as it is. A tainted tank gives tainted taps, with vanilla's warning and sickness. Nothing in this version cleans it. |
+| Off the town's water | Plumbing a fixture takes it off the town's water and its reserve for good, even before the shutoff. It holds only its tank's water, and keeps what's left after you unplumb it. |
+| Unplumb | From the fixture, the tank, or the bare floor where the tank stood: 10 minutes with a Pipe Wrench. Every length comes back; vanilla's Plumb laid none. |
+| Washer | A plumbed washing machine keeps its **Turn On** switch. It needs power, and draws about a litre a minute while it runs, which the tank keeps up with. |
+| Old saves | With **Plumbing keeps taint** on, a fixture vanilla plumbed before you added the mod changes over the first time its area loads. A fixture fed by another mod's container stays on vanilla's plumbing. |
 
 ### Garden lines
 
@@ -78,11 +92,11 @@ This version has raised tanks, tanks plumbed together and garden lines. Pumps, p
 
 | Mechanic | How it works |
 |---|---|
-| *Cisterns for Kentucky* | Teaches the Tank Stand and Plumb to Tank. Reading it eases boredom and stress, as vanilla's magazines do. |
+| *Cisterns for Kentucky* | Teaches the Tank Stand and Plumb to Tank, for tanks and fixtures. Reading it eases boredom and stress, as vanilla's magazines do. |
 | Skills | Carpentry 5 teaches the Tank Stand; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
-| No learning needed | Laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe. |
+| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe. |
 | XP | Only building the Tank Stand gives XP. |
-| Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. |
+| Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. **Plumbing keeps taint** (on by default): vanilla's Plumb makes the mod's connection and old plumbed fixtures change over; off, vanilla's plumbing is untouched and a rooftop barrel's water comes out clean. |
 | Adding to a save | The pamphlet turns up only in containers nobody has opened yet. Barrels already in your world count as tanks straight away. |
 
 ## Items and recipes
@@ -94,7 +108,8 @@ This version has raised tanks, tanks plumbed together and garden lines. Pumps, p
 | Raised Rain Barrel | A barrel on a stand | Set Barrel on Stand | A 600 L tank a level up |
 | Garden line tile | Laid | One tile of pipe and its joint | Carries water; holed, it waters the plant on its square |
 | Tap | Fitted to a line tile | A Pipe Wrench, one length of pipe and its joint | Where you run the line |
-| Buried pipe | Plumbed between tanks | 1 length of pipe per 3 tiles, with joints | Moves water between tanks |
+| Buried pipe | Plumbed between tanks, or from a tank to a fixture | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, or into a fixture |
+| Plumbed fixture | A vanilla sink, bath, shower, toilet or washer | Plumb to Tank, or vanilla's Plumb | Holds its tank's water for vanilla's drink, fill, wash and washer |
 
 Everything else is vanilla:
 
@@ -103,7 +118,7 @@ Everything else is vanilla:
 | Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps and buried pipe |
 | Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack |
 | Bucket of Clay Cement or Concrete | Joints in clay pipe |
-| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Unplumb |
+| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, vanilla's Plumb, Unplumb |
 | Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes |
 | Rain barrel | Set on a Tank Stand |
 

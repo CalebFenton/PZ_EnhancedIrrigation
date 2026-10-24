@@ -100,7 +100,7 @@ Facts from Build 42.21.0 (`~/Zomboid/version.txt`), read from the vanilla Lua an
 - A building's fixtures: `sq:getBuilding():getDef():getRooms()` → RoomDef `getX/getY/getX2/getY2/getZ`, `getRects()`; iterate squares and test `obj:getSprite():getProperties():has(IsoFlagType.waterPiped)` (as `SpawnRateChecker.lua` 55-59 walks rooms).
 - Vanilla's stove has a shut-off timer (`IsoStove.setTimer`, `IsoStove.java:371`; knob in `lua/client/ISUI/Fireplace/ISOvenUI.lua`), the closest vanilla precedent for a timed valve.
 
-**Fixture buffers, run in game** (phase 1; `dev/.../EnhancedIrrigationTestsProbe.lua`, passing in single player and `--mp`):
+**Fixture buffers, run in game** (phase 1's probe, now `dev/.../EnhancedIrrigationTestsFixtures.lua`, passing in single player and `--mp`):
 - A sink given a `FluidContainer` from server Lua, with `modData.canBeWaterPiped = true`, then `transmitModData()` and `sync()`, reaches every client: `syncIsoObjectSend` carries the container, and a client copy without one gets it added (`IsoObject.java` 1079-1113).
 - On it, vanilla's menu offers Drink, with the tainted-water warning in its tooltip, Fill and Wash. Filling a bucket moves tainted water: the bucket is tainted and the sink goes down by what it took.
 - An empty buffer gives nothing, and offers no Drink, in a room before the water shutoff. A plain sink beside it gives the town's water.

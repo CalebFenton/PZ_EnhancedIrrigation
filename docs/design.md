@@ -74,7 +74,8 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
 
 ### Fixtures
 
-- Plumbing a sink, tub, toilet or washing machine to a tank gives it a buffer of its vanilla reserve size (sink 20 L, bath 100 L). Every ten minutes the buffer refills from its tank, as far as the tank has water.
+- Plumbing a sink, tub, toilet or washing machine to a tank gives it a buffer of its vanilla reserve size (sink 20 L, bath 100 L; washers and showers, which have none, 20 L). It fills at once as the pipe goes in, then every ten minutes refills from its tank, up to 20 L, as far as the tank has water and stands a storey above the fixture. The fixture's vanilla reserve doesn't carry over: cut in to a tank, it holds that tank's water only.
+- A buffer stays when the fixture is unplumbed, holding what's left: the engine tells clients of a container added, never of one taken away. The fixture stays off the town's water.
 - Drinking, washing, filling a bottle and the washing machine all use vanilla's own actions on the buffer. The buffer holds the tank's water as a vanilla fluid mixture, so a raw tank gives "Tainted" taps and a clean tank gives clean ones, with vanilla's sickness and its bandage refusal.
 - **Rooftop barrels stop purifying.** The vanilla "Plumb" option (a barrel straight above) still appears and needs no learning. It now makes the same buffer connection. Fixtures already plumbed in an older save are converted the first time their square loads. Nothing is left on the vanilla path that purifies. A sandbox option (on by default) can turn this off for players who want vanilla plumbing.
 
@@ -274,12 +275,12 @@ The mod stands alone. With Renewable Energy:
   - The vanilla Plumb handler (`ISWorldObjectContextMenu.onPlumbItem`) is a Lua function the Java menu calls by name, so the mod routes it here.
   - Fixtures already flagged `usesExternalWaterSource` in a save are converted on load: the flag is cleared, and a buffer is linked to the tank they used. The hook is `MapObjects.OnLoadWithSprite` on the base game's `waterPiped` tiles, run a tick later, when the storey above is in the cell.
   - **Proven in game** (phase 1, single player and multiplayer): the buffer reaches clients, survives a chunk reload, gets vanilla's Drink, Fill and Wash, and keeps taint into a filled bucket. An empty buffer gives no town water. A converted sink reaches clients. Details in `docs/research.md`, "Fixture buffers, run in game".
-  - **Phase 3 must handle what the probe found:**
-    - A buffer moves the fixture to vanilla's fluid container menu, which loses a washing machine's on/off switch. Washers need it added back, or a different route.
+  - **What phase 3 settled from the probe:**
+    - A buffer moves a fixture to vanilla's fluid container menu, which drops a washing machine's on/off switch; the fixture menu adds it back. A washer-dryer keeps vanilla's own switch, which its menu shows either way.
     - The same menu lets a player pour into or empty a buffer. Accepted: it's a basin, and pouring tainted water into a clean-tank fixture taints it, as it should.
-    - Vanilla's Plumb still shows on a buffered fixture under a barrel, so the override must cover it.
-    - Vanilla plumbing needs a room. Plumb to Tank must not, or player-built cabins are left out.
-    - A multiplayer server converts an old save's fixtures only when it first loads their chunk; that path is unrun.
+    - Vanilla's Plumb still shows on a buffered fixture under a barrel; the fixture menu takes it out once the fixture is plumbed.
+    - Plumb to Tank on a fixture needs no room, so player-built cabins work; vanilla's Plumb still needs one.
+    - A multiplayer server converts an old save's fixtures only when it first loads their chunk. The conversion itself is tested on a loaded chunk in multiplayer, and through a reload in single player.
 - **Salvage.** "Salvage Pump" is the mod's own action on washer sprites (`appliances_laundry_01_0..7`) and dishwasher sprites (`appliances_cooking_01_72..79`). It marks the appliance stripped in its modData. Vanilla scrapping is left alone: it runs on the appliance's first material (`Fridge`: blowtorch and MetalWelding), so a scrap-table route would demand a welder for what is screwdriver work.
 - **Teaching.**
   - The pamphlet's `LearnedRecipes`.
@@ -296,9 +297,9 @@ The mod stands alone. With Renewable Energy:
 
 Each phase is playable on its own:
 
-1. **Prove the risk.** Done: a throwaway test of fixture buffers (save, reload, multiplayer, vanilla menus, taint) and of plumbed-fixture conversion, in the dev mod. Its tests go when phase 3's replace them.
+1. **Prove the risk.** Done: a throwaway test of fixture buffers (save, reload, multiplayer, vanilla menus, taint) and of plumbed-fixture conversion, in the dev mod, since replaced by phase 3's tests.
 2. **Gravity garden.** Done: tanks and height, Tank Stand, Plumb to Tank between tanks, Lay Line, Drill Holes, Fit Tap, Water from Tank, soak and root rot, frost, patching and draining, the pamphlet, its loot and learning, each with in-game tests in single player and multiplayer. Not yet played through: the summer-and-frost playtest under Starting numbers.
-3. **Fixtures.** Plumb to Tank on fixtures, the vanilla Plumb override and conversion, two tanks.
+3. **Fixtures.** Done: Plumb to Tank on fixtures, the vanilla Plumb override and old-save conversion behind the Plumbing Keeps Taint option, the washer's switch, each with in-game tests in single player and multiplayer. Two tanks, raw and clean, wait on phase 4's filters.
 4. **Safe water.** Barrel and Brick Filters, the Boiler, the Filter Crock.
 5. **Pumps.** Hand pumps and seals, Salvage Pump, Pump House, Utility Pump, sprinklers.
 6. **Automation.** Wind-up Valve, Timer Valve, Sprinkler Timer, Renewable Energy billing.
