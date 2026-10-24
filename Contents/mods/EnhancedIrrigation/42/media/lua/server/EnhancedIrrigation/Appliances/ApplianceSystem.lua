@@ -1,5 +1,5 @@
 -- The authority's side of the job at an appliance (shared/EnhancedIrrigation/ApplianceJobs.lua):
--- Salvage Pump done for real.
+-- Salvage Pump done for real, which takes out the drain pump and the water inlet valve beside it.
 
 if isClient() then return end
 
@@ -8,6 +8,7 @@ require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/Appliances"
 require "EnhancedIrrigation/ApplianceJobs"
+require "EnhancedIrrigation/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceSystem = {}
@@ -23,6 +24,7 @@ local DO = {
         pump:setCondition(ZombRand(least, most + 1))
         Appliances.strip(appliance)
         EnhancedIrrigation.giveItems(character, pump)
+        EnhancedIrrigation.giveItems(character, EnhancedIrrigation.Valves.WATER_VALVE)
         return true
     end,
 }

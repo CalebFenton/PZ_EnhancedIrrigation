@@ -88,6 +88,15 @@ Sprites.PUMP_HOUSE_METAL = tile(142)
 -- The lawn sprinkler, drawn over the line tile it is set on, as the tap is.
 Sprites.SPRINKLER = tile(143)
 
+-- The valves fitted to a tap, drawn over the tap hung off its spout, by the valve's full type
+-- (Valves.ITEMS); and a timer fitted to a Pump House, drawn over either house by its plug.
+Sprites.TAP_VALVES = {
+    ["EnhancedIrrigation.WindUpValve"] = tile(144),
+    ["EnhancedIrrigation.TimerValve"] = tile(145),
+    ["EnhancedIrrigation.SprinklerTimer"] = tile(146),
+}
+Sprites.HOUSE_TIMER = tile(147)
+
 -- The priority every loader of the mod's tiles passes to MapObjects.OnLoadWithSprite. MapObjects
 -- keeps one function per sprite and priority, a later one silently replacing an earlier
 -- (MapObjects.java), so a second loader of the same tiles on one side needs a priority of its own.

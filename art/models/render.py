@@ -180,7 +180,9 @@ def render_tiles(camera, stage, only=None):
     atlas = np.zeros((rows * TILE_H, COLUMNS * TILE_W, 4), dtype=np.float32)
     if only:
         if os.path.exists(DEPTH_FILE):
-            atlas = kit.load_pixels(DEPTH_FILE)
+            # The depth map as last written, grown to rows tiles added since.
+            written = kit.load_pixels(DEPTH_FILE)
+            atlas[:written.shape[0]] = written[:atlas.shape[0]]
     else:
         for stale in os.listdir(TILE_DIR):
             if stale.endswith(".png"):

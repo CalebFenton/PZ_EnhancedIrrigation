@@ -105,6 +105,64 @@ module Base
     }
 
     /*
+        The Wind-up Valve: a kitchen timer's spring and dial screwed to a length of rubber hose it
+        pinches shut as it runs down. Anyone can make one. At a table or another surface, as
+        vanilla's own timer crafts are (MakeTimer).
+    */
+    craftRecipe EnhancedIrrigation_MakeWindUpValve
+    {
+        timedAction = MakingElectrical,
+        time = 100,
+        Tags = AnySurfaceCraft,
+        category = Farming,
+        Tooltip = Tooltip_EnhancedIrrigation_MakeWindUpValve,
+        inputs
+        {
+            item 1 tags[base:screwdriver] mode:keep flags[MayDegradeLight],
+            item 1 [Base.Timer],
+            item 2 [Base.Screws],
+            item 1 [Base.RubberHose],
+        }
+        outputs
+        {
+            item 1 EnhancedIrrigation.WindUpValve,
+        }
+    }
+
+    /*
+        The Timer Valve: an alarm clock wired to switch a salvaged Water Valve, which opens the tap
+        or the Pump House's power at its hour each day. At a table or another surface, as
+        vanilla's own timer crafts are. Learned at Electricity 4 or by researching a Water Valve or
+        a Sprinkler Timer, from Electricity 1.
+    */
+    craftRecipe EnhancedIrrigation_MakeTimerValve
+    {
+        timedAction = MakingElectrical,
+        time = 150,
+        Tags = AnySurfaceCraft,
+        category = Electrical,
+        NeedToBeLearn = true,
+        AutoLearnAny = Electricity:4,
+        SkillRequired = Electricity:2,
+        xpAward = Electricity:10,
+        Tooltip = Tooltip_EnhancedIrrigation_MakeTimerValve,
+        inputs
+        {
+            item 1 tags[base:screwdriver] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:pliers] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:pipewrench] mode:keep flags[MayDegradeLight],
+            item 1 [Base.AlarmClock2],
+            item 1 [EnhancedIrrigation.WaterValve],
+            item 2 [Base.ElectricWire],
+            item 1 [Base.ElectronicsScrap],
+        }
+        outputs
+        {
+            item 1 EnhancedIrrigation.TimerValve,
+        }
+    }
+
+    /*
         The Filter Crock, made as vanilla's clay jar is: shaped at a pottery wheel, with the water
         from any container kept, then fired in a kiln. The charcoal crushed into the clay burns
         out in the firing and leaves the pores the water seeps through. Both are learned together

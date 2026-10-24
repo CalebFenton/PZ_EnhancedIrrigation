@@ -73,6 +73,18 @@ TILES[PUMP_HOUSE_METAL] = [layer(items.pump_house_metal)]
 SPRINKLER = 143
 TILES[SPRINKLER] = [layer(items.sprinkler)]
 
+# The valves fitted to a tap, each an overlay drawn with the tap's, hung off its spout: the Wind-up
+# Valve, the Timer Valve and the Sprinkler Timer; then a timer fitted to a Pump House, an overlay on
+# either house by its plug.
+TAP_WIND_UP = 144
+TAP_TIMER_VALVE = 145
+TAP_SPRINKLER_TIMER = 146
+HOUSE_TIMER = 147
+TILES[TAP_WIND_UP] = [layer(items.tap_wind_up_valve)]
+TILES[TAP_TIMER_VALVE] = [layer(items.tap_timer_valve)]
+TILES[TAP_SPRINKLER_TIMER] = [layer(items.tap_sprinkler_timer)]
+TILES[HOUSE_TIMER] = [layer(items.house_timer)]
+
 # Build-menu icons by the name after EnhancedIrrigation_Build_: each thing as it stands built.
 BUILD_ICONS = {
     "TankStand": [layer(items.tank_stand)],

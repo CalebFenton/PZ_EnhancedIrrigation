@@ -16,5 +16,7 @@
     "EnhancedIrrigation_PumpHouseMetal": "Pump House (Sheet Metal)",
     "EnhancedIrrigation_SalvagePump": "Salvage Pump",
     "EnhancedIrrigation_MakeUtilityPump": "Make Utility Pump",
-    "EnhancedIrrigation_MakePipeSprinkler": "Make Pipe Sprinkler"
+    "EnhancedIrrigation_MakePipeSprinkler": "Make Pipe Sprinkler",
+    "EnhancedIrrigation_MakeWindUpValve": "Make Wind-up Valve",
+    "EnhancedIrrigation_MakeTimerValve": "Make Timer Valve"
 }

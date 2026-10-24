@@ -7,10 +7,11 @@ Tile numbers match art/models/tiles.py, which renders them, and
 media/lua/shared/EnhancedIrrigation/Sprites.lua, which names them for Lua. Property names and
 values follow the vanilla tile definitions (newtiledefinitions.tiles).
 
-- Pipe tiles and the tap and sprinkler overlays have none. Nothing that blocks (solid, solidtrans),
-  since a line runs under plants and feet. Never canBeRemoved, vegitation or canBeCut: plowing a
-  square deletes objects so marked, and the game counts them as weeds. Not IsMoveAble: the mod
-  takes a pipe up with its own action, which gives the pipe back and reshapes the neighbours.
+- Pipe tiles and the tap, sprinkler, valve and Pump House timer overlays have none. Nothing that
+  blocks (solid, solidtrans), since a line runs under plants and feet. Never canBeRemoved,
+  vegitation or canBeCut: plowing a square deletes objects so marked, and the game counts them as
+  weeds. Not IsMoveAble: the mod takes a pipe up with its own action, which gives the pipe back and
+  reshapes the neighbours.
 - The Tank Stand and the stand with a barrel block movement and building as the game's own rain
   barrel (carpentry_02_122) does. That barrel is also IsMoveAble and IsWaterCollector, which only
   the pick-up and disassemble cursors read; a barrel on the stand comes down by the mod's own
@@ -53,7 +54,7 @@ MEDIA = os.path.join(HERE, "..", "Contents", "mods", "EnhancedIrrigation", "comm
 TILES_FILE = os.path.join(MEDIA, "enhanced_irrigation.tiles")
 GEOMETRY_FILE = os.path.join(MEDIA, "tileGeometry.txt")
 TILESET = "enhanced_irrigation_01"
-COLUMNS, ROWS = 8, 18
+COLUMNS, ROWS = 8, 19
 
 STAND = 129
 RAISED_BARRELS = (130, 131, 132, 133)

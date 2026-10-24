@@ -786,9 +786,10 @@ end
 
 -- A washing machine indoors on the grid with water in it runs once switched on. Salvage Pump from
 -- its menu, with Electricity 2, the knowledge, a screwdriver and pliers, gives an Appliance Pump at
--- a used part's condition and stops the washer; its Turn On is then greyed out saying the pump is
--- gone, the server won't switch it on, and a second Salvage Pump is refused. Catches a washer that
--- runs with no pump, a pump salvaged twice, or one that comes out new.
+-- a used part's condition and a Water Valve and stops the washer; its Turn On is then greyed out
+-- saying the pump is gone, the server won't switch it on, and a second Salvage Pump is refused.
+-- Catches a washer that runs with no pump, a pump salvaged twice, one that comes out new, or no
+-- valve for a Timer Valve.
 T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
     instant = true,
     run = function(self)
@@ -810,6 +811,7 @@ T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
         end, true)
         readWasher(self, self.washer, "salvaged", function(state) return state.stripped end)
         T.read(self, "pumpHouse.carried", { type = APPLIANCE }, "part")
+        T.read(self, "pumpHouse.carried", { type = EnhancedIrrigation.Valves.WATER_VALVE }, "valve")
         T.waitFor(self, function()
             local copy = washer()
             return copy ~= nil and EnhancedIrrigation.Appliances.isStripped(copy)
@@ -830,6 +832,7 @@ T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
         local least, most = ApplianceJobs.SALVAGED_CONDITION[1], ApplianceJobs.SALVAGED_CONDITION[2]
         expect(#items == 1 and items[1].condition >= least and items[1].condition <= most,
             "Salvage Pump gave " .. #items .. " pumps" .. (items[1] and " at " .. items[1].condition or ""))
+        expect(#self.reads.valve.items == 1, "Salvage Pump gave " .. #self.reads.valve.items .. " Water Valves")
         T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpSalvaged")
         expect(not self.reads.forced.activated, "the server switched the stripped washer on")
         T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSalvaged")

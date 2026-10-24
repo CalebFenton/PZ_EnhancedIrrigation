@@ -4,5 +4,9 @@
     "EnhancedIrrigation.FilterCrock": "Filter Crock",
     "EnhancedIrrigation.AppliancePump": "Appliance Pump",
     "EnhancedIrrigation.UtilityPump": "Utility Pump",
-    "EnhancedIrrigation.LawnSprinkler": "Lawn Sprinkler"
+    "EnhancedIrrigation.LawnSprinkler": "Lawn Sprinkler",
+    "EnhancedIrrigation.WaterValve": "Water Valve",
+    "EnhancedIrrigation.WindUpValve": "Wind-up Valve",
+    "EnhancedIrrigation.TimerValve": "Timer Valve",
+    "EnhancedIrrigation.SprinklerTimer": "Sprinkler Timer"
 }

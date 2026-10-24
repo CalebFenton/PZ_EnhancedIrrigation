@@ -79,5 +79,11 @@
     "Tooltip_EnhancedIrrigation_PumpBurntOut": "The pump is burnt out. Repair it, or take it out and fit another.",
     "Tooltip_EnhancedIrrigation_PumpTooRepaired": "The pump has been repaired too often to take another. Fit a new one.",
     "Tooltip_EnhancedIrrigation_PumpSound": "The pump is sounder than a repair would leave it.",
-    "Tooltip_EnhancedIrrigation_PumpSalvaged": "Its pump has been salvaged."
+    "Tooltip_EnhancedIrrigation_PumpSalvaged": "Its pump has been salvaged.",
+    "Tooltip_EnhancedIrrigation_WaterValveItem": "A washing machine's water inlet valve: a coil opens it while it has power. Wire it to an alarm clock for a Timer Valve.",
+    "Tooltip_EnhancedIrrigation_WindUpValveItem": "A kitchen timer that pinches a hose shut as it runs down. Fit it to a garden line's tap and wind it: the tap runs for the minutes you give it, with nobody holding it.",
+    "Tooltip_EnhancedIrrigation_TimerValveItem": "An alarm clock wired to a water valve. Fit it to a garden line's tap or a Pump House and set it: every day it runs the tap or the pump at the hour you pick, for the minutes you pick, while it has power.",
+    "Tooltip_EnhancedIrrigation_SprinklerTimerItem": "A plug-in garden timer. Fit it to a garden line's tap or a Pump House and set it: every day it runs the tap or the pump at the hour you pick, for the minutes you pick, while it has power.",
+    "Tooltip_EnhancedIrrigation_MakeWindUpValve": "A kitchen timer screwed to a length of hose it pinches shut as it runs down.",
+    "Tooltip_EnhancedIrrigation_MakeTimerValve": "An alarm clock wired to open a water valve at its hour each day."
 }

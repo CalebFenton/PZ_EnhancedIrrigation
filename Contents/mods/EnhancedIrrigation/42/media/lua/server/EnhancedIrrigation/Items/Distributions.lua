@@ -17,6 +17,8 @@ local procLists = ProceduralDistributions.list
 Distributions.PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
 Distributions.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
 Distributions.LAWN_SPRINKLER = "EnhancedIrrigation.LawnSprinkler"
+Distributions.SPRINKLER_TIMER = "EnhancedIrrigation.SprinklerTimer"
+Distributions.WATER_VALVE = "EnhancedIrrigation.WaterValve"
 
 -- { ProceduralDistributions list, weight } before the option. A weight w spawns with
 -- ceil(w x 100 x the literature loot rarity) in 10,000 per roll, and each of these lists rolls
@@ -77,11 +79,29 @@ Distributions.LAWN_SPRINKLER_LISTS = {
     { "CrateToolsOld", 0.5 },
 }
 
+-- The same for the Sprinkler Timer, a garden store's plug-in timer, as often as a Lawn Sprinkler
+-- there and half that by a hardware store's garden tools. A garden part, so the parts option
+-- scales it.
+Distributions.SPRINKLER_TIMER_LISTS = {
+    { "GardenStoreTools", 2 },
+    { "GardenStoreMisc", 1 },
+    { "ToolStoreFarming", 1 },
+    { "GigamartFarming", 0.5 },
+}
+
+-- The same for the Water Valve, rare in plumbing supplies: a washer's inlet valve is a spare few
+-- kept. Most come out of washers and dishwashers (Salvage Pump).
+Distributions.WATER_VALVE_LISTS = {
+    { "PlumbingSupplies", 0.5 },
+}
+
 -- Each found item: its full type, its lists and the sandbox option that scales their weights.
 Distributions.LOOT = {
     { item = Distributions.PAMPHLET, lists = Distributions.PAMPHLET_LISTS, option = "PamphletLoot" },
     { item = Distributions.UTILITY_PUMP, lists = Distributions.UTILITY_PUMP_LISTS, option = "PartsLoot" },
     { item = Distributions.LAWN_SPRINKLER, lists = Distributions.LAWN_SPRINKLER_LISTS, option = "PartsLoot" },
+    { item = Distributions.SPRINKLER_TIMER, lists = Distributions.SPRINKLER_TIMER_LISTS, option = "PartsLoot" },
+    { item = Distributions.WATER_VALVE, lists = Distributions.WATER_VALVE_LISTS, option = "PartsLoot" },
 }
 
 -- Items lists are flat name, weight pairs.
