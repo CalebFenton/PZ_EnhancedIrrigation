@@ -166,8 +166,28 @@ function ValveSystem.setTimer(record, start, minutes)
     ValveSystem.update(record)
 end
 
+-- Each ten minutes, and at the first game minute after the world loads, every record with a
+-- valve, loaded or not: the system's records are made as the save loads, after the world's own
+-- start events (SGlobalObjects.initSystems runs after GlobalModData.init), and a tile can come
+-- back with its chunk.
+local function findValves()
+    local system = Lines.serverSystem
+    for i = 1, system and system:getLuaObjectCount() or 0 do
+        local record = system:getLuaObjectByIndex(i)
+        if record.valve then
+            valved[record] = true
+        end
+    end
+end
+
+local found = false
+
 -- Each game minute, every valve tracked that's still on its tap.
 local function updateValves()
+    if not found then
+        found = true
+        findValves()
+    end
     local gone = {}
     for record in pairs(valved) do
         if record.valve and record.x and Lines.recordAt(record.x, record.y, record.z) == record then
@@ -181,20 +201,7 @@ local function updateValves()
     end
 end
 
--- Each ten minutes, and once the world is up, every record with a valve, loaded or not: the system's
--- records are made as the save loads, and a tile can come back with its chunk.
-local function findValves()
-    local system = Lines.serverSystem
-    for i = 1, system and system:getLuaObjectCount() or 0 do
-        local record = system:getLuaObjectByIndex(i)
-        if record.valve then
-            valved[record] = true
-        end
-    end
-end
-
 Events.EveryOneMinute.Add(updateValves)
 Events.EveryTenMinutes.Add(findValves)
-Events.OnInitGlobalModData.Add(findValves)
 
 return ValveSystem

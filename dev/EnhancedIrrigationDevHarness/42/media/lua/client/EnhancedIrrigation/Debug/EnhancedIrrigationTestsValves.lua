@@ -55,15 +55,16 @@ local function placeValve(self, line, item)
     end)
 end
 
---- Queues opening the valve's panel from the tap's menu (Wind Valve or Set Timer), then `set(panel)`
---- and its button, as a player sets it and clicks.
+--- Queues opening the valve's panel from the tap's menu (Wind Valve or Set Timer), which walks the
+--- character over and opens it there, then `set(panel)` and its button, as a player sets it and
+--- clicks.
 local function setFromPanel(self, line, label, set)
     T.useOption(self, function() return T.lineObject(line.tap) end, label, function(context)
         return T.findOption(context, context, function(option) return option.onSelect == LineMenu.openValve end)
     end, true)
+    T.waitFor(self, function() return ValveUI.instances[T.player():getPlayerNum()] ~= nil end, "the valve's panel")
     T.step(function()
-        local panel = T.need(self, ValveUI.instances[T.player():getPlayerNum()], "the valve's panel")
-        if not panel then return end
+        local panel = ValveUI.instances[T.player():getPlayerNum()]
         set(panel)
         panel:update()
         self.panelRefusal = panel.refusal

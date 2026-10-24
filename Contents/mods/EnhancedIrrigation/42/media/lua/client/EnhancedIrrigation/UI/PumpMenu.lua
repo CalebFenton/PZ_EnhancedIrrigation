@@ -110,10 +110,15 @@ local function hasTimer(pump)
     return summary ~= nil and summary.timer ~= nil
 end
 
---- Opens `character`'s panel for the timer of the Pump House `pump`: its hour and knob.
-function PumpMenu.openTimer(character, pump)
-    local timer = Pumps.currentSummary(pump).timer
-    return ValveUI.open(character, {
+-- The panel of the Pump House `pump`'s timer as it stands now: its hour and knob; nil once the
+-- timer is gone.
+local function timerPanel(pump)
+    local summary = Pumps.currentSummary(pump)
+    local timer = summary and summary.timer
+    if not timer then
+        return nil
+    end
+    return {
         title = getItemNameFromFullType(timer.item),
         object = pump,
         feature = "pump",
@@ -124,7 +129,12 @@ function PumpMenu.openTimer(character, pump)
         minutes = timer.minutes,
         blocker = function(who, object, with) return PumpJobs.blocker(who, PumpJobs.SET_TIMER, object, with) end,
         stillThere = hasTimer,
-    })
+    }
+end
+
+--- Walks `character` to the Pump House `pump` and opens its timer's panel there (ValveUI).
+function PumpMenu.openTimer(character, pump)
+    ValveUI.walkAndOpen(character, pump, function() return timerPanel(pump) end)
 end
 
 -- A Pump House with a timer offers its panel and Take Off Timer; one without, Fit Timer with a

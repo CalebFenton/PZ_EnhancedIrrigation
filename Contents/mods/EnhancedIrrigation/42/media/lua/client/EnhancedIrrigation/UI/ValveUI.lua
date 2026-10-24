@@ -1,13 +1,16 @@
--- The panel a valve or timer is set from, opened by the menus' Wind Valve and Set Timer: the oven's
--- timer knob (ISOvenUI), which both use for the minutes it runs, so the run is picked from the
--- knob's few stops; and for a timer the hour it starts, stepped up and down as vanilla's alarm clock
--- sets its hour (ISAlarmClockDialog). Its button queues the job (LineJobs, PumpJobs), which walks
--- the character over and turns the knob there, greyed out saying why while the job would be
--- refused. It closes once the character walks off or the valve is gone.
+-- The panel a valve or timer is set from, opened by the menus' Wind Valve and Set Timer once the
+-- character has walked over: the oven's timer knob (ISOvenUI), which both use for the minutes it
+-- runs, so the run is picked from the knob's few stops; and for a timer the hour it starts, stepped
+-- up and down as vanilla's alarm clock sets its hour (ISAlarmClockDialog). Its button queues the
+-- job (LineJobs, PumpJobs), which turns the knob there, greyed out saying why while the job would
+-- be refused. It closes once the character walks off or the valve is gone.
 
 require "ISUI/ISPanelJoypad"
 require "ISUI/ISButton"
 require "ISUI/Fireplace/ISKnob"
+require "TimedActions/ISBaseTimedAction"
+require "TimedActions/ISTimedActionQueue"
+require "luautils"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
@@ -118,11 +121,33 @@ function ValveUI:onClick(button)
         self.hour = (self.hour + 1) % 24
     elseif button.internal == "HOUR_DOWN" then
         self.hour = (self.hour + 23) % 24
-    elseif button.internal == "OK" then
+    elseif button.internal == "OK" and self.refusal == nil then
         EnhancedIrrigationAction.queue(self.playerNum, self.spec.feature, self.spec.job, self.spec.object, self:setting())
         self:destroy()
     elseif button.internal == "CLOSE" then
         self:destroy()
+    end
+end
+
+-- A controller starts on the first row. Up and down turn the knob once it has focus, as the oven's
+-- do, so A sets and B closes from anywhere but the hour's buttons and Close, which A presses.
+function ValveUI:onGainJoypadFocus(joypadData)
+    ISPanelJoypad.onGainJoypadFocus(self, joypadData)
+    self.joypadIndexY = 1
+    self.joypadIndex = 1
+    self.joypadButtons = self.joypadButtonsY[self.joypadIndexY]
+    self.joypadButtons[self.joypadIndex]:setJoypadFocused(true)
+end
+
+function ValveUI:onJoypadDown(button)
+    local focused = self.joypadButtons and self.joypadButtons[self.joypadIndex]
+    local presses = focused == self.hourUp or focused == self.hourDown or focused == self.close
+    if button == Joypad.AButton and not presses then
+        self:onClick(self.ok)
+    elseif button == Joypad.BButton then
+        self:onClick(self.close)
+    else
+        ISPanelJoypad.onJoypadDown(self, button)
     end
 end
 
@@ -172,6 +197,45 @@ function ValveUI.open(character, spec)
         setJoypadFocus(playerNum, panel)
     end
     return panel
+end
+
+-- Opens the panel once the character stands at its object, as vanilla opens an oven's knobs
+-- (ISWorldObjectContextMenu.onStoveSetting, ISOvenUITimedAction): a timed action of no length,
+-- this client's alone, as it changes nothing.
+local OpenAction = ISBaseTimedAction:derive("EnhancedIrrigationValveUIAction")
+
+function OpenAction:isValid()
+    return EnhancedIrrigation.onSquare(self.object)
+end
+
+function OpenAction:update()
+    self.character:faceThisObject(self.object)
+end
+
+function OpenAction:start()
+end
+
+function OpenAction:perform()
+    ISBaseTimedAction.perform(self)
+    local spec = self.makeSpec()
+    if spec then
+        ValveUI.open(self.character, spec)
+    end
+end
+
+function OpenAction:new(character, object, makeSpec)
+    local o = ISBaseTimedAction.new(self, character)
+    o.object, o.makeSpec = object, makeSpec
+    o.maxTime = 0
+    return o
+end
+
+--- Walks `character` over to `object`, then opens the panel `makeSpec()` describes there
+--- (ValveUI.open), read then, so a valve taken off meanwhile opens nothing (it answers nil).
+function ValveUI.walkAndOpen(character, object, makeSpec)
+    if luautils.walkAdj(character, object:getSquare()) then
+        ISTimedActionQueue.add(OpenAction:new(character, object, makeSpec))
+    end
 end
 
 return ValveUI

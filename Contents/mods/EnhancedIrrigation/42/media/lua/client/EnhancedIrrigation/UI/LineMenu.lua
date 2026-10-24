@@ -117,26 +117,34 @@ local function hasValve(kind)
     end
 end
 
---- Opens `character`'s panel for the valve on the tap tile `line`: a Wind-up Valve's knob, or a
---- timer's hour and knob.
-function LineMenu.openValve(character, line)
-    local valve = Lines.stateOf(line).valve
+-- The panel of the valve on the tap tile `line` as it stands now: a Wind-up Valve's knob, or a
+-- timer's hour and knob; nil once the valve is gone.
+local function valvePanel(line)
+    local state = Lines.stateOf(line)
+    local valve = state and state.valve
+    if not valve then
+        return nil
+    end
     local kind = Valves.kindOf(valve.item)
     local windUp = kind == "windup"
-    return ValveUI.open(character, {
+    local job = windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER
+    return {
         title = getItemNameFromFullType(valve.item),
         object = line,
         feature = "line",
-        job = windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER,
+        job = job,
         okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
         timer = not windUp,
         start = valve.start,
         minutes = windUp and Valves.minutesLeft(valve) or valve.minutes,
-        blocker = function(who, object, with)
-            return LineJobs.blocker(who, windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER, object, with)
-        end,
+        blocker = function(who, object, with) return LineJobs.blocker(who, job, object, with) end,
         stillThere = hasValve(kind),
-    })
+    }
+end
+
+--- Walks `character` to the tap tile `line` and opens its valve's panel there (ValveUI).
+function LineMenu.openValve(character, line)
+    ValveUI.walkAndOpen(character, line, function() return valvePanel(line) end)
 end
 
 -- A tap with a valve offers its panel and Take Off Valve; one without, Fit Valve with a submenu of
