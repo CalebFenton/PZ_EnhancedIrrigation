@@ -752,3 +752,28 @@ T.test("irrigation_lines_sledgehammer_reshapes_neighbours", {
         end
     end,
 })
+
+-- Taking up the middle of a line parts it on the authority in the same pass, before any client
+-- hears the tile went: each end is then a line of one. Catches the authority walking a line
+-- through single player's client copy of the taken tile, which a flow or a drain would then run
+-- as a record. A multiplayer server keeps no client copies, so there it passes either way.
+T.test("irrigation_lines_take_up_parts_the_line_at_once", {
+    instant = true,
+    run = function(self)
+        local rows = T.row(self, 3)
+        if not rows then return end
+        self.tiles = rows[1]
+        T.placeLine(self, self.tiles, "iron")
+        T.read(self, "lines.perform", T.at(self.tiles[2], { job = LineJobs.TAKE_UP, tiles = T.tiles(self.tiles) }),
+            "taken")
+    end,
+    validate = function(self)
+        local taken = self.reads.taken
+        expect(taken.done and taken.tiles[2].record == nil, "the server didn't take up the middle tile")
+        for _, i in ipairs({ 1, 3 }) do
+            local record = taken.tiles[i].record
+            expect(record and record.tiles == 1, "end " .. i .. " is in a line of "
+                .. tostring(record and record.tiles) .. " tiles, not 1")
+        end
+    end,
+})

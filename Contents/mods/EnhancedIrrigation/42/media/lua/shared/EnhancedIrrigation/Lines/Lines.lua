@@ -123,15 +123,17 @@ function Lines.canTakeLine(square)
     return Lines.lineOn(square) == nil
 end
 
--- Summaries are the system's own tables; nothing here changes them.
+-- Summaries are the system's own tables; nothing here changes them. Only a multiplayer client
+-- reads them: single player's client keeps its copy of a tile whose record just went until it
+-- reads the removal packet, so the authority asks its records alone.
 local function receivedAt(x, y, z)
-    local system = Lines.clientSystem
+    local system = isClient() and Lines.clientSystem
     local globalObject = system and system.system:getObjectAt(x, y, z)
     return globalObject and globalObject:getModData().summary or nil
 end
 
---- The tile at x, y, z as this side knows it: its record on the authority, loaded or not, else the
---- summary this client has; nil where there is no line tile. Read only.
+--- The tile at x, y, z as this side knows it: on the authority its record, loaded or not; on a
+--- multiplayer client the summary it has. Nil where there is no line tile. Read only.
 function Lines.stateAt(x, y, z)
     return Lines.recordAt(x, y, z) or receivedAt(x, y, z)
 end
@@ -140,9 +142,9 @@ function Lines.stateOf(isoObject)
     return Lines.stateAt(isoObject:getX(), isoObject:getY(), isoObject:getZ())
 end
 
---- The summary of the tile at x, y, z as this side knows it: built from its record on the
---- authority, as currentSummary builds it, else the one this client has; nil where there is no
---- line tile. Read only.
+--- The summary of the tile at x, y, z as this side knows it: on the authority built from its
+--- record, as currentSummary builds it; on a multiplayer client the one it has. Nil where there is
+--- no line tile. Read only.
 function Lines.summaryAt(x, y, z)
     local record = Lines.recordAt(x, y, z)
     if record then

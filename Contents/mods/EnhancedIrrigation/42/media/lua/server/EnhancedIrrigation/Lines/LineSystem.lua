@@ -53,19 +53,14 @@ function LineSystem.reshapeAround(x, y, z)
     end
 end
 
---- Marks every tile of the line through x, y, z as run by its pump now, or not (`running`), for the
---- menus: a pumped line is held while its pump runs, as a tap is while someone holds it
---- (LineJobs' Drain Line). Tells the clients of each tile that changed. The pump says so again as
---- it runs (PumpObject.afterChange), so a tile laid on since, or a line split, is right by its
---- next pass.
+--- Marks every tile of the line through x, y, z as run by its pump now, or not (`running`), and
+--- tells their clients: a pumped line is held while its pump runs, as a tap is while someone holds
+--- it. The pump says so again on each pass, so a tile laid on since, or a line split, is right by
+--- the next one.
 function LineSystem.showRunning(x, y, z, running)
     for _, tile in ipairs(Lines.component(x, y, z)) do
-        -- Single player's client copy of a tile whose record just went is in the line too.
-        local record = Lines.recordAt(tile.x, tile.y, tile.z)
-        if record then
-            record.running = running or nil
-            record:sendSummary()
-        end
+        tile.state.running = running or nil
+        tile.state:sendSummary()
     end
 end
 
