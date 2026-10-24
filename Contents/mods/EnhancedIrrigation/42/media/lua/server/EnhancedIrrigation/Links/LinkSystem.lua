@@ -20,7 +20,6 @@ require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
-require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Fixtures/FixtureSystem"
 require "EnhancedIrrigation/Treatment/TreatmentSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
@@ -31,8 +30,7 @@ EnhancedIrrigation.LinkSystem = LinkSystem
 
 local Links, LinkJobs, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes,
     EnhancedIrrigation.Tanks
-local Materials, Fixtures, FixtureSystem = EnhancedIrrigation.Materials, EnhancedIrrigation.Fixtures,
-    EnhancedIrrigation.FixtureSystem
+local Materials, FixtureSystem = EnhancedIrrigation.Materials, EnhancedIrrigation.FixtureSystem
 local TreatmentSystem = EnhancedIrrigation.TreatmentSystem
 
 -- What the system saves with the world (its modData keys): `links`, the list; `lastHour`, when
@@ -183,23 +181,6 @@ local function flow(tankA, tankB, hours)
     return true
 end
 
--- Refills the buffer of the fixture plumbed by `link` from its tank for `hours`, while both are
--- loaded and the tank stands high enough to push, and the town's water no longer runs to it.
--- Returns the tank when any water moved.
-local function refill(link, hours)
-    local fixture = Fixtures.fixtureAt(link.b.x, link.b.y, link.b.z)
-    if fixture and Fixtures.townWaterRuns(fixture) then
-        FixtureSystem.standBy(fixture)
-        return nil
-    end
-    local tank = Tanks.tankAt(link.a.x, link.a.y, link.a.z)
-    if tank and fixture and Tanks.hasPressureFor(tank, link.b.z)
-            and FixtureSystem.fill(tank, fixture, Fixtures.REFILL_RATE * hours) then
-        return tank
-    end
-    return nil
-end
-
 --- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks,
 --- from a tank into a fixture's buffer, or out of a unit's basin into a tank. A link with an end
 --- unloaded, or gone from it, waits; an inlet runs in its unit's time (TreatmentObject.advance),
@@ -208,12 +189,14 @@ function LinkSystem:pass(hours)
     local changed = {}
     for _, link in ipairs(self.links) do
         local tank
-        if link.fixture then
-            tank = refill(link, hours)
-        elseif link.outlet then
+        local role = Links.roleOf(link)
+        if role == "fixture" then
+            tank = FixtureSystem.refill(link, hours)
+        elseif role == "outlet" then
             tank = TreatmentSystem.drain(link, Links.RATE * hours)
-        elseif not (link.inlet or link.pump) then
-            local tankA, tankB = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
+        elseif not role then
+            local a, b = Links.ends(link)
+            local tankA, tankB = Tanks.tankAt(a.x, a.y, a.z), Tanks.tankAt(b.x, b.y, b.z)
             if tankA and tankB and flow(tankA, tankB, hours) then
                 changed[tankA], changed[tankB] = true, true
             end
