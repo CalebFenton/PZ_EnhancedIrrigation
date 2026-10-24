@@ -26,7 +26,7 @@ local APPLIANCE, UTILITY = Pumps.APPLIANCE_PUMP, Pumps.UTILITY_PUMP
 local BARREL_LITRES = 600
 
 local fitted, at, update, readUntil = T.pumpHouseFitted, T.pumpHouseAt, T.updatePumpHouse, T.readPumpHouseUntil
-local lifts, burns = T.pumpLifts, T.pumpBurns
+local lifts = T.pumpLifts
 
 -- Houses -------------------------------------------------------------------------------------------------
 
@@ -342,12 +342,6 @@ local function houseLine(self, spots, entity, part)
     local barrel = T.placeTank(self, spots[2], "lidded", SOURCE_LITRES)
     T.linkPump(self, house, tiles[1])
     return house, barrel, tiles
-end
-
-local function useLineJob(self, tile, job, label, choose)
-    T.useOption(self, function() return T.lineObject(tile) end, label, function(context)
-        return T.jobOption(context, "line", job)
-    end, choose)
 end
 
 -- A Pump House with a Utility Pump on the grid, its outlet on a line of two holed tiles: switched

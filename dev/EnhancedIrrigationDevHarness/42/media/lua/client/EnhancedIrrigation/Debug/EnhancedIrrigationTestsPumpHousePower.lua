@@ -20,7 +20,7 @@ local BARREL_LITRES = 600
 -- How near a generator's fuel comes to the bill: Java keeps it as a float.
 local FUEL = 0.0005
 
-local fitted, at, update, readUntil = T.pumpHouseFitted, T.pumpHouseAt, T.updatePumpHouse, T.readPumpHouseUntil
+local fitted, update, readUntil = T.pumpHouseFitted, T.updatePumpHouse, T.readPumpHouseUntil
 local lifts, burns = T.pumpLifts, T.pumpBurns
 
 -- Houses -------------------------------------------------------------------------------------------------
