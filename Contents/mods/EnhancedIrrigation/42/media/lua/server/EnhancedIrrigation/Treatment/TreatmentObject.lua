@@ -169,6 +169,20 @@ function TreatmentObject:rate(spec)
     return spec.rate * (self:isClogged(spec) and Treatment.CLOGGED_FACTOR or 1)
 end
 
+--- Whether a boiler's drum has burnt through: a hole that holds nothing.
+function TreatmentObject:isBurntThrough()
+    return self.condition ~= nil and self.condition <= 0
+end
+
+-- A drum this close to HOT_HOURS counts as hot: heat added up in ten-minute passes falls short of a
+-- whole hour by a rounding.
+local HOT_SLACK = 1e-6
+
+--- Whether a boiler's drum is hot enough to make its water safe.
+function TreatmentObject:isHot()
+    return (self.hotHours or 0) >= Treatment.HOT_HOURS - HOT_SLACK
+end
+
 -- The film grows while water stands on the sand and dies once the sand has stood dry long enough
 -- (DRY_DEATH_HOURS), or when a hard freeze turns the water on it to ice, which also stops the flow.
 -- A grown film passes clean water; an unripe one passes the head's own.

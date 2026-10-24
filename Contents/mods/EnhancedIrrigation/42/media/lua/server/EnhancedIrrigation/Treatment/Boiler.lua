@@ -10,20 +10,6 @@ require "EnhancedIrrigation/Treatment/TreatmentObject"
 
 local Treatment, TreatmentObject = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentObject
 
---- Whether a boiler's drum has burnt through: a hole that holds nothing.
-function TreatmentObject:isBurntThrough()
-    return self.condition ~= nil and self.condition <= 0
-end
-
--- A drum this close to HOT_HOURS counts as hot: heat added up in ten-minute passes falls short of a
--- whole hour by a rounding.
-local HOT_SLACK = 1e-6
-
---- Whether a boiler's drum is hot enough to make its water safe.
-function TreatmentObject:isHot()
-    return (self.hotHours or 0) >= Treatment.HOT_HOURS - HOT_SLACK
-end
-
 -- How much of `lit` hours of fire then `unlit` hours without a drum of heat `hotHours` spends hot,
 -- and its heat after: the fire warms it an hour of heat an hour up to HEAT_MAX_HOURS, and it cools
 -- COOLING times as fast. Worked through within the step, so ten-minute passes and an hour's
@@ -86,5 +72,3 @@ function TreatmentObject:patch()
     self.ceiling = EnhancedIrrigation.Parts.restores(self.ceiling, Treatment.PATCH_LOSS)
     self.condition = self.ceiling
 end
-
-return TreatmentObject.KINDS.boiler
