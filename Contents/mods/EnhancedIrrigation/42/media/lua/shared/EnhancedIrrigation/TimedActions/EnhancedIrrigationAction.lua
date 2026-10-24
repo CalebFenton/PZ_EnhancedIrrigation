@@ -54,9 +54,8 @@ end
 -- perform(character, job, object, with), which does the job on the authority and returns whether
 -- it was done, looked up when a job completes, since server files load after shared ones.
 -- A JOBS row: minutes (a number, or function(object, with, character)); anim and position (the loot
--- animation low down when absent); heavy (heavy work while it lasts); sound, played while it lasts,
--- and doneSound, when it's done; equip(character, object, with), which picks the tool to hold while
--- the job is done.
+-- animation low down when absent); heavy (heavy work while it lasts); sound, played while it lasts;
+-- equip(character, object, with), which picks the tool to hold while the job is done.
 local FEATURES = {
     stand = {
         isTarget = function(object) return Stands.isStand(object) or Stands.isRaised(object) end,
@@ -182,10 +181,6 @@ end
 
 function Action:perform()
     self:stopSound()
-    local doneSound = rowOf(self.feature, self.job).doneSound
-    if doneSound then
-        self.character:playSound(doneSound)
-    end
     ISInventoryPage.renderDirty = true
     ISBaseTimedAction.perform(self)
 end
