@@ -4,6 +4,7 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
+require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/TreatmentMenu"
 require "ISUI/ISBBQMenu"
@@ -358,14 +359,14 @@ T.test("irrigation_treatment_hard_freeze_kills_the_layer", {
         if not spots then return end
         self.wet = placeUnit(self, spots[1], BARREL)
         self.dry = placeUnit(self, spots[2], BARREL)
-        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Lines.HARD_FREEZE_CELSIUS - 3 })
+        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.wet, "wet", { 1 }, { head = 20, ripeHours = Treatment.RIPE_HOURS })
         run(self, self.dry, "dry", { 1 }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
         waitForServer(self, self.wet, "wet", "ripeHours")
         waitForServer(self, self.dry, "dry", "ripeHours")
         readMenu(self, self.wet, "wet")
         readMenu(self, self.dry, "dry")
-        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Lines.HARD_FREEZE_CELSIUS + 20 })
+        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS + 20 })
         run(self, self.wet, "thawed", { 1 }, { headTainted = true })
     end,
     validate = function(self)
@@ -908,7 +909,7 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         if not spots then return end
         self.wet = placeUnit(self, spots[1], CROCK)
         self.dry = placeUnit(self, spots[2], CROCK)
-        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Lines.HARD_FREEZE_CELSIUS - 3 })
+        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.wet, "wet", { 1, 1 }, { head = 5 })
         run(self, self.dry, "dry", { 1 }, { head = 0 })
         waitForCopy(self, self.wet, nil, function(summary) return summary.cracked end,

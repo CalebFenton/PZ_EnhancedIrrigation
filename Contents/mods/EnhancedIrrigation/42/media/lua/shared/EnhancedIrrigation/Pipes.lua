@@ -28,7 +28,7 @@ local WINTER_TILE_HOURS = 24 * 600
 -- Each material: `item` and `perLength`, what one length of pipe is, and what taking it out gives
 -- back; `joint`, the material each length's joint takes, or nil, used up for good; `wrench`, its
 -- lengths are joined with the pipe wrench alone, which laying it needs; `frostPerHour`, the chance
--- an hour that a full length splits in a hard freeze (Lines.HARD_FREEZE_CELSIUS); `punchCracks`,
+-- an hour that a full length splits in a hard freeze (Frost.HARD_FREEZE_CELSIUS); `punchCracks`,
 -- whether a punched hole may split it; `hardness`, which hole tools get into it (LineJobs.HOLE_TOOLS
 -- reach).
 Pipes.KINDS = {

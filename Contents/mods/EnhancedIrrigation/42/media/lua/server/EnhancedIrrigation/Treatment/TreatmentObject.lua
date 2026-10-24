@@ -13,13 +13,12 @@ require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
-require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/ObjectSystem"
-require "EnhancedIrrigation/Lines/LineObject"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
-local Treatment, Lines, Tanks = EnhancedIrrigation.Treatment, EnhancedIrrigation.Lines, EnhancedIrrigation.Tanks
+local Treatment, Tanks, Frost = EnhancedIrrigation.Treatment, EnhancedIrrigation.Tanks, EnhancedIrrigation.Frost
 local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 
 local TreatmentObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Treatment")
@@ -135,11 +134,6 @@ function TreatmentObject:pass(unit, litres, fluid)
     return litres
 end
 
---- The air temperature at the unit, as a garden line's (LineObject.temperatureAt): a room warms it.
-function TreatmentObject:temperature()
-    return EnhancedIrrigation.LineObject.temperatureAt(self)
-end
-
 -- Kinds ---------------------------------------------------------------------------------------------
 
 --- What an hour or less of time does to a unit of each kind: `step(record, unit, spec, hours)`.
@@ -162,7 +156,7 @@ TreatmentObject.KINDS.sand = {
     step = function(record, unit, spec, hours)
         if record.head > 0 then
             record.dryHours = 0
-            if record:temperature() <= Lines.HARD_FREEZE_CELSIUS then
+            if Frost.isHard(record) then
                 record.ripeHours = 0
                 return
             end
@@ -187,7 +181,7 @@ TreatmentObject.KINDS.crock = {
         if record.cracked then
             return
         end
-        if record.head > 0 and record:temperature() <= Lines.HARD_FREEZE_CELSIUS then
+        if record.head > 0 and Frost.isHard(record) then
             record.cracked = true
             record.head = 0
             record.headTainted = false
