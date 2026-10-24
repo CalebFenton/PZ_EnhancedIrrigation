@@ -1,8 +1,8 @@
 -- Development only. The setup of the Enhanced Irrigation QA debug scenario, for playing through
--- the mod by hand: a character nothing
--- can see or hurt, who carries anything and has every skill and recipe the mod reads, and on an
--- open lot between a farmhouse and its field, from north to south, beds of crops beside tanks to
--- lay lines from, tanks to set up and plumb, and a row to each group of items the jobs take.
+-- the mod by hand: a character nothing can see or hurt, who carries anything and has every skill
+-- and recipe the mod reads, and on an open lot between a farmhouse and its field, from north to
+-- south, beds of crops beside tanks to lay lines from, tanks to set up and plumb, and a row to each
+-- group of items the jobs take.
 -- Single player only: it sows through the authority's SFarmingSystem.
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Stands/Stands"

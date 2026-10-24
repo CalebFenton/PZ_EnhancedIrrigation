@@ -5,8 +5,9 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/UI/LineMenu"
 
--- The jobs at a laid line tile, played from its right-click menu: drilling, fitting a tap, patching,
--- draining, taking up and smashing.
+-- The jobs at a laid line tile: drilling, fitting a tap, patching, draining and taking up, played
+-- from its right-click menu but for the one test that parts a line by calling the job directly, and
+-- smashing with vanilla's sledgehammer cursor.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear

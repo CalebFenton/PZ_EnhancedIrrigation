@@ -268,8 +268,7 @@ end
 --- one craft's inputs (T.recipeInputs with `opts.prefer`). `opts.workTable` checks the scenario's
 --- work table stands by the character (T.placeWorkTable); `opts.ready(self)`, if given, queues
 --- what the inputs need first. Then counts `counted` (full types) into self.counts.craft. Returns
---- whether it queued the craft. T.craftTest would teach every recipe of the mod and set a work
---- table down for good, which the leak check would count.
+--- whether it queued the craft. T.craftTest would teach every recipe of the mod.
 function T.craft(self, name, from, counted, opts)
     opts = opts or {}
     local recipe = T.need(self, getScriptManager():getCraftRecipe(name), "the recipe " .. name)
