@@ -351,7 +351,6 @@ function TreatmentObject:buildSummary()
     local spec = self:spec()
     return {
         head = math.floor(self.head * 10 + 0.5) / 10,
-        headTainted = self.headTainted,
         ripeHours = math.floor(self.ripeHours),
         dryHours = math.floor(self.dryHours),
         clogged = spec ~= nil and self:isClogged(spec),
