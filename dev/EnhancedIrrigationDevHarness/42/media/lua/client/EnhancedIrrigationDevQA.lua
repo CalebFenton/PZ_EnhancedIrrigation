@@ -5,6 +5,7 @@
 -- lay lines from, tanks to set up and plumb, and a row to each group of items the jobs take.
 -- Single player only: it sows through the authority's SFarmingSystem.
 require "EnhancedIrrigation/Sprites"
+require "EnhancedIrrigation/Stands/Stands"
 local Stage = require "EnhancedIrrigationDevStage"
 
 local QA = {}
@@ -26,7 +27,8 @@ local ARRIVE = { x = 2, y = 2 }
 local SKILL = 10
 
 -- Vanilla's open round rain barrel, the one a Tank Stand takes, as it stands on the ground.
-local BARREL = "carpentry_02_122"
+local BARREL_SPEC = EnhancedIrrigation.Stands.BARRELS[1]
+local BARREL = BARREL_SPEC.barrel
 -- The deck the upper tank stands on, built as a player builds one: vanilla's Log Stairs up the
 -- lot's west column, climbing north to the landing they lay a storey up, and wooden floor joined to
 -- the landing, the deck two squares by two with the bed's tank square among them. Each is the tile
@@ -260,17 +262,6 @@ local function placeBeds(player, lot)
     end
 end
 
--- The rain barrel vanilla's pickup would give for an empty BARREL: the moveable named after its
--- tile (ISMoveableSpriteProps:instanceItem), carrying the components of a new barrel of that tile,
--- which pickup moves from the barrel onto the item (GameEntityFactory.TransferComponents).
-local function carriedBarrel(square)
-    local item = instanceItem("Moveables." .. BARREL)
-    local fresh = IsoThumpable.new(getCell(), square, BARREL, false, nil)
-    GameEntityFactory.CreateIsoObjectEntity(fresh, EnhancedIrrigation.tileEntity(BARREL), true)
-    GameEntityFactory.TransferComponents(fresh, item)
-    return item
-end
-
 local function setUpCharacter(player, recipes)
     player:setGodMod(true)
     player:setInvisible(true)
@@ -283,7 +274,10 @@ local function setUpCharacter(player, recipes)
     PZHarness.Fixtures.setPerkLevels(player, levels)
     PZHarness.Test.learnRecipes(player)
     PZHarness.Fixtures.learnRecipes(player, recipeNames(recipes))
-    player:getInventory():AddItem(carriedBarrel(player:getCurrentSquare()))
+    -- An empty barrel as vanilla's pickup gives it, the server module loaded by the first tick
+    -- in single player.
+    player:getInventory():AddItem(EnhancedIrrigation.StandSystem.barrelItem(BARREL_SPEC,
+        player:getCurrentSquare()))
 end
 
 --- Sets the scenario up around `player`, and prints what it laid out, and anything it couldn't,
