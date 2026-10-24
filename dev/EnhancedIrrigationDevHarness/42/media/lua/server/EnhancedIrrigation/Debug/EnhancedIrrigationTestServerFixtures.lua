@@ -32,7 +32,7 @@ local function describe(fixture)
         tainted = fixture:isTaintedWater(),
         hasWater = fixture:hasWater(),
         external = fixture:getUsesExternalWaterSource(),
-        linked = mod().Fixtures.linkAt({ x = fixture:getX(), y = fixture:getY(), z = fixture:getZ() }) ~= nil,
+        linked = mod().Links.roleAt({ x = fixture:getX(), y = fixture:getY(), z = fixture:getZ() }, "fixture") ~= nil,
     }
 end
 

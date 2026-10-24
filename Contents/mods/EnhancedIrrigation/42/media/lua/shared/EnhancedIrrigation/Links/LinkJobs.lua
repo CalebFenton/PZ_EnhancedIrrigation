@@ -94,7 +94,7 @@ function LinkJobs.fixtureBlocker(fixture, with)
     if not tank then
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
-    if Fixtures.linkAt(here) then
+    if Links.roleAt(here, "fixture") then
         return "Tooltip_EnhancedIrrigation_FixturePlumbed"
     end
     -- A fixture is an outlet: its tank must push, as a tap's must.
@@ -133,7 +133,7 @@ function LinkJobs.unitBlocker(unit, with, role)
     if not tank then
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
-    if Treatment.linkOf(here, role) then
+    if Links.roleAt(here, role) then
         return UNIT_ENDS[role].plumbed
     end
     if Links.find(here, other) then

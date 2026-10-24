@@ -9,13 +9,14 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local FixtureSystem = {}
 EnhancedIrrigation.FixtureSystem = FixtureSystem
 
-local Fixtures, Tanks = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Tanks
+local Fixtures, Tanks, Links = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 
 -- A fill smaller than this isn't worth a sync to every client.
 local LEAST_LITRES = 0.01
@@ -65,10 +66,11 @@ local function holdReserve(fixture)
     return reserve
 end
 
---- Gives the fixture at the `b` end of `link`, being unplumbed, back the reserve plumbing held, so
+--- Gives the fixture of `link`, being unplumbed, back the reserve plumbing held, so
 --- it has what vanilla would give. A fixture gone from the square takes nothing.
 function FixtureSystem.giveBackReserve(link)
-    local fixture = link.reserve and Fixtures.fixtureAt(link.b.x, link.b.y, link.b.z)
+    local at = Links.ends(link)
+    local fixture = link.reserve and Fixtures.fixtureAt(at.x, at.y, at.z)
     if fixture then
         fixture:getModData().waterAmount = link.reserve
         fixture:transmitModData()
@@ -95,8 +97,8 @@ end
 --- unless the town's water runs to it.
 function FixtureSystem.plumb(fixture, tank, kind, lengths, conditions)
     FixtureSystem.ensureBuffer(fixture)
-    local link = EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank),
-        EnhancedIrrigation.squareOf(fixture), kind, lengths, conditions, "fixture")
+    local link = EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(fixture),
+        EnhancedIrrigation.squareOf(tank), kind, lengths, conditions, "fixture")
     link.reserve = holdReserve(fixture)
     if not Fixtures.townWaterRuns(fixture) and FixtureSystem.fill(tank, fixture, Fixtures.capacityOf(fixture)) then
         Tanks.sync(tank)
@@ -116,7 +118,7 @@ function FixtureSystem.convert(fixture)
         return false
     end
     -- Another mod's store stays on vanilla's route, which is all it knows.
-    if Tanks.isTank(tank) and not Fixtures.linkAt(EnhancedIrrigation.squareOf(fixture)) then
+    if Tanks.isTank(tank) and not Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
         FixtureSystem.plumb(fixture, tank, nil, 0, nil)
     end
     return true

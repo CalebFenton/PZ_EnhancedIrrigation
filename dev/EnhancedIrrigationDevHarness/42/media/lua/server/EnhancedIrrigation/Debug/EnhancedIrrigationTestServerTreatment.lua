@@ -44,7 +44,7 @@ local function stateAt(args)
     local here = { x = args.x, y = args.y, z = args.z }
     local state = {
         loaded = square ~= nil, found = unit ~= nil,
-        inlet = mod().Treatment.linkOf(here, "inlet") ~= nil, outlet = mod().Treatment.linkOf(here, "outlet") ~= nil,
+        inlet = mod().Links.roleAt(here, "inlet") ~= nil, outlet = mod().Links.roleAt(here, "outlet") ~= nil,
     }
     if record then
         state.record = recordState(record)

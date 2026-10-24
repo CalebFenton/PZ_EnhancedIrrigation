@@ -76,18 +76,12 @@ function LinkSystem:sendLinks()
     self:sendCommand("links", { links = self.links, version = self.version })
 end
 
---- Adds the link from the square `a` to the square `b`: `kind` pipe in `lengths` lengths whose
---- items were at `conditions`, none for vanilla's Plumb; `role` ("fixture", "inlet", "outlet" or
---- "pump") when `b` is a plumbed fixture or a unit's inlet, or `a` a unit's or pump's outlet, set
---- true on the link. Returns the link.
-function LinkSystem:addLink(a, b, kind, lengths, conditions, role)
-    local link = {
-        a = { x = a.x, y = a.y, z = a.z }, b = { x = b.x, y = b.y, z = b.z }, kind = kind, lengths = lengths,
-        conditions = conditions,
-    }
-    if role then
-        link[role] = true
-    end
+--- Adds the link from the square `at` to the square `other` (Links.new): with `role`, `at` is that
+--- role's object. `kind` pipe in `lengths` lengths whose items were at `conditions`, none for
+--- vanilla's Plumb. Returns the link.
+function LinkSystem:addLink(at, other, kind, lengths, conditions, role)
+    local link = Links.new(at, other, role)
+    link.kind, link.lengths, link.conditions = kind, lengths, conditions
     table.insert(self.links, link)
     self:sendLinks()
     return link
@@ -99,8 +93,9 @@ function LinkSystem:removeLink(link)
         if entry == link then
             table.remove(self.links, i)
             self:sendLinks()
-            if link.pump and EnhancedIrrigation.Lines.recordAt(link.b.x, link.b.y, link.b.z) then
-                EnhancedIrrigation.LineSystem.showRunning(link.b.x, link.b.y, link.b.z, false)
+            local _, line = Links.ends(link)
+            if link.pump and EnhancedIrrigation.Lines.recordAt(line.x, line.y, line.z) then
+                EnhancedIrrigation.LineSystem.showRunning(line.x, line.y, line.z, false)
             end
             return
         end
@@ -109,14 +104,18 @@ end
 
 -- Jobs -----------------------------------------------------------------------------------------
 
+-- Lays the pipe a job's `with` names from `object` to the square it names, as a link of `role`.
+local function layPipe(role)
+    return function(character, object, with, materials)
+        local kind, lengths = LinkJobs.pipeFor(object, with)
+        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(object), Links.decode(with), kind, lengths,
+            Materials.conditions(character, materials), role)
+    end
+end
+
 -- What each job does at `object` toward the square `with` names.
 local DO = {
-    [LinkJobs.PLUMB] = function(character, tank, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(tank, with)
-        local other = Links.decode(with)
-        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank), other, kind, lengths,
-            Materials.conditions(character, materials))
-    end,
+    [LinkJobs.PLUMB] = layPipe(nil),
     -- The tank the fixture's pipe runs to, as LinkJobs.fixtureBlocker found it before the job.
     [LinkJobs.PLUMB_FIXTURE] = function(character, fixture, with, materials)
         local kind, lengths = LinkJobs.pipeFor(fixture, with)
@@ -128,23 +127,9 @@ local DO = {
         local other = Links.decode(with)
         FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), nil, 0, nil)
     end,
-    -- The tank the unit draws from, at the link's `a` end, as fixtures' tanks are.
-    [LinkJobs.PLUMB_INLET] = function(character, unit, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(unit, with)
-        LinkSystem.instance:addLink(Links.decode(with), EnhancedIrrigation.squareOf(unit), kind, lengths,
-            Materials.conditions(character, materials), "inlet")
-    end,
-    [LinkJobs.PLUMB_OUTLET] = function(character, unit, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(unit, with)
-        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(unit), Links.decode(with), kind, lengths,
-            Materials.conditions(character, materials), "outlet")
-    end,
-    -- The pump at the link's `a` end, as a unit's outlet is.
-    [LinkJobs.PLUMB_PUMP] = function(character, pump, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(pump, with)
-        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(pump), Links.decode(with), kind, lengths,
-            Materials.conditions(character, materials), "pump")
-    end,
+    [LinkJobs.PLUMB_INLET] = layPipe("inlet"),
+    [LinkJobs.PLUMB_OUTLET] = layPipe("outlet"),
+    [LinkJobs.PLUMB_PUMP] = layPipe("pump"),
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
     [LinkJobs.UNPLUMB] = function(character, object, with)
         local link = Links.find(EnhancedIrrigation.squareOf(object), Links.decode(with))

@@ -3,18 +3,16 @@
 -- size of vanilla's reserve for it, which its tank refills (server/EnhancedIrrigation/Fixtures/
 -- FixtureSystem.lua). Vanilla's drink, fill, wash and washer read the buffer, and the engine keeps
 -- its taint (docs/research.md, "Fixture buffers, run in game"). While the town's water runs to it,
--- that wins and the buffer waits empty. The pipe is a link like the one between two tanks
--- (Links.lua), its `b` end the fixture's square and `fixture` set.
+-- that wins and the buffer waits empty. The pipe is a link like the one between two tanks, of the
+-- role `fixture` (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Links/Links"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Fixtures = {}
 EnhancedIrrigation.Fixtures = Fixtures
 
-local Links = EnhancedIrrigation.Links
 local Tanks = EnhancedIrrigation.Tanks
 
 -- Litres a buffer holds when its tile names no reserve: washers and showers have none in vanilla.
@@ -66,16 +64,6 @@ function Fixtures.townWaterRuns(fixture)
     return not (fixture:hasModData() and fixture:getModData().canBeWaterPiped == true)
         and square ~= nil and square:getRoom() ~= nil and not square:isNoWater()
         and getGameTime():getWorldAgeDaysSinceBegin() < getSandboxOptions():getWaterShutModifier()
-end
-
---- The link plumbing the fixture square `at` ({ x, y, z }) to its tank, or nil.
-function Fixtures.linkAt(at)
-    for _, link in ipairs(Links.all()) do
-        if link.fixture and EnhancedIrrigation.sameSquare(link.b, at) then
-            return link
-        end
-    end
-    return nil
 end
 
 --- Whether the tank on the square `tankAt` is where vanilla's Plumb looks for a fixture on the square

@@ -214,7 +214,8 @@ T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
         self.sink = placeFixture(self, spots[1], SINK)
         self.tank = T.placeTank(self, spots[2], "raised", TANK_LITRES)
         T.server(self, "fixtures.plumb", T.at(self.sink, { tank = T.at(self.tank), kind = "iron", lengths = 1 }))
-        T.waitFor(self, function() return Fixtures.linkAt(T.at(self.sink)) ~= nil end, "this client's copy of the link")
+        T.waitFor(self, function() return Links.roleAt(T.at(self.sink), "fixture") ~= nil end,
+            "this client's copy of the link")
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
         useFixtureMenu(self, self.sink, "unplumb", job(LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
         readUntil(self, self.sink, nil, "unplumbed", function(state) return not state.linked end)

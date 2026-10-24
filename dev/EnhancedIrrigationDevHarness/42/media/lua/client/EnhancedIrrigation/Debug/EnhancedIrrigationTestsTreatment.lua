@@ -529,7 +529,7 @@ T.test("irrigation_treatment_inlet_keeps_the_film_through_an_absence", {
             ripeHours = Treatment.RIPE_HOURS } })
         self.raw = T.placeTank(self, spots[2], "lidded", 100, true)
         self.clean = T.placeTank(self, spots[3], "lidded")
-        T.server(self, "links.make", T.at(self.raw, { to = T.at(self.unit), kind = "iron", lengths = 1, role = "inlet" }))
+        T.server(self, "links.make", T.at(self.unit, { to = T.at(self.raw), kind = "iron", lengths = 1, role = "inlet" }))
         T.server(self, "links.make", T.at(self.unit, { to = T.at(self.clean), kind = "iron", lengths = 1,
             role = "outlet" }))
         local gap = spec.head / spec.rate + Treatment.DRY_DEATH_HOURS + 6
@@ -567,7 +567,7 @@ T.test("irrigation_treatment_waits_for_an_unloaded_inlet_tank", {
         self.gap, self.head = 5, 40
         self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = self.head, ripeHours = Treatment.RIPE_HOURS } })
         local far = { x = self.unit.x + 3000, y = self.unit.y, z = self.unit.z }
-        T.server(self, "links.make", T.at(far, { to = T.at(self.unit), kind = "iron", lengths = 1, role = "inlet" }))
+        T.server(self, "links.make", T.at(self.unit, { to = far, kind = "iron", lengths = 1, role = "inlet" }))
         T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap, tank = far }), "waiting")
         T.server(self, "treatment.unlink", far)
         T.read(self, "treatment.update", T.at(self.unit), "back")

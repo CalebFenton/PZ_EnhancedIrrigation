@@ -81,7 +81,7 @@ end
 -- A plumbed fixture offers Unplumb, its pipe found there even with its tank gone; any other offers
 -- Plumb to Tank.
 local function addLinkOptions(context, playerNum, character, fixture)
-    if Fixtures.linkAt(EnhancedIrrigation.squareOf(fixture)) then
+    if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
         LinkMenu.addUnplumbOptions(context, playerNum, character, fixture)
         return
     end
@@ -100,7 +100,7 @@ function FixtureMenu.onFill(playerNum, context, worldobjects, test)
     local fixture = Needs.findClicked(worldobjects, Fixtures.isFixture)
     if not fixture then return end
     if test then return ISWorldObjectContextMenu.setTest() end
-    if Fixtures.linkAt(EnhancedIrrigation.squareOf(fixture)) then
+    if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
         removeVanillaPlumb(context)
     end
     addWasherSwitch(context, playerNum, worldobjects, fixture)

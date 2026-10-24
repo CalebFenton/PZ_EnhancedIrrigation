@@ -11,6 +11,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/ObjectSystem"
@@ -19,7 +20,7 @@ require "EnhancedIrrigation/Lines/LineObject"
 EnhancedIrrigation = EnhancedIrrigation or {}
 
 local Treatment, Lines, Tanks = EnhancedIrrigation.Treatment, EnhancedIrrigation.Lines, EnhancedIrrigation.Tanks
-local LinkJobs = EnhancedIrrigation.LinkJobs
+local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 
 local TreatmentObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Treatment")
 EnhancedIrrigation.TreatmentObject = TreatmentObject
@@ -79,8 +80,9 @@ end
 --- The tank the unit's inlet draws from: the one at the far end of its inlet link, while it is
 --- loaded and stands at least level with `unit` (design, Tanks and height); or nil.
 function TreatmentObject:inletTank(unit)
-    local link = Treatment.linkOf(self, "inlet")
-    local tank = link and Tanks.tankAt(link.a.x, link.a.y, link.a.z)
+    local link = Links.roleAt(self, "inlet")
+    local at = link and Links.otherEnd(link, self)
+    local tank = at and Tanks.tankAt(at.x, at.y, at.z)
     if tank and LinkJobs.runsFor("inlet", Tanks.levelOf(tank), Treatment.levelOf(unit)) then
         return tank
     end
@@ -303,8 +305,9 @@ end
 --- that would have kept the head topped up, which can't be known until it loads. A loaded square
 --- with no tank on it feeds nothing, and the unit runs on.
 function TreatmentObject:inletUnloaded()
-    local link = Treatment.linkOf(self, "inlet")
-    return link ~= nil and getCell():getGridSquare(link.a.x, link.a.y, link.a.z) == nil
+    local link = Links.roleAt(self, "inlet")
+    local at = link and Links.otherEnd(link, self)
+    return at ~= nil and getCell():getGridSquare(at.x, at.y, at.z) == nil
 end
 
 --- Brings the record up to now while its unit is loaded, and its inlet's tank too if it has one;

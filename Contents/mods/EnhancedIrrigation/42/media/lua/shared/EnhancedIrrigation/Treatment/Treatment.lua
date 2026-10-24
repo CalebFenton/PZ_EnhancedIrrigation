@@ -113,18 +113,6 @@ function Treatment.isWater(fluid)
     return fluid ~= nil and fluid:isWaterOnlySource()
 end
 
---- The link of `role` ("inlet" or "outlet") of the unit on the square `at` ({ x, y, z }), or nil.
-function Treatment.linkOf(at, role)
-    local Links = EnhancedIrrigation.Links
-    for _, link in ipairs(Links and Links.all() or {}) do
-        local unitEnd = role == "inlet" and link.b or link.a
-        if link[role] and EnhancedIrrigation.sameSquare(unitEnd, at) then
-            return link
-        end
-    end
-    return nil
-end
-
 --- Whether a wall (Lines.wallOn) stands on any edge of `square` or of the eight squares around it:
 --- a fire wants a clear square on every side. Squares this side hasn't loaded count as clear.
 function Treatment.wallNear(square)

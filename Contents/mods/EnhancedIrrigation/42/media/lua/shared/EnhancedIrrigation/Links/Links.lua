@@ -3,16 +3,13 @@
 -- by the two tanks' squares, not on the tanks: the vanilla lid swap replaces a barrel's object and
 -- drops its modData, and the tank on the square stays the link's end. The pipe stays buried when a
 -- tank leaves its square, and carries water again once a tank stands there. The authority keeps
--- the links in its system (server/EnhancedIrrigation/Links/LinkSystem.lua), which sends every
--- client the list (client/EnhancedIrrigation/Links/LinkClient.lua).
+-- the links in its system, which sends every client the list.
 --
 -- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, conditions }: its ends, the pipe in
 -- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), all of which Unplumb gives
--- back, and the condition of each item of that pipe as it went in (Materials.conditions). One of
--- `fixture` (b is a plumbed fixture, Fixtures.lua), `inlet` (b is a treatment unit fed from the
--- tank at a), `outlet` (a is a unit whose basin empties into the tank at b, Treatment.lua) or
--- `pump` (a is a pump that lifts water into the tank at b, or into the garden line b is a tile of,
--- Pumps.lua) is true when the link isn't between two tanks.
+-- back, and the condition of each item of that pipe as it went in (Materials.conditions). A link
+-- plumbing a fixture, a treatment unit's inlet or outlet, or a pump has that role (ROLE_END) set
+-- true; one between two tanks has none.
 
 require "EnhancedIrrigation/Utilities"
 
@@ -32,6 +29,10 @@ Links.TILES_PER_LENGTH = 3
 -- Minutes of wrench work at the tanks, and per tile of pipe run between them.
 Links.BASE_MINUTES = 10
 Links.MINUTES_PER_TILE = 3
+
+-- Which end of a link each role's object stands at; the other end is the tank it draws on or fills,
+-- or for a pump the tank or garden line tile it lifts into. Saved links keep these ends.
+local ROLE_END = { fixture = "b", inlet = "b", outlet = "a", pump = "a" }
 
 --- The tiles of pipe between the squares `a` and `b` ({ x, y, z }): the straight run across,
 --- rounded up, and the storeys between them.
@@ -75,6 +76,48 @@ end
 function Links.all()
     local system = not isClient() and Links.serverSystem or Links.clientSystem
     return system and system.links or {}
+end
+
+--- A new link from the square `at` to the square `other`, as plain ends: with `role`, `at` is that
+--- role's object and `other` the far end; without, two tanks.
+function Links.new(at, other, role)
+    local link = { a = { x = at.x, y = at.y, z = at.z }, b = { x = other.x, y = other.y, z = other.z } }
+    if role then
+        link[role] = true
+        if ROLE_END[role] == "b" then
+            link.a, link.b = link.b, link.a
+        end
+    end
+    return link
+end
+
+--- The role of `link`, a key of ROLE_END, or nil between two tanks.
+function Links.roleOf(link)
+    for role in pairs(ROLE_END) do
+        if link[role] then
+            return role
+        end
+    end
+    return nil
+end
+
+--- The squares of `link`'s ends: its role's object's, then the far end's; between two tanks, a then b.
+function Links.ends(link)
+    if ROLE_END[Links.roleOf(link)] == "b" then
+        return link.b, link.a
+    end
+    return link.a, link.b
+end
+
+--- The link of `role` whose object stands on the square `at` ({ x, y, z }), or nil.
+function Links.roleAt(at, role)
+    local side = ROLE_END[role]
+    for _, link in ipairs(Links.all()) do
+        if link[role] and EnhancedIrrigation.sameSquare(link[side], at) then
+            return link
+        end
+    end
+    return nil
 end
 
 --- The other end of `link` from the square `at`, or nil when `at` is neither end.
