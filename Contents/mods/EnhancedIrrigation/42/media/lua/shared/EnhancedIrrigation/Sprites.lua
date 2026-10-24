@@ -1,5 +1,5 @@
--- The mod's tiles, named here only. Their numbers must stay in step with art/models/tiles.py, which
--- draws them, and tools/make_tiles.py, which gives them their properties.
+-- The mod's tiles, named here only. Their numbers must stay in step with art/models/sprites.py,
+-- which the renders and tools/make_tiles.py read.
 
 require "EnhancedIrrigation/Utilities"
 
