@@ -804,8 +804,9 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
 -- the bank's scan asks when that mod is loaded), with no power, as a bank that cut it for an
 -- overload leaves it: its part's draw under the house's own load label while it is switched on or
 -- its timer is open and nothing else pays; nothing while a vanilla generator pays for it, so the
--- two never both bill one run, nor while it is off with its timer shut. Catches a house a bank
--- powers for free, one billed twice, or one an overloaded bank loses sight of and powers again.
+-- two never both bill one run, nor while it is off with its timer shut, nor once its part is burnt
+-- out, its timer still open. Catches a house a bank powers for free, one billed twice or for a part
+-- that can't run, or one an overloaded bank loses sight of and powers again.
 T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
     instant = true,
     run = function(self)
@@ -818,6 +819,7 @@ T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
             { timer = { item = timer, openNow = true } },
             { on = true, payer = T.at(spots[1]) },
             { timer = { item = timer, start = 0, minutes = 0 } },
+            { timer = { item = timer, openNow = true }, partCondition = 0 },
         } }), "draws")
     end,
     validate = function(self)
@@ -828,6 +830,7 @@ T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
         end
         expect(draws[3].kind == nil, "a house a generator pays for also bills the bank")
         expect(draws[4].kind == nil, "a house off with its timer unset bills the bank")
+        expect(draws[5].kind == nil, "a burnt-out house in its timer's window bills the bank")
     end,
 })
 

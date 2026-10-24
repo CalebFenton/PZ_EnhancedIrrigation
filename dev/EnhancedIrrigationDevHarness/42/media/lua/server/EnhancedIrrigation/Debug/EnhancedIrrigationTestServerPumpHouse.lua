@@ -78,15 +78,17 @@ handler("pumpHouse.update", function(_, args)
 end)
 
 -- What the Pump House at x, y, z tells a Renewable Energy bank it draws (PumpHouse.bankDraw), with
--- each of `args.cases`' switch, timer and payer set on its record in turn, and `running` never
--- set, as a bank that cut its power leaves it: { kind, fuel } for each, kind nil when it reports
--- none. A `timer` with `openNow` opens at the hour now for an hour.
+-- each of `args.cases`' switch, timer, payer and part's condition (the fitted part's unless given)
+-- set on its record in turn, and `running` never set, as a bank that cut its power leaves it:
+-- { kind, fuel } for each, kind nil when it reports none. A `timer` with `openNow` opens at the
+-- hour now for an hour.
 handler("pumpHouse.bankDraw", function(_, args)
     local record = recordAt(args)
     local house = record and record:getIsoObject()
     if not house then
         return nil, "the Pump House at " .. args.x .. "," .. args.y
     end
+    local condition = record.partCondition
     local draws = {}
     for i, fields in ipairs(args.cases) do
         local timer = fields.timer
@@ -94,6 +96,7 @@ handler("pumpHouse.bankDraw", function(_, args)
             timer = { item = timer.item, start = math.floor(getGameTime():getTimeOfDay()), minutes = 60 }
         end
         record.on, record.timer, record.payer, record.running = fields.on, timer, fields.payer, nil
+        record.partCondition = fields.partCondition or condition
         local kind, fuel = mod().PumpHouse.bankDraw(house)
         draws[i] = { kind = kind, fuel = fuel }
     end
