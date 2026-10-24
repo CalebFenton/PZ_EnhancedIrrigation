@@ -1,4 +1,4 @@
-# Enhanced Irrigation
+# ![Enhanced Irrigation](art/promo/images/banner.png)
 
 *Work in progress: still being balanced and updated. Feedback is welcome in the comments.*
 
@@ -19,6 +19,8 @@ Get running water back after the taps run dry, with what a Kentucky farm had in 
 
 ## How it plays
 
+![Two rain barrels up on log Tank Stands and a Barrel Filter by a garden, a tap at the stands feeding an iron line along a bed of tomatoes and a bed of cabbages, the soil dark under its holes](art/promo/images/homestead.png)
+
 | When | What you're after | What it takes |
 |---|---|---|
 | The first planting | A bed that waters while you stand at the tap | A Tank Stand and a rain barrel, a few lengths of pipe and their joints, a drill or an awl, a Pipe Wrench |
@@ -27,6 +29,8 @@ Get running water back after the taps run dry, with what a Kentucky farm had in 
 | The long haul | A garden that waters itself every evening | A Pump House with a salvaged or scavenged pump on a generator, a Timer Valve, lawn sprinklers on the pumped line |
 
 ## Everything you can find or build
+
+![Every item and build: the Tank Stand, plastic, iron, lead and clay pipe and the Pipe Wrench; the filters, the Filter Crock and the two boilers; the hand pumps, the Pump Houses and their pumps; the sprinkler, the valves and timers, and the pamphlet](art/promo/images/items.png)
 
 - **Tanks.** A **Tank Stand** lifts a rain barrel a storey, and **Plumb to Tank** joins barrels into a cistern with buried pipe, up to 10 tiles.
 - **Garden lines** of plastic, iron, lead or clay pipe, holed under the plants, with a tap at the tank. Overwater and the roots rot; leave them full in a hard frost and they split.
@@ -38,6 +42,8 @@ Get running water back after the taps run dry, with what a Kentucky farm had in 
 
 ## Getting started
 
+![A garden line's right-click menu with Water from Tank, and Fit Valve open on the Wind-up Valve, Timer Valve and Sprinkler Timer, beside the Timer Valve's dial](art/promo/images/interface.png)
+
 1. Build a **Tank Stand** (it's with the rain collectors in the build menu), or put a barrel on a deck or a floor a storey up.
 2. Carry an empty rain barrel to the stand and **Set Barrel on Stand**. Open its lid for the rain.
 3. Carrying pipe and its joints, right-click the ground beside it and **Lay Line** along the bed, on the plants' own squares.
@@ -48,15 +54,21 @@ A tap runs only from a tank at least a storey above it, and a higher one pushes 
 
 ## Clean water
 
+![At night, a Barrel Filter, a boiler on a brick firebox with its fire lit, a Brick Filter, a boiler on a welded firebox, lit, and a Filter Crock in its bucket](art/promo/images/filters.png)
+
 Rain comes down tainted, and so does the river. A sand filter is slow, about 100 L a day from a barrel's worth of sand, and alive: give it three days to ripen before you trust it, and water it every day or two, or the film that does the cleaning dies and it starts over. A boiler is quick, about 30 L an hour, but it burns fuel all the while, and ten hours of fire with the drum dry burn it through. Keep the clean tank's lid shut; one careless bucket spoils it.
 
 ## Pumps
 
+![A Wooden Hand Pump and an Iron Hand Pump at a stone well, and a sheet metal Pump House with a generator, piped to a rain barrel up on a Tank Stand](art/promo/images/pumps.png)
+
 A hand pump on a well gives clean water forever, at about 60% of your endurance an hour, and the wooden one squeals loud enough to bring company. A Pump House does the work on the grid while it lasts, if it stands in or beside a house, then on a generator's fuel. Run one with nothing to draw and it burns out, and every repair brings it back a little less.
+
+![An Iron Hand Pump at a well feeding a line between two beds, two Lawn Sprinklers on it and a strip of wet ground along it](art/promo/images/sprinklers.png)
 
 ## Crafting
 
-Learn the recipes from *Cisterns for Kentucky*, by levelling Carpentry, Welding, Masonry, Pottery or Electricity, or by researching a part you found. Builds and crafts need light to see by, and the valves and the Utility Pump a table. Laying pipe, drilling, fitting taps and watering take no learning at all.
+Learn the recipes from *Cisterns for Kentucky*, by levelling Carpentry, Welding, Masonry, Pottery or Electricity, or by researching a part you found. Builds and crafts need light to see by, and the valves and the Utility Pump a table. Laying pipe, drilling, fitting taps and watering take no learning at all. Every recipe is on [one sheet](art/promo/images/recipes.png).
 
 ## Where to look
 

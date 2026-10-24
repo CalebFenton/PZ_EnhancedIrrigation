@@ -317,7 +317,7 @@ Every recipe but the Pump Houses is also learned by reaching a skill level, usua
 
 Researching an item teaches what it's part of, from about two thirds of the recipe's skill:
 
-- A Clay Jar or a Filter Crock: the Filter Crock.
+- A Ceramic Jar or a Filter Crock: the Filter Crock.
 - A Metal Drum: the boilers you have the skill for.
 - An Appliance Pump or a Utility Pump: the Pump Houses, and a Utility Pump Make Utility Pump too.
 - A Lawn Sprinkler: Make Pipe Sprinkler.
