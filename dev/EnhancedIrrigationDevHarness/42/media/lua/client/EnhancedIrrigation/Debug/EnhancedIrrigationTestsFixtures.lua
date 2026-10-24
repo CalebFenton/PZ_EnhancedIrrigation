@@ -6,13 +6,12 @@ require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/FixtureMenu"
 
--- Plumbed fixtures (Fixtures.lua, FixtureSystem.lua, LinkJobs' fixture jobs, FixtureMenu.lua):
--- plumbing a sink to a tank from its menu and through vanilla's own Plumb, the buffer that tank
--- refills and the engine serves vanilla's drink, fill and wash from, taint and all, the town's water
--- winning while it runs, converting a fixture vanilla plumbed, and the washer's switch. Fixtures are
--- placed and read by EnhancedIrrigationTestServerFixtures.lua; refills run there in one call, so the
--- clock doesn't decide them. In a room the town's water wins until the shutoff, so tests of a
--- buffer's own water there set it to day 0.
+-- Plumbed fixtures: plumbing a sink to a tank from its menu and through vanilla's own Plumb, the
+-- buffer that tank refills and the engine serves vanilla's drink, fill and wash from, taint and all,
+-- the town's water winning while it runs, converting a fixture vanilla plumbed, and the washer's
+-- switch. Fixtures are placed and read by the server's fixture handlers; refills run there in one
+-- call, so the clock doesn't decide them. In a room the town's water wins until the shutoff, so
+-- tests of a buffer's own water there set the shutoff to day 0.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -123,7 +122,7 @@ end
 
 -- Plumb to Tank -------------------------------------------------------------------------------------
 
--- Plumb to Tank from a sink's menu lays the pipe chosen to a raised barrel three tiles off, and the
+-- Plumb to Tank from a sink's menu lays the pipe chosen to a raised barrel, and the
 -- sink fills at once from it with the barrel's tainted water, which this client's copy serves as
 -- tainted. The sink stands in no room: the mod's plumbing doesn't need one, as vanilla's does.
 -- Catches a fixture plumbed without its pipe, a buffer that cleans the water, or plumbing that
@@ -207,7 +206,7 @@ T.test("irrigation_fixtures_refill_from_the_tank", {
     end,
 })
 
--- Unplumb from the sink gives back the pipe as it went in, and the tank refills it no more; the sink
+-- Unplumb from the sink gives back the pipe, and the tank refills it no more; the sink
 -- keeps its buffer, and gets back the vanilla reserve plumbing held back, clean. Catches pipe lost to
 -- Unplumb, a refill through a link that's gone, or the reserve lost.
 T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {

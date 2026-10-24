@@ -1,13 +1,10 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsTreatment.lua:
--- treatment units placed as the build menu leaves them, read, run for set hours and linked on the
--- authority, a boiler's fire set as vanilla's fire actions leave it, a wall put by a boiler's
--- square, and the carried containers filled that Pour In takes from. Time runs here through the
--- record's own advance, or its update after a set gap, all in one call, so the clock and the
--- ten-minute event don't decide what a test sees. Only registers handlers, so a --stay rerun loads
--- it again.
+-- Development only, not published. The server's half of EnhancedIrrigationTestsTreatment.lua. Time
+-- runs here through the record's own advance, or its update after a set gap, all in one call, so
+-- the clock and the ten-minute event don't decide what a test sees. Only registers handlers, so a
+-- --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 
@@ -170,9 +167,9 @@ handler("treatment.wall", function(_, args, defer)
     return {}
 end)
 
--- Sets `args.fields` on the unit's record, then advances it by each of `args.hours` in turn, as
--- the time passing does (TreatmentObject.advance), and shows and tells the change. Answers the state
--- once the fields are set, `before`, and after each hour, in `steps`.
+-- Advances the unit's record by each of `args.hours` as time passing does, after setting
+-- `args.fields`, telling the clients each change. Answers the state before (`before`) and after
+-- each hour (`steps`).
 handler("treatment.run", function(_, args)
     local record = recordAt(args)
     if not record then
@@ -188,9 +185,9 @@ handler("treatment.run", function(_, args)
     return reply
 end)
 
--- Winds the unit's record's clock back `args.hoursAgo` hours, if given, and runs the ten-minute
--- pass on it (its record's update), loaded or not. Answers the clock's time, `now`, and the state
--- before and after, all in one call, so no ten-minute event runs in between.
+-- Runs the ten-minute pass on the unit's record, loaded or not, its clock first wound back
+-- `args.hoursAgo` hours if given. Answers `now` and the states before and after in one call, so no
+-- ten-minute event runs in between.
 handler("treatment.update", function(_, args)
     local record = recordAt(args)
     if not record then
@@ -212,8 +209,8 @@ handler("treatment.unlink", function(_, args)
     return {}
 end)
 
--- Fills the first carried item of `args.type` with `args.litres` of `args.fluid` (a FluidType
--- name), emptied first, and sends it to the client.
+-- Fills the first carried item of `args.type`, emptied first, with `args.litres` of `args.fluid` (a
+-- FluidType name), and sends it to the client.
 handler("treatment.fillCarried", function(player, args)
     local item = player:getInventory():getFirstTypeRecurse(args.type)
     local fluid = item and item:getFluidContainer()

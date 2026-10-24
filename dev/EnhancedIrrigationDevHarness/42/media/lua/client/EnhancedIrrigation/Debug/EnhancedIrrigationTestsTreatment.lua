@@ -10,17 +10,9 @@ require "EnhancedIrrigation/UI/TreatmentMenu"
 require "ISUI/ISBBQMenu"
 require "Camping/ISCampingMenu"
 
--- The sand filters, the Filter Crock and the Boilers (Treatment.lua, TreatmentJobs.lua,
--- TreatmentObject.lua, TreatmentSystem.lua, TreatmentMenu.lua, the inlet and outlet jobs of
--- LinkJobs, their entities in Entities.txt, the crock's items and recipes): building them from the
--- build menu, Pour In, what passes into the basin ripe and unripe, the film dying dry or frozen,
--- clogging and Clean Filter, the inlet and outlet links and their heights, the basin in vanilla's
--- menus, and the record catching up after its chunk reloads; the crock shaped and fired, set in a
--- bucket, seeping clean water, clogged and scrubbed, cracked by frost and taken down; the boiler
--- placed only outdoors and clear of walls, fuelled, lit and put out through vanilla's fire menu,
--- passing clean water only while hot, scorching dry, burning through and patched, and plumbed.
--- Units are placed, read and run by EnhancedIrrigationTestServerTreatment.lua; time runs there
--- through the record's own advance for set hours, so the clock doesn't decide it.
+-- The sand filters, the Filter Crock and the Boilers. Units are placed, read and run by the
+-- server's treatment handlers; time runs there through the record's own advance for set hours, so
+-- the clock doesn't decide what a test sees.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -320,7 +312,7 @@ T.test("irrigation_treatment_ripe_filter_passes_clean_water", {
     end,
 })
 
--- Two days with an empty head kill the film, which ripens from nothing again: a filter fed a
+-- Enough hours with an empty head kill the film, which ripens from nothing again: a filter fed a
 -- tainted head an hour short of them still passes it clean; one fed at them passes it tainted, and
 -- before that its menu says it's ripening and how long it's been dry. Catches a film that never
 -- dies, or dies early.
@@ -638,7 +630,7 @@ end
 -- tainted water, and Drink warns of it; a crock's or a boiler's, clean, and Drink doesn't; the
 -- boiler is a vanilla fireplace, whose fire menu stands beside the fluid menu. Catches a basin
 -- vanilla can't reach, one it can pour into past the sand, the clay or the fire, or a taint lost or
--- made up. The crock's bucket holds no more than the one carried, so that one starts half full: a
+-- made up. The crock's bucket holds no more than the one carried, so that one starts part full: a
 -- Fill that empties its source ends in an invalid action on a multiplayer client, which clears the
 -- queue.
 for _, case in ipairs({
@@ -855,7 +847,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
 })
 
 -- Pour In from a bucket of tainted water fills the crock's head and leaves the rest in the bucket;
--- half a day later the bucket under it holds clean water at the crock's rate, on both sides, and
+-- later the bucket under it holds clean water at the crock's rate, on both sides, and
 -- the menu says what is still waiting. Scrub Crock is greyed out, as it isn't clogged. Catches a
 -- crock that passes taint, runs at the wrong rate, or takes more than it holds.
 T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
@@ -1040,7 +1032,6 @@ local function placeable(entity, square)
     return build:isValid(square)
 end
 
--- The option in the unit's menu running vanilla's `handler`, for T.useOption.
 local function running(handler)
     return function(context) return optionRunning(context, handler) end
 end
@@ -1195,8 +1186,8 @@ T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
     end,
 })
 
--- Raw water poured in waits in a lit boiler's drum for its first hour, while the drum heats and its
--- menu says so; the next hour, hot, the boiler passes clean water at its rate, and its menu says
+-- Raw water poured in waits in a lit boiler's head while the drum heats, and its
+-- menu says so; once hot, the boiler passes clean water at its rate, and its menu says
 -- so. Put out, the hot drum passes on while it cools, then nothing, and its menu says it's cold; a
 -- boiler never lit passes nothing. Catches water passed before it's safe, a boiler that never
 -- passes, one that keeps passing cold, or the taint carried through.

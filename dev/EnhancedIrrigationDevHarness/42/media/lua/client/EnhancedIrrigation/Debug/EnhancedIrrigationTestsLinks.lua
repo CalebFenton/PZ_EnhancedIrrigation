@@ -5,11 +5,10 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkClient"
 require "EnhancedIrrigation/UI/LinkMenu"
 
--- Pipe between tanks (Links.lua, LinkJobs.lua, LinkSystem.lua, LinkClient.lua and LinkMenu.lua's
--- Plumb to Tank and Unplumb): plumbing tanks together from the right-click menu and taking the pipe
--- out, how water moves through a link, and this client's copy of the list. What the menu greys out,
--- the server is also asked to do directly (tanks.perform), to show it refuses on its own. Link
--- passes run through EnhancedIrrigationTestServerLinks.lua, so the clock doesn't decide them.
+-- Pipe between tanks: plumbing tanks together from the right-click menu and taking the pipe out,
+-- how water moves through a link, and this client's copy of the list. What the menu greys out, the
+-- server is also asked to do directly (tanks.perform), to show it refuses on its own. Link passes
+-- run through the server's link handlers, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -33,7 +32,8 @@ local function counted(self, fullType)
     return self.counts.left and self.counts.left[fullType] or 0
 end
 
--- The links this client knows of with an end on the handle's square.
+-- The links with an end on the handle's square, as the menus see them: in single player that is the
+-- server's list, so only a multiplayer run waits here on this client's copy.
 local function clientLinks(handle)
     return Links.linksAt(T.at(handle))
 end

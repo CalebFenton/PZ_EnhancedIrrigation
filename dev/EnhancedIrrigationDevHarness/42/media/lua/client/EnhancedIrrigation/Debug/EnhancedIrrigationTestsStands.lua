@@ -2,12 +2,10 @@ require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Stands/StandJobs"
 require "EnhancedIrrigation/UI/StandMenu"
 
--- The Tank Stand (Stands.lua, StandJobs.lua, StandSystem.lua, its entity in Entities.txt and its
--- jobs in StandMenu.lua): building it from the build menu, setting a barrel on it, the raised barrel
--- through the vanilla lid, and taking the barrel down. Each job goes through the build menu or the
+-- The Tank Stand: building it from the build menu, setting a barrel on it, the raised barrel through
+-- the vanilla lid, and taking the barrel down. Each job goes through the build menu or the
 -- right-click menu and its timed action; what the menu greys out, the server is also asked to do
--- directly (tanks.perform), to show it refuses on its own. EnhancedIrrigationTestServerStands.lua
--- holds the server's half.
+-- directly (tanks.perform), to show it refuses on its own.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
