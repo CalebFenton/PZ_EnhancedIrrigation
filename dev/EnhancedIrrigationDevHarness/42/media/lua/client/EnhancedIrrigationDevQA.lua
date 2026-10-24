@@ -290,19 +290,18 @@ local function setUpCharacter(player, recipes)
 end
 
 --- Sets the scenario up around `player`, and prints what it laid out, and anything it couldn't,
---- under MARK. Returns that summary.
+--- under MARK.
 function QA.setup(player)
     getGameTime():setTimeOfDay(10)
     local recipes = buildRecipes()
     setUpCharacter(player, recipes)
-    local summary = { types = 0, items = 0, unknown = {}, unplaced = {} }
     local lot = Stage.findLot(player, AREA.w, AREA.h, true)
     if not lot then
         print(MARK .. " no open lot of soil or grass " .. AREA.w .. "x" .. AREA.h .. " within "
             .. Stage.SEARCH_RADIUS .. " squares")
-        return summary
+        return
     end
-    summary.lot = lot
+    local summary = { types = 0, items = 0, unknown = {}, unplaced = {} }
     Stage.clearLot(lot, AREA.w, AREA.h, MARGIN)
     summary.missing = placeBeds(player, lot)
     layItems(lot, itemGroups(recipes), summary)
@@ -317,7 +316,6 @@ function QA.setup(player)
             print(MARK .. " " .. what .. ": " .. table.concat(summary[what], "; "))
         end
     end
-    return summary
 end
 
 --- QA.setup on the first tick: a scenario's onStart runs during the world's start (OnGameStart),
