@@ -72,12 +72,15 @@ end
 
 --- Adds the link from the square `a` to the square `b`: `kind` pipe in `lengths` lengths whose
 --- items were at `conditions`, none for vanilla's Plumb; `fixture` when `b` is a plumbed fixture.
+--- Returns the link.
 function LinkSystem:addLink(a, b, kind, lengths, conditions, fixture)
-    table.insert(self.links, {
+    local link = {
         a = { x = a.x, y = a.y, z = a.z }, b = { x = b.x, y = b.y, z = b.z }, kind = kind, lengths = lengths,
         conditions = conditions, fixture = fixture or nil,
-    })
+    }
+    table.insert(self.links, link)
     self:sendLinks()
+    return link
 end
 
 function LinkSystem:removeLink(link)
@@ -120,6 +123,9 @@ local DO = {
         LinkSystem.instance:removeLink(link)
         if link.kind then
             Pipes.giveBack(character, link.kind, link.lengths, link.conditions)
+        end
+        if link.fixture then
+            FixtureSystem.giveBackReserve(link)
         end
         return true
     end,
@@ -172,10 +178,15 @@ local function flow(tankA, tankB, hours)
 end
 
 -- Refills the buffer of the fixture plumbed by `link` from its tank for `hours`, while both are
--- loaded and the tank stands high enough to push. Returns the tank when any water moved.
+-- loaded and the tank stands high enough to push, and the town's water no longer runs to it.
+-- Returns the tank when any water moved.
 local function refill(link, hours)
-    local tank = Tanks.tankAt(link.a.x, link.a.y, link.a.z)
     local fixture = Fixtures.fixtureAt(link.b.x, link.b.y, link.b.z)
+    if fixture and Fixtures.townWaterRuns(fixture) then
+        FixtureSystem.standBy(fixture)
+        return nil
+    end
+    local tank = Tanks.tankAt(link.a.x, link.a.y, link.a.z)
     if tank and fixture and Tanks.hasPressureFor(tank, link.b.z)
             and FixtureSystem.fill(tank, fixture, Fixtures.REFILL_RATE * hours) then
         return tank

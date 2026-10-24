@@ -19,18 +19,18 @@ local function fixtureAt(args)
     return mod().Fixtures.fixtureAt(args.x, args.y, args.z)
 end
 
---- The fixture as plain values: what vanilla's menus and actions read off it, its buffer, and
---- whether it is plumbed, the mod's way or vanilla's.
+--- The fixture as plain values: what vanilla's menus and actions read off it, its buffer and what
+--- that holds, and whether it is plumbed, the mod's way or vanilla's.
 local function describe(fixture)
     local fluid = fixture:getFluidContainer()
     return {
         found = true,
         buffer = fluid ~= nil,
+        inBuffer = fluid and fluid:getAmount() or 0,
         amount = fixture:getFluidAmount(),
         capacity = fixture:getFluidCapacity(),
         tainted = fixture:isTaintedWater(),
         hasWater = fixture:hasWater(),
-        canBeWaterPiped = fixture:getModData().canBeWaterPiped == true,
         external = fixture:getUsesExternalWaterSource(),
         linked = mod().Fixtures.linkAt({ x = fixture:getX(), y = fixture:getY(), z = fixture:getZ() }) ~= nil,
     }

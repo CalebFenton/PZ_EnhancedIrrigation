@@ -1,7 +1,8 @@
 -- The authority's side of plumbed fixtures (shared/EnhancedIrrigation/Fixtures.lua): giving a
--- fixture its buffer, filling it from its tank, and taking fixtures that vanilla plumbed off the
--- rooftop route, whose water always comes out clean, onto the mod's (docs/design.md, Fixtures).
--- The links themselves are the LinkSystem's, which refills each buffer as it runs its links.
+-- fixture its buffer, filling it from its tank, holding back its vanilla reserve while it's plumbed,
+-- and taking fixtures that vanilla plumbed off the rooftop route, whose water always comes out
+-- clean, onto the mod's (docs/design.md, Fixtures). The links themselves are the LinkSystem's, which
+-- refills each buffer as it runs its links.
 
 if isClient() then return end
 
@@ -20,11 +21,11 @@ local Fixtures, Tanks = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Tanks
 local LEAST_LITRES = 0.01
 
 --- `fixture`'s buffer, given it first if it has none: an empty FluidContainer of its reserve's
---- size, which the engine then serves its drink, fill, wash and washer from, taint and all.
---- canBeWaterPiped turns off the town's water and vanilla's reserve (IsoObject.isWaterInfinite,
---- isUnmovedPipedWaterSource), and vanilla's rooftop plumbing goes, so the buffer is all it has: cut
---- in to a tank, a fixture holds only that tank's water. A buffer stays once given: a client copy
---- is told of a container added (IsoObject.syncFluidContainerSend), never of one taken away.
+--- size, which the engine serves its drink, fill, wash and washer from, taint and all, once the
+--- town's water stops (IsoObject.isWaterInfinite comes first). Vanilla's rooftop plumbing goes, so
+--- with its reserve held back the buffer is all it has after the shutoff. A buffer stays once
+--- given: a client copy is told of a container added (IsoObject.syncFluidContainerSend), never of
+--- one taken away.
 function FixtureSystem.ensureBuffer(fixture)
     local buffer = fixture:getFluidContainer()
     if buffer then
@@ -33,14 +34,45 @@ function FixtureSystem.ensureBuffer(fixture)
     buffer = ComponentType.FluidContainer:CreateComponent()
     buffer:setCapacity(Fixtures.capacityOf(fixture))
     GameEntityFactory.AddComponent(fixture, true, buffer)
-    fixture:getModData().canBeWaterPiped = true
     if fixture:getUsesExternalWaterSource() then
         fixture:setUsesExternalWaterSource(false)
         fixture:sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = false })
     end
-    fixture:transmitModData()
     fixture:sync()
     return buffer
+end
+
+--- Empties `fixture`'s buffer while the town's water runs to it. The engine reads a buffer's taint
+--- before the town's water (IsoObject.isTaintedWater), so water poured into it would have the
+--- town's read as tainted.
+function FixtureSystem.standBy(fixture)
+    local buffer = fixture:getFluidContainer()
+    if buffer and buffer:getAmount() > 0 then
+        buffer:Empty()
+        fixture:sync()
+    end
+end
+
+-- Holds back `fixture`'s vanilla reserve, which the engine would serve clean once its buffer ran
+-- dry. Returns the litres held, for the link to give back on Unplumb, or nil with none.
+local function holdReserve(fixture)
+    local reserve = Fixtures.reserveOf(fixture)
+    if reserve <= 0 then
+        return nil
+    end
+    fixture:getModData().waterAmount = 0
+    fixture:transmitModData()
+    return reserve
+end
+
+--- Gives the fixture at the `b` end of `link`, being unplumbed, back the reserve plumbing held, so
+--- it has what vanilla would give. A fixture gone from the square takes nothing.
+function FixtureSystem.giveBackReserve(link)
+    local fixture = link.reserve and Fixtures.fixtureAt(link.b.x, link.b.y, link.b.z)
+    if fixture then
+        fixture:getModData().waterAmount = link.reserve
+        fixture:transmitModData()
+    end
 end
 
 --- Fills `fixture`'s buffer from `tank` by up to `litres`, as far as the buffer has room and the
@@ -59,14 +91,15 @@ function FixtureSystem.fill(tank, fixture, litres)
 end
 
 --- Plumbs `fixture` to `tank` with `kind` pipe in `lengths` lengths (none for vanilla's Plumb), whose
---- items were at `conditions`: the link, the buffer, and a first fill, as the pipe goes in full.
+--- items were at `conditions`: the link, the buffer, and a first fill as the pipe goes in full,
+--- unless the town's water runs to it.
 function FixtureSystem.plumb(fixture, tank, kind, lengths, conditions)
-    EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank),
+    FixtureSystem.ensureBuffer(fixture)
+    local link = EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank),
         EnhancedIrrigation.squareOf(fixture), kind, lengths, conditions, true)
-    if FixtureSystem.fill(tank, fixture, Fixtures.capacityOf(fixture)) then
+    link.reserve = holdReserve(fixture)
+    if not Fixtures.townWaterRuns(fixture) and FixtureSystem.fill(tank, fixture, Fixtures.capacityOf(fixture)) then
         Tanks.sync(tank)
-    else
-        FixtureSystem.ensureBuffer(fixture)
     end
 end
 

@@ -2,8 +2,9 @@
 -- plumbed to one tank. A plumbed fixture holds its own water in a FluidContainer, its buffer, the
 -- size of vanilla's reserve for it, which its tank refills (server/EnhancedIrrigation/Fixtures/
 -- FixtureSystem.lua). Vanilla's drink, fill, wash and washer read the buffer, and the engine keeps
--- its taint (docs/research.md, "Fixture buffers, run in game"). The pipe is a link like the one
--- between two tanks (Links.lua), its `b` end the fixture's square and `fixture` set.
+-- its taint (docs/research.md, "Fixture buffers, run in game"). While the town's water runs to it,
+-- that wins and the buffer waits empty. The pipe is a link like the one between two tanks
+-- (Links.lua), its `b` end the fixture's square and `fixture` set.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
@@ -48,6 +49,23 @@ end
 --- The litres `fixture`'s buffer holds: vanilla's reserve for its tile, sink 20 and bath 100.
 function Fixtures.capacityOf(fixture)
     return tileNumber(fixture, "waterMaxAmount") or tileNumber(fixture, "waterAmount") or Fixtures.DEFAULT_LITRES
+end
+
+--- The litres left in `fixture`'s vanilla reserve, the water its pipes hold after the shutoff:
+--- modData.waterAmount once vanilla has drawn on it, else its tile's (IsoObject.getReserveWaterAmount).
+function Fixtures.reserveOf(fixture)
+    local drawn = fixture:hasModData() and fixture:getModData().waterAmount
+    return drawn or tileNumber(fixture, "waterAmount") or 0
+end
+
+--- Whether the town's water runs to `fixture`, as vanilla decides for an unplumbed one
+--- (IsoObject.isWaterInfinite): before the shutoff, in a room, on a square with water, and never
+--- moved, since a fixture set down by a player is flagged canBeWaterPiped and draws none.
+function Fixtures.townWaterRuns(fixture)
+    local square = fixture:getSquare()
+    return not (fixture:hasModData() and fixture:getModData().canBeWaterPiped == true)
+        and square ~= nil and square:getRoom() ~= nil and not square:isNoWater()
+        and getGameTime():getWorldAgeDaysSinceBegin() < getSandboxOptions():getWaterShutModifier()
 end
 
 --- The link plumbing the fixture square `at` ({ x, y, z }) to its tank, or nil.

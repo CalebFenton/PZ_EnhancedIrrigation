@@ -103,7 +103,8 @@ Facts from Build 42.21.0 (`~/Zomboid/version.txt`), read from the vanilla Lua an
 **Fixture buffers, run in game** (phase 1's probe, now `dev/.../EnhancedIrrigationTestsFixtures.lua`, passing in single player and `--mp`):
 - A sink given a `FluidContainer` from server Lua, with `modData.canBeWaterPiped = true`, then `transmitModData()` and `sync()`, reaches every client: `syncIsoObjectSend` carries the container, and a client copy without one gets it added (`IsoObject.java` 1079-1113).
 - On it, vanilla's menu offers Drink, with the tainted-water warning in its tooltip, Fill and Wash. Filling a bucket moves tainted water: the bucket is tainted and the sink goes down by what it took.
-- An empty buffer gives nothing, and offers no Drink, in a room before the water shutoff. A plain sink beside it gives the town's water.
+- With the flag, an empty buffer gives nothing, and offers no Drink, in a room before the water shutoff. A plain sink beside it gives the town's water.
+- Without the flag, the town's water comes first (`isWaterInfinite` before the container in every fluid method but `isTaintedWater`): a sink with an empty buffer in a room before the shutoff reads as town water, clean, on the server and the client, and offers Drink without the taint warning (`irrigation_fixtures_town_water_wins_while_it_runs`). The shipped fixtures rely on this, leave the flag alone, and hold back the reserve through `modData.waterAmount` instead.
 - The buffer survives its chunk unloading and loading again: from the save in single player, and from the server in multiplayer.
 - Vanilla's Plumb under a rain collector of tainted water gives a sink that reports clean water.
 - Converting a plumbed sink (`setUsesExternalWaterSource(false)`, `sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = false })`, then a buffer filled from the tank) reaches the clients.
@@ -112,7 +113,7 @@ Facts from Build 42.21.0 (`~/Zomboid/version.txt`), read from the vanilla Lua an
 **What a buffer changes in the menu** (`ISWorldObjectContextMenuLogic.java`):
 - An object with a `FluidContainer` gets the fluid container submenu (`doFluidContainerMenu`, 2885-2947), not the water-source one. It holds Fluid Info, and, only while `canPlayerEmpty()`, Transfer Fluids, Drink, Fill, Wash and Empty. So a player can pour anything into a buffer or empty it.
 - The washing machine's on/off toggle lives only in the water-source path, which skips objects with a `FluidContainer` (959-993). A washer given a buffer would lose its switch from the menu `[INFERENCE]`.
-- Vanilla's Plumb still shows on a buffered fixture under a barrel: the `canBeWaterPiped == true` branch (456) offers it.
+- Vanilla's Plumb still shows on a buffered fixture under a barrel: both branches (456, 459) offer it, the second for any `waterPiped` fixture not plumbed the vanilla way.
 - Both Plumb branches need `isInARoom()` (456, 459), and so does `isWaterInfinite`. Vanilla plumbing never works in a building without rooms.
 
 **Fixture tiles.** The base game's `waterPiped` tiles, from `newtiledefinitions.tiles` and the other `.tiles` files in `Java/media`: `appliances_laundry_01_0..7` (washers, combo washer-dryers), `fixtures_bathroom_01_0..7` (toilets), `_24..27` (baths), `_32..33` (shower), and `fixtures_sinks_01_0..25, 28..35`. A conversion hook keyed on sprites misses fixtures from other mods' tiles.
