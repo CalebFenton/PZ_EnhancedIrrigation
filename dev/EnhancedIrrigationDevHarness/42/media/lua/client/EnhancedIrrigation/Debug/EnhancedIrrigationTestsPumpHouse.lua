@@ -399,8 +399,9 @@ local GENERATOR_HOURS = 2
 
 -- The grid off, a generator a few tiles off running: Turn On is offered and runs a Utility Pump,
 -- and two hours burn its draw at the sandbox's rate from the generator, whose reach pays for it, the
--- full barrel stopping the water but not the pump. Catches a generator that runs a house for
--- nothing, or a full tank that stops the bill.
+-- full barrel stopping the water but not the pump, which wears as it does lifting. Catches a
+-- generator that runs a house for nothing, or a full tank that stops the bill or wears the part as
+-- if its source were dry.
 T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
     instant = true,
     run = function(self)
@@ -429,6 +430,8 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
             .. (payer and payer.x .. "," .. payer.y or "nothing"))
         expectNear("the barrel after the hours", hours.after.tank.litres, BARREL_LITRES, LITRES)
         expect(hours.after.summary.running, "the house stopped at the full barrel")
+        expectNear("the part after the hours", hours.before.record.partCondition - hours.after.record.partCondition,
+            Pumps.PARTS[UTILITY].wearPerHour * GENERATOR_HOURS, 0.001)
     end,
 })
 
