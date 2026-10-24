@@ -67,7 +67,7 @@ local function haveOf(character, material)
     elseif material.skill then
         return character:getPerkLevel(Perks[material.skill])
     elseif material.tool then
-        return Materials.hasWorkingTool(character, ItemTag[material.tool]) and 1 or 0
+        return Materials.workingTool(character, ItemTag[material.tool]) and 1 or 0
     elseif isDrainable(material) then
         local uses = 0
         for _, item in ipairs(drainablesOf(character, material)) do
@@ -174,11 +174,6 @@ Materials.SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
 --- The first working tool with `tag` (an ItemTag value) `character` carries, bags included, or nil.
 function Materials.workingTool(character, tag)
     return character:getInventory():getFirstTagEvalRecurse(tag, notBroken)
-end
-
---- Whether `character` carries a working tool with `tag` (an ItemTag value), bags included.
-function Materials.hasWorkingTool(character, tag)
-    return Materials.workingTool(character, tag) ~= nil
 end
 
 --- A job row's `equip` (EnhancedIrrigationAction) holding the tool the material `tool` names.

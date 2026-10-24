@@ -40,7 +40,7 @@ LineJobs.WIND_VALVE = "WindValve"
 LineJobs.SET_VALVE_TIMER = "SetValveTimer"
 
 -- How long winding or setting a valve takes: a turn of a knob, as long as a Pump House's switch.
-LineJobs.VALVE_MINUTES = 1
+local VALVE_MINUTES = 1
 
 -- What makes a hole, in the order Drill Holes picks among those carried: the tools that cut before
 -- the ones that punch. `reach`: the hardest pipe it gets into (Pipes.KINDS hardness). `punches`: it
@@ -313,7 +313,7 @@ LineJobs.JOBS = {
     -- Winding it down to nothing shuts it whatever the tap; winding it up needs a tap that would
     -- run: nobody holding it, and a tank to feed it.
     [LineJobs.WIND_VALVE] = {
-        minutes = LineJobs.VALVE_MINUTES, position = "Mid",
+        minutes = VALVE_MINUTES, position = "Mid",
         blocker = atValve("windup", function(character, object, state, with)
             local minutes = Valves.decodeWind(with)
             if not minutes then
@@ -330,7 +330,7 @@ LineJobs.JOBS = {
         end),
     },
     [LineJobs.SET_VALVE_TIMER] = {
-        minutes = LineJobs.VALVE_MINUTES, position = "Mid",
+        minutes = VALVE_MINUTES, position = "Mid",
         blocker = atValve("timer", function(character, object, state, with)
             return not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil
         end),

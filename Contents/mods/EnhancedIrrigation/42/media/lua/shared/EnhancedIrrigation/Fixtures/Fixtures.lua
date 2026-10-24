@@ -18,7 +18,7 @@ local Links = EnhancedIrrigation.Links
 local Tanks = EnhancedIrrigation.Tanks
 
 -- Litres a buffer holds when its tile names no reserve: washers and showers have none in vanilla.
-Fixtures.DEFAULT_LITRES = 20
+local DEFAULT_LITRES = 20
 -- Litres an hour a tank refills a buffer: a sink's reserve every ten minutes, so a bath refills in
 -- under an hour and a running washer, which draws a litre a minute, never runs dry while the tank
 -- holds out.
@@ -48,7 +48,7 @@ end
 
 --- The litres `fixture`'s buffer holds: vanilla's reserve for its tile, sink 20 and bath 100.
 function Fixtures.capacityOf(fixture)
-    return tileNumber(fixture, "waterMaxAmount") or tileNumber(fixture, "waterAmount") or Fixtures.DEFAULT_LITRES
+    return tileNumber(fixture, "waterMaxAmount") or tileNumber(fixture, "waterAmount") or DEFAULT_LITRES
 end
 
 --- The litres left in `fixture`'s vanilla reserve, the water its pipes hold after the shutoff:

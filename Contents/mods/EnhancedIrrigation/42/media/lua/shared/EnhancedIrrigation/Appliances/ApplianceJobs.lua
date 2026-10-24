@@ -20,14 +20,14 @@ ApplianceJobs.SALVAGE_PUMP = "SalvagePump"
 ApplianceJobs.RECIPE = "EnhancedIrrigation_SalvagePump"
 
 -- Minutes to open the appliance's back panel, unhook its pump and cut it free of its hoses.
-ApplianceJobs.SALVAGE_MINUTES = 30
+local SALVAGE_MINUTES = 30
 
 -- The condition an Appliance Pump comes out at, at random between these: a used part.
 ApplianceJobs.SALVAGED_CONDITION = { 60, 100 }
 
 ApplianceJobs.JOBS = {
     [ApplianceJobs.SALVAGE_PUMP] = {
-        minutes = ApplianceJobs.SALVAGE_MINUTES, position = "Low", sound = "Screwdriver",
+        minutes = SALVAGE_MINUTES, position = "Low", sound = "Screwdriver",
         equip = Materials.holds(Materials.SCREWDRIVER),
         blocker = function(character, appliance)
             if not Appliances.hasPumpTile(appliance) then

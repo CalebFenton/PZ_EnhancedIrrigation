@@ -12,34 +12,34 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Appliances = {}
 EnhancedIrrigation.Appliances = Appliances
 
--- The tiles of the appliances with a pump inside: vanilla's washer-dryers and washers
--- (appliances_laundry_01_0..7) and dishwashers (appliances_cooking_01_72..79). Dryers have none.
-Appliances.SPRITES = {}
+-- The tiles of the appliances with a pump inside: vanilla's washer-dryers and washers and its
+-- dishwashers. Dryers have none.
+local SPRITES = {}
 for i = 0, 7 do
-    Appliances.SPRITES["appliances_laundry_01_" .. i] = true
-    Appliances.SPRITES["appliances_cooking_01_" .. (72 + i)] = true
+    SPRITES["appliances_laundry_01_" .. i] = true
+    SPRITES["appliances_cooking_01_" .. (72 + i)] = true
 end
 
--- The key of the stripped mark in an appliance's movableData.
-Appliances.STRIPPED = "EnhancedIrrigation_stripped"
+-- The key of the stripped mark in an appliance's movableData, kept in saves.
+local STRIPPED = "EnhancedIrrigation_stripped"
 
 --- Whether `object` is an appliance with a pump inside, stripped or not.
 function Appliances.hasPumpTile(object)
     local sprite = object:getSprite()
-    return sprite ~= nil and Appliances.SPRITES[sprite:getName()] == true
+    return sprite ~= nil and SPRITES[sprite:getName()] == true
 end
 
 --- Whether `object`'s pump has been salvaged.
 function Appliances.isStripped(object)
     local movable = object:getModData().movableData
-    return type(movable) == "table" and movable[Appliances.STRIPPED] == true
+    return type(movable) == "table" and movable[STRIPPED] == true
 end
 
 --- Marks `object` stripped, switched off if it was running, and tells the clients. Authority only.
 function Appliances.strip(object)
     local modData = object:getModData()
     modData.movableData = type(modData.movableData) == "table" and modData.movableData or {}
-    modData.movableData[Appliances.STRIPPED] = true
+    modData.movableData[STRIPPED] = true
     object:transmitModData()
     local combo = instanceof(object, "IsoCombinationWasherDryer")
     if (combo or instanceof(object, "IsoClothingWasher")) and object:isActivated() then

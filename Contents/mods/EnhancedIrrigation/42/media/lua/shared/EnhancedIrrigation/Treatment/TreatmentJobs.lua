@@ -24,20 +24,19 @@ TreatmentJobs.TAKE_DOWN_CROCK = "TakeDownCrock"
 TreatmentJobs.PATCH_DRUM = "PatchDrum"
 
 -- Minutes to scrub the clogged skin off a crock by hand, and to lift it out of its bucket.
-TreatmentJobs.SCRUB_MINUTES = 15
-TreatmentJobs.TAKE_DOWN_MINUTES = 2
--- Minutes to weld a patch on a boiler's drum.
-TreatmentJobs.PATCH_MINUTES = 30
+local SCRUB_MINUTES = 15
+local TAKE_DOWN_MINUTES = 2
+local PATCH_MINUTES = 30
 
--- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand: a shovel, a
--- garden trowel (both base:takedirt) or a mason's trowel.
-TreatmentJobs.CLEAN_MINUTES = 60
-TreatmentJobs.CLEAN_TOOL_MINUTES = 30
-TreatmentJobs.CLEAN_TOOLS = { ItemTag.TAKE_DIRT, ItemTag.MASONS_TROWEL }
+-- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand: a shovel or a
+-- garden trowel, or a mason's trowel.
+local CLEAN_MINUTES = 60
+local CLEAN_TOOL_MINUTES = 30
+local CLEAN_TOOLS = { ItemTag.TAKE_DIRT, ItemTag.MASONS_TROWEL }
 
---- The tool `character` cleans a filter with, or nil to work by hand.
-function TreatmentJobs.cleaningTool(character)
-    for _, tag in ipairs(TreatmentJobs.CLEAN_TOOLS) do
+-- The tool `character` cleans a filter with, or nil to work by hand.
+local function cleaningTool(character)
+    for _, tag in ipairs(CLEAN_TOOLS) do
         local tool = EnhancedIrrigation.Materials.workingTool(character, tag)
         if tool then
             return tool
@@ -53,27 +52,26 @@ local function headRoom(unit)
     return summary and math.max(0, Treatment.specOf(unit).head - summary.head) or 0
 end
 
---- The litres Pour In moves from the carried `item` into `unit`: what it holds, as far as the head
---- has room. The container keeps the rest.
-function TreatmentJobs.pourLitres(unit, item)
+-- The litres Pour In moves from the carried `item` into `unit`: what it holds, as far as the head
+-- has room. The container keeps the rest.
+local function pourLitres(unit, item)
     local fluid = item and item:getFluidContainer()
     return fluid and math.min(fluid:getAmount(), headRoom(unit)) or 0
 end
 
---- Whether `unit` is a Filter Crock standing in its bucket.
-function TreatmentJobs.isCrock(unit)
+-- Whether `unit` is a Filter Crock standing in its bucket.
+local function isCrock(unit)
     local spec = Treatment.specOf(unit)
     return spec ~= nil and spec.kind == "crock" and Treatment.isUnit(unit)
 end
 
---- Whether `unit` is a boiler.
-function TreatmentJobs.isBoiler(unit)
+local function isBoiler(unit)
     local spec = Treatment.specOf(unit)
     return spec ~= nil and spec.kind == "boiler" and Treatment.isUnit(unit)
 end
 
---- The welding torch with the most fuel `character` carries, or nil.
-function TreatmentJobs.weldingTorch(character)
+-- The welding torch with the most fuel `character` carries, or nil.
+local function weldingTorch(character)
     local best = nil
     local torches = character:getInventory():getAllTypeRecurse("Base.BlowTorch")
     for i = 0, torches:size() - 1 do
@@ -88,7 +86,7 @@ end
 TreatmentJobs.JOBS = {
     [TreatmentJobs.POUR_IN] = {
         minutes = function(unit, item)
-            return math.max(1, math.ceil(TreatmentJobs.pourLitres(unit, item) / Treatment.POUR_LITRES_PER_MINUTE))
+            return math.max(1, math.ceil(pourLitres(unit, item) / Treatment.POUR_LITRES_PER_MINUTE))
         end,
         position = "Mid", sound = "PourWaterIntoObject",
         equip = function(character, unit, item) return item end,
@@ -118,11 +116,11 @@ TreatmentJobs.JOBS = {
     },
     [TreatmentJobs.CLEAN_FILTER] = {
         minutes = function(unit, with, character)
-            return character and TreatmentJobs.cleaningTool(character) and TreatmentJobs.CLEAN_TOOL_MINUTES
-                or TreatmentJobs.CLEAN_MINUTES
+            return character and cleaningTool(character) and CLEAN_TOOL_MINUTES
+                or CLEAN_MINUTES
         end,
         position = "Mid", heavy = true, sound = "Shoveling",
-        equip = function(character) return TreatmentJobs.cleaningTool(character) end,
+        equip = function(character) return cleaningTool(character) end,
         blocker = function(character, unit)
             local spec = Treatment.specOf(unit)
             if not (spec and spec.kind == "sand" and Treatment.isUnit(unit)) then
@@ -133,10 +131,10 @@ TreatmentJobs.JOBS = {
         end,
     },
     [TreatmentJobs.SCRUB_CROCK] = {
-        minutes = TreatmentJobs.SCRUB_MINUTES,
+        minutes = SCRUB_MINUTES,
         position = "Low",
         blocker = function(character, unit)
-            if not TreatmentJobs.isCrock(unit) then
+            if not isCrock(unit) then
                 return Jobs.UNKNOWN
             end
             local summary = Treatment.currentSummary(unit)
@@ -148,19 +146,19 @@ TreatmentJobs.JOBS = {
     },
     -- Whatever is still waiting in the crock spills as it comes out; the bucket keeps its water.
     [TreatmentJobs.TAKE_DOWN_CROCK] = {
-        minutes = TreatmentJobs.TAKE_DOWN_MINUTES,
+        minutes = TAKE_DOWN_MINUTES,
         position = "Low",
         blocker = function(character, unit)
-            return not TreatmentJobs.isCrock(unit) and Jobs.UNKNOWN or nil
+            return not isCrock(unit) and Jobs.UNKNOWN or nil
         end,
     },
     -- A small sheet welded over the worn steel, as vanilla mends metal: each patch restores less.
     [TreatmentJobs.PATCH_DRUM] = {
-        minutes = TreatmentJobs.PATCH_MINUTES,
+        minutes = PATCH_MINUTES,
         anim = "BlowTorch", position = "Mid", sound = "BlowTorch",
-        equip = function(character) return TreatmentJobs.weldingTorch(character) end,
+        equip = function(character) return weldingTorch(character) end,
         blocker = function(character, unit)
-            if not TreatmentJobs.isBoiler(unit) then
+            if not isBoiler(unit) then
                 return Jobs.UNKNOWN
             end
             local summary = Treatment.currentSummary(unit)

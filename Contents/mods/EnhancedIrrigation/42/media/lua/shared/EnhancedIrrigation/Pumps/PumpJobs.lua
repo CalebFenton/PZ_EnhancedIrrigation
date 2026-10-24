@@ -34,16 +34,16 @@ PumpJobs.TAKE_TIMER = "TakeTimer"
 PumpJobs.SET_TIMER = "SetTimer"
 
 -- Minutes to take a hand pump's cap off, swap the cup on its plunger and screw it back.
-PumpJobs.SEAL_MINUTES = 10
+local SEAL_MINUTES = 10
 -- Minutes to bolt a pump part into a Pump House and wire it up, to take one out, to flip its
 -- switch, and to rewind and reseal a burnt pump.
-PumpJobs.FIT_MINUTES = 15
-PumpJobs.TAKE_OUT_MINUTES = 10
-PumpJobs.SWITCH_MINUTES = 1
-PumpJobs.REPAIR_MINUTES = 30
+local FIT_MINUTES = 15
+local TAKE_OUT_MINUTES = 10
+local SWITCH_MINUTES = 1
+local REPAIR_MINUTES = 30
 -- Minutes to screw a timer into a Pump House's switch wiring and to take it out.
-PumpJobs.TIMER_MINUTES = 5
-PumpJobs.TAKE_TIMER_MINUTES = 3
+local TIMER_MINUTES = 5
+local TAKE_TIMER_MINUTES = 3
 
 -- The Tooltip key saying how high a pump of each lift fills a tank.
 PumpJobs.LIFT_KEYS = {
@@ -51,8 +51,7 @@ PumpJobs.LIFT_KEYS = {
     [2] = "Tooltip_EnhancedIrrigation_LiftsTwoStoreys",
 }
 
---- Whether `character` is too tired to work a pump.
-function PumpJobs.exhausted(character)
+local function exhausted(character)
     return character:getStats():get(CharacterStat.ENDURANCE) <= Pumps.EXHAUSTED
 end
 
@@ -114,9 +113,9 @@ function PumpJobs.flowOf(pump)
     return PumpJobs.deliveryOf(pump, spec, summary.intake)
 end
 
---- What a Pump House's next Repair Pump would restore its part to, from its `summary`: the ceiling,
---- lowered by a repair's loss.
-function PumpJobs.repairRestores(summary)
+-- What a Pump House's next Repair Pump would restore its part to, from its `summary`: the ceiling,
+-- lowered by a repair's loss.
+local function repairRestores(summary)
     return summary.partCeiling - Pumps.REPAIR_LOSS
 end
 
@@ -164,12 +163,12 @@ PumpJobs.JOBS = {
             if not into then
                 return refusal
             end
-            return PumpJobs.exhausted(character) and "Tooltip_EnhancedIrrigation_Exhausted" or nil
+            return exhausted(character) and "Tooltip_EnhancedIrrigation_Exhausted" or nil
         end,
     },
     -- The old seal is worn to nothing, so it doesn't come back.
     [PumpJobs.REPLACE_SEAL] = {
-        minutes = PumpJobs.SEAL_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
+        minutes = SEAL_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump, item)
             local spec = Pumps.specOf(pump)
             if not (spec and spec.kind == "hand") then
@@ -192,7 +191,7 @@ PumpJobs.JOBS = {
     -- The part goes in as worn as it is; its item is taken by the job itself, being that one item
     -- rather than any of its type.
     [PumpJobs.FIT_PUMP] = {
-        minutes = PumpJobs.FIT_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
+        minutes = FIT_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump, item)
             local summary = houseSummary(pump)
             if not summary then
@@ -206,14 +205,14 @@ PumpJobs.JOBS = {
         materials = { SCREWDRIVER },
     },
     [PumpJobs.TAKE_OUT_PUMP] = {
-        minutes = PumpJobs.TAKE_OUT_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
+        minutes = TAKE_OUT_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump) return (fittedBlocker(pump)) end,
         materials = { SCREWDRIVER },
     },
     -- Like a washer's switch (ISWorldObjectContextMenuLogic.toggleClothingWasher), greyed out
     -- without power.
     [PumpJobs.TURN_ON] = {
-        minutes = PumpJobs.SWITCH_MINUTES, position = "Mid",
+        minutes = SWITCH_MINUTES, position = "Mid",
         blocker = function(character, pump)
             local refusal, summary = fittedBlocker(pump)
             if refusal then
@@ -229,7 +228,7 @@ PumpJobs.JOBS = {
         end,
     },
     [PumpJobs.TURN_OFF] = {
-        minutes = PumpJobs.SWITCH_MINUTES, position = "Mid",
+        minutes = SWITCH_MINUTES, position = "Mid",
         blocker = function(character, pump)
             local summary = houseSummary(pump)
             return not (summary and summary.on) and Jobs.UNKNOWN or nil
@@ -238,13 +237,13 @@ PumpJobs.JOBS = {
     -- The burnt windings and the shaft seal made good from scrap, as Patch Drum mends a boiler: each
     -- repair restores less.
     [PumpJobs.REPAIR_PUMP] = {
-        minutes = PumpJobs.REPAIR_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
+        minutes = REPAIR_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump)
             local refusal, summary = fittedBlocker(pump)
             if refusal then
                 return refusal
             end
-            local restores = PumpJobs.repairRestores(summary)
+            local restores = repairRestores(summary)
             if restores <= 0 then
                 return "Tooltip_EnhancedIrrigation_PumpTooRepaired"
             end
@@ -259,7 +258,7 @@ PumpJobs.JOBS = {
     },
     -- The timer goes in as the item carried, taken by the job itself.
     [PumpJobs.FIT_TIMER] = {
-        minutes = PumpJobs.TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
+        minutes = TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump, item)
             local summary = houseSummary(pump)
             if not summary then
@@ -273,7 +272,7 @@ PumpJobs.JOBS = {
         materials = { SCREWDRIVER },
     },
     [PumpJobs.TAKE_TIMER] = {
-        minutes = PumpJobs.TAKE_TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
+        minutes = TAKE_TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump)
             local summary = houseSummary(pump)
             return not (summary and summary.timer) and "Tooltip_EnhancedIrrigation_NoTimerHere" or nil
@@ -281,7 +280,7 @@ PumpJobs.JOBS = {
         materials = { SCREWDRIVER },
     },
     [PumpJobs.SET_TIMER] = {
-        minutes = PumpJobs.SWITCH_MINUTES, position = "Mid",
+        minutes = SWITCH_MINUTES, position = "Mid",
         blocker = function(character, pump, with)
             local summary = houseSummary(pump)
             if not (summary and summary.timer) then
