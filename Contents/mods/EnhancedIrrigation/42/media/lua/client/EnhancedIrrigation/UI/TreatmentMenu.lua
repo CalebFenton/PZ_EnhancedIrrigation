@@ -13,7 +13,7 @@ require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -21,8 +21,8 @@ local TreatmentMenu = {}
 EnhancedIrrigation.TreatmentMenu = TreatmentMenu
 
 local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
-local Treatment, TreatmentJobs, TankMenu = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs,
-    EnhancedIrrigation.TankMenu
+local Treatment, TreatmentJobs, LinkMenu = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs,
+    EnhancedIrrigation.LinkMenu
 local Action = EnhancedIrrigationAction
 
 -- Each kind's own jobs, by their ContextMenu keys, in menu order.
@@ -78,7 +78,7 @@ end
 
 local function addPlumbing(menu, playerNum, character, unit)
     for _, plumbEnd in ipairs(PLUMB_ENDS) do
-        TankMenu.addPlumbOptions(menu, playerNum, character, unit, {
+        LinkMenu.addPlumbOptions(menu, playerNum, character, unit, {
             nameKey = plumbEnd.nameKey,
             job = plumbEnd.job,
             skip = function() return false end,
@@ -86,13 +86,13 @@ local function addPlumbing(menu, playerNum, character, unit)
             noneKey = "ContextMenu_EnhancedIrrigation_NoTankForFixture",
         })
     end
-    TankMenu.addUnplumbOptions(menu, playerNum, character, unit)
+    LinkMenu.addUnplumbOptions(menu, playerNum, character, unit)
 end
 
 -- The submenu for `unit`: for a fireplace, the one of its name that vanilla's fire menu, which the
 -- game fills before this event, made; else a new one.
 local function unitMenu(context, unit)
-    local name = TankMenu.objectName(unit)
+    local name = LinkMenu.objectName(unit)
     local option = unit:isFireInteractionObject() and context:getOptionFromName(name)
     local submenu = option and option.subOption and context:getSubMenu(option.subOption)
     return submenu or Needs.addSubMenu(context, name)

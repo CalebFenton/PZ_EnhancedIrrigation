@@ -12,7 +12,7 @@ require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -20,7 +20,7 @@ local FixtureMenu = {}
 EnhancedIrrigation.FixtureMenu = FixtureMenu
 
 local Needs, Tanks, Links = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
-local LinkJobs, Fixtures, TankMenu = EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Fixtures, EnhancedIrrigation.TankMenu
+local LinkJobs, Fixtures, LinkMenu = EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Fixtures, EnhancedIrrigation.LinkMenu
 
 -- Vanilla's Plumb ----------------------------------------------------------------------------------
 
@@ -81,10 +81,10 @@ end
 -- Plumb to Tank.
 local function addLinkOptions(context, playerNum, character, fixture)
     if Fixtures.linkAt(EnhancedIrrigation.squareOf(fixture)) then
-        TankMenu.addUnplumbOptions(context, playerNum, character, fixture)
+        LinkMenu.addUnplumbOptions(context, playerNum, character, fixture)
         return
     end
-    TankMenu.addPlumbOptions(context, playerNum, character, fixture, {
+    LinkMenu.addPlumbOptions(context, playerNum, character, fixture, {
         nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
         job = LinkJobs.PLUMB_FIXTURE,
         skip = function() return false end,

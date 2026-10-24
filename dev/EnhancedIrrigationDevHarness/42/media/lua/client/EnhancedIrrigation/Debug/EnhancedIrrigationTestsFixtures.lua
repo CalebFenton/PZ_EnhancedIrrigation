@@ -3,7 +3,7 @@ require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/Fixtures"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/FixtureMenu"
 
 -- Plumbed fixtures (Fixtures.lua, FixtureSystem.lua, LinkJobs' fixture jobs, FixtureMenu.lua):
@@ -17,7 +17,7 @@ require "EnhancedIrrigation/UI/FixtureMenu"
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Links, LinkJobs, Fixtures = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Fixtures
-local TankMenu = EnhancedIrrigation.TankMenu
+local LinkMenu = EnhancedIrrigation.LinkMenu
 
 local LITRES = 0.05
 -- A white bathroom sink and a washing machine: vanilla flags both waterPiped.
@@ -164,7 +164,7 @@ T.test("irrigation_fixtures_need_a_tank_a_storey_up", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         useFixtureMenu(self, self.sink, "ground barrel", function(context)
-            return T.findNamed(context, context, TankMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
+            return T.findNamed(context, context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
         end, false)
         T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_FIXTURE,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")

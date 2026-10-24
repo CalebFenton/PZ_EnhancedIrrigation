@@ -3,9 +3,9 @@ require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkClient"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 
--- Pipe between tanks (Links.lua, LinkJobs.lua, LinkSystem.lua, LinkClient.lua and TankMenu.lua's
+-- Pipe between tanks (Links.lua, LinkJobs.lua, LinkSystem.lua, LinkClient.lua and LinkMenu.lua's
 -- Plumb to Tank and Unplumb): plumbing tanks together from the right-click menu and taking the pipe
 -- out, how water moves through a link, and this client's copy of the list. What the menu greys out,
 -- the server is also asked to do directly (tanks.perform), to show it refuses on its own. Link

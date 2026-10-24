@@ -1,10 +1,10 @@
--- The right-click options of tanks and Tank Stands: Set Barrel on Stand and Take Barrel Down on a
--- stand, and on any tank Plumb to Tank, with a submenu of the tanks in reach, and Unplumb, with a
--- submenu of the pipe buried from it, to tanks, fixtures, treatment units, pumps and garden lines.
--- The floor where a plumbed tank stood, or a pump's line tile, also offers Unplumb, so pipe whose
--- tanks are both gone is found where it was laid. Each option is greyed out saying why when its
--- job would be refused (StandJobs, LinkJobs). A fixture's own options are FixtureMenu.lua's, a
--- unit's TreatmentMenu.lua's, a pump's PumpMenu.lua's.
+-- The plumbing options, which tanks, fixtures, treatment units and pumps share: Plumb to Tank, with
+-- a submenu of the tanks in reach, and Unplumb, with a submenu of the pipe buried from it, to
+-- tanks, fixtures, treatment units, pumps and garden lines. This file offers them on tanks; the
+-- floor where a plumbed tank stood, or a pump's line tile, also offers Unplumb, so pipe whose tanks
+-- are both gone is found where it was laid. Each option is greyed out saying why when LinkJobs
+-- would refuse it. A fixture's own options are FixtureMenu.lua's, a unit's TreatmentMenu.lua's, a
+-- pump's PumpMenu.lua's.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -12,8 +12,6 @@ require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Stands/Stands"
-require "EnhancedIrrigation/Stands/StandJobs"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/Fixtures"
@@ -21,21 +19,23 @@ require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+-- Registers its menu first, so a raised barrel lists its stand's options above its plumbing.
+require "EnhancedIrrigation/UI/StandMenu"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
-local TankMenu = {}
-EnhancedIrrigation.TankMenu = TankMenu
+local LinkMenu = {}
+EnhancedIrrigation.LinkMenu = LinkMenu
 
-local Needs, Tanks, Stands = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Stands
-local StandJobs, Links, LinkJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
-local Pipes, Fixtures, Action = EnhancedIrrigation.Pipes, EnhancedIrrigation.Fixtures, EnhancedIrrigationAction
+local Needs, Tanks, Links = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
+local LinkJobs, Pipes, Fixtures = EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes, EnhancedIrrigation.Fixtures
 local Treatment, Pumps, Lines = EnhancedIrrigation.Treatment, EnhancedIrrigation.Pumps, EnhancedIrrigation.Lines
+local Action = EnhancedIrrigationAction
 
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
 
 --- Which way the square `there` lies from `here`, in words: a compass point, or above or below.
-function TankMenu.direction(here, there)
+function LinkMenu.direction(here, there)
     local dx, dy = there.x - here.x, there.y - here.y
     if dx == 0 and dy == 0 then
         return getText(there.z > here.z and "IGUI_EnhancedIrrigation_Above" or "IGUI_EnhancedIrrigation_Below")
@@ -48,9 +48,9 @@ end
 
 --- How the menu names the tank on the square `there`, seen from the square `here`: what it is,
 --- how far and which way, and its level; just how far and which way when it isn't loaded here.
-function TankMenu.tankLabel(here, there)
+function LinkMenu.tankLabel(here, there)
     local tank = Tanks.tankAt(there.x, there.y, there.z)
-    local distance, direction = Links.distance(here, there), TankMenu.direction(here, there)
+    local distance, direction = Links.distance(here, there), LinkMenu.direction(here, there)
     if not tank then
         return getText("ContextMenu_EnhancedIrrigation_TankOutOfSight", distance, direction)
     end
@@ -59,13 +59,13 @@ function TankMenu.tankLabel(here, there)
 end
 
 --- How the menu names the garden line whose tile is on the square `there`, seen from `here`.
-function TankMenu.lineLabel(here, there)
-    return getText("ContextMenu_EnhancedIrrigation_LineThere", Links.distance(here, there), TankMenu.direction(here, there))
+function LinkMenu.lineLabel(here, there)
+    return getText("ContextMenu_EnhancedIrrigation_LineThere", Links.distance(here, there), LinkMenu.direction(here, there))
 end
 
 --- The name the game gives `object` ("Sink", "Bath", "Barrel Filter"), a fixture, a unit or a
 --- pump, as its own menus name it.
-function TankMenu.objectName(object)
+function LinkMenu.objectName(object)
     local props = object:getSprite():getProperties()
     local name = props:get("CustomName")
     if not name then
@@ -78,48 +78,25 @@ end
 --- How Unplumb names the buried pipe from the square `here` to the square `there`: by the tank,
 --- fixture, unit, pump or line at its far end, or as pipe to an empty spot when that square is
 --- loaded with none of them.
-function TankMenu.linkLabel(here, there)
+function LinkMenu.linkLabel(here, there)
     local square = getCell():getGridSquare(there.x, there.y, there.z)
     local object = Fixtures.fixtureOn(square) or Treatment.unitOn(square) or Pumps.pumpOn(square)
     if object then
         return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", getText("ContextMenu_EnhancedIrrigation_FixtureThere",
-            TankMenu.objectName(object), Links.distance(here, there), TankMenu.direction(here, there)))
+            LinkMenu.objectName(object), Links.distance(here, there), LinkMenu.direction(here, there)))
     end
     if Lines.lineOn(square) then
-        return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", TankMenu.lineLabel(here, there))
+        return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", LinkMenu.lineLabel(here, there))
     end
     if square and not Tanks.tankOn(square) then
         return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", Links.distance(here, there),
-            TankMenu.direction(here, there))
+            LinkMenu.direction(here, there))
     end
-    return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", TankMenu.tankLabel(here, there))
-end
-
-local function addStandOptions(context, playerNum, character, object)
-    if Stands.isStand(object) then
-        local carried = Stands.barrelsCarried(character)
-        local name = getText("ContextMenu_EnhancedIrrigation_SetBarrel")
-        if #carried > 1 then
-            local submenu = Needs.addSubMenu(context, name)
-            for _, entry in ipairs(carried) do
-                local option = submenu:addOption(entry.item:getDisplayName(), playerNum, Action.queue, "stand",
-                    StandJobs.SET_BARREL, object, entry.item)
-                Needs.refuse(option, StandJobs.refusal(character, StandJobs.SET_BARREL, object, entry.item))
-            end
-        else
-            local barrel = carried[1] and carried[1].item
-            local option = context:addOption(name, playerNum, Action.queue, "stand", StandJobs.SET_BARREL, object, barrel)
-            Needs.refuse(option, StandJobs.refusal(character, StandJobs.SET_BARREL, object, barrel))
-        end
-    elseif Stands.isRaised(object) then
-        local option = context:addOption(getText("ContextMenu_EnhancedIrrigation_TakeBarrelDown"), playerNum, Action.queue,
-            "stand", StandJobs.TAKE_DOWN, object)
-        Needs.refuse(option, StandJobs.refusal(character, StandJobs.TAKE_DOWN, object))
-    end
+    return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", LinkMenu.tankLabel(here, there))
 end
 
 -- A link job's option, greyed out as LinkJobs refuses it.
-function TankMenu.showLink(option, character, job, object, with)
+function LinkMenu.showLink(option, character, job, object, with)
     Needs.show(option, LinkJobs.needs(character, job, object, with), LinkJobs.blocker(character, job, object, with))
 end
 
@@ -129,7 +106,7 @@ end
 --- run takes. `spec`: `nameKey`, the option's ContextMenu key; `job`, the LinkJobs job each pipe
 --- queues; `skip(at)`, which tanks to leave out; `refusal(at)`, a Tooltip key greying a tank or line
 --- out before its pipe is listed, or nil; `noneKey`, what the submenu says when it lists none.
-function TankMenu.addPlumbOptions(context, playerNum, character, object, spec)
+function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
     local here = EnhancedIrrigation.squareOf(object)
     local name = getText(spec.nameKey)
     local tools = EnhancedIrrigation.Materials.needs(character, LinkJobs.PLUMB_TOOLS)
@@ -142,11 +119,11 @@ function TankMenu.addPlumbOptions(context, playerNum, character, object, spec)
     local ends = {}
     for _, entry in ipairs(Links.inReach(object, Tanks.tankAt)) do
         if not spec.skip(entry.at) then
-            table.insert(ends, { at = entry.at, distance = entry.distance, label = TankMenu.tankLabel(here, entry.at) })
+            table.insert(ends, { at = entry.at, distance = entry.distance, label = LinkMenu.tankLabel(here, entry.at) })
         end
     end
     for _, entry in ipairs(spec.lines and Pumps.linesInReach(object) or {}) do
-        table.insert(ends, { at = entry.at, distance = entry.distance, label = TankMenu.lineLabel(here, entry.at) })
+        table.insert(ends, { at = entry.at, distance = entry.distance, label = LinkMenu.lineLabel(here, entry.at) })
     end
     table.sort(ends, function(p, q) return p.distance < q.distance end)
     for _, entry in ipairs(ends) do
@@ -159,7 +136,7 @@ function TankMenu.addPlumbOptions(context, playerNum, character, object, spec)
                 local with = Links.encode(entry.at, kind)
                 local option = pipes:addOption(getItemNameFromFullType(Pipes.KINDS[kind].item), playerNum,
                     Action.queue, "link", spec.job, object, with)
-                TankMenu.showLink(option, character, spec.job, object, with)
+                LinkMenu.showLink(option, character, spec.job, object, with)
             end
         end
     end
@@ -170,7 +147,7 @@ end
 
 --- Unplumb at `object`, a tank, a fixture, a unit, or the floor of a square one stood on: a submenu
 --- of the pipe buried from its square.
-function TankMenu.addUnplumbOptions(context, playerNum, character, object)
+function LinkMenu.addUnplumbOptions(context, playerNum, character, object)
     local here = EnhancedIrrigation.squareOf(object)
     local links = Links.linksAt(here)
     if #links == 0 then return end
@@ -178,9 +155,9 @@ function TankMenu.addUnplumbOptions(context, playerNum, character, object)
     for _, link in ipairs(links) do
         local there = Links.otherEnd(link, here)
         local with = Links.encode(there)
-        local option = submenu:addOption(TankMenu.linkLabel(here, there), playerNum, Action.queue, "link",
+        local option = submenu:addOption(LinkMenu.linkLabel(here, there), playerNum, Action.queue, "link",
             LinkJobs.UNPLUMB, object, with)
-        TankMenu.showLink(option, character, LinkJobs.UNPLUMB, object, with)
+        LinkMenu.showLink(option, character, LinkJobs.UNPLUMB, object, with)
     end
 end
 
@@ -199,34 +176,28 @@ local function bareEnd(worldobjects)
     return nil
 end
 
-function TankMenu.onFill(playerNum, context, worldobjects, test)
+function LinkMenu.onFill(playerNum, context, worldobjects, test)
     local character = getSpecificPlayer(playerNum)
     if not character or character:getVehicle() then return end
-    local stand = Needs.findClicked(worldobjects, function(object)
-        return Stands.isStand(object) or Stands.isRaised(object)
-    end)
     local tank = Needs.findClicked(worldobjects, Tanks.isTank)
     local floor = not tank and bareEnd(worldobjects)
-    if not (stand or tank or floor) then return end
+    if not (tank or floor) then return end
     if test then return ISWorldObjectContextMenu.setTest() end
-    if stand then
-        addStandOptions(context, playerNum, character, stand)
-    end
     if tank then
         local here = EnhancedIrrigation.squareOf(tank)
-        TankMenu.addPlumbOptions(context, playerNum, character, tank, {
+        LinkMenu.addPlumbOptions(context, playerNum, character, tank, {
             nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
             job = LinkJobs.PLUMB,
             skip = function(at) return Links.find(here, at) ~= nil end,
             refusal = function() return nil end,
             noneKey = "ContextMenu_EnhancedIrrigation_NoTankInReach",
         })
-        TankMenu.addUnplumbOptions(context, playerNum, character, tank)
+        LinkMenu.addUnplumbOptions(context, playerNum, character, tank)
     elseif floor then
-        TankMenu.addUnplumbOptions(context, playerNum, character, floor)
+        LinkMenu.addUnplumbOptions(context, playerNum, character, floor)
     end
 end
 
-Events.OnFillWorldObjectContextMenu.Add(TankMenu.onFill)
+Events.OnFillWorldObjectContextMenu.Add(LinkMenu.onFill)
 
-return TankMenu
+return LinkMenu

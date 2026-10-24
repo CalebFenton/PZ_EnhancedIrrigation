@@ -4,7 +4,7 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/TreatmentMenu"
 require "ISUI/ISBBQMenu"
 require "Camping/ISCampingMenu"
@@ -24,8 +24,8 @@ require "Camping/ISCampingMenu"
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Links, LinkJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
-local Treatment, TreatmentJobs, TankMenu = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs,
-    EnhancedIrrigation.TankMenu
+local Treatment, TreatmentJobs, LinkMenu = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs,
+    EnhancedIrrigation.LinkMenu
 
 local LITRES = 0.05
 local BARREL, BRICK = "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter"
@@ -462,7 +462,7 @@ T.test("irrigation_treatment_inlet_refuses_a_lower_tank", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         T.useOption(self, function() return copyOf(self.unit) end, "lower tank", function(context)
-            local label = TankMenu.tankLabel(T.at(self.unit), T.at(self.tank))
+            local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.tank))
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbInlet", function(option)
                 return option.name == label
             end)
@@ -492,7 +492,7 @@ T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         useMenu(self, self.unit, "higher tank", function(context)
-            local label = TankMenu.tankLabel(T.at(self.unit), T.at(self.high))
+            local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.high))
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option)
                 return option.name == label
             end)

@@ -7,7 +7,7 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
@@ -26,7 +26,7 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Links, LinkJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
-local Pumps, PumpJobs, TankMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.TankMenu
+local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
 
 local LITRES = 0.05
 local WOODEN, IRON = "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump"
@@ -477,7 +477,7 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
         useMenu(self, self.wooden, "wooden", function(context)
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
-                TankMenu.tankLabel(T.at(self.wooden), T.at(self.tank)))
+                LinkMenu.tankLabel(T.at(self.wooden), T.at(self.tank)))
         end, false)
         T.read(self, "tanks.perform", T.at(self.wooden, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
@@ -534,7 +534,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
         useMenu(self, self.pump, "tapped", function(context)
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
-                TankMenu.lineLabel(T.at(self.pump), T.at(tapped)))
+                LinkMenu.lineLabel(T.at(self.pump), T.at(tapped)))
         end, false)
         T.read(self, "tanks.perform", T.at(self.pump, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(tapped), "iron") }), "forced")
@@ -544,7 +544,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         readMenu(self, self.pump, "plumbed")
         T.step(function()
             local b = Pumps.outletOf(T.at(self.pump)).b
-            self.unplumbLabel = TankMenu.linkLabel(T.at(self.pump), b)
+            self.unplumbLabel = LinkMenu.linkLabel(T.at(self.pump), b)
         end)
         T.useOption(self, function() return copyOf(self.pump) end, "unplumb", function(context)
             return T.findNamed(context, context, self.unplumbLabel)

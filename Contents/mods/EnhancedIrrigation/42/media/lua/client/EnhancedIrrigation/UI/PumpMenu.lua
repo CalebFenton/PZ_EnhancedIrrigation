@@ -14,7 +14,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
@@ -24,7 +24,7 @@ local PumpMenu = {}
 EnhancedIrrigation.PumpMenu = PumpMenu
 
 local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
-local Pumps, PumpJobs, TankMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.TankMenu
+local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
 local Action = EnhancedIrrigationAction
 local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
 
@@ -189,7 +189,7 @@ function PumpMenu.onFill(playerNum, context, worldobjects, test)
     local pump = Needs.findClicked(worldobjects, Pumps.isPump)
     if not pump then return end
     if test then return ISWorldObjectContextMenu.setTest() end
-    local menu = Needs.addSubMenu(context, TankMenu.objectName(pump))
+    local menu = Needs.addSubMenu(context, LinkMenu.objectName(pump))
     local summary = Pumps.currentSummary(pump)
     if summary then
         menu:addOption(Pumps.statusText(pump, summary)).notAvailable = true
@@ -199,7 +199,7 @@ function PumpMenu.onFill(playerNum, context, worldobjects, test)
     else
         addHandOptions(menu, playerNum, character, pump)
     end
-    TankMenu.addPlumbOptions(menu, playerNum, character, pump, {
+    LinkMenu.addPlumbOptions(menu, playerNum, character, pump, {
         nameKey = "ContextMenu_EnhancedIrrigation_PlumbOutlet",
         job = LinkJobs.PLUMB_PUMP,
         skip = function() return false end,
@@ -207,7 +207,7 @@ function PumpMenu.onFill(playerNum, context, worldobjects, test)
         noneKey = "ContextMenu_EnhancedIrrigation_NoOutletInReach",
         lines = true,
     })
-    TankMenu.addUnplumbOptions(menu, playerNum, character, pump)
+    LinkMenu.addUnplumbOptions(menu, playerNum, character, pump)
 end
 
 Events.OnFillWorldObjectContextMenu.Add(PumpMenu.onFill)
