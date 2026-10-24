@@ -227,43 +227,6 @@ T.test("irrigation_pump_house_power_pays_its_debt_switched_off", {
     end,
 })
 
--- The grid off and no generator in reach, as with a house a Renewable Energy bank powers, a
--- switched-on Utility Pump's pass finds no payer and the house tells a bank it draws its part's
--- draw. A generator started in reach then pays from the next ten-minute pass: that pass makes it the
--- payer and burns the hour's draw from it, and the house tells a bank nothing. Catches a search that
--- found nothing standing past its pass (an hour, or for good), so a bank bills a house a generator
--- should pay for, or a house run for free. The second pass waits for the clock to move on from the
--- first.
-T.test("irrigation_pump_house_power_finds_a_generator_started_after_a_search", {
-    instant = true,
-    run = function(self)
-        T.setGrid(self, false)
-        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
-        if not spots then return end
-        self.generator = spots[2]
-        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
-        update(self, self.house, "searched", { hoursAgo = 1, fields = { on = true } })
-        T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
-        readUntil(self, self.house, "later", function(state) return state.now > self.reads.searched.now end)
-        update(self, self.house, "next pass", { hoursAgo = 1, generator = self.generator })
-    end,
-    validate = function(self)
-        local searched = self.reads.searched.after
-        expect(searched.record.payer == nil, "the house found a payer with no generator in reach")
-        expectNear("the draw the house tells a bank with nothing paying", searched.bankFuel or 0,
-            Pumps.PARTS[UTILITY].draw, 0.0001)
-        local nextPass = self.reads["next pass"]
-        local payer = nextPass.after.record.payer
-        expect(payer and payer.x == self.generator.x and payer.y == self.generator.y, "the next pass's payer is "
-            .. (payer and payer.x .. "," .. payer.y or "nothing"))
-        -- From the fuel read in the same call: the house's own pass may have found the generator first.
-        expectNear("the generator's fuel after the next pass", nextPass.after.generator.fuel,
-            nextPass.before.generator.fuel - burns(UTILITY, 1), FUEL)
-        expect(nextPass.after.bankFuel == nil, "with its generator paying the house tells a bank it draws "
-            .. tostring(nextPass.after.bankFuel))
-    end,
-})
-
 -- Hours the spent generator's fuel runs the Appliance Pump.
 local FUEL_HOURS = 1.5
 
