@@ -21,9 +21,6 @@ EnhancedIrrigation.TreatmentSystem = TreatmentSystem
 local Tanks = EnhancedIrrigation.Tanks
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
 
--- A flow smaller than this isn't worth a sync to every client.
-local LEAST_LITRES = 0.01
-
 TreatmentSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Treatment",
     sprites = Treatment.SPRITES,
@@ -140,7 +137,7 @@ function TreatmentSystem.drain(link, litres)
     end
     local basin, fluid = unit:getFluidContainer(), tank:getFluidContainer()
     litres = math.min(litres, basin:getAmount(), fluid:getFreeCapacity())
-    if litres < LEAST_LITRES then
+    if litres < EnhancedIrrigation.Links.LEAST_FLOW then
         return nil
     end
     FluidContainer.Transfer(basin, fluid, litres)

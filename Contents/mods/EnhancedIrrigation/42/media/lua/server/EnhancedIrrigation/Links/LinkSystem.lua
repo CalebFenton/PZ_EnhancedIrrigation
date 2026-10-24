@@ -35,9 +35,6 @@ local Materials, Fixtures, FixtureSystem = EnhancedIrrigation.Materials, Enhance
     EnhancedIrrigation.FixtureSystem
 local TreatmentSystem = EnhancedIrrigation.TreatmentSystem
 
--- A flow smaller than this isn't worth a sync to every client.
-local LEAST_LITRES = 0.01
-
 -- What the system saves with the world (its modData keys): `links`, the list; `lastHour`, when
 -- water last moved, so a pass moves what the time since allows however often the event fires.
 local SAVED_KEYS = { "links", "lastHour" }
@@ -178,7 +175,7 @@ local function flow(tankA, tankB, hours)
         litres = math.min(from:getAmount(), to:getFreeCapacity())
     end
     litres = math.min(litres, Links.RATE * hours)
-    if litres < LEAST_LITRES then
+    if litres < Links.LEAST_FLOW then
         return false
     end
     -- The mixture moves, taint and all.

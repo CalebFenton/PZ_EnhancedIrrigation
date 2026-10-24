@@ -32,6 +32,8 @@ Links.MINUTES_PER_TILE = 3
 -- Litres an hour a link carries at most: a pipe under a barrel's head passes a few litres a
 -- minute.
 Links.RATE = 360
+-- Litres through a link too few to be worth a sync to every client.
+Links.LEAST_FLOW = 0.01
 
 -- Which end of a link each role's object stands at; the other end is the tank it draws on or fills,
 -- or for a pump the tank or garden line tile it lifts into. Saved links keep these ends.

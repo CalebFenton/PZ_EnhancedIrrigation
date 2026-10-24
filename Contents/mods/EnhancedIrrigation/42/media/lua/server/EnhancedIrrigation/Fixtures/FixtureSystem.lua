@@ -18,9 +18,6 @@ EnhancedIrrigation.FixtureSystem = FixtureSystem
 
 local Fixtures, Tanks, Links = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 
--- A fill smaller than this isn't worth a sync to every client.
-local LEAST_LITRES = 0.01
-
 --- `fixture`'s buffer, given it first if it has none: an empty FluidContainer of its reserve's
 --- size, which the engine serves its drink, fill, wash and washer from, taint and all, once the
 --- town's water stops (IsoObject.isWaterInfinite comes first). Vanilla's rooftop plumbing goes, so
@@ -84,7 +81,7 @@ function FixtureSystem.fill(tank, fixture, litres)
     local buffer = FixtureSystem.ensureBuffer(fixture)
     local tankFluid = tank:getFluidContainer()
     local moved = math.min(litres, buffer:getFreeCapacity(), tankFluid:getAmount())
-    if moved < LEAST_LITRES then
+    if moved < Links.LEAST_FLOW then
         return false
     end
     FluidContainer.Transfer(tankFluid, buffer, moved)

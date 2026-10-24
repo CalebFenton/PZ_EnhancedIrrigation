@@ -23,10 +23,9 @@ local Links = EnhancedIrrigation.Links
 local TreatmentObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Treatment")
 EnhancedIrrigation.TreatmentObject = TreatmentObject
 
--- A head with less than this left counts as empty.
-local LEAST_LITRES = 0.001
--- A draw from an inlet's tank smaller than this isn't worth a sync to every client.
-local LEAST_DRAWN = 0.01
+-- Fewer litres than this left in a head count as none, so the rounding of a pass leaves no drop
+-- that keeps the sand wet.
+local EMPTY_HEAD = 0.001
 
 -- The world's save format: renaming one loses it from saves. unit: the unit's entity script name,
 -- a key of Treatment.UNITS, so the record knows its numbers unloaded too; head: litres of raw water
@@ -100,7 +99,7 @@ function TreatmentObject:draw(tank, hours)
         return false
     end
     local litres = math.min(Links.RATE * hours, fluid:getAmount(), self:spec().head - self.head)
-    if litres < LEAST_DRAWN then
+    if litres < Links.LEAST_FLOW then
         return false
     end
     local tainted = fluid:isTainted()
@@ -123,7 +122,7 @@ function TreatmentObject:pass(unit, litres, fluid)
     basin:setInputLocked(true)
     self.head = self.head - litres
     self.passed = self.passed + litres
-    if self.head < LEAST_LITRES then
+    if self.head < EMPTY_HEAD then
         self.head = 0
         self.headTainted = false
     end
