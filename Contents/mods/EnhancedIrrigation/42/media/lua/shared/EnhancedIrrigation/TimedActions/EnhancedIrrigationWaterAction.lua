@@ -43,7 +43,7 @@ function Action:run()
     if self.finished then
         return
     end
-    EnhancedIrrigation.TapSystem.renew(self)
+    EnhancedIrrigation.Holds.renew(self)
     if EnhancedIrrigation.TapSystem.run(self.tap, hours) then
         self.finished = true
         self:finish()
@@ -67,7 +67,7 @@ function Action:letGo()
         self:run()
     end
     self.finished = true
-    EnhancedIrrigation.TapSystem.release(self)
+    EnhancedIrrigation.Holds.release(self)
 end
 
 -- Whether the character still stands at the tap: what isValid() checks, which the server never

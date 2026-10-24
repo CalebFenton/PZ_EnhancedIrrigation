@@ -44,7 +44,7 @@ function Action:run()
     if self.finished then
         return
     end
-    EnhancedIrrigation.PumpSystem.renew(self)
+    EnhancedIrrigation.Holds.renew(self)
     if EnhancedIrrigation.PumpSystem.pump(self.character, self.pump, hours) then
         self.finished = true
         self:finish()
@@ -75,7 +75,7 @@ function Action:letGo()
         self:run()
     end
     self.finished = true
-    EnhancedIrrigation.PumpSystem.release(self)
+    EnhancedIrrigation.Holds.release(self)
 end
 
 -- The handle worked lifts water; a character who walked off stopped working it. Authority only.

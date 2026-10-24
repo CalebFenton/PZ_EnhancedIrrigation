@@ -201,7 +201,7 @@ handler("lines.holdTap", function(player, args)
     return { held = EnhancedIrrigation.TapSystem.hold(tap, standIn) }
 end)
 
--- Dates the hold on the tap at x, y, z back past TapSystem.HOLD_LAPSE_MS, as if its action had
+-- Dates the hold on the tap at x, y, z back past Holds.LAPSE_MS, as if its action had
 -- been silent that long, so the test doesn't wait it out in real time.
 handler("lines.lapseHold", function(player, args)
     local tap = EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z)
@@ -209,7 +209,7 @@ handler("lines.lapseHold", function(player, args)
     if not (record and record.heldMs) then
         return nil, "a held tap at " .. args.x .. "," .. args.y
     end
-    record.heldMs = getTimestampMs() - EnhancedIrrigation.TapSystem.HOLD_LAPSE_MS - 1
+    record.heldMs = getTimestampMs() - EnhancedIrrigation.Holds.LAPSE_MS - 1
     return {}
 end)
 

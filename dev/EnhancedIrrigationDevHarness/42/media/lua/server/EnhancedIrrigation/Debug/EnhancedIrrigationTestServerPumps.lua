@@ -191,17 +191,17 @@ handler("pumps.hold", function(_, args, defer)
         return nil, "the pump at " .. args.x .. "," .. args.y
     end
     local standIn = { character = { getUsername = function() return args.as end } }
-    defer(function() mod().PumpSystem.release(standIn) end)
+    defer(function() mod().Holds.release(standIn) end)
     return { held = mod().PumpSystem.hold(pump, standIn) }
 end)
 
--- Dates the hold on the pump at x, y, z back past PumpSystem.HOLD_LAPSE_MS, as if its action had
+-- Dates the hold on the pump at x, y, z back past Holds.LAPSE_MS, as if its action had
 -- been silent that long, so the test doesn't wait it out in real time.
 handler("pumps.lapseHold", function(_, args)
     local record = recordAt(args)
     if not (record and record.heldMs) then
         return nil, "a held pump at " .. args.x .. "," .. args.y
     end
-    record.heldMs = getTimestampMs() - mod().PumpSystem.HOLD_LAPSE_MS - 1
+    record.heldMs = getTimestampMs() - mod().Holds.LAPSE_MS - 1
     return {}
 end)
