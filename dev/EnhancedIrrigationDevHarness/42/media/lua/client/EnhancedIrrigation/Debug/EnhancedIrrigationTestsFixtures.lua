@@ -337,6 +337,54 @@ T.test("irrigation_fixtures_vanilla_plumb_reaches_over_a_whole_bath", {
     end,
 })
 
+-- Vanilla's Plumb takes any barrel on the floor above within a tile of the sink, not only the one
+-- vanilla's plumbing prefers now. That one shifts as the barrels fill and drain while the job runs.
+-- With an empty barrel over the sink and one holding water beside it, which vanilla prefers, the job
+-- toward the empty barrel is neither greyed out nor refused, and plumbs the sink to it. A barrel two
+-- tiles off is out of reach. Catches the job refused unless it names vanilla's preferred barrel.
+T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
+    instant = true,
+    sandbox = { PlumbingKeepsTaint = true },
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 2, 0 } }, { bare = true, indoors = true })
+        if not spots then return end
+        self.sink = placeFixture(self, spots[1], SINK)
+        self.empty = T.placeTank(self, spots[1], "above")
+        self.full = T.placeTank(self, spots[2], "above", TANK_LITRES)
+        self.far = T.placeTank(self, spots[3], "above", TANK_LITRES)
+        T.give(self, "tools", { { type = "Base.PipeWrench" } })
+        self.toEmpty, self.toFar = Links.encode(T.at(self.empty)), Links.encode(T.at(self.far))
+        T.step(function()
+            local sink = T.copyOf(self.sink)
+            local source = sink:FindExternalWaterSource()
+            self.preferred = source and EnhancedIrrigation.squareOf(source)
+            self.emptyRefusal = LinkJobs.refusal(T.player(), LinkJobs.PLUMB_ABOVE, sink, self.toEmpty)
+            self.farRefusal = LinkJobs.refusal(T.player(), LinkJobs.PLUMB_ABOVE, sink, self.toFar)
+        end)
+        T.batch(function()
+            T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_ABOVE, with = self.toFar }), "far")
+            T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_ABOVE, with = self.toEmpty,
+                tank = T.at(self.empty) }), "plumbed")
+            T.read(self, "tanks.read", T.at(self.full), "full")
+        end)
+    end,
+    validate = function(self)
+        -- Without this the test can't tell the old check from the new.
+        expect(self.preferred and EnhancedIrrigation.sameSquare(self.preferred, T.at(self.full)),
+            "vanilla's plumbing doesn't prefer the barrel holding water")
+        expect(self.emptyRefusal == nil, "Plumb Above toward the empty barrel is refused: " .. tostring(self.emptyRefusal))
+        expect(self.farRefusal == "Tooltip_EnhancedIrrigation_OutOfReach",
+            "Plumb Above toward a barrel two tiles off is refused with " .. tostring(self.farRefusal))
+        local far = self.reads.far
+        expect(far.done == false and not far.linked, "the server plumbed the sink to a barrel two tiles off")
+        local plumbed = self.reads.plumbed
+        expect(plumbed.done and plumbed.linked, "the server refused to plumb the sink to the empty barrel")
+        expect(plumbed.tank and plumbed.tank.links == 1, "the empty barrel has "
+            .. tostring(plumbed.tank and plumbed.tank.links) .. " links, not the sink's")
+        expect(self.reads.full.links == 0, "the sink was plumbed to the barrel vanilla prefers, not the one chosen")
+    end,
+})
+
 -- Converting what vanilla plumbed ------------------------------------------------------------------
 
 -- Queues a sink in a room plumbed the vanilla way, as a save from before the mod holds it, under a
