@@ -8,6 +8,7 @@ require "BuildingObjects/ISBuildingObject"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Materials"
+require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -67,7 +68,7 @@ function LineCursor:refusal(square)
     end
     local blocker = LineJobs.layBlocker(square, function(px, py, pz) return self:isPending(px, py, pz) end)
     local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.layMaterials(self.kind, self:pendingCount() + 1))
-    return EnhancedIrrigation.refusal(blocker, needs)
+    return EnhancedIrrigation.Jobs.refusal(blocker, needs)
 end
 
 -- The line tiles this side knows, which a tile laid or taken up anywhere changes.

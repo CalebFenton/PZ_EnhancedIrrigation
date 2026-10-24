@@ -13,6 +13,15 @@ local Materials = EnhancedIrrigation.Materials
 -- Only a client that made up a job of its own asks for one no module has.
 local UNKNOWN_JOB = "Tooltip_EnhancedIrrigation_UnknownJob"
 
+--- Why a job is refused: its `blocker` (a Tooltip key) if any, else Short while any of `needs` is
+--- unmet, else nil.
+function Jobs.refusal(blocker, needs)
+    if blocker then
+        return blocker
+    end
+    return EnhancedIrrigation.firstUnmet(needs) and "Tooltip_EnhancedIrrigation_Short" or nil
+end
+
 --- Adds to the job module `Module` what the menu, the action's start() and the authority read of
 --- its jobs. Beside how the job looks (EnhancedIrrigationAction), each row of Module.JOBS has
 --- `blocker(character, object, with)`, what refuses it beside its materials (a Tooltip key or nil),
@@ -41,7 +50,7 @@ function Jobs.define(Module)
     end
 
     function Module.refusal(character, job, object, with)
-        return EnhancedIrrigation.refusal(Module.blocker(character, job, object, with),
+        return Jobs.refusal(Module.blocker(character, job, object, with),
             Module.needs(character, job, object, with))
     end
 end

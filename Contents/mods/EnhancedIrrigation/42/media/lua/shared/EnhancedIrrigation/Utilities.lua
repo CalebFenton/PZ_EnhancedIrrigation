@@ -155,13 +155,4 @@ function EnhancedIrrigation.entityName(isoObject)
     return script and script:getName() or nil
 end
 
---- Why a job is refused: its `blocker` (a Tooltip key) if any, else Short while any of `needs` is
---- unmet, else nil.
-function EnhancedIrrigation.refusal(blocker, needs)
-    if blocker then
-        return blocker
-    end
-    return EnhancedIrrigation.firstUnmet(needs) and "Tooltip_EnhancedIrrigation_Short" or nil
-end
-
 return EnhancedIrrigation
