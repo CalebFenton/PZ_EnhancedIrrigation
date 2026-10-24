@@ -488,9 +488,8 @@ def barrel_filter(col):
     lathe(col, "Filter_Sand", M("sand"), [(0, BARREL_SAND + 0.014), (edge * 0.5, BARREL_SAND + 0.01), (edge, BARREL_SAND)],
           segments=36, shape=lambda angle, row: (0.0, 0.003 * ripples[int(round(angle / 10)) % 36] * (row == 1)))
     angle, z = BARREL_OUTLET
-    a = math.radians(angle)
-    wall = profile_radius(BARREL_PROFILE, z) - 0.01
-    mouth = _outlet(col, (wall * math.cos(a), wall * math.sin(a), z), angle, 0.06, 0.06)
+    wall = heading(angle) * (profile_radius(BARREL_PROFILE, z) - 0.01)
+    mouth = _outlet(col, (wall.x, wall.y, z), angle, 0.06, 0.06)
     # The dish under the spout, its rim a few fingers below the mouth.
     lathe(col, "Filter_Dish", M("clay"), [(0, 0.004), (0.06, 0.004), (0.085, 0.045), (0.079, 0.047), (0.058, 0.012), (0, 0.012)],
           segments=24, at=(mouth.x, mouth.y, 0))
@@ -692,11 +691,11 @@ def metal_drum(col):
         cylinder(col, "Drum_Bung", M("drumdark"), radius, 0.006, at=(x, y, h - 0.016), segments=12)
     lathe(col, "Drum_Seam", M("drum"), [(r, DRUM_SEAM - 0.012), (r + 0.006, DRUM_SEAM), (r, DRUM_SEAM + 0.012)], segments=48)
     for angle in range(-150, 61, 30):
-        a = math.radians(angle)
-        cylinder(col, "Drum_Rivet", M("drumdark"), 0.009, 0.01, at=(r * math.cos(a), r * math.sin(a), DRUM_SEAM - 0.02),
-                 rotate=(90, 0, angle + 90), segments=6)
-    a = math.radians(DRUM_WELD)
-    box(col, "Drum_Weld", M("drumdark"), (0.006, 0.03, h - 0.05), at=(r * math.cos(a), r * math.sin(a), 0.025), rotate=(0, 0, DRUM_WELD))
+        at = heading(angle) * r
+        cylinder(col, "Drum_Rivet", M("drumdark"), 0.009, 0.01, at=(at.x, at.y, DRUM_SEAM - 0.02), rotate=(90, 0, angle + 90),
+                 segments=6)
+    at = heading(DRUM_WELD) * r
+    box(col, "Drum_Weld", M("drumdark"), (0.006, 0.03, h - 0.05), at=(at.x, at.y, 0.025), rotate=(0, 0, DRUM_WELD))
     return [obj for obj in col.objects if obj not in before and obj.parent is None]
 
 
@@ -718,11 +717,9 @@ def _boiler_drum(col):
     group(col, "Boiler_Drum", metal_drum(col), at=(0, 0, FIREBOX_HEIGHT))
     wall = DRUM_RADIUS - 0.01
     angle, z = DRUM_INLET
-    a = math.radians(angle)
-    _stub(col, (wall * math.cos(a), wall * math.sin(a), FIREBOX_HEIGHT + z), angle, 0.06)
+    _stub(col, heading(angle) * wall + Vector((0, 0, FIREBOX_HEIGHT + z)), angle, 0.06)
     angle, z = DRUM_TAP
-    a = math.radians(angle)
-    start = Vector((wall * math.cos(a), wall * math.sin(a), FIREBOX_HEIGHT + z))
+    start = heading(angle) * wall + Vector((0, 0, FIREBOX_HEIGHT + z))
     _outlet(col, start, angle, 0.09, 0.05)
     # A brass globe valve on the run, its red handwheel uppermost, as on the tap at a line's head.
     valve = start + heading(angle) * 0.05
