@@ -95,30 +95,44 @@ handler("pumpHouse.shutoff", function(_, args, defer)
     return { shutoff = mod().PumpHouse.shutoffHour(), now = mod().now(), grid = getSandboxOptions():doesPowerGridExist() }
 end)
 
--- The appliance drawn as `args.sprite` at x, y, z: whether it runs and whether its pump is gone.
+-- The appliance drawn as `args.sprite` at x, y, z: whether it runs, whether a washer-dryer is set to
+-- dry, and whether its pump is gone.
 handler("appliances.state", function(_, args)
     local square = Server.squareAt(args)
     local appliance = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
     if not appliance then
         return { found = false }
     end
-    local switched = instanceof(appliance, "IsoClothingWasher") or instanceof(appliance, "IsoCombinationWasherDryer")
+    local combo = instanceof(appliance, "IsoCombinationWasherDryer")
+    local switched = combo or instanceof(appliance, "IsoClothingWasher")
     return { found = true, activated = switched and appliance:isActivated() or false,
-        stripped = mod().Appliances.isStripped(appliance) }
+        dryer = combo and appliance:isModeDryer(), stripped = mod().Appliances.isStripped(appliance) }
 end)
 
--- Runs vanilla's switch of the washer drawn as `args.sprite` at x, y, z on the authority, as its
--- action's complete() does once a client asks (ISToggleClothingWasher), whatever the client checked.
--- Answers whether it ran and the washer's state after. A refused action on a multiplayer client
--- would clear the test's queue, so the switch is run here rather than queued.
+-- Runs vanilla's switch of the washer or washer-dryer drawn as `args.sprite` at x, y, z on the
+-- authority, as its action's complete() does once a client asks (ISToggleClothingWasher,
+-- ISToggleComboWasherDryer), whatever the client checked; a washer-dryer set to `args.mode`
+-- ("washer" or "dryer") first, as ISSetComboWasherDryerMode does. Answers whether it ran and the
+-- appliance's state after. A refused action on a multiplayer client would clear the test's queue,
+-- so the switch is run here rather than queued.
 handler("appliances.toggle", function(player, args)
     local square = Server.squareAt(args)
     local washer = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
     if not washer then
         return nil, "the washer at " .. args.x .. "," .. args.y
     end
-    local done = ISToggleClothingWasher:new(player, washer):complete()
-    return { done = done == true, activated = washer:isActivated(), stripped = mod().Appliances.isStripped(washer) }
+    local combo = instanceof(washer, "IsoCombinationWasherDryer")
+    local done
+    if combo then
+        if args.mode then
+            ISSetComboWasherDryerMode:new(player, washer, args.mode):complete()
+        end
+        done = ISToggleComboWasherDryer:new(player, washer):complete()
+    else
+        done = ISToggleClothingWasher:new(player, washer):complete()
+    end
+    return { done = done == true, activated = washer:isActivated(), dryer = combo and washer:isModeDryer(),
+        stripped = mod().Appliances.isStripped(washer) }
 end)
 
 -- Every item of `args.type` the server's copy of the character carries, bags included: its

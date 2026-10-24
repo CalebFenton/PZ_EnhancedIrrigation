@@ -41,10 +41,13 @@ function Appliances.strip(object)
     modData.movableData = type(modData.movableData) == "table" and modData.movableData or {}
     modData.movableData[Appliances.STRIPPED] = true
     object:transmitModData()
-    if (instanceof(object, "IsoClothingWasher") or instanceof(object, "IsoCombinationWasherDryer"))
-            and object:isActivated() then
+    local combo = instanceof(object, "IsoCombinationWasherDryer")
+    if (combo or instanceof(object, "IsoClothingWasher")) and object:isActivated() then
         object:setActivated(false)
-        object:sendObjectChange(IsoObjectChange.WASHER_STATE)
+        -- A washer-dryer carries its switch as the change of the mode it is in, and ignores the
+        -- other's (ISToggleComboWasherDryer).
+        object:sendObjectChange((combo and object:isModeDryer()) and IsoObjectChange.DRYER_STATE
+            or IsoObjectChange.WASHER_STATE)
     end
 end
 

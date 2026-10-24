@@ -55,18 +55,19 @@ local function removeFixtureAt(x, y, z)
 end
 
 -- Places the fixture tile `args.sprite` at x, y, z: a washer as the game makes one
--- (IsoClothingWasher), anything else a plain object. With `args.plumbed`, plumbed the vanilla way
--- (ISPlumbItem:complete), as a save from before the mod holds it; with `args.buffer` = { litres,
--- tainted }, given a buffer holding that much. Answers its state. Removed, with its links, when the
--- test ends.
+-- (IsoClothingWasher), with `args.combo` a washer-dryer (IsoCombinationWasherDryer), anything else
+-- a plain object. With `args.plumbed`, plumbed the vanilla way (ISPlumbItem:complete), as a save
+-- from before the mod holds it; with `args.buffer` = { litres, tainted }, given a buffer holding
+-- that much. Answers its state. Removed, with its links, when the test ends.
 handler("fixtures.place", function(_, args, defer)
     local square = Server.squareAt(args)
     if not square then
         return nil, "a loaded square for " .. tostring(args.sprite)
     end
     local fixture
-    if args.washer then
-        fixture = IsoClothingWasher.new(getCell(), square, getSprite(args.sprite))
+    if args.washer or args.combo then
+        local Kind = args.combo and IsoCombinationWasherDryer or IsoClothingWasher
+        fixture = Kind.new(getCell(), square, getSprite(args.sprite))
         fixture:createContainersFromSpriteProperties()
         square:AddTileObject(fixture)
         if isServer() then
