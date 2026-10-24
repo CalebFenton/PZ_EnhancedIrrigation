@@ -3,7 +3,7 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 -- An action with no end of its own, modelled on vanilla's open-ended ISAddWaterToTrough: the
--- character holds its target (Holds.lua) until they stop or walk off, or the authority stops it.
+-- character holds its target (Holds) until they stop or walk off, or the authority stops it.
 -- The authority runs it for the world time gone by, on a timed event the multiplayer server raises
 -- itself (emulateAnimEvent), or from update() in single player, and once more as it ends.
 --
