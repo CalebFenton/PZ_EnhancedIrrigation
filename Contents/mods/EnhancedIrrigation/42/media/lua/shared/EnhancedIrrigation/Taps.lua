@@ -40,11 +40,14 @@ function Taps.tankFor(tap)
 end
 
 --- Why `character` can't run water from the tap tile `tap`, a Tooltip key, or nil: someone else
---- holds it (TapSystem.hold), or no tank can feed it.
+--- holds it (TapSystem.hold), its valve runs it (ValveSystem.lua), or no tank can feed it.
 function Taps.blocker(tap, character)
     local state = Lines.stateOf(tap)
     if state and state.heldBy and state.heldBy ~= character:getUsername() then
         return "Tooltip_EnhancedIrrigation_TapInUse"
+    end
+    if state and state.valveOpen then
+        return "Tooltip_EnhancedIrrigation_ValveRunning"
     end
     local _, refusal = Taps.tankFor(tap)
     return refusal

@@ -1,7 +1,7 @@
 -- The hands-on jobs at a garden line: laying a tile, drilling holes, fitting the tap, patching a
--- crack, draining, setting and taking a sprinkler and taking the pipe up, done on the authority by
--- server/EnhancedIrrigation/Lines/LineSystem.lua. Running water from the tap is Taps.lua's, and from
--- a pump Pumps.lua's.
+-- crack, draining, setting and taking a sprinkler, fitting, setting and taking off a tap's valve,
+-- and taking the pipe up, done on the authority by server/EnhancedIrrigation/Lines/LineSystem.lua.
+-- Running water from the tap is Taps.lua's, from a valve Valves.lua's, and from a pump Pumps.lua's.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -11,6 +11,8 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/Sprinklers"
+require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Taps"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LineJobs = {}
@@ -20,7 +22,8 @@ local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 local Pipes = EnhancedIrrigation.Pipes
 local Materials = EnhancedIrrigation.Materials
-local Pumps, Sprinklers = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers
+local Pumps, Sprinklers, Valves = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers, EnhancedIrrigation.Valves
+local Taps = EnhancedIrrigation.Taps
 
 LineJobs.LAY = "LayLine"
 LineJobs.DRILL = "DrillHoles"
@@ -30,6 +33,13 @@ LineJobs.DRAIN = "DrainLine"
 LineJobs.TAKE_UP = "TakeUpPipe"
 LineJobs.SET_SPRINKLER = "SetSprinkler"
 LineJobs.TAKE_SPRINKLER = "TakeSprinkler"
+LineJobs.FIT_VALVE = "FitValve"
+LineJobs.TAKE_VALVE = "TakeValve"
+LineJobs.WIND_VALVE = "WindValve"
+LineJobs.SET_VALVE_TIMER = "SetValveTimer"
+
+-- How long winding or setting a valve takes: a turn of a knob, as long as a Pump House's switch.
+LineJobs.VALVE_MINUTES = 1
 
 local function firstTagged(tag)
     return function(character)
@@ -161,7 +171,28 @@ local function carriesSprinkler(character, item)
         and character:getInventory():containsRecursive(item)
 end
 
--- Lay's `with` is the pipe kind, Set Sprinkler's the sprinkler carried; the others' is nil.
+-- Whether `item` is a valve (Valves.ITEMS) `character` carries.
+local function carriesValve(character, item)
+    return instanceof(item, "InventoryItem") and Valves.kindOf(item:getFullType()) ~= nil
+        and character:getInventory():containsRecursive(item)
+end
+
+-- Why a job at a tap's valve of `kind` ("windup" or "timer") can't be done at `object`, a Tooltip
+-- key, or nil: it's no line tile, or has no such valve.
+local function valveBlocker(object, kind)
+    local state = Lines.stateOf(object)
+    if not state then
+        return "Tooltip_EnhancedIrrigation_NoLine"
+    end
+    if not (state.valve and Valves.kindOf(state.valve.item) == kind) then
+        return "Tooltip_EnhancedIrrigation_NoValveHere"
+    end
+    return nil
+end
+
+-- Lay's `with` is the pipe kind, Set Sprinkler's the sprinkler carried, Fit Valve's the valve
+-- carried, Wind Valve's its minutes and Set Valve Timer's its setting (Valves.decodeWind and
+-- decodeTimer); the others' is nil.
 LineJobs.JOBS = {
     [LineJobs.LAY] = {
         minutes = 3,
@@ -233,8 +264,9 @@ LineJobs.JOBS = {
         blocker = atLine(function(character, object)
             local full = false
             for _, tile in ipairs(Lines.component(object:getX(), object:getY(), object:getZ())) do
-                -- Its pump holds it, as a character holds a tap (LineSystem.showRunning).
-                if tile.state.running then
+                -- Its pump or its tap's valve holds it, as a character holds a tap
+                -- (LineSystem.showRunning, ValveSystem.lua).
+                if tile.state.running or tile.state.valveOpen then
                     return "Tooltip_EnhancedIrrigation_LineRunning"
                 end
                 full = full or tile.state.full
@@ -271,6 +303,62 @@ LineJobs.JOBS = {
             return not state.sprinkler and "Tooltip_EnhancedIrrigation_NoSprinklerHere" or nil
         end),
         materials = { Pipes.WRENCH },
+    },
+    -- A hose-end valve screws onto the tap's spout. It goes on as the item carried, taken by the
+    -- job itself.
+    [LineJobs.FIT_VALVE] = {
+        minutes = 5, sound = "RepairWithWrench", equip = holdWrench,
+        blocker = function(character, object, item)
+            local state = Lines.stateOf(object)
+            if not state then
+                return "Tooltip_EnhancedIrrigation_NoLine"
+            end
+            if not state.tap then
+                return "Tooltip_EnhancedIrrigation_NoTap"
+            end
+            if state.valve then
+                return "Tooltip_EnhancedIrrigation_HasValve"
+            end
+            return not carriesValve(character, item) and "Tooltip_EnhancedIrrigation_NoValve" or nil
+        end,
+        materials = { Pipes.WRENCH },
+    },
+    [LineJobs.TAKE_VALVE] = {
+        minutes = 3, sound = "RepairWithWrench", equip = holdWrench,
+        blocker = atLine(function(character, object, state)
+            return not state.valve and "Tooltip_EnhancedIrrigation_NoValveHere" or nil
+        end),
+        materials = { Pipes.WRENCH },
+    },
+    -- Winding it down to nothing shuts it whatever the tap; winding it up needs a tap that would
+    -- run: nobody holding it, and a tank to feed it.
+    [LineJobs.WIND_VALVE] = {
+        minutes = LineJobs.VALVE_MINUTES, position = "Mid",
+        blocker = function(character, object, with)
+            local refusal = valveBlocker(object, "windup")
+            if refusal then
+                return refusal
+            end
+            local minutes = Valves.decodeWind(with)
+            if not minutes then
+                return "Tooltip_EnhancedIrrigation_UnknownJob"
+            end
+            if minutes == 0 then
+                return nil
+            end
+            if Lines.stateOf(object).heldBy then
+                return "Tooltip_EnhancedIrrigation_TapInUse"
+            end
+            local _, noTank = Taps.tankFor(object)
+            return noTank
+        end,
+    },
+    [LineJobs.SET_VALVE_TIMER] = {
+        minutes = LineJobs.VALVE_MINUTES, position = "Mid",
+        blocker = function(character, object, with)
+            return valveBlocker(object, "timer")
+                or (not Valves.decodeTimer(with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil)
+        end,
     },
 }
 

@@ -82,6 +82,9 @@ local TOOLS = {
     { "Base.StoneDrill", 1 }, { "Base.Hammer", 1 }, { "Base.Nails", LINE_TILES }, { "Base.Saw", 1 },
 }
 local READING = { { "EnhancedIrrigation.CisternsForKentucky", 1 }, { "Base.WateredCan", 1, FluidType.Water } }
+-- One of each valve, to fit to the lines' taps.
+local VALVES = { { "EnhancedIrrigation.WindUpValve", 1 }, { "EnhancedIrrigation.TimerValve", 1 },
+    { "EnhancedIrrigation.SprinklerTimer", 1 } }
 
 -- The mod's build-menu recipes, which PZHarness.Test.learnRecipes doesn't teach: it teaches only
 -- craftRecipes.
@@ -136,7 +139,7 @@ local function itemGroups(recipes)
     for _, joint in ipairs(JOINTS) do
         table.insert(joints, { joint, itemsFor(joint, LENGTHS) })
     end
-    return { pipes, joints, TOOLS, standMaterials(recipes), READING }
+    return { pipes, joints, TOOLS, standMaterials(recipes), READING, VALVES }
 end
 
 local function isKnown(fullType)

@@ -14,6 +14,7 @@ require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/Sprinklers"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
+require "EnhancedIrrigation/Lines/ValveSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LineSystem = {}
@@ -162,8 +163,8 @@ local DO = {
         record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
         return true
     end,
-    -- Each item comes back as it went in. A length still cracked is scrap. The tap's length and the
-    -- sprinkler come back with their tile.
+    -- Each item comes back as it went in. A length still cracked is scrap. The tap's length, its
+    -- valve and the sprinkler come back with their tile.
     [LineJobs.TAKE_UP] = function(character, object)
         local record = Lines.recordOf(object)
         if not record.cracked then
@@ -171,6 +172,9 @@ local DO = {
         end
         if record.tap and record.tapMaterial then
             Pipes.giveBack(character, record.tapMaterial, 1, record.tapConditions)
+        end
+        if record.valve then
+            EnhancedIrrigation.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(record))
         end
         if record.sprinkler then
             EnhancedIrrigation.giveItems(character, LineSystem.takeSprinkler(record))
@@ -186,6 +190,23 @@ local DO = {
     end,
     [LineJobs.TAKE_SPRINKLER] = function(character, object)
         EnhancedIrrigation.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
+        return true
+    end,
+    [LineJobs.FIT_VALVE] = function(character, object, item)
+        EnhancedIrrigation.takeItem(character, item)
+        EnhancedIrrigation.ValveSystem.fit(Lines.recordOf(object), item)
+        return true
+    end,
+    [LineJobs.TAKE_VALVE] = function(character, object)
+        EnhancedIrrigation.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(Lines.recordOf(object)))
+        return true
+    end,
+    [LineJobs.WIND_VALVE] = function(character, object, with)
+        EnhancedIrrigation.ValveSystem.wind(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeWind(with))
+        return true
+    end,
+    [LineJobs.SET_VALVE_TIMER] = function(character, object, with)
+        EnhancedIrrigation.ValveSystem.setTimer(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeTimer(with))
         return true
     end,
 }

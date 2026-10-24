@@ -85,5 +85,9 @@
     "Tooltip_EnhancedIrrigation_TimerValveItem": "An alarm clock wired to a water valve. Fit it to a garden line's tap or a Pump House and set it: every day it runs the tap or the pump at the hour you pick, for the minutes you pick, while it has power.",
     "Tooltip_EnhancedIrrigation_SprinklerTimerItem": "A plug-in garden timer. Fit it to a garden line's tap or a Pump House and set it: every day it runs the tap or the pump at the hour you pick, for the minutes you pick, while it has power.",
     "Tooltip_EnhancedIrrigation_MakeWindUpValve": "A kitchen timer screwed to a length of hose it pinches shut as it runs down.",
-    "Tooltip_EnhancedIrrigation_MakeTimerValve": "An alarm clock wired to open a water valve at its hour each day."
+    "Tooltip_EnhancedIrrigation_MakeTimerValve": "An alarm clock wired to open a water valve at its hour each day.",
+    "Tooltip_EnhancedIrrigation_HasValve": "The tap already has a valve. Take it off first.",
+    "Tooltip_EnhancedIrrigation_NoValve": "Needs a Wind-up Valve, a Timer Valve or a Sprinkler Timer in your inventory.",
+    "Tooltip_EnhancedIrrigation_NoValveHere": "There is no such valve on this tap.",
+    "Tooltip_EnhancedIrrigation_ValveRunning": "The tap's valve is running it."
 }

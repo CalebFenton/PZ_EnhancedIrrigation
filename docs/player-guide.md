@@ -2,7 +2,7 @@
 
 How the mod's systems work, for players who want more than the Workshop page tells them, and where to start looking for the gear. Figures assume the default sandbox settings and vanilla's own plant figures: 1 L of water is 50 water points, a plant holds 100, and a plant uses about 5 a day.
 
-This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, sand filters, a filter crock and boilers that make rain water safe to drink, hand pumps that lift water from a well, a barrel or a river into a tank or a garden line, Pump Houses that do it on electric power, and lawn sprinklers that a pumped line drives. Timers are planned, but they aren't in the game yet.
+This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, sand filters, a filter crock and boilers that make rain water safe to drink, hand pumps that lift water from a well, a barrel or a river into a tank or a garden line, Pump Houses that do it on electric power, lawn sprinklers that a pumped line drives, and valves and timers that run a tap with nobody holding it.
 
 ## Mechanics
 
@@ -151,19 +151,34 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Wear | Running with nothing to draw wears the part ten times as fast. At 0% it burns out, stops and switches off. |
 | Repair Pump | Electricity 2; a screwdriver, Scrap Electronics and a Tire Piece; 30 minutes. Brings the part back to 10% below its last ceiling (90%, then 80%, …), and is refused while the part is better than that. The ceiling travels with the part. |
 | Away | While the house's area isn't loaded it waits, and catches the time up when you come back: grid hours count up to the shutoff, a generator's as far as its fuel goes, and nothing if it has no power when you return. |
-| Salvage Pump | On a washing machine, washer-dryer or dishwasher: Electricity 2 (learned automatically at that level), a screwdriver and pliers, 30 minutes. Gives an Appliance Pump at 60-100% and leaves the appliance where it stands, switched off; it never switches on again ("Its pump has been salvaged"), even moved. Refused on one already stripped. |
+| Salvage Pump | On a washing machine, washer-dryer or dishwasher: Electricity 2 (learned automatically at that level), a screwdriver and pliers, 30 minutes. Gives an Appliance Pump at 60-100% and a Water Valve, and leaves the appliance where it stands, switched off; it never switches on again ("Its pump has been salvaged"), even moved. Refused on one already stripped. |
 | Make Utility Pump | Electricity 3 and Welding 2, at a table or counter: a Blower Fan, 2 small steel sheets, 4 screws, 2 electrical wires, a rubber hose, 2 uses of a welding torch and 1 of welding rods; a welder mask and a screwdriver. The pump comes out at 80%, its ceiling. Learned at Electricity 6 or by researching a Utility Pump. |
+
+### Valves and timers
+
+| Mechanic | How it works |
+|---|---|
+| Three valves | A **Wind-up Valve** runs a tap for the minutes you wind it, then shuts. A **Timer Valve** or a **Sprinkler Timer** runs it every day at the hour you set, for the minutes you set, while it has power. All three run the tap as if you held it: every hole on the line runs, the soil darkens and you hear water. None of them wears out. |
+| Fit Valve, Take Off Valve | From a tap's menu, with a Pipe Wrench, which you keep: Fit Valve (5 minutes) screws on the valve you pick from the ones you carry, one to a tap; Take Off Valve (3 minutes) gives it back and forgets its setting. Take Up Pipe on the tap's tile gives it back too. |
+| Wind Valve | Opens the valve's knob, the oven timer's: 1 to 5, 10 to 30 in fives, then 40, 50, 60, 90 or 120 minutes. **Wind** turns it there (1 minute at the tap); winding to 0 shuts it. Greyed out while someone holds the tap or no tank can feed it. |
+| Set Timer | Opens the timer's panel: the hour it starts, stepped with ^ and v, and the same knob for how long it runs; 0 never runs. **Set** sets it (1 minute at the tap). |
+| How long to run it | A tank one level up gives each hole a little under 1 point of plant water a minute, and a plant drinks about 5 points a day, so about 6 minutes a day keeps a bed level and the soil dries off what up to 15 gives past that (Too much water, above). A tank two levels up runs faster, so less. Hold the tap and watch the soil to judge it. |
+| While it runs | The tap's menu says **water running**, and Water from Tank and Drain Line are greyed out. If someone holds the tap when a timer would open, their watering counts and the timer's doesn't. |
+| Power | A timer needs its tap's square powered, as a washer does: the grid in or right beside a room until the shutoff, a generator in reach, or a Renewable Energy bank. It draws too little to bill. Without power it doesn't open. |
+| Away | While the tap's area isn't loaded its valve waits, then catches up when you come back (a week at most): every time it would have run, from the tank as it stands then. A timer counts the hours only if it has power when you return, or the grid's until the shutoff if the grid powered it when you left. |
+| Make Wind-up Valve | Anyone, at a table or counter: a kitchen timer, 2 screws and a rubber hose; a screwdriver, which you keep. |
+| Make Timer Valve | Electricity 2, at a table or counter: an alarm clock, a Water Valve, 2 electrical wires and scrap electronics; a screwdriver, pliers and a Pipe Wrench, which you keep. Gives Electricity XP. Learned at Electricity 4 or by researching a Water Valve or a Sprinkler Timer, from Electricity 1. |
 
 ### Learning and options
 
 | Mechanic | How it works |
 |---|---|
 | *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures, filters, boilers and pumps), the Wooden and Iron Hand Pumps, both Pump Houses and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
-| Skills | Carpentry 4 teaches the Wooden Hand Pump, Carpentry 5 the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 4 Make Pipe Sprinkler, Welding 5 the welded-firebox Boiler and the Iron Hand Pump, Pottery 5 the Filter Crock (shaping, firing and setting it up), Electricity 2 Salvage Pump, Electricity 6 Make Utility Pump; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
-| Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. Researching a Metal Drum teaches the stone-firebox Boiler from Masonry 1 and the welded-firebox Boiler from Welding 2. Researching an Appliance Pump or a Utility Pump teaches the Pump Houses; a Utility Pump also Make Utility Pump. Researching a Lawn Sprinkler, from Welding 1, teaches Make Pipe Sprinkler. |
-| Parts loot | A sandbox option multiplies how often Utility Pumps and Lawn Sprinklers turn up (0 leaves them out). |
-| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Set and Take Sprinkler, Pour In, Clean Filter, Scrub Crock, Take Down, Patch Drum, Pump, Replace Seal, Fit Pump, Take Out Pump, Turn On and Off, and Repair Pump (Electricity 2). |
-| XP | Building the Tank Stand, the Barrel Filter and the Wooden Hand Pump give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler, the Iron Hand Pump and Make Pipe Sprinkler give Welding XP; shaping a Filter Crock gives Pottery XP. |
+| Skills | Carpentry 4 teaches the Wooden Hand Pump, Carpentry 5 the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 4 Make Pipe Sprinkler, Welding 5 the welded-firebox Boiler and the Iron Hand Pump, Pottery 5 the Filter Crock (shaping, firing and setting it up), Electricity 2 Salvage Pump, Electricity 4 Make Timer Valve, Electricity 6 Make Utility Pump; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
+| Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. Researching a Metal Drum teaches the stone-firebox Boiler from Masonry 1 and the welded-firebox Boiler from Welding 2. Researching an Appliance Pump or a Utility Pump teaches the Pump Houses; a Utility Pump also Make Utility Pump. Researching a Lawn Sprinkler, from Welding 1, teaches Make Pipe Sprinkler. Researching a Water Valve or a Sprinkler Timer, from Electricity 1, teaches Make Timer Valve. |
+| Parts loot | A sandbox option multiplies how often Utility Pumps, Lawn Sprinklers, Sprinkler Timers and Water Valves turn up (0 leaves them out). |
+| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Set and Take Sprinkler, Pour In, Clean Filter, Scrub Crock, Take Down, Patch Drum, Pump, Replace Seal, Fit Pump, Take Out Pump, Turn On and Off, Fit and Take Off Valve, Wind Valve, Set Timer, Make Wind-up Valve, and Repair Pump (Electricity 2). |
+| XP | Building the Tank Stand, the Barrel Filter and the Wooden Hand Pump give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler, the Iron Hand Pump and Make Pipe Sprinkler give Welding XP; shaping a Filter Crock gives Pottery XP; Make Timer Valve gives Electricity XP. |
 | Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. **Plumbing keeps taint** (on by default): vanilla's Plumb makes the mod's connection and old plumbed fixtures change over; off, vanilla's plumbing is untouched and a rooftop barrel's water comes out clean. |
 | Adding to a save | The pamphlet turns up only in containers nobody has opened yet. Barrels already in your world count as tanks straight away. |
 
@@ -175,6 +190,10 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Appliance Pump | Part, weight 1 | Salvage Pump on a washer or dishwasher | A Pump House's weak pump |
 | Utility Pump | Part, weight 6 | Found in hardware stores, the Gigamart, garages and basements; or Make Utility Pump | A Pump House's strong pump |
 | Lawn Sprinkler | Part, weight 1 | Found in garden stores, garages, sheds and farm crates; or Make Pipe Sprinkler (Welding 2: an iron pipe, an empty gardening spray can, 2 screws; hand drill, pliers) | Set on a line tile, waters a 5 × 3 patch while a pump drives the line |
+| Water Valve | Part, weight 0.3 | Salvage Pump on a washer or dishwasher; rarely in plumbing supplies | Make Timer Valve |
+| Wind-up Valve | Valve, weight 0.6 | Make Wind-up Valve (anyone: a kitchen timer, 2 screws, a rubber hose; screwdriver) | Fitted to a tap, runs it for the minutes you wind |
+| Timer Valve | Valve, weight 1.3 | Make Timer Valve (Electricity 2: an alarm clock, a Water Valve, 2 electrical wires, scrap electronics; screwdriver, pliers, Pipe Wrench) | Fitted to a tap, runs it at its hour every day while powered |
+| Sprinkler Timer | Valve, weight 0.5 | Found in garden stores and hardware stores' and the Gigamart's farm aisles | The same as a Timer Valve |
 | Tank Stand | Built | Carpentry 3: 4 logs, 6 planks, 8 nails; hammer, saw | Holds one rain barrel a level up |
 | Raised Rain Barrel | A barrel on a stand | Set Barrel on Stand | A 600 L tank a level up |
 | Barrel Filter | Built | Carpentry 2: 6 planks, 5 nails, gravel bag, 2 sand bags, 5 charcoal, a pipe and a joint; hammer, shovel | About 100 L of clean water a day, once ripe |
@@ -199,7 +218,7 @@ Everything else is vanilla:
 | Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet; plastic and iron pipe build the hand pumps; an iron pipe makes a sprinkler |
 | Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack; the Barrel Filter's outlet |
 | Bucket of Clay Cement or Concrete | Joints in clay pipe; the Brick Filter; the stone-firebox Boiler |
-| Pipe Wrench | Laying iron or lead line, Fit Tap, Set and Take Sprinkler, Plumb to Tank, Plumb Inlet and Outlet, a pump's Plumb Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler |
+| Pipe Wrench | Laying iron or lead line, Fit Tap, Set and Take Sprinkler, Fit and Take Off Valve, Plumb to Tank, Plumb Inlet and Outlet, a pump's Plumb Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler; Make Timer Valve |
 | Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes; a drill builds the Wooden Hand Pump, a Hand Drill the Iron one and makes a sprinkler |
 | Rain barrel | Set on a Tank Stand |
 | Sand Bag, Gravel Bag, Charcoal, Clay Bricks | The filters |
@@ -210,11 +229,12 @@ Everything else is vanilla:
 | Clay Bricks or Stone Blocks, Iron Pipe | The stone-firebox Boiler |
 | Small Steel Sheet, Screws, Welding Torch, Welding Rods, Welder Mask | The welded-firebox Boiler; Patch Drum; the Iron Hand Pump; screws for Make Pipe Sprinkler |
 | Empty Gardening Spray Can | A made sprinkler's head |
-| Rubber Hose | A hand pump's intake |
+| Rubber Hose | A hand pump's intake; a Wind-up Valve |
 | Leather Strips, Tire Piece, Tarp Piece, Plunger | A hand pump's seal; the Plunger only through Replace Seal |
-| Screwdriver | Replace Seal; Pump Houses, Fit and Take Out Pump, Repair Pump, Salvage Pump |
-| Pliers | Salvage Pump; Make Pipe Sprinkler |
-| Electrical Wire, Scrap Electronics, Blower Fan | Pump Houses; Repair Pump; Make Utility Pump |
+| Screwdriver | Replace Seal; Pump Houses, Fit and Take Out Pump, Repair Pump, Salvage Pump; the valves |
+| Pliers | Salvage Pump; Make Pipe Sprinkler; Make Timer Valve |
+| Electrical Wire, Scrap Electronics, Blower Fan | Pump Houses; Repair Pump; Make Utility Pump; Make Timer Valve |
+| Kitchen Timer, Alarm Clock | Make Wind-up Valve; Make Timer Valve |
 | Well, forest hand pump, river or pond, water trough | Water for a hand pump |
 | Logs, planks and anything else vanilla burns; a lighter or matches and tinder | Fuelling and lighting a boiler, as any vanilla fire |
 | Shovel, garden trowel, mason's trowel | Building the filters and the stone-firebox Boiler; Clean Filter |
@@ -228,6 +248,8 @@ Everything else is vanilla:
 | *Cisterns for Kentucky* | Garden centres' shelves most of all; farm crates, homesteaders' boxes, hardware stores' farm aisles, libraries' gardening shelves and magazine racks, post offices; less often farm tool cabinets, barn tool crates, garden-centre tools, the Gigamart's farm aisle and libraries' reference shelves | Uncommon: about as often as one of vanilla's farming magazines |
 | Utility Pump | Hardware stores' and the Gigamart's tools; less often garage tools and the tool crates of garages and basements; worn, in old tool crates | Rare: about as often as a Blower Fan |
 | Lawn Sprinkler | Garden stores' tools and shelves; less often garage tools and the farm and garden crates of sheds, barns and garages; worn, in old tool crates | Rare: a fifth to a tenth as often as an empty gardening spray can |
+| Sprinkler Timer | Garden stores' tools and shelves, hardware stores' farm aisle; less often the Gigamart's | Rare: as often as a Lawn Sprinkler |
+| Water Valve | Plumbing supplies | Very rare: Salvage Pump is the way to get one |
 | Plastic pipe | Hardware stores' plumbing aisle, craft supplies, junk bins | Uncommon |
 | Iron pipe | Crates of pipe in warehouses and on building sites, plumbing aisles, plumbers' vans | Common |
 | Lead pipe | Plumbing aisles, construction trucks, wherever vanilla keeps melee weapons | Uncommon |

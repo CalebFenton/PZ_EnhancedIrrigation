@@ -57,10 +57,10 @@ local function letGoWhere(matches)
 end
 
 --- Holds the tap at the tile `tap` for the Water from Tank `action`, unless another action holds
---- it. Returns whether `action` holds it now.
+--- it or its valve runs it (ValveSystem.lua). Returns whether `action` holds it now.
 function TapSystem.hold(tap, action)
     local record = Lines.recordOf(tap)
-    if not record or (record.holder and record.holder ~= action and not lapsed(record)) then
+    if not record or record.valveOpen or (record.holder and record.holder ~= action and not lapsed(record)) then
         return false
     end
     record.holder, record.heldBy, record.heldMs = action, action.character:getUsername(), getTimestampMs()

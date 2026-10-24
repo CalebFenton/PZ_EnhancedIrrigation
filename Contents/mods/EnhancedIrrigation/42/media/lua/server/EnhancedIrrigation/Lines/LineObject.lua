@@ -30,11 +30,12 @@ EnhancedIrrigation.LineObject = LineObject
 -- sprinkler: { condition, ceiling } of the Lawn Sprinkler set on it, as its item had them, nil for
 -- none; sprinklerSoak: the soak of squares with no line tile that its sprinkler soaked, by
 -- Sprinklers.offsetKey from it, nil for none, a square's on one record only, the first sprinkler's
--- to soak it (addSprinklerSoak). Unsaved, `running`: its pump runs the line now
--- (LineSystem.showRunning), which a loaded world's pumps say again.
+-- to soak it (addSprinklerSoak); valve: the valve on its tap, nil for none (ValveSystem.lua).
+-- Unsaved, `running`: its pump runs the line now (LineSystem.showRunning), which a loaded world's
+-- pumps say again; and `valveOpen`: its valve runs the line now, which the valve says again.
 LineObject.SAVED_FIELDS = {
-    "material", "holed", "cracked", "conditions", "full", "soak",
-    "tap", "tapMaterial", "tapConditions", "wetUntil", "exterior", "lastHour", "sprinkler", "sprinklerSoak",
+    "material", "holed", "cracked", "conditions", "full", "soak", "tap", "tapMaterial", "tapConditions",
+    "wetUntil", "exterior", "lastHour", "sprinkler", "sprinklerSoak", "valve",
 }
 
 function LineObject:initNew()
@@ -195,13 +196,17 @@ end
 
 -- The overlays a tile may carry.
 local OVERLAYS = { [Sprites.TAP] = true, [Sprites.SPRINKLER] = true }
+for _, sprite in pairs(Sprites.TAP_VALVES) do
+    OVERLAYS[sprite] = true
+end
 
 local function isOverlay(name)
     return OVERLAYS[name] == true
 end
 
 --- Shows the tile as its record says: the pipe joined to its neighbours, wet or dry, with the tap's
---- riser or the sprinkler over it if it has one. Does nothing while its chunk is unloaded.
+--- riser and its valve or the sprinkler over it if it has one. Does nothing while its chunk is
+--- unloaded.
 function LineObject:show()
     local isoObject = self:getIsoObject()
     if not isoObject then
@@ -212,6 +217,9 @@ function LineObject:show()
     local overlays = {}
     if self.tap then
         table.insert(overlays, Sprites.TAP)
+    end
+    if self.valve then
+        table.insert(overlays, Sprites.TAP_VALVES[self.valve.item])
     end
     if self.sprinkler then
         table.insert(overlays, Sprites.SPRINKLER)
@@ -227,7 +235,8 @@ end
 -- What every client keeps: the fields the shared refusals read, under the record's names
 -- (Lines.stateAt), and the soil's words for the plant info, decided from the soak itself, as the
 -- rot reads it, so a word never disagrees with the roots and a little drying sends nothing: under
--- the tile, and where its sprinkler soaked squares off the line, by Sprinklers.offsetKey.
+-- the tile, and where its sprinkler soaked squares off the line, by Sprinklers.offsetKey. Of its
+-- valve, what the menu says of it, not its clock.
 function LineObject:buildSummary()
     local sprinklerSoil = nil
     for key, soak in pairs(self.sprinklerSoak or {}) do
@@ -237,6 +246,7 @@ function LineObject:buildSummary()
             sprinklerSoil[key] = word
         end
     end
+    local valve = self.valve
     return {
         material = self.material,
         holed = self.holed,
@@ -248,6 +258,8 @@ function LineObject:buildSummary()
         sprinkler = self.sprinkler ~= nil,
         sprinklerSoil = sprinklerSoil,
         running = self.running == true,
+        valve = valve and { item = valve.item, start = valve.start, minutes = valve.minutes, untilHour = valve.untilHour },
+        valveOpen = self.valveOpen == true,
     }
 end
 

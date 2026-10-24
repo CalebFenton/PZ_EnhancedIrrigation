@@ -1,6 +1,7 @@
 -- Garden lines on the right-click menu: "Lay Line" on the ground, by the pipe the character
 -- carries, which starts the Lay Line cursor; and on a line tile one "Garden Line" submenu with what
--- the tile is and every job it takes, greyed out saying why when LineJobs refuses it.
+-- the tile is and every job it takes, greyed out saying why when LineJobs refuses it: at a tap, its
+-- valve's too, whose Wind Valve and Set Timer open the valve's panel (ValveUI).
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -10,6 +11,8 @@ require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Taps"
 require "EnhancedIrrigation/Sprinklers"
+require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/UI/ValveUI"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationWaterAction"
@@ -24,8 +27,31 @@ local Taps = EnhancedIrrigation.Taps
 local Pipes = EnhancedIrrigation.Pipes
 local Needs = EnhancedIrrigation.Needs
 local Materials = EnhancedIrrigation.Materials
+local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
 
 -- What a tile is ------------------------------------------------------------------------------------
+
+-- The minutes left on a wound valve of `summary`, rounded up, 0 when run down.
+local function minutesLeft(summary)
+    local left = (summary.untilHour or 0) - EnhancedIrrigation.now()
+    return left > 0 and math.ceil(left * 60 - 0.001) or 0
+end
+
+--- What the tap's valve of `valve` (a line summary's) is and how it is set.
+function LineMenu.describeValve(valve)
+    local name = getItemNameFromFullType(valve.item)
+    if Valves.kindOf(valve.item) == "windup" then
+        local left = minutesLeft(valve)
+        if left > 0 then
+            return getText("IGUI_EnhancedIrrigation_ValveMinutesLeft", name, left)
+        end
+        return getText("IGUI_EnhancedIrrigation_ValveRunDown", name)
+    end
+    if (valve.minutes or 0) > 0 then
+        return getText("IGUI_EnhancedIrrigation_TimerSet", name, ValveUI.hourText(valve.start), valve.minutes)
+    end
+    return getText("IGUI_EnhancedIrrigation_TimerNotSet", name)
+end
 
 function LineMenu.describe(state)
     local holes = state.holed and "IGUI_EnhancedIrrigation_Holed" or "IGUI_EnhancedIrrigation_NoHoles"
@@ -39,10 +65,13 @@ function LineMenu.describe(state)
     if state.tap then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_Tapped"))
     end
+    if state.valve then
+        table.insert(parts, LineMenu.describeValve(state.valve))
+    end
     if state.sprinkler then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_WithSprinkler"))
     end
-    if state.running then
+    if state.running or state.valveOpen then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_LineRunning"))
     end
     return getText("IGUI_EnhancedIrrigation_Pipe_" .. state.material) .. ": " .. table.concat(parts, ", ")
@@ -90,6 +119,73 @@ local function addDrill(menu, playerNum, character, line, state)
     end
 end
 
+-- The first valve of each kind carried, in Valves.ORDER.
+local function valvesCarried(character)
+    local found = {}
+    for _, fullType in ipairs(Valves.ORDER) do
+        local item = character:getInventory():getFirstTypeRecurse(fullType)
+        if item then
+            table.insert(found, item)
+        end
+    end
+    return found
+end
+
+-- Whether the tile `line` still has a valve of `kind`, for its panel.
+local function hasValve(kind)
+    return function(line)
+        local state = Lines.stateOf(line)
+        return state ~= nil and state.valve ~= nil and Valves.kindOf(state.valve.item) == kind
+    end
+end
+
+--- Opens `character`'s panel for the valve on the tap tile `line`: a Wind-up Valve's knob, or a
+--- timer's hour and knob.
+function LineMenu.openValve(character, line)
+    local valve = Lines.stateOf(line).valve
+    local kind = Valves.kindOf(valve.item)
+    local windUp = kind == "windup"
+    return ValveUI.open(character, {
+        title = getItemNameFromFullType(valve.item),
+        object = line,
+        feature = "line",
+        job = windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER,
+        okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
+        timer = not windUp,
+        start = valve.start,
+        minutes = windUp and minutesLeft(valve) or valve.minutes,
+        blocker = function(who, object, with)
+            return LineJobs.blocker(who, windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER, object, with)
+        end,
+        stillThere = hasValve(kind),
+    })
+end
+
+-- A tap with a valve offers its panel and Take Off Valve; one without, Fit Valve with a submenu of
+-- the valves carried, or greyed out saying it needs one.
+local function addValve(menu, playerNum, character, line, state)
+    if state.valve then
+        local windUp = Valves.kindOf(state.valve.item) == "windup"
+        local name = windUp and "ContextMenu_EnhancedIrrigation_WindValve" or "ContextMenu_EnhancedIrrigation_SetValveTimer"
+        menu:addOption(getText(name), character, LineMenu.openValve, line)
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_VALVE, line)
+        return
+    end
+    local carried = valvesCarried(character)
+    if #carried == 0 then
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_FitValve", LineJobs.FIT_VALVE, line)
+        return
+    end
+    local sub = Needs.addSubMenu(menu, getText("ContextMenu_EnhancedIrrigation_FitValve"))
+    for _, item in ipairs(carried) do
+        local option = sub:addOption(item:getDisplayName(), playerNum, EnhancedIrrigationAction.queue, "line",
+            LineJobs.FIT_VALVE, line, item)
+        Needs.show(option, LineJobs.needs(character, LineJobs.FIT_VALVE, line, item),
+            LineJobs.blocker(character, LineJobs.FIT_VALVE, line, item))
+        option.itemForTexture = item
+    end
+end
+
 local function addLineOptions(context, playerNum, character, line, state)
     local menu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_GardenLine"))
     menu:addOption(LineMenu.describe(state)).notAvailable = true
@@ -97,6 +193,7 @@ local function addLineOptions(context, playerNum, character, line, state)
         local water = menu:addOption(getText("ContextMenu_EnhancedIrrigation_WaterFromTank"), playerNum,
             EnhancedIrrigationWaterAction.queue, line)
         Needs.refuse(water, Taps.blocker(line, character))
+        addValve(menu, playerNum, character, line, state)
     else
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_FitTap", LineJobs.TAP, line)
     end
