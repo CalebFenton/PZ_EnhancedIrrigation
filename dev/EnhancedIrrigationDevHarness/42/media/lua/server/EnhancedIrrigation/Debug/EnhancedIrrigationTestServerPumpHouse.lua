@@ -4,7 +4,7 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestsPumpHouse.lua: a
 -- Pump House's record run for set hours by its own ten-minute pass, a generator set down and read,
--- the grid's shutoff moved to the past, appliances read, and items carried read. Pump Houses are
+-- the grid's shutoff moved to the past, and appliances read. Pump Houses are
 -- placed and plumbed by EnhancedIrrigationTestServerPumps.lua's handlers. Only registers handlers,
 -- so a --stay rerun loads it again.
 
@@ -31,10 +31,7 @@ local function stateAt(args)
     local record = recordAt(args)
     local state = {}
     if record then
-        state.record = {}
-        for _, key in ipairs(mod().PumpObject.SAVED_FIELDS) do
-            state.record[key] = record[key]
-        end
+        state.record = Server.fieldsOf(record, mod().PumpObject.SAVED_FIELDS)
         state.summary = record:buildSummary()
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
@@ -59,12 +56,7 @@ handler("pumpHouse.update", function(_, args)
     if not record then
         return nil, "the record of the Pump House at " .. args.x .. "," .. args.y
     end
-    for key, value in pairs(args.fields or {}) do
-        record[key] = value
-    end
-    if args.hoursAgo then
-        record.lastHour = mod().now() - args.hoursAgo
-    end
+    Server.setFields(record, args.fields, args.hoursAgo)
     Server.setWater(args.squares, args.water)
     local reply = { now = mod().now(), before = stateAt(args) }
     record:update()
@@ -169,17 +161,4 @@ handler("appliances.toggle", function(player, args)
     end
     return { done = done == true, activated = washer:isActivated(), dryer = combo and washer:isModeDryer(),
         stripped = mod().Appliances.isStripped(washer) }
-end)
-
--- Every item of `args.type` the server's copy of the character carries, bags included: its
--- condition, the ceiling it carries (Parts.ceilingOf) and, for a drainable, its uses left.
-handler("pumpHouse.carried", function(player, args)
-    local items = player:getInventory():getAllTypeRecurse(args.type)
-    local found = {}
-    for i = 0, items:size() - 1 do
-        local item = items:get(i)
-        table.insert(found, { condition = item:getCondition(), ceiling = mod().Parts.ceilingOf(item),
-            uses = instanceof(item, "DrainableComboItem") and item:getCurrentUses() or nil })
-    end
-    return { items = found }
 end)

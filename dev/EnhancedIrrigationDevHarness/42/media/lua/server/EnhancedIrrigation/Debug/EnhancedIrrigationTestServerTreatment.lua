@@ -20,15 +20,6 @@ local function recordAt(args)
     return mod().Treatment.recordAt(args.x, args.y, args.z)
 end
 
--- The record's saved fields, as plain values.
-local function recordState(record)
-    local state = {}
-    for _, key in ipairs(mod().TreatmentObject.SAVED_FIELDS) do
-        state[key] = record[key]
-    end
-    return state
-end
-
 --- The unit at args' x, y, z as plain values: whether its square is `loaded` and it stands there,
 --- its record's fields and summary (`record`, `summary`, nil without one), what its basin holds,
 --- whether it has an `inlet` and an `outlet`, whether it is a vanilla `fireplace` and its fire
@@ -44,7 +35,7 @@ local function stateAt(args)
         inlet = mod().Links.roleAt(here, "inlet") ~= nil, outlet = mod().Links.roleAt(here, "outlet") ~= nil,
     }
     if record then
-        state.record = recordState(record)
+        state.record = Server.fieldsOf(record, mod().TreatmentObject.SAVED_FIELDS)
         state.summary = record:buildSummary()
     end
     if unit then
@@ -62,15 +53,6 @@ local function stateAt(args)
     state.tank = args.tank and Server.stateAt(args.tank) or nil
     state.into = args.into and Server.stateAt(args.into) or nil
     return state
-end
-
--- Sets `fields` (saved fields) on `record`, and its clock to now, so only the hours a handler runs
--- count.
-local function setFields(record, fields)
-    for key, value in pairs(fields or {}) do
-        record[key] = value
-    end
-    record.lastHour = mod().now()
 end
 
 -- Places the unit tile `args.sprite` at x, y, z as the build menu builds it, its record made as its
@@ -109,7 +91,7 @@ handler("treatment.place", function(_, args, defer)
     if not record then
         return nil, "the unit's record after its OnCreate"
     end
-    setFields(record, args.fields)
+    Server.setFields(record, args.fields, 0)
     record:sendSummary()
     return stateAt(args)
 end)
@@ -167,7 +149,7 @@ handler("treatment.run", function(_, args)
     if not record then
         return nil, "the record of the unit at " .. args.x .. "," .. args.y
     end
-    setFields(record, args.fields)
+    Server.setFields(record, args.fields, 0)
     local reply = { before = stateAt(args), steps = {} }
     for _, hours in ipairs(args.hours or {}) do
         record:advance(hours)
@@ -185,9 +167,7 @@ handler("treatment.update", function(_, args)
     if not record then
         return nil, "the record of the unit at " .. args.x .. "," .. args.y
     end
-    if args.hoursAgo then
-        record.lastHour = mod().now() - args.hoursAgo
-    end
+    Server.setFields(record, nil, args.hoursAgo)
     local reply = { now = mod().now(), before = stateAt(args) }
     record:update()
     reply.after = stateAt(args)

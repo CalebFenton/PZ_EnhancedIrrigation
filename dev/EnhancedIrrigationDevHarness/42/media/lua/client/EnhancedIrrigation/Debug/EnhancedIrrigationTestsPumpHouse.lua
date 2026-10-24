@@ -245,7 +245,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         readMenu(self, function() return copyOf(self.house) end, "fitted")
         useMenu(self, self.house, "take out", job(PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
-        T.read(self, "pumpHouse.carried", { type = APPLIANCE }, "carried")
+        T.read(self, "items.carried", { type = APPLIANCE }, "carried")
         T.waitFor(self, function()
             self.back = T.player():getInventory():getFirstTypeRecurse(APPLIANCE)
             return self.back ~= nil
@@ -286,7 +286,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
         useMenu(self, self.house, "take out", job(PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
-        T.read(self, "pumpHouse.carried", { type = APPLIANCE }, "carried")
+        T.read(self, "items.carried", { type = APPLIANCE }, "carried")
         T.waitFor(self, function()
             self.back = T.player():getInventory():getFirstTypeRecurse(APPLIANCE)
             return self.back ~= nil
@@ -741,7 +741,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         readMenu(self, function() return copyOf(self.house) end, "set")
         useMenu(self, self.house, "take off", job(PumpJobs.TAKE_TIMER), true)
         readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
-        T.read(self, "pumpHouse.carried", { type = Valves.TIMER }, "carried")
+        T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
     end,
     validate = function(self)
         local Valves = EnhancedIrrigation.Valves
@@ -977,8 +977,8 @@ T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
             return T.jobOption(context, "appliance", ApplianceJobs.SALVAGE_PUMP)
         end, true)
         readWasher(self, self.washer, "salvaged", function(state) return state.stripped end)
-        T.read(self, "pumpHouse.carried", { type = APPLIANCE }, "part")
-        T.read(self, "pumpHouse.carried", { type = EnhancedIrrigation.Valves.WATER_VALVE }, "valve")
+        T.read(self, "items.carried", { type = APPLIANCE }, "part")
+        T.read(self, "items.carried", { type = EnhancedIrrigation.Valves.WATER_VALVE }, "valve")
         T.waitFor(self, function()
             local copy = washer()
             return copy ~= nil and EnhancedIrrigation.Appliances.isStripped(copy)
@@ -1080,9 +1080,9 @@ T.test("irrigation_pump_house_make_utility_pump", {
             T.startCraft(self, recipe, fan)
             T.count(self, "craft", { UTILITY, "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }, { dropped = true })
         end)
-        T.read(self, "pumpHouse.carried", { type = UTILITY }, "made")
-        T.read(self, "pumpHouse.carried", { type = "Base.BlowTorch" }, "torch")
-        T.read(self, "pumpHouse.carried", { type = "Base.WeldingRods" }, "rods")
+        T.read(self, "items.carried", { type = UTILITY }, "made")
+        T.read(self, "items.carried", { type = "Base.BlowTorch" }, "torch")
+        T.read(self, "items.carried", { type = "Base.WeldingRods" }, "rods")
     end,
     validate = function(self)
         local craft = self.counts.craft or {}

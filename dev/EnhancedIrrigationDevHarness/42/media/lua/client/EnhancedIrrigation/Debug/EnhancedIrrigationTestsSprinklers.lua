@@ -295,7 +295,7 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
             return reply.tiles[1].record.sprinkler == nil
         end)
         T.waitFor(self, function() return not hasSprinkler(T.lineObject(tile)) end, "this client's copy of the bare tile")
-        T.read(self, "pumpHouse.carried", { type = Sprinklers.ITEM }, "carried")
+        T.read(self, "items.carried", { type = Sprinklers.ITEM }, "carried")
     end,
     validate = function(self)
         T.expectRefused(self, "on the tap", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
@@ -404,7 +404,7 @@ T.test("irrigation_sprinklers_make_pipe_sprinkler", {
             T.startCraft(self, recipe, pipe)
             T.count(self, "craft", { Sprinklers.ITEM }, { dropped = true })
         end)
-        T.read(self, "pumpHouse.carried", { type = Sprinklers.ITEM }, "made")
+        T.read(self, "items.carried", { type = Sprinklers.ITEM }, "made")
     end,
     validate = function(self)
         local craft = self.counts.craft or {}

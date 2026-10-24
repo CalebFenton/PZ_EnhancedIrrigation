@@ -102,11 +102,11 @@ T.test("irrigation_valves_fit_and_take_off", {
         T.useOption(self, tap, "fit", fit, true)
         T.readUntil(self, "valves.read", T.at(line.tap), "fitted", function(reply) return reply.valve.item ~= nil end)
         T.readLines(self, { line.tap }, "shown")
-        T.read(self, "pumpHouse.carried", { type = Valves.WIND_UP }, "carriedFitted")
+        T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedFitted")
         T.useOption(self, tap, "takeOff", function(context) return T.jobOption(context, "line", LineJobs.TAKE_VALVE) end,
             true)
         T.readUntil(self, "valves.read", T.at(line.tap), "off", function(reply) return reply.valve.item == nil end)
-        T.read(self, "pumpHouse.carried", { type = Valves.WIND_UP }, "carriedOff")
+        T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedOff")
     end,
     validate = function(self)
         T.expectRefused(self, "none", "Tooltip_EnhancedIrrigation_NoValve")
@@ -137,7 +137,7 @@ T.test("irrigation_valves_take_up_gives_the_valve_back", {
             return T.jobOption(context, "line", LineJobs.TAKE_UP)
         end, true)
         T.waitFor(self, function() return T.lineObject(line.tap) == nil end, "this client to see the tap taken up")
-        T.read(self, "pumpHouse.carried", { type = Valves.TIMER }, "carried")
+        T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
     end,
     validate = function(self)
         T.expectOffered(self, "takeUp")

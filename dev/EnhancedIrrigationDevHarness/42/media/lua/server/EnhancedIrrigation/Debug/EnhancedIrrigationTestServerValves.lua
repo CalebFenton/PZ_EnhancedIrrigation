@@ -1,4 +1,5 @@
 require "PZHarness/ServerHandlers"
+local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestsValves.lua: a valve
 -- put on a tap as Fit Valve leaves it, and a valve's clock wound back as though the hours had gone
@@ -9,14 +10,6 @@ require "PZHarness/ServerHandlers"
 -- A tile is { x, y, z }; `args.tiles` lists the crops to read.
 
 local handler = PZHarness.serverHandler
-
-local function recordAt(at)
-    local record = EnhancedIrrigation.Lines.recordAt(at.x, at.y, at.z)
-    if not record then
-        return nil, "a line record at " .. at.x .. "," .. at.y .. "," .. at.z
-    end
-    return record
-end
 
 -- The valve on the record's tap as plain values, and whether it runs the line now.
 local function valveOf(record)
@@ -45,7 +38,7 @@ end
 
 -- Puts the valve `args.item` on the tap at x, y, z as Fit Valve does.
 handler("valves.place", function(_, args)
-    local record, missing = recordAt(args)
+    local record, missing = Server.lineRecordAt(args)
     if not record then return nil, missing end
     EnhancedIrrigation.ValveSystem.fit(record, instanceItem(args.item))
     record:afterChange()
@@ -53,7 +46,7 @@ handler("valves.place", function(_, args)
 end)
 
 handler("valves.read", function(_, args)
-    local record, missing = recordAt(args)
+    local record, missing = Server.lineRecordAt(args)
     if not record then return nil, missing end
     local reply = readWater(args)
     reply.valve = valveOf(record)
@@ -64,7 +57,7 @@ end)
 -- though they had gone by since it last ran, and runs it. Answers the crops and tank after, and in
 -- `before` as they were.
 handler("valves.age", function(_, args)
-    local record, missing = recordAt(args)
+    local record, missing = Server.lineRecordAt(args)
     if not record then return nil, missing end
     local valve = record.valve
     if not valve then

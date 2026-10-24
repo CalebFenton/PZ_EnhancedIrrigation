@@ -12,10 +12,6 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 local handler = PZHarness.serverHandler
 
-local function squareAt(at)
-    return getCell():getGridSquare(at.x, at.y, at.z)
-end
-
 local function lineSystem()
     return EnhancedIrrigation.LineSystem
 end
@@ -32,15 +28,6 @@ local function deferRemoval(tiles, defer)
     for _, at in ipairs(tiles) do
         defer(function() removeLineAt(at) end)
     end
-end
-
--- The saved fields of a line record, as plain values.
-local function fieldsOf(record)
-    local fields = {}
-    for _, key in ipairs(EnhancedIrrigation.LineObject.SAVED_FIELDS) do
-        fields[key] = record[key]
-    end
-    return fields
 end
 
 -- The names of `isoObject`'s overlays.
@@ -71,7 +58,7 @@ local function readTile(at)
     local line = Lines.lineAt(at.x, at.y, at.z)
     local reply = { x = at.x, y = at.y, z = at.z, plant = plantAt(at) }
     if record then
-        reply.record = fieldsOf(record)
+        reply.record = Server.fieldsOf(record, EnhancedIrrigation.LineObject.SAVED_FIELDS)
         reply.record.wet = record:isWet()
         reply.record.tiles = #Lines.component(at.x, at.y, at.z)
         reply.record.heldBy = record.heldBy
@@ -91,21 +78,13 @@ local function readTiles(tiles)
     return reply
 end
 
-local function recordOrMissing(at)
-    local record = EnhancedIrrigation.Lines.recordAt(at.x, at.y, at.z)
-    if not record then
-        return nil, "a line record at " .. at.x .. "," .. at.y .. "," .. at.z
-    end
-    return record
-end
-
 -- Lines ---------------------------------------------------------------------------------------------
 
 -- Lays a line tile on each of `args.tiles`, of the tile's `material` or `args.material`, with the
 -- tile's `fields` (saved fields) set, as Lay Line would lay it.
 handler("lines.place", function(player, args, defer)
     for _, at in ipairs(args.tiles) do
-        local square = squareAt(at)
+        local square = Server.squareAt(at)
         if not square then
             return nil, "a loaded square for a line tile at " .. at.x .. "," .. at.y
         end
@@ -133,9 +112,9 @@ handler("lines.age", function(player, args)
     local before = readTiles(args.tiles).tiles
     local squaresBefore = Server.readSquares(args.squares)
     for _, at in ipairs(args.tiles) do
-        local record, missing = recordOrMissing(at)
+        local record, missing = Server.lineRecordAt(at)
         if not record then return nil, missing end
-        record.lastHour = EnhancedIrrigation.now() - args.hours
+        Server.setFields(record, nil, args.hours)
         record.wetUntil = (record.wetUntil or 0) - args.hours
         record:update()
     end
@@ -169,7 +148,7 @@ end)
 -- whether it was `done` and `args.tiles` after, so a test sees the server refuse on its own.
 handler("lines.perform", function(player, args)
     local LineJobs = EnhancedIrrigation.LineJobs
-    local square = squareAt(args)
+    local square = Server.squareAt(args)
     local object
     if args.job == LineJobs.LAY then
         object = square and square:getFloor()
@@ -249,7 +228,7 @@ end)
 -- Sows a crop on `at`, plowed and seeded as the farming system does them, at `water` water points,
 -- taken away when the test ends. Returns it as plantAt reads it, or nil and what is missing.
 local function sow(at, water, seed, defer)
-    local square = squareAt(at)
+    local square = Server.squareAt(at)
     if not square then
         return nil, "a loaded square for a crop at " .. at.x .. "," .. at.y
     end

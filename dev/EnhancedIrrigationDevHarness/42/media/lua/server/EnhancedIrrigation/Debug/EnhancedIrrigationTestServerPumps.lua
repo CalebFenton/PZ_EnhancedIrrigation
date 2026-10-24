@@ -23,15 +23,6 @@ local function recordAt(args)
     return mod().Pumps.recordAt(args.x, args.y, args.z)
 end
 
--- The record's saved fields, as plain values.
-local function recordState(record)
-    local state = {}
-    for _, key in ipairs(mod().PumpObject.SAVED_FIELDS) do
-        state[key] = record[key]
-    end
-    return state
-end
-
 --- The pump at args' x, y, z as plain values: whether it stands there (`found`), its `entity`,
 --- its record's fields and summary (nil without one), whether it has an `outlet`, the `source` it
 --- draws from now ({ kind, litres, dry }), the tank at `args.tank` as Server.stateAt sees it, the
@@ -48,7 +39,7 @@ local function stateAt(player, args)
         state.source = source and { kind = source.kind, litres = source.litres, dry = source.dry == true } or nil
     end
     if record then
-        state.record = recordState(record)
+        state.record = Server.fieldsOf(record, mod().PumpObject.SAVED_FIELDS)
         state.summary = record:buildSummary()
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
@@ -59,15 +50,6 @@ local function stateAt(player, args)
     state.wellLitres = well and well:getFluidContainer() and well:getFluidContainer():getAmount() or nil
     state.squares = Server.readSquares(args.squares)
     return state
-end
-
--- Sets `fields` (saved fields) on `record`, and its clock to now, so only the hours a handler runs
--- count.
-local function setFields(record, fields)
-    for key, value in pairs(fields or {}) do
-        record[key] = value
-    end
-    record.lastHour = mod().now()
 end
 
 -- Places the pump tile `args.sprite` at x, y, z as the build menu builds it, on a new square where
@@ -112,7 +94,7 @@ handler("pumps.place", function(player, args, defer)
         item:getModData()[mod().Pumps.FRACTION_KEY] = args.part.fraction
         record:fitPart(item)
     end
-    setFields(record, args.fields)
+    Server.setFields(record, args.fields, 0)
     record:sendSummary()
     return stateAt(player, args)
 end)
@@ -129,7 +111,7 @@ handler("pumps.link", function(player, args)
     if not (pump and record) then
         return nil, "the pump at " .. args.x .. "," .. args.y
     end
-    setFields(record, args.fields)
+    Server.setFields(record, args.fields, 0)
     local kind, lengths = mod().LinkJobs.pipeFor(pump, mod().Links.encode(args.tank, "iron"))
     mod().LinkSystem.instance:addLink(mod().squareOf(pump), args.tank, kind, lengths, nil, "pump")
     record:sendSummary()
@@ -144,7 +126,7 @@ handler("pumps.run", function(player, args)
     if not (pump and record) then
         return nil, "the pump at " .. args.x .. "," .. args.y
     end
-    setFields(record, args.fields)
+    Server.setFields(record, args.fields, 0)
     local reply = { before = stateAt(player, args), steps = {} }
     for _, hours in ipairs(args.hours or {}) do
         local stopped = mod().PumpSystem.pump(player, pump, hours)

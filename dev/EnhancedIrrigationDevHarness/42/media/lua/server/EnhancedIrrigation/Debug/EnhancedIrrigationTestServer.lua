@@ -25,6 +25,35 @@ function Server.squareAt(args)
     return args and args.x and getSquare(args.x, args.y, args.z)
 end
 
+--- The fields `savedFields` names (a record class's SAVED_FIELDS) of `record`, as plain values.
+function Server.fieldsOf(record, savedFields)
+    local fields = {}
+    for _, key in ipairs(savedFields) do
+        fields[key] = record[key]
+    end
+    return fields
+end
+
+--- Sets `fields` (saved fields) on `record` and, given `hoursAgo`, winds its clock to that many
+--- hours ago (0: now), so only the hours a handler runs count.
+function Server.setFields(record, fields, hoursAgo)
+    for key, value in pairs(fields or {}) do
+        record[key] = value
+    end
+    if hoursAgo then
+        record.lastHour = mod().now() - hoursAgo
+    end
+end
+
+--- The line record at `at`'s x, y, z, or nil and what is missing.
+function Server.lineRecordAt(at)
+    local record = mod().Lines.recordAt(at.x, at.y, at.z)
+    if not record then
+        return nil, "a line record at " .. at.x .. "," .. at.y .. "," .. at.z
+    end
+    return record
+end
+
 --- Whether `object` is one of the things the tank tests place: a stand, with or without its barrel,
 --- a tank, a treatment unit, a pump, or a well, which isn't a tank.
 function Server.isPlaced(object)
@@ -242,6 +271,21 @@ handler("tanks.perform", function(player, args)
     local state = Server.stateAt(args)
     state.done = done == true
     return state
+end)
+
+-- Items ---------------------------------------------------------------------------------------------
+
+-- Every item of `args.type` the server's copy of the character carries, bags included: its
+-- condition, the ceiling it carries (Parts.ceilingOf) and, for a drainable, its uses left.
+handler("items.carried", function(player, args)
+    local items = player:getInventory():getAllTypeRecurse(args.type)
+    local found = {}
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        table.insert(found, { condition = item:getCondition(), ceiling = mod().Parts.ceilingOf(item),
+            uses = instanceof(item, "DrainableComboItem") and item:getCurrentUses() or nil })
+    end
+    return { items = found }
 end)
 
 -- Recipes -------------------------------------------------------------------------------------------
