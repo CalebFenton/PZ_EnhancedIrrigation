@@ -993,11 +993,10 @@ local function toggle(self, appliance, label, sprite, mode)
 end
 
 -- A washing machine indoors on the grid with water in it runs once switched on. Salvage Pump from
--- its menu, with Electricity 2, the knowledge, a screwdriver and pliers, gives an Appliance Pump at
--- a used part's condition and a Water Valve and stops the washer; its Turn On is then greyed out
--- saying the pump is gone, the server won't switch it on, and a second Salvage Pump is refused.
--- Catches a washer that runs with no pump, a pump salvaged twice, one that comes out new, or no
--- valve for a Timer Valve.
+-- its menu, with Electricity 2, the knowledge, a screwdriver and pliers, gives an Appliance Pump in
+-- the salvaged range of condition and a Water Valve and stops the washer; its Turn On is then greyed
+-- out saying the pump is gone, the server won't switch it on, and a second Salvage Pump is refused.
+-- Catches a washer that runs with no pump, a pump salvaged twice, or no valve for a Timer Valve.
 T.test("irrigation_pumps_salvage_washer_gives_a_part_and_stops_it", {
     instant = true,
     run = function(self)
