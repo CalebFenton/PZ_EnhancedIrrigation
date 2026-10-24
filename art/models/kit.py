@@ -36,10 +36,9 @@ _MATERIALS = {}
 
 # Wood grain, by kind: the size across the grain of the figure the grain lines follow (metres),
 # how many times longer it runs along the grain, how many lines cross one figure, and how dark a
-# line is. Boards are sawn, so their grain runs in long straight streaks; plywood's face is a veneer
-# peeled off the log, its figure broad and wavy. Weathered planks, as the game draws its own crates
-# and composters, are dark with grain cut deep by the rain.
-GRAIN = {"board": (0.08, 12.0, 3.0, 0.5), "veneer": (0.09, 4.0, 3.0, 0.5), "weathered": (0.05, 14.0, 4.0, 0.3)}
+# line is. Boards are sawn, so their grain runs in long straight streaks. Weathered planks, as the
+# game draws its own crates and composters, are dark with grain cut deep by the rain.
+GRAIN = {"board": (0.08, 12.0, 3.0, 0.5), "weathered": (0.05, 14.0, 4.0, 0.3)}
 GRAIN_EARLY = 1.1  # the pale wood between grain lines
 
 
@@ -58,20 +57,18 @@ def _math(nodes, links, operation, a, b=None, c=None, clamp=False):
     return node.outputs[0]
 
 
-def material(name, color, roughness=0.6, metallic=0.0, grime=0.12, scale=40.0, emission=None, speckle=None, grain=None,
-             streaks=None, scorch=None):
+def material(name, color, roughness=0.6, metallic=0.0, grime=0.12, scale=40.0, speckle=None, grain=None, streaks=None,
+             scorch=None):
     """A painted, plastic or metal surface. `grime` darkens it in blotches, so flat colours don't
     look like a render. `speckle` = (colour, amount) mottles it with a second colour in a web of
     flakes, the base colour left at each flake's centre and less of it the higher `amount`: the way
     multicrystalline cells sparkle, or rust on scrap steel. `streaks` = (colour, amount) runs that
     colour down its sides in thin streaks, as rust and soot run down a drum left out in the rain.
     `scorch` = (soot, tint, height) blackens it from its foot up to a ragged line `height` metres
-    up, with a band of heat tint above, as a fire inside leaves a stove. `emission` makes it glow,
-    for lit LEDs. `grain`, a kind in GRAIN, draws dark grain lines along each part's longest side,
-    as `_object` laid them out."""
-    key = name
-    if key in _MATERIALS:
-        return _MATERIALS[key]
+    up, with a band of heat tint above, as a fire inside leaves a stove. `grain`, a kind in GRAIN,
+    draws dark grain lines along each part's longest side, as `_object` laid them out."""
+    if name in _MATERIALS:
+        return _MATERIALS[name]
     mat = bpy.data.materials.new(name)
     nodes, bsdf = _principled(mat)
     links = mat.node_tree.links
@@ -200,10 +197,7 @@ def material(name, color, roughness=0.6, metallic=0.0, grime=0.12, scale=40.0, e
         links.new(shade.outputs["Color"], streaked.inputs[7])
         color_out = streaked.outputs[2]
     links.new(color_out, bsdf.inputs["Base Color"])
-    if emission:
-        bsdf.inputs["Emission Color"].default_value = (*hex_rgb(emission), 1.0)
-        bsdf.inputs["Emission Strength"].default_value = 6.0
-    _MATERIALS[key] = mat
+    _MATERIALS[name] = mat
     return mat
 
 
