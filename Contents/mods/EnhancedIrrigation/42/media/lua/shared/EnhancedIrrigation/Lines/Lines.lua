@@ -1,6 +1,6 @@
 -- Garden lines: pipe laid on the ground, one tile a square, joined to its same-floor neighbours
--- where no wall stands between, holed over the beds and tapped at a tank or fed by a pump's outlet
--- (Pumps.lua). The authority keeps a record of every tile in a Global Object System, saved with the
+-- where no wall stands between, holed over the beds and tapped at a tank or fed by a pump's
+-- outlet. The authority keeps a record of every tile in a Global Object System, saved with the
 -- world and run loaded or not; every client gets each tile's summary, whose fields carry the
 -- record's names, so the menu and the authority read a line the same way (Lines.stateAt).
 
@@ -75,7 +75,7 @@ Lines.STEPS = {
 -- frame and a door add none, so a line runs through a doorway. The square drops HoppableN (W)
 -- when anything on that edge can't be hopped (IsoGridSquare.RecalcProperties), so a hoppable edge
 -- holds only fences and low walls, which a pipe is laid over. Vanilla's isWallTo would block
--- those and pass a glazed window. A boiler keeps clear of the same walls (Treatment.wallNear).
+-- those and pass a glazed window.
 function Lines.wallOn(square, north)
     local props = square:getProperties()
     if north then
@@ -202,8 +202,7 @@ function Lines.shapeAt(x, y, z, isLineAt)
     return shape
 end
 
---- The IG_UI key of the plant info's soil word for `soak`, or nil when the soil is dry. Strictly
---- above WATERLOGGED, as the roots rot (LineObject.dryAndRot).
+--- The IG_UI key of the plant info's soil word for `soak`, or nil when the soil is dry.
 function Lines.soilKey(soak)
     if not soak or soak < Lines.DAMP then
         return nil
@@ -215,7 +214,6 @@ function Lines.soilKey(soak)
     return "IGUI_EnhancedIrrigation_Damp"
 end
 
--- The soil words, driest first.
 local SOIL_RANK = {
     IGUI_EnhancedIrrigation_Damp = 1, IGUI_EnhancedIrrigation_Soaked = 2, IGUI_EnhancedIrrigation_Waterlogged = 3,
 }
