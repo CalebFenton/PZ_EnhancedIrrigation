@@ -66,21 +66,17 @@ end
 
 -- Jobs -----------------------------------------------------------------------------------------------
 
--- What each job does at `pump`, whose record PumpSystem.perform brought up to now. Returns whether
--- it was done.
+-- What each job does at `pump`, whose record PumpSystem.perform brought up to now.
 local DO = {
     [PumpJobs.REPLACE_SEAL] = function(character, pump, item)
         Pumps.recordOf(pump):fitSeal(item:getFullType())
-        return true
     end,
     [PumpJobs.FIT_PUMP] = function(character, pump, item)
         EnhancedIrrigation.Materials.takeItem(character, item)
         Pumps.recordOf(pump):fitPart(item)
-        return true
     end,
     [PumpJobs.TAKE_OUT_PUMP] = function(character, pump)
         EnhancedIrrigation.Materials.giveItems(character, Pumps.recordOf(pump):takeOutPart())
-        return true
     end,
     -- The time before it was switched on did nothing, so it counts from now.
     [PumpJobs.TURN_ON] = function(character, pump)
@@ -88,17 +84,14 @@ local DO = {
         record.on = true
         record.lastHour = EnhancedIrrigation.now()
         EnhancedIrrigation.PumpHouse.settle(record, pump)
-        return true
     end,
     [PumpJobs.TURN_OFF] = function(character, pump)
         local record = Pumps.recordOf(pump)
         record.on = nil
         EnhancedIrrigation.PumpHouse.settle(record, pump)
-        return true
     end,
     [PumpJobs.REPAIR_PUMP] = function(character, pump)
         Pumps.recordOf(pump):repairPart()
-        return true
     end,
     -- The timer's setting starts at nothing: it never opens until set.
     [PumpJobs.FIT_TIMER] = function(character, pump, item)
@@ -106,20 +99,17 @@ local DO = {
         local record = Pumps.recordOf(pump)
         record.timer = { item = item:getFullType() }
         EnhancedIrrigation.PumpHouse.settle(record, pump)
-        return true
     end,
     [PumpJobs.TAKE_TIMER] = function(character, pump)
         local record = Pumps.recordOf(pump)
         EnhancedIrrigation.Materials.giveItems(character, instanceItem(record.timer.item))
         record.timer = nil
         EnhancedIrrigation.PumpHouse.settle(record, pump)
-        return true
     end,
     [PumpJobs.SET_TIMER] = function(character, pump, with)
         local record = Pumps.recordOf(pump)
         record.timer.start, record.timer.minutes = EnhancedIrrigation.Valves.decodeTimer(with)
         EnhancedIrrigation.PumpHouse.settle(record, pump)
-        return true
     end,
 }
 

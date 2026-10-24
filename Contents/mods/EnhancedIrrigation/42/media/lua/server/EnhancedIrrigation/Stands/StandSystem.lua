@@ -44,21 +44,18 @@ function StandSystem.barrelItem(spec, square)
     return item
 end
 
--- What each job does at the stand `object`; Set Barrel's `with` is the barrel. Returns whether it
--- was done.
+-- What each job does at the stand `object`; Set Barrel's `with` is the barrel.
 local DO = {
     [StandJobs.SET_BARREL] = function(character, stand, barrel)
         local spec = Stands.barrelSpec(barrel)
         EnhancedIrrigation.Materials.takeItem(character, barrel)
         replace(stand, spec.entity, spec.sprite)
-        return true
     end,
     [StandJobs.TAKE_DOWN] = function(character, raised)
         local spec = Stands.raisedSpec(raised)
         local item = StandSystem.barrelItem(spec, raised:getSquare())
         replace(raised, Stands.STAND_ENTITY, Sprites.STAND)
         EnhancedIrrigation.Materials.giveItems(character, item)
-        return true
     end,
 }
 

@@ -76,8 +76,7 @@ end
 
 -- Jobs -----------------------------------------------------------------------------------------------
 
--- What each job does at `unit`, whose record TreatmentSystem.perform brought up to now. Returns
--- whether it was done.
+-- What each job does at `unit`, whose record TreatmentSystem.perform brought up to now.
 local DO = {
     -- The container keeps what the head has no room for.
     [TreatmentJobs.POUR_IN] = function(character, unit, item)
@@ -88,15 +87,12 @@ local DO = {
         fluid:removeFluid(litres, false)
         item:syncItemFields()
         record:fill(litres, tainted)
-        return true
     end,
     [TreatmentJobs.CLEAN_FILTER] = function(character, unit)
         Treatment.recordOf(unit):clean()
-        return true
     end,
     [TreatmentJobs.SCRUB_CROCK] = function(character, unit)
         Treatment.recordOf(unit):scrub()
-        return true
     end,
     -- The bucket comes back holding the basin's water as it is; the crock, unless frost split it.
     -- Removing the unit removes its record (SGlobalObjectSystem.OnObjectAboutToBeRemoved).
@@ -111,11 +107,9 @@ local DO = {
         if not cracked then
             EnhancedIrrigation.Materials.giveItems(character, Treatment.CROCK_ITEM)
         end
-        return true
     end,
     [TreatmentJobs.PATCH_DRUM] = function(character, unit)
         Treatment.recordOf(unit):patch()
-        return true
     end,
 }
 

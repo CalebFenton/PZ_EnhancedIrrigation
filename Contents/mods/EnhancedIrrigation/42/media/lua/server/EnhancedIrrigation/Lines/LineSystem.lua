@@ -121,11 +121,10 @@ function LineSystem.System:OnObjectAboutToBeRemoved(isoObject)
 end
 
 -- What each job does at `object`: the floor for Lay, else a line tile, whose record
--- LineSystem.perform brought up to now. Returns whether it was done.
+-- LineSystem.perform brought up to now.
 local DO = {
     [LineJobs.LAY] = function(character, floor, kind, materials)
         LineSystem.place(floor:getSquare(), kind, { conditions = Materials.conditions(character, materials) })
-        return true
     end,
     [LineJobs.DRILL] = function(character, object)
         local record = Lines.recordOf(object)
@@ -134,18 +133,15 @@ local DO = {
                 and ZombRandFloat(0, 1) < Lines.PUNCH_CRACK_CHANCE then
             record.cracked = true
         end
-        return true
     end,
     [LineJobs.TAP] = function(character, object, with, materials)
         local record = Lines.recordOf(object)
         record.tap = true
         record.tapMaterial = record.material
         record.tapConditions = Materials.conditions(character, materials)
-        return true
     end,
     [LineJobs.PATCH] = function(character, object)
         Lines.recordOf(object).cracked = false
-        return true
     end,
     -- The water runs out over the ground where the line is opened, wetting it, not into a bed's
     -- roots, so it adds no soak.
@@ -161,7 +157,6 @@ local DO = {
         end
         record.full = false
         record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
-        return true
     end,
     -- Each item comes back as it went in. A length still cracked is scrap. The tap's length, its
     -- valve and the sprinkler come back with their tile.
@@ -180,34 +175,27 @@ local DO = {
             EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(record))
         end
         LineSystem.remove(object)
-        return true
     end,
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
     [LineJobs.SET_SPRINKLER] = function(character, object, item)
         EnhancedIrrigation.Materials.takeItem(character, item)
         Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Pumps.ceilingOf(item) }
-        return true
     end,
     [LineJobs.TAKE_SPRINKLER] = function(character, object)
         EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
-        return true
     end,
     [LineJobs.FIT_VALVE] = function(character, object, item)
         EnhancedIrrigation.Materials.takeItem(character, item)
         EnhancedIrrigation.ValveSystem.fit(Lines.recordOf(object), item)
-        return true
     end,
     [LineJobs.TAKE_VALVE] = function(character, object)
         EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(Lines.recordOf(object)))
-        return true
     end,
     [LineJobs.WIND_VALVE] = function(character, object, with)
         EnhancedIrrigation.ValveSystem.wind(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeWind(with))
-        return true
     end,
     [LineJobs.SET_VALVE_TIMER] = function(character, object, with)
         EnhancedIrrigation.ValveSystem.setTimer(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeTimer(with))
-        return true
     end,
 }
 

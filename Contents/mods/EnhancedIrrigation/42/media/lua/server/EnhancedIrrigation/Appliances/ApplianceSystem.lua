@@ -17,7 +17,7 @@ EnhancedIrrigation.ApplianceSystem = ApplianceSystem
 
 local Appliances, ApplianceJobs = EnhancedIrrigation.Appliances, EnhancedIrrigation.ApplianceJobs
 
--- What each job does at `appliance`. Returns whether it was done.
+-- What each job does at `appliance`.
 local DO = {
     [ApplianceJobs.SALVAGE_PUMP] = function(character, appliance)
         local pump = instanceItem(EnhancedIrrigation.Pumps.APPLIANCE_PUMP)
@@ -26,7 +26,6 @@ local DO = {
         Appliances.strip(appliance)
         EnhancedIrrigation.Materials.giveItems(character, pump)
         EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.Valves.WATER_VALVE)
-        return true
     end,
 }
 
