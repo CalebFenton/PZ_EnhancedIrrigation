@@ -8,6 +8,7 @@ require "EnhancedIrrigation/Appliances/ApplianceJobs"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/Pumps/PumpClient"
+require "EnhancedIrrigation/SquareSounds"
 require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/ApplianceMenu"
 require "EnhancedIrrigation/UI/LineMenu"
@@ -336,14 +337,14 @@ T.test("irrigation_pump_house_refuses_the_grid_in_the_open", {
 -- part by an hour's wear; the menu says it runs. Turn Off stops it and the hum. Catches a house the
 -- grid can't run beside a room, water at the wrong rate, wear that isn't by the hour, or a hum that
 -- doesn't follow the switch. This client looks for running houses every frame while it lasts,
--- rather than every PumpClient.CHECK_MS.
+-- rather than every SquareSounds.CHECK_MS.
 T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
     instant = true,
     run = function(self)
-        local PumpClient = EnhancedIrrigation.PumpClient
-        local checkMs = PumpClient.CHECK_MS
-        PumpClient.CHECK_MS = 0
-        T.defer(self, function() PumpClient.CHECK_MS = checkMs end)
+        local SquareSounds = EnhancedIrrigation.SquareSounds
+        local checkMs = SquareSounds.CHECK_MS
+        SquareSounds.CHECK_MS = 0
+        T.defer(self, function() SquareSounds.CHECK_MS = checkMs end)
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, accept = function(squares)
             return besideRoom(squares[1]) and bareBeside(self, squares[1]) ~= nil
