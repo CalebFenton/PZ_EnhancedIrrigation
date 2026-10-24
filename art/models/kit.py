@@ -311,6 +311,20 @@ def stain(name, color, arms, centre, near, far, softness, ragged, opacity, scale
     return mat
 
 
+# Directions ---------------------------------------------------------------------------------------
+
+
+def heading(degrees):
+    """The level unit vector `degrees` from east, anticlockwise seen from above."""
+    return Vector((math.cos(math.radians(degrees)), math.sin(math.radians(degrees)), 0))
+
+
+def circle(radius, z, step=10):
+    """Points round a level circle of `radius` at height `z`, every `step` degrees, closed: its first
+    point repeated at its end, for a tube round it."""
+    return [(radius * math.cos(math.radians(a)), radius * math.sin(math.radians(a)), z) for a in range(0, 361, step)]
+
+
 # Meshes -------------------------------------------------------------------------------------------
 
 

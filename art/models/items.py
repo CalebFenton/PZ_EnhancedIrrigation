@@ -8,7 +8,7 @@ import random
 
 from mathutils import Matrix, Quaternion, Vector
 
-from kit import beam, box, cylinder, group, lathe, material, profile_radius, stain, text, tube
+from kit import beam, box, circle, cylinder, group, heading, lathe, material, profile_radius, stain, text, tube
 
 
 def M(name):
@@ -422,8 +422,7 @@ def rain_barrel(col, closed=False, tarp=False):
         return 0.016 * fold * depth, drop
     lathe(col, "Barrel_Liner", liner, [(r, z) for r, z, _ in profile], segments=segments, shape=crumple)
     # The cord tied round the skirt, its two ends sticking out at the sides.
-    tube(col, "Barrel_Cord", M("cord"), [(0.395 * math.cos(math.radians(a)), 0.395 * math.sin(math.radians(a)), tie)
-                                         for a in range(0, 361, 10)], 0.006, sides=6)
+    tube(col, "Barrel_Cord", M("cord"), circle(0.395, tie), 0.006, sides=6)
     for angle in (155, 340):
         a = math.radians(angle)
         tube(col, "Barrel_CordEnd", M("cord"), [(0.392 * math.cos(a), 0.392 * math.sin(a), tie),
@@ -447,11 +446,16 @@ def rain_barrel(col, closed=False, tarp=False):
 OUTLET_RADIUS = 0.022  # drawn fatter than a real nipple, as the pipes are, so it holds at game size
 
 
+def _sleeve(col, name, start, out):
+    """The malleable sleeve round a nipple where it leaves a wall at `start`, heading `out`."""
+    tube(col, name, M("malleable"), [start - out * 0.01, start + out * 0.03], OUTLET_RADIUS * 1.35, sides=10, up=(0, 0, 1))
+
+
 def _outlet(col, start, angle, length, drop):
     """A galvanised nipple out of a wall at `start` (x, y, z), heading `angle` degrees from east,
     `length` long to its elbow, then turning down `drop` to its mouth: a sleeve where it leaves the
     wall and a lip round the mouth. Returns the mouth."""
-    out = Vector((math.cos(math.radians(angle)), math.sin(math.radians(angle)), 0))
+    out = heading(angle)
     down = Vector((0, 0, -1))
     start = Vector(start)
     bend = start + out * length
@@ -461,8 +465,7 @@ def _outlet(col, start, angle, length, drop):
              for t in (math.radians(d) for d in range(0, 91, 15))]
     mouth = elbow[-1] + down * (drop - radius)
     tube(col, "Outlet_Pipe", M("galvanised"), [start] + elbow + [mouth], OUTLET_RADIUS, sides=10, up=(0, 0, 1))
-    tube(col, "Outlet_Sleeve", M("malleable"), [start - out * 0.01, start + out * 0.03], OUTLET_RADIUS * 1.35, sides=10,
-         up=(0, 0, 1))
+    _sleeve(col, "Outlet_Sleeve", start, out)
     tube(col, "Outlet_Lip", M("malleable"), [mouth - down * 0.018, mouth + down * 0.004], OUTLET_RADIUS * 1.3, sides=10,
          up=tuple(out))
     return mouth
@@ -623,8 +626,7 @@ def crock_in_bucket(col):
                                    (PAIL_BOTTOM - PAIL_WALL - 0.004, PAIL_FLOOR), (0, PAIL_FLOOR)], segments=36)
 
     def ring(name, z, radius, wire):
-        tube(col, name, M("pail"), [(radius * math.cos(math.radians(a)), radius * math.sin(math.radians(a)), z)
-                                    for a in range(0, 361, 10)], wire, sides=8)
+        tube(col, name, M("pail"), circle(radius, z), wire, sides=8)
 
     ring("Pail_Rim", top - 0.002, PAIL_TOP + 0.002, 0.007)
     for z in (0.075, 0.15):
@@ -633,7 +635,7 @@ def crock_in_bucket(col):
     # The ears, plates riveted under the rim, and the bail: a half hoop between them, leaning back.
     ear_z = top - 0.035
     reach = profile_radius(PAIL_SIDE, ear_z) + 0.006
-    pivot = Vector((math.cos(math.radians(PAIL_EARS)), math.sin(math.radians(PAIL_EARS)), 0))
+    pivot = heading(PAIL_EARS)
     back = Vector((-pivot.y, pivot.x, 0))
     lean = math.radians(PAIL_LEAN)
     rise = Vector((0, 0, math.cos(lean))) + back * math.sin(lean)
@@ -702,11 +704,11 @@ def _stub(col, start, angle, length):
     """A galvanised nipple out of a wall at `start` (x, y, z), heading `angle` degrees from east,
     `length` long, a sleeve where it leaves the wall and a coupling on its end for the pipe that
     feeds it."""
-    out = Vector((math.cos(math.radians(angle)), math.sin(math.radians(angle)), 0))
+    out = heading(angle)
     start = Vector(start)
     end = start + out * length
     tube(col, "Stub_Pipe", M("galvanised"), [start, end], OUTLET_RADIUS, sides=10, up=(0, 0, 1))
-    tube(col, "Stub_Sleeve", M("malleable"), [start - out * 0.01, start + out * 0.03], OUTLET_RADIUS * 1.35, sides=10, up=(0, 0, 1))
+    _sleeve(col, "Stub_Sleeve", start, out)
     tube(col, "Stub_Coupling", M("malleable"), [end - out * 0.035, end], OUTLET_RADIUS * 1.4, sides=10, up=(0, 0, 1))
 
 
@@ -723,7 +725,7 @@ def _boiler_drum(col):
     start = Vector((wall * math.cos(a), wall * math.sin(a), FIREBOX_HEIGHT + z))
     _outlet(col, start, angle, 0.09, 0.05)
     # A brass globe valve on the run, its red handwheel uppermost, as on the tap at a line's head.
-    valve = start + Vector((math.cos(a), math.sin(a), 0)) * 0.05
+    valve = start + heading(angle) * 0.05
     cylinder(col, "Boiler_Valve", M("brass"), 0.026, 0.05, at=(valve.x, valve.y, valve.z - 0.025), segments=12)
     cylinder(col, "Boiler_ValveStem", M("brass"), 0.007, 0.035, at=(valve.x, valve.y, valve.z + 0.025), segments=8)
     cylinder(col, "Boiler_ValveWheel", M("red"), 0.035, 0.01, at=(valve.x, valve.y, valve.z + 0.055), segments=16)
@@ -870,10 +872,6 @@ def _board(col, name, mat, start, end, section, face, bevel=0.003):
     return obj
 
 
-def _heading(degrees):
-    return Vector((math.cos(math.radians(degrees)), math.sin(math.radians(degrees)), 0))
-
-
 def _strainer(col, at, direction):
     """The brass strainer on an intake hose's end at `at`, along `direction`, its slots dark rings."""
     at, direction = Vector(at), Vector(direction).normalized()
@@ -883,12 +881,12 @@ def _strainer(col, at, direction):
              HOSE_RADIUS * 1.55, sides=12)
 
 
-def _intake(col, start, heading=INTAKE_HEADING, reach=0.32):
-    """A pump's Rubber Hose intake from `start` (x, y, z) on its foot: out along `heading` (degrees
+def _intake(col, start, angle=INTAKE_HEADING, reach=0.32):
+    """A pump's Rubber Hose intake from `start` (x, y, z) on its foot: out along `angle` (degrees
     from east), sagging to the ground and curving a little on it to the strainer on its end, `reach`
     metres out."""
     start = Vector(start)
-    out = _heading(heading)
+    out = heading(angle)
     side = UP.cross(out)
     foot = Vector((start.x, start.y, 0))
     stations = [(0, 0, start.z), (0.07, 0, max(HOSE_RADIUS, start.z * 0.6)), (0.16, 0.01, HOSE_RADIUS),
@@ -958,7 +956,7 @@ def wooden_hand_pump(col):
     box(col, "WoodPump_Post", M("planks"), (post_depth, 0.1, pivot.z - handle[0] / 2 - 0.004 - deck),
         at=(post.x, post.y, deck), rotate=(0, 0, 45), bevel=0.004)
     for z in (0.58, 0.8):
-        ring = [_heading(a) * (PVC_RADIUS + 0.004) + UP * z for a in range(-45, -226, -15)]
+        ring = [heading(a) * (PVC_RADIUS + 0.004) + UP * z for a in range(-45, -226, -15)]
         reach = RIGHT * (PVC_RADIUS + post_depth)
         tube(col, "WoodPump_Strap", M("galvanised"), [ring[0] + reach] + ring + [ring[-1] + reach], 0.005, sides=6)
     # The handle between two cheeks nailed to the post's top, on a bolt through them.
@@ -1001,7 +999,7 @@ def iron_hand_pump(col):
     lathe(col, "IronPump_Foot", M("castiron"), [(0, plate), (0.095, plate), (0.095, plate + 0.02), (0.066, plate + 0.034),
                                                 (IRON_COLUMN + 0.005, 0.075), (0, 0.075)], segments=24)
     for angle in (45, 135, 225, 315):
-        at = _heading(angle) * 0.077
+        at = heading(angle) * 0.077
         cylinder(col, "IronPump_Bolt", M("malleable"), 0.011, 0.01, at=(at.x, at.y, plate + 0.02), segments=6)
     bottom = IRON_BODY[0][1]
     cylinder(col, "IronPump_Column", M("ironwork"), IRON_COLUMN, bottom - 0.06, at=(0, 0, 0.06), segments=16)
@@ -1032,7 +1030,7 @@ def iron_hand_pump(col):
     tube(col, "IronPump_RodPin", M("malleable"), [UP * rod_top - TOWARD * 0.025, UP * rod_top + TOWARD * 0.025], 0.006,
          sides=8)
     # The hose's nipple out of the column above the flange.
-    out = _heading(INTAKE_HEADING)
+    out = heading(INTAKE_HEADING)
     nipple = 0.1
     tube(col, "IronPump_Nipple", M("galvanised"), [out * (IRON_COLUMN - 0.004) + UP * nipple, out * 0.085 + UP * nipple], 0.013,
          sides=10, up=(0, 0, 1))
@@ -1043,15 +1041,15 @@ HOUSE = (0.56, 0.48, 0.46)  # a Pump House's width (east-west), depth (north-sou
 HOUSE_PLUG = (HOUSE[0] / 2 + 0.09, -HOUSE[1] / 2 + 0.08 - 0.2)  # where its switch's wire ends on the ground
 
 
-def _plug(col, at, heading):
-    """A two-pin plug lying on the ground at `at` on an electric wire's end, its pins along `heading`
+def _plug(col, at, angle):
+    """A two-pin plug lying on the ground at `at` on an electric wire's end, its pins along `angle`
     (degrees from east)."""
-    out, side = _heading(heading), _heading(heading + 90)
+    out, side = heading(angle), heading(angle + 90)
     body = Vector(at) + out * 0.02
-    box(col, "Plug", M("insulation"), (0.04, 0.03, 0.022), at=(body.x, body.y, 0), rotate=(0, 0, heading), bevel=0.003)
+    box(col, "Plug", M("insulation"), (0.04, 0.03, 0.022), at=(body.x, body.y, 0), rotate=(0, 0, angle), bevel=0.003)
     for s in (-1, 1):
         pin = Vector(at) + out * 0.048 + side * s * 0.007
-        box(col, "Plug_Pin", M("brass"), (0.018, 0.003, 0.008), at=(pin.x, pin.y, 0.007), rotate=(0, 0, heading))
+        box(col, "Plug_Pin", M("brass"), (0.018, 0.003, 0.008), at=(pin.x, pin.y, 0.007), rotate=(0, 0, angle))
 
 
 def _house_fittings(col, width, depth):
@@ -1059,7 +1057,7 @@ def _house_fittings(col, width, depth):
     south face's foot, its outlet hose out of the east face, curling on the ground to the coupling a
     Plumb takes on from, and its switch on the east face, its electric wire run from it down to a
     plug on the ground."""
-    _intake(col, (-width / 2 + 0.12, -depth / 2 + 0.01, 0.1), heading=-140, reach=0.2)
+    _intake(col, (-width / 2 + 0.12, -depth / 2 + 0.01, 0.1), angle=-140, reach=0.2)
     x = width / 2
     outlet = [(x - 0.01, 0.05, 0.2), (x + 0.06, 0.05, 0.15), (x + 0.1, 0.08, HOSE_RADIUS), (x + 0.12, 0.18, HOSE_RADIUS),
               (x + 0.09, 0.3, HOSE_RADIUS)]
