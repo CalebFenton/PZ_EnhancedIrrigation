@@ -74,13 +74,12 @@ local function addPlumbing(menu, playerNum, character, unit)
     LinkMenu.addUnplumbOptions(menu, playerNum, character, unit)
 end
 
--- The submenu for `unit`: for a fireplace, the one of its name that vanilla's fire menu, which the
--- game fills before this event, made; else a new one.
+-- The submenu for `unit`: for a fireplace, the one vanilla's fire menu, which the game fills before
+-- this event, made under the name it gives the fireplace (ISBBQMenu, getTileName); else a new one.
 local function unitMenu(context, unit)
-    local name = LinkMenu.objectName(unit)
-    local option = unit:isFireInteractionObject() and context:getOptionFromName(name)
+    local option = unit:isFireInteractionObject() and context:getOptionFromName(unit:getTileName())
     local submenu = option and option.subOption and context:getSubMenu(option.subOption)
-    return submenu or Needs.addSubMenu(context, name)
+    return submenu or Needs.addSubMenu(context, LinkMenu.objectName(unit))
 end
 
 function TreatmentMenu.onFill(playerNum, context, worldobjects, test)

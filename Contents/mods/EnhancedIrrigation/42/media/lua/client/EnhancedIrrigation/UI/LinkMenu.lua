@@ -64,15 +64,10 @@ function LinkMenu.lineLabel(here, there)
 end
 
 --- The name the game gives `object` ("Sink", "Bath", "Barrel Filter"), a fixture, a unit or a
---- pump, as its own menus name it.
+--- pump, as vanilla's menus name it (IsoObject.getTileName); "" for an object with neither a
+--- tile name nor a name of its own.
 function LinkMenu.objectName(object)
-    local props = object:getSprite():getProperties()
-    local name = props:get("CustomName")
-    if not name then
-        return ""
-    end
-    local group = props:get("GroupName")
-    return Translator.getMoveableDisplayName(group and (group .. " " .. name) or name)
+    return object:getTileName() or ""
 end
 
 --- How Unplumb names the buried pipe from the square `here` to the square `there`: by the tank,
