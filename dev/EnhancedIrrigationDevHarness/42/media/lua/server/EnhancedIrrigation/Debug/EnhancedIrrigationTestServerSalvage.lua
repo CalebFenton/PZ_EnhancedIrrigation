@@ -2,9 +2,7 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsSalvage.lua: a
--- washer's or washer-dryer's switch run and read on the authority. Only registers handlers, so a
--- --stay rerun loads it again.
+-- Development only, not published. Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 
