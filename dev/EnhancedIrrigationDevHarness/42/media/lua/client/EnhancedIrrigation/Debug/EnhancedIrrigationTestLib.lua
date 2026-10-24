@@ -7,9 +7,8 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Treatment/Treatment"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,
--- menu helpers and fixtures the mod's tests share. Fixtures are placed by the server handlers of
--- EnhancedIrrigationTestServer.lua and EnhancedIrrigationTestServerLines.lua, the way the
--- authority places them, and each waits for this client's copy. A tile handle is { x, y, z,
+-- menu helpers and fixtures the mod's tests share. Fixtures are placed by server handlers the way
+-- the authority places them, and each waits for this client's copy. A tile handle is { x, y, z,
 -- square }. A fixture only one test file uses is that file's own.
 
 EnhancedIrrigationTest = EnhancedIrrigationTest or setmetatable({}, { __index = PZHarness.Test })
@@ -340,8 +339,7 @@ end
 --- knowledge and exactly its inputs, each the first of `prefer` (full names) it takes if any
 --- (T.inputItem), and the build waits for this client's copy of the tile `sprite`. A build the
 --- menu refuses, for its inputs or its square, is missing. Returns the built tile's handle, or nil.
---- ISBuildIsoEntity is server Lua, which loads after this file, so it is reached at call time
---- rather than through a require.
+--- ISBuildIsoEntity is server Lua, which loads after this file, so it is reached at call time.
 function T.buildFromMenu(self, entity, handle, sprite, prefer)
     local info = T.need(self, T.buildEntry(entity), "the build menu entry of " .. entity)
     local recipe = info and info:getRecipe() and info:getRecipe():getCraftRecipe()
@@ -497,7 +495,7 @@ end
 local AWAY = 600
 -- How long a chunk may take to unload behind the character, or load again in front of it.
 T.LOAD_MS = 60000
--- A test with a reload outlasts the runner's 30 s.
+-- A test with a reload outlasts the runner's default timeout.
 T.RELOAD_SECONDS = 150
 
 --- Queues a trip AWAY tiles east and back, so this client saves the chunk of `at` ({ x, y, z }),

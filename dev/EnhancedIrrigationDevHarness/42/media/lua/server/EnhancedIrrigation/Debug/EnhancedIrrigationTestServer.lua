@@ -1,12 +1,11 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua: the tanks
--- and the recipe knowledge every system's tests use, the jobs the stand and link tests share, and
--- what the other handler files (EnhancedIrrigationTestServer*.lua) share, which this file returns.
--- Server Lua loads after shared, and the mod's server modules exist only on the authority, so the
--- handlers look them up when they run. Named to sort before the handler files, so that a --stay
--- rerun loads it again (RELOAD_FILES) before the files that require it; it only registers handlers.
+-- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua; it returns
+-- what the other handler files share. Server Lua loads after shared, and the mod's server modules
+-- exist only on the authority, so the handlers look them up when they run. Named to sort before
+-- the handler files, so that a --stay rerun loads it again (RELOAD_FILES) before the files that
+-- require it.
 --
 -- What these place is removed by its square when the test ends, not by the object: the jobs under
 -- test replace a stand's object with a barrel's and back, and the vanilla lid swaps it again.
@@ -67,7 +66,7 @@ function Server.isPlaced(object)
         or EI.Treatment.isUnit(object) or EI.Pumps.isPump(object) or EI.entityName(object) == "Well"
 end
 
---- Removes the stand or tank at x, y, z the way the game removes an object.
+--- Removes the placed thing (Server.isPlaced) at x, y, z the way the game removes an object.
 function Server.removeAt(x, y, z)
     local square = getSquare(x, y, z)
     local object = square and mod().findObjectOn(square, Server.isPlaced)
@@ -85,7 +84,7 @@ function Server.unlinkAt(x, y, z)
     end
 end
 
---- Removes, when the test ends, whatever stand or tank stands at args' x, y, z then, and its links.
+--- Removes, when the test ends, whatever placed thing stands at args' x, y, z then, and its links.
 function Server.removeWhenDone(args, defer)
     defer(function()
         Server.unlinkAt(args.x, args.y, args.z)
@@ -241,7 +240,7 @@ handler("tanks.read", function(_, args)
     return Server.stateAt(args)
 end)
 
--- Removes, when the test ends, whatever stand or tank stands at x, y, z then, and its links: for
+-- Removes, when the test ends, whatever placed thing stands at x, y, z then, and its links: for
 -- what the test builds through the game.
 handler("tanks.track", function(_, args, defer)
     Server.removeWhenDone(args, defer)
@@ -342,9 +341,7 @@ end)
 
 -- Recipes -------------------------------------------------------------------------------------------
 
--- Makes the server's copy of the character know (`args.known`) or not know the recipes
--- `args.names`. When the test ends it knows exactly the recipes it knew before, including those a
--- level up taught meanwhile (vanilla's AutoLearn), which the leak check counts.
+-- The server's half of T.knowRecipes.
 handler("recipes.know", function(player, args, defer)
     local saved = Fixtures.knownRecipes(player)
     if args.known then
