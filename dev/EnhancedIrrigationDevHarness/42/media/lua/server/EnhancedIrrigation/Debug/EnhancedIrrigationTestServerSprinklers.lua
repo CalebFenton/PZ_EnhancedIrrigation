@@ -9,8 +9,7 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 -- or vanilla's drying lands between. Pumps, lines, tanks and crops are placed by the other handler
 -- files. Only registers handlers, so a --stay rerun loads it again.
 --
--- A square is { x, y, z }; `args.squares` lists those to read, and `args.sprinkler` the tile whose
--- sprinkler's record holds the soak of the squares off the line.
+-- A square is { x, y, z }; `args.squares` lists those to read.
 
 local handler = PZHarness.serverHandler
 
@@ -19,9 +18,9 @@ local function mod()
 end
 
 -- What the square `at` holds: its crop's `water` and `health` (nil without one), whether a line
--- tile lies on it (`line`), and its soil's `soak`, on that tile's record or else on the record of
--- the sprinkler at `sprinkler`, by the square's offset from it.
-local function readSquare(at, sprinkler)
+-- tile lies on it (`line`), and its soil's `soak`: that tile's, or off the line what every line
+-- record in a sprinkler's reach keeps of it, added up, so a soak kept twice reads twice.
+local function readSquare(at)
     local EI = mod()
     local reply = { x = at.x, y = at.y, z = at.z, soak = 0 }
     local plant = SFarmingSystem.instance:getLuaObjectAt(at.x, at.y, at.z)
@@ -29,11 +28,17 @@ local function readSquare(at, sprinkler)
         reply.water, reply.health = plant.waterLvl, plant.health
     end
     local line = EI.Lines.recordAt(at.x, at.y, at.z)
-    local holder = sprinkler and EI.Lines.recordAt(sprinkler.x, sprinkler.y, sprinkler.z)
     if line then
         reply.line, reply.soak = true, line.soak
-    elseif holder and holder.sprinklerSoak then
-        reply.soak = holder.sprinklerSoak[EI.Sprinklers.offsetKey(at.x - sprinkler.x, at.y - sprinkler.y)] or 0
+        return reply
+    end
+    local reach = EI.Sprinklers.ALONG
+    for dx = -reach, reach do
+        for dy = -reach, reach do
+            local holder = EI.Lines.recordAt(at.x - dx, at.y - dy, at.z)
+            local soak = holder and holder.sprinklerSoak and holder.sprinklerSoak[EI.Sprinklers.offsetKey(dx, dy)]
+            reply.soak = reply.soak + (soak or 0)
+        end
     end
     return reply
 end
@@ -41,7 +46,7 @@ end
 local function readSquares(args)
     local squares = {}
     for i, at in ipairs(args.squares or {}) do
-        squares[i] = readSquare(at, args.sprinkler)
+        squares[i] = readSquare(at)
     end
     return squares
 end

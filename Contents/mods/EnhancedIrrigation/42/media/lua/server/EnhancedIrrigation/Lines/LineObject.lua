@@ -28,8 +28,9 @@ EnhancedIrrigation.LineObject = LineObject
 -- tapMaterial and tapConditions (the pipe it took); wetUntil: the hour its soil stops showing wet;
 -- exterior: whether it lies outdoors, as last seen loaded; lastHour: when time last reached it;
 -- sprinkler: { condition, ceiling } of the Lawn Sprinkler set on it, as its item had them, nil for
--- none; sprinklerSoak: the soak of each square its sprinkler waters that has no line tile, by
--- Sprinklers.offsetKey, nil for none. Unsaved, `running`: its pump runs the line now
+-- none; sprinklerSoak: the soak of squares with no line tile that its sprinkler soaked, by
+-- Sprinklers.offsetKey from it, nil for none, a square's on one record only, the first sprinkler's
+-- to soak it (addSprinklerSoak). Unsaved, `running`: its pump runs the line now
 -- (LineSystem.showRunning), which a loaded world's pumps say again.
 LineObject.SAVED_FIELDS = {
     "material", "holed", "cracked", "conditions", "full", "soak",
@@ -81,11 +82,32 @@ function LineObject:addSoak(points)
     self.soak = math.min(Lines.SOAK_MAX, self.soak + points)
 end
 
---- Adds `points` to the soak of the square `dx`, `dy` from the tile's sprinkler.
-function LineObject:addSprinklerSoak(dx, dy, points)
-    local key = Sprinklers.offsetKey(dx, dy)
-    self.sprinklerSoak = self.sprinklerSoak or {}
-    self.sprinklerSoak[key] = math.min(Lines.SOAK_MAX, (self.sprinklerSoak[key] or 0) + points)
+-- The line record within a sprinkler's reach of the square x, y, z that keeps its soak, and the
+-- square's key there; nil when none does.
+local function soakHolder(x, y, z)
+    for dx = -Sprinklers.ALONG, Sprinklers.ALONG do
+        for dy = -Sprinklers.ALONG, Sprinklers.ALONG do
+            local record = Lines.recordAt(x - dx, y - dy, z)
+            local key = Sprinklers.offsetKey(dx, dy)
+            if record and record.sprinklerSoak and record.sprinklerSoak[key] then
+                return record, key
+            end
+        end
+    end
+    return nil
+end
+
+--- Adds `points` the tile's sprinkler threw to the soak of the square x, y off the line: on the
+--- record already keeping it, so overlapping sprinklers share one soak there that rots and dries
+--- once, else on this one. Returns the record it went on.
+function LineObject:addSprinklerSoak(x, y, points)
+    local holder, key = soakHolder(x, y, self.z)
+    if not holder then
+        holder, key = self, Sprinklers.offsetKey(x - self.x, y - self.y)
+        self.sprinklerSoak = self.sprinklerSoak or {}
+    end
+    holder.sprinklerSoak[key] = math.min(Lines.SOAK_MAX, (holder.sprinklerSoak[key] or 0) + points)
+    return holder
 end
 
 -- The hours of `hours` the soak stays above `level` while it dries at `perHour` from `soak`.

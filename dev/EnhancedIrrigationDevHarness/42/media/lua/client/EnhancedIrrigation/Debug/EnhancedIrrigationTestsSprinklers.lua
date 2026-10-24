@@ -11,8 +11,9 @@ require "EnhancedIrrigation/UI/PlantInfo"
 -- Lawn Sprinklers (Sprinklers.lua, the sprinkler's part of Flow.lua and LineObject.lua, Set and Take
 -- Sprinkler in LineJobs.lua and LineSystem.lua, the line menu's options, the plant info's soil
 -- word, Make Pipe Sprinkler in Recipes.txt): a sprinkler on a pumped line watering its rectangle at
--- the pump's rate, soaking it and rotting what's left waterlogged under it; nothing from a tapped
--- line; setting and taking one; making one and learning to. Lines run for set hours on the server
+-- the pump's rate, soaking it and rotting what's left waterlogged under it, overlapping sprinklers
+-- keeping one soak; nothing from a tapped line; setting and taking one, the soil word outlasting
+-- it; making one and learning to. Lines run for set hours on the server
 -- by what runs them there (EnhancedIrrigationTestServerSprinklers.lua), so the clock doesn't decide
 -- the sums.
 
@@ -133,22 +134,22 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
         T.placeLine(self, { north, middle, south }, "iron")
         self.pump = pumpInto(self, spots[1], spots[2], north)
         plantAll(self, squares)
-        local args = T.at(self.pump, { squares = T.tiles(squares), sprinkler = T.at(middle) })
+        local args = T.at(self.pump, { squares = T.tiles(squares) })
         args.hours = { MINUTE }
         T.read(self, "sprinklers.pump", args, "minute")
-        local soak = T.at(self.pump, { squares = T.tiles(squares), sprinkler = T.at(middle), hours = { SOAK_HOURS } })
+        local soak = T.at(self.pump, { squares = T.tiles(squares), hours = { SOAK_HOURS } })
         T.read(self, "sprinklers.pump", soak, "soaked")
         self.offLine, self.past = squares[indexOf(1, 0)], squares[indexOf(Sprinklers.ALONG, 0)]
         T.waitFor(self, function()
             local plant = CFarmingSystem.instance:getLuaObjectOnSquare(self.offLine.square)
-            return plant ~= nil and PlantInfo.soilKeyOf(plant) == "IGUI_EnhancedIrrigation_Waterlogged"
+            return plant ~= nil and PlantInfo.soilKeyOf(plant) == WATERLOGGED
         end, "this client's plant info naming the crop off the line waterlogged")
         T.step(function()
             local plant = CFarmingSystem.instance:getLuaObjectOnSquare(self.past.square)
             self.pastKey = plant and PlantInfo.soilKeyOf(plant)
         end)
-        T.read(self, "sprinklers.age", { tiles = { T.at(middle) }, hours = ROT_HOURS, squares = { T.at(self.offLine) },
-            sprinkler = T.at(middle) }, "rotted")
+        T.read(self, "sprinklers.age", { tiles = { T.at(middle) }, hours = ROT_HOURS, squares = { T.at(self.offLine) } },
+            "rotted")
     end,
     validate = function(self)
         local spec = self.pump.spec
@@ -176,6 +177,39 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
     end,
 })
 
+-- Two sprinklers on one line whose rectangles overlap keep one soak of a square off the line they
+-- share: each soaks it as far as soil holds, and left waterlogged its crop's roots rot and its soil
+-- dries as under a line tile, not twice as fast. Catches each sprinkler keeping a soak of its own.
+T.test("irrigation_sprinklers_overlapping_keep_one_soak", {
+    instant = true,
+    run = function(self)
+        -- A line west to east, a sprinkler on its second and fourth tiles; the crop beside the middle
+        -- tile, in both rectangles.
+        local squares = T.layout(self, { { 0, 0 }, { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 }, { 2, 1 } }, { joined = true })
+        if not squares then return end
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
+        if not spots then return end
+        local line, crop = { squares[1], squares[2], squares[3], squares[4], squares[5] }, squares[6]
+        line[2].fields = { sprinkler = NEW }
+        line[4].fields = { sprinkler = NEW }
+        T.placeLine(self, line, "iron")
+        self.pump = pumpInto(self, spots[1], spots[2], line[1])
+        -- Full already, so all each sprinkler throws on it soaks the soil.
+        T.plant(self, crop, Lines.PLANT_FULL)
+        T.server(self, "sprinklers.pump", T.at(self.pump, { squares = { T.at(crop) }, hours = { SOAK_HOURS } }))
+        T.read(self, "sprinklers.age", { tiles = { T.at(line[2]), T.at(line[4]) }, hours = ROT_HOURS,
+            squares = { T.at(crop) } }, "rotted")
+    end,
+    validate = function(self)
+        local rotted = self.reads.rotted
+        expectNear("the shared square's soak", rotted.before.squares[1].soak, Lines.SOAK_MAX, POINTS)
+        local change = changes(rotted.before.squares, rotted.after.squares)[1]
+        expectNear("the health of the waterlogged crop both water", change.health, -Lines.ROOT_ROT_PER_HOUR * ROT_HOURS,
+            POINTS)
+        expectNear("the shared square's soak after it was left", change.soak, -Lines.SOAK_DRY_OUT / 24 * ROT_HOURS, POINTS)
+    end,
+})
+
 -- A sprinkler on a line a raised barrel taps does nothing: an hour at the tap waters the crop on
 -- the holed tap tile and draws its hole's water, and none of the crops around the sprinkler, which
 -- a storey of head can't turn. Catches a sprinkler that runs on gravity.
@@ -193,8 +227,8 @@ T.test("irrigation_sprinklers_do_nothing_on_a_tapped_line", {
         T.placeLine(self, { tap, middle, squares[3] }, "iron")
         local crops = { tap, squares[4], squares[5], squares[6], squares[7] }
         plantAll(self, crops)
-        T.read(self, "sprinklers.flow", { tap = T.at(tap), hours = 1, squares = T.tiles(crops), sprinkler = T.at(middle),
-            tank = T.at(self.tank) }, "hour")
+        T.read(self, "sprinklers.flow", { tap = T.at(tap), hours = 1, squares = T.tiles(crops), tank = T.at(self.tank) },
+            "hour")
     end,
     validate = function(self)
         local hour = self.reads.hour

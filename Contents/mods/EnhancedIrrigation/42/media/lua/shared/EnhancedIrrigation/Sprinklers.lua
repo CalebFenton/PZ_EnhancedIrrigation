@@ -36,14 +36,14 @@ local NORTH_SOUTH = {
     [Sprites.NORTH] = true, [Sprites.SOUTH] = true, [Sprites.NORTH + Sprites.SOUTH] = true,
 }
 
---- The key of the square `dx`, `dy` from a sprinkler in its record's soak.
+--- The key of the square `dx`, `dy` from the line tile whose record keeps its soak.
 function Sprinklers.offsetKey(dx, dy)
     return dx .. "," .. dy
 end
 
 --- The squares the sprinkler on the line tile at x, y, z waters: the rectangle centred on it, its
 --- long side along the line there, east to west where the line turns, branches or stands alone.
---- `isLineAt(x, y, z)` says where line lies (Lines.shapeAt). A list of { x, y, dx, dy }.
+--- `isLineAt(x, y, z)` says where line lies (Lines.shapeAt). A list of { x, y }.
 function Sprinklers.squaresOf(x, y, z, isLineAt)
     local reachX, reachY = Sprinklers.ALONG, Sprinklers.ACROSS
     if NORTH_SOUTH[Lines.shapeAt(x, y, z, isLineAt)] then
@@ -52,7 +52,7 @@ function Sprinklers.squaresOf(x, y, z, isLineAt)
     local squares = {}
     for dx = -reachX, reachX do
         for dy = -reachY, reachY do
-            table.insert(squares, { x = x + dx, y = y + dy, dx = dx, dy = dy })
+            table.insert(squares, { x = x + dx, y = y + dy })
         end
     end
     return squares

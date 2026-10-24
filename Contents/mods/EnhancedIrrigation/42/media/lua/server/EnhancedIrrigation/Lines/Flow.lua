@@ -92,8 +92,8 @@ end
 
 -- Throws `litres` from the sprinkler on `record`'s tile: what the air and the paths don't take falls
 -- evenly over its squares (Sprinklers.squaresOf), each plant taking it up to full and the soil the
--- rest: a line tile's soil on its own record, any other square's on the sprinkler's. Notes in
--- `touched` the line records it soaked.
+-- rest: a line tile's soil on its own record, any other square's on the record keeping its soak
+-- (LineObject:addSprinklerSoak). Notes in `touched` the line records it soaked.
 local function spray(record, litres, touched)
     local squares = Sprinklers.squaresOf(record.x, record.y, record.z, Lines.recordAt)
     local points = litres * (1 - Sprinklers.LOST) * Lines.POINTS_PER_LITRE / #squares
@@ -104,7 +104,7 @@ local function spray(record, litres, touched)
             line:addSoak(rest)
             touched[line] = true
         else
-            record:addSprinklerSoak(square.dx, square.dy, rest)
+            touched[record:addSprinklerSoak(square.x, square.y, rest)] = true
         end
     end
 end
