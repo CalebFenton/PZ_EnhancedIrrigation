@@ -89,9 +89,9 @@ end
 --- A plumbing option at `object` (a tank, a fixture, a unit or a pump): a submenu of the tanks in
 --- reach, and with `spec.lines` the garden lines too, each by its nearest tile, each with a submenu
 --- of the pipe the character carries to lay to it, as Lay Line lists it, greyed out with what the
---- run takes. `spec`: `nameKey`, the option's ContextMenu key; `job`, the LinkJobs job each pipe
---- queues; `skip(at)`, which tanks to leave out; `refusal(at)`, a Tooltip key greying a tank or line
---- out before its pipe is listed, or nil; `noneKey`, what the submenu says when it lists none.
+--- queues; `skip(at)`, if given, which tanks to leave out; `refusal(at)`, if given, a Tooltip key
+--- greying a tank or line out before its pipe is listed, or nil; `noneKey`, what the submenu says
+--- when it lists none.
 function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
     local here = EnhancedIrrigation.squareOf(object)
     local name = getText(spec.nameKey)
@@ -104,7 +104,7 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
     local kinds = Pipes.kindsCarried(character)
     local ends = {}
     for _, entry in ipairs(Links.inReach(object, Tanks.tankAt)) do
-        if not spec.skip(entry.at) then
+        if not (spec.skip and spec.skip(entry.at)) then
             table.insert(ends, { at = entry.at, distance = entry.distance, label = LinkMenu.tankLabel(here, entry.at) })
         end
     end
@@ -113,7 +113,7 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
     end
     table.sort(ends, function(p, q) return p.distance < q.distance end)
     for _, entry in ipairs(ends) do
-        local refusal = spec.refusal(entry.at) or (#kinds == 0 and "Tooltip_EnhancedIrrigation_NoPipe") or nil
+        local refusal = spec.refusal and spec.refusal(entry.at) or (#kinds == 0 and "Tooltip_EnhancedIrrigation_NoPipe") or nil
         if refusal then
             Needs.refuse(submenu:addOption(entry.label), refusal)
         else
@@ -172,7 +172,6 @@ function LinkMenu.onFill(playerNum, context, worldobjects, test)
             nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
             job = LinkJobs.PLUMB,
             skip = function(at) return Links.find(here, at) ~= nil end,
-            refusal = function() return nil end,
             noneKey = "ContextMenu_EnhancedIrrigation_NoTankInReach",
         })
         LinkMenu.addUnplumbOptions(context, playerNum, character, tank)
