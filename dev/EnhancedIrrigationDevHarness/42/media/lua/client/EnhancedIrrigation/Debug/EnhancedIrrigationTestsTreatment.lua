@@ -1184,6 +1184,8 @@ end
 -- menu offers Put Out. Catches a boiler vanilla's fire menu can't fuel, one that burns without
 -- flames, or a fire the boiler's line doesn't see.
 T.test("irrigation_treatment_boiler_vanilla_fuels_it_and_draws_its_flames", {
+    mpOnly = "in single player irrigation_treatment_boiler_vanilla_lights_and_puts_it_out runs this path with "
+        .. "vanilla's own Light and Put Out",
     instant = true,
     run = function(self)
         if not fuelled(self) then return end
@@ -1201,8 +1203,9 @@ T.test("irrigation_treatment_boiler_vanilla_fuels_it_and_draws_its_flames", {
     end,
 })
 
--- Vanilla's Light, with splinters and a lighter, lights the fuelled boiler, and its Put Out puts
--- it out. Catches a boiler vanilla's own fire actions can't run.
+-- Vanilla's fire menu adds fuel to the boiler, and its Light, with splinters and a lighter, lights
+-- it: this client draws vanilla's flames on it and the boiler's line says it's heating. Its Put Out
+-- puts it out. Catches a boiler vanilla's fire menu can't fuel or its own fire actions can't run.
 T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
     spOnly = "on a multiplayer client vanilla's Light and Put Out end invalid when the server's change "
         .. "to the fire arrives first (ISBBQLightFromLiterature and ISBBQExtinguish check the fire's "
@@ -1217,6 +1220,8 @@ T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
         readUntil(self, self.unit, "out", function(state) return not state.lit end)
     end,
     validate = function(self)
+        T.expectOffered(self, "add fuel")
+        expect(self.reads.fuelled.fuel > 0, "Add Fuel gave the boiler no fuel")
         T.expectOffered(self, "light")
         expect(self.reads.lit.lit, "Light didn't light the boiler")
         expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
