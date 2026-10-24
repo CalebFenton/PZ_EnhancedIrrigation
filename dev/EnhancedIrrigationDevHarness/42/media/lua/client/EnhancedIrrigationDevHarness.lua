@@ -1,8 +1,6 @@
--- Development only, not published; dev/run-debug-client.sh loads it with the shared harness mod
--- (dev/harness), which runs the modes it registers here in the Enhanced Irrigation debug scenario
--- and then quits the game. With --test it runs every irrigation_* test; with --art,
--- EnhancedIrrigationDevArt stages the tiles and saves screenshots of them, then prints
--- "EIArt DONE". The script reads the result from console.txt.
+-- Development only, not published. dev/run-debug-client.sh loads it with the shared harness mod,
+-- which runs the registered modes in the debug scenario and then quits; the script reads the
+-- result from console.txt.
 require "PZHarness/Runner"
 require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugScenario"
 local Art = require "EnhancedIrrigationDevArt"
