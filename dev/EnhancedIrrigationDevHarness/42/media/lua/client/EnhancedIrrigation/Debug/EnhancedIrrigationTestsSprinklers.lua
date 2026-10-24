@@ -41,15 +41,9 @@ local WATERLOGGED = "IGUI_EnhancedIrrigation_Waterlogged"
 --- and its outlet plumbed to the line tile `into`; waits for this client's copies. Returns the
 --- pump's handle.
 local function pumpInto(self, handle, well, into)
-    local pump = { x = handle.x, y = handle.y, z = handle.z, sprite = Sprites.IRON_HAND_PUMP, spec = Pumps.UNITS[IRON],
-        square = handle.square }
-    T.server(self, "pumps.place", T.at(pump, { sprite = pump.sprite }))
+    local pump = T.placePump(self, handle, IRON)
     T.placeTank(self, well, "well")
-    T.server(self, "pumps.link", T.at(pump, { tank = T.at(into), fields = { seal = LEATHER } }))
-    T.waitFor(self, function()
-        local copy = T.objectWithSprite(getSquare(pump.x, pump.y, pump.z), pump.sprite)
-        return copy ~= nil and Pumps.summaryOf(copy) ~= nil and Pumps.outletOf(T.at(pump)) ~= nil
-    end, "this client's copy of the pump and its outlet")
+    T.linkPump(self, pump, into, { seal = LEATHER })
     return pump
 end
 

@@ -17,11 +17,11 @@ require "EnhancedIrrigation/UI/LineMenu"
 
 -- The Pump Houses and their parts, Salvage Pump and Make Utility Pump: building the houses from the
 -- build menu, fitting and taking out a part, the switch, running on the grid beside a room and on a
--- generator that pays for it in fuel, looking for that generator once an hour, a house a storey up,
--- a dry source and burning out, Repair Pump, the time a house was away and the grid's shutoff, the
--- timer, what a house tells a Renewable Energy bank, a garden line a house drives, a washer's pump
--- salvaged, and a Utility Pump made. Houses are placed, plumbed and run for set hours by their own
--- pass from server handlers, so the clock doesn't decide the sums.
+-- generator that pays for it in fuel, a house a storey up, a dry source and burning out, Repair
+-- Pump, the time a house was away and the grid's shutoff, the timer, what a house tells a Renewable
+-- Energy bank, a garden line a house drives, a washer's pump salvaged, and a Utility Pump made.
+-- Houses are placed, plumbed and run for set hours by their own pass from server handlers, so the
+-- clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -31,7 +31,6 @@ local Parts = EnhancedIrrigation.Parts
 
 local LITRES = 0.05
 local WOOD, METAL = "EnhancedIrrigation_PumpHouseWood", "EnhancedIrrigation_PumpHouseMetal"
-local SPRITES = { [WOOD] = Sprites.PUMP_HOUSE_WOOD, [METAL] = Sprites.PUMP_HOUSE_METAL }
 local APPLIANCE, UTILITY = Pumps.APPLIANCE_PUMP, Pumps.UTILITY_PUMP
 -- A raised barrel's water: vanilla's round rain barrel's.
 local BARREL_LITRES = 600
@@ -43,11 +42,6 @@ local FUEL = 0.0005
 
 -- Houses -------------------------------------------------------------------------------------------------
 
-local function summaryOf(house)
-    local copy = T.copyOf(house)
-    return copy and Pumps.summaryOf(copy)
-end
-
 -- What a house is placed with: `part` (a full type) fitted as Fit Pump fits it, from an item new but
 -- for what `item` gives ({ condition, ceiling, fraction } of a point past its condition), then
 -- `fields` set on its record.
@@ -57,22 +51,6 @@ local function fitted(part, fields, item)
         fitting[key] = value
     end
     return { part = fitting, fields = fields }
-end
-
---- Queues placing the Pump House `entity` at `handle` with what `with` (fitted) puts in it, and a
---- wait for this client's copy and its summary. Returns its handle.
-local function placeHouse(self, handle, entity, with)
-    local house = { x = handle.x, y = handle.y, z = handle.z, sprite = SPRITES[entity], square = handle.square }
-    T.server(self, "pumps.place", T.at(house, { sprite = house.sprite, part = with and with.part,
-        fields = with and with.fields }))
-    T.waitFor(self, function() return summaryOf(house) ~= nil end, "this client's copy of the " .. entity)
-    return house
-end
-
--- Queues plumbing the house's outlet to `tank` on the server and a wait for this client to know.
-local function link(self, house, tank)
-    T.server(self, "pumps.link", T.at(house, { tank = T.at(tank) }))
-    T.waitFor(self, function() return Pumps.outletOf(T.at(house)) ~= nil end, "this client's copy of the outlet")
 end
 
 -- The args of a server handler at the house, with the tank, generator and crop squares to read.
@@ -96,13 +74,6 @@ end
 
 local function readUntil(self, house, label, done, extra)
     T.readUntil(self, "pumpHouse.state", at(house, extra), label, done)
-end
-
-local function waitForSummary(self, house, holds, what)
-    T.waitFor(self, function()
-        local summary = summaryOf(house)
-        return summary ~= nil and holds(summary)
-    end, what)
 end
 
 local function partWord(part, condition)
@@ -160,10 +131,10 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
         run = function(self)
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
-            self.house = T.buildFromMenu(self, "Base." .. case.entity, spots[1], SPRITES[case.entity])
+            self.house = T.buildFromMenu(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity])
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
-            waitForSummary(self, self.house, function() return true end, "this client's summary of the built house")
+            T.waitForPumpSummary(self, self.house, function() return true end, "this client's summary of the built house")
             T.readMenu(self, self.house, "built")
             T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         end,
@@ -192,14 +163,14 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD)
+        self.house = T.placePump(self, spots[1], WOOD)
         T.give(self, "parts", { { type = "Base.Screwdriver" },
             { type = APPLIANCE, condition = WORN, modData = { [Parts.CEILING_KEY] = CEILING } } })
         T.useMenu(self, self.house, "fit", function(context)
             return T.jobOption(context, "pump", PumpJobs.FIT_PUMP, self.items.parts[2])
         end, true)
         readUntil(self, self.house, "fitted", function(state) return state.record.part ~= nil end)
-        waitForSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
+        T.waitForPumpSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
         T.readMenu(self, self.house, "fitted")
         T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
@@ -240,7 +211,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
         T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
@@ -278,10 +249,10 @@ T.test("irrigation_pump_house_refuses_the_grid_in_the_open", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true,
             accept = function(squares) return not besideRoom(squares[1]) end })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "forced")
         update(self, self.house, "hour", { hoursAgo = 1, fields = { on = true }, tank = self.tank })
@@ -318,13 +289,13 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
         spots[3] = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots[3] then return end
         spots[3] = spots[3][1]
-        self.house = placeHouse(self, spots[1], METAL, fitted(APPLIANCE))
+        self.house = T.placePump(self, spots[1], METAL, fitted(APPLIANCE))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
-        waitForSummary(self, self.house, function(summary) return summary.running end, "this client's summary of the running house")
+        T.waitForPumpSummary(self, self.house, function(summary) return summary.running end, "this client's summary of the running house")
         T.waitFor(self, function()
             return EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum of the running house")
@@ -332,7 +303,7 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
         T.readMenu(self, self.house, "running")
         T.useMenu(self, self.house, "off", T.job("pump", PumpJobs.TURN_OFF), true)
         readUntil(self, self.house, "off", function(state) return not state.record.on end)
-        waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
+        T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
         T.waitFor(self, function()
             return not EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum to stop")
@@ -368,10 +339,10 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
         if not spots then return end
         self.generator = spots[4]
         T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
-        self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), true)
@@ -413,7 +384,7 @@ T.test("irrigation_pump_house_pays_its_debt_switched_off", {
         self.generator = spots[2]
         self.payer = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
         T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
-        self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
         T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
         update(self, self.house, "away", { hoursAgo = 1, generator = self.generator,
@@ -453,12 +424,12 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
         if not spots then return end
         self.generator = spots[4]
         T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = burns(APPLIANCE, FUEL_HOURS) }), "generator")
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         update(self, self.house, "spent", { hoursAgo = 2 * FUEL_HOURS, tank = self.tank, generator = self.generator })
-        waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
+        T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
         T.readMenu(self, self.house, "spent")
     end,
     validate = function(self)
@@ -488,10 +459,10 @@ T.test("irrigation_pump_house_runs_a_storey_up", {
         self.generator = spots[4]
         T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
         local above = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
-        self.house = placeHouse(self, above, WOOD, fitted(APPLIANCE, { on = true }))
+        self.house = T.placePump(self, above, WOOD, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "wellAbove")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
     end,
     validate = function(self)
@@ -512,10 +483,10 @@ T.test("irrigation_pump_house_dry_source_wears_it_fast", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "ground", 0)
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         update(self, self.house, "dry", { hoursAgo = 2, tank = self.tank })
     end,
     validate = function(self)
@@ -543,17 +514,17 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true },
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true },
             { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
-        waitForSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
+        T.waitForPumpSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
         T.readMenu(self, self.house, "burnt")
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         T.setPerk(self, Perks.Electricity, 2)
         T.give(self, "kit", { { type = "Base.Screwdriver" }, { type = "Base.ElectronicsScrap" }, { type = "Base.TirePiece" } })
         T.useMenu(self, self.house, "repair", T.job("pump", PumpJobs.REPAIR_PUMP), true)
         readUntil(self, self.house, "repaired", function(state) return state.record.partCondition > 0 end)
-        waitForSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
+        T.waitForPumpSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
         T.readMenu(self, self.house, "repaired")
         T.useMenu(self, self.house, "again", T.job("pump", PumpJobs.REPAIR_PUMP), false)
         T.count(self, "used", { "Base.ElectronicsScrap", "Base.TirePiece", "Base.Screwdriver" })
@@ -590,10 +561,10 @@ T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         update(self, self.house, "burnt", { hoursAgo = 1, tank = self.tank,
             fields = { on = true, partCondition = Pumps.PARTS[APPLIANCE].wearPerHour / 4 } })
     end,
@@ -623,10 +594,10 @@ T.test("irrigation_pump_house_grid_runs_a_gap_until_the_shutoff", {
         T.setSandbox(self, "TimeSinceApo", A_MONTH_IN)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], METAL, fitted(APPLIANCE, { on = true }))
+        self.house = T.placePump(self, spots[1], METAL, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         update(self, self.house, "lit", {})
         T.read(self, "pumpHouse.shutoff", {}, "shutoff")
         T.step(function()
@@ -662,10 +633,10 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], METAL, fitted(APPLIANCE))
+        self.house = T.placePump(self, spots[1], METAL, fitted(APPLIANCE))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = Valves.TIMER } })
         T.useMenu(self, self.house, "fit", T.job("pump", PumpJobs.FIT_TIMER), true)
         readUntil(self, self.house, "fitted", function(state) return state.record.timer ~= nil end)
@@ -694,7 +665,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         end)
         readUntil(self, self.house, "set", function(state) return state.record.timer.minutes == 30 end)
         update(self, self.house, "hours", { hoursAgo = 3, tank = self.tank })
-        waitForSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
+        T.waitForPumpSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
             "this client's summary of the set timer")
         T.readMenu(self, self.house, "set")
         T.useMenu(self, self.house, "take off", T.job("pump", PumpJobs.TAKE_TIMER), true)
@@ -733,7 +704,7 @@ T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
         local timer = EnhancedIrrigation.Valves.TIMER
         T.read(self, "pumpHouse.bankDraw", T.at(self.house, { cases = {
             { on = true },
@@ -775,9 +746,9 @@ local function houseLine(self, spots, entity, part)
     T.placeLine(self, tiles, "iron")
     T.plant(self, tiles[1], 0)
     T.plant(self, tiles[2], 0)
-    local house = placeHouse(self, spots[1], entity, fitted(part))
+    local house = T.placePump(self, spots[1], entity, fitted(part))
     local barrel = T.placeTank(self, spots[2], "lidded", SOURCE_LITRES)
-    link(self, house, tiles[1])
+    T.linkPump(self, house, tiles[1])
     return house, barrel, tiles
 end
 
@@ -857,10 +828,10 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
                 return true
             end })
         if not lineSpots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
+        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE))
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.house, self.tank)
+        T.linkPump(self, self.house, self.tank)
         self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, WOOD, APPLIANCE)
         update(self, self.house, "lit", {})
         update(self, self.lineHouse, "line lit", {})

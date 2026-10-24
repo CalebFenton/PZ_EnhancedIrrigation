@@ -1,6 +1,5 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "ISUI/ISWorldObjectContextMenu"
-require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Lines/Lines"
@@ -22,13 +21,12 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
-local Sprites, Links, LinkJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
+local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
 
 local LITRES = 0.05
 local WOODEN, IRON = "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump"
-local SPRITES = { [WOODEN] = Sprites.WOODEN_HAND_PUMP, [IRON] = Sprites.IRON_HAND_PUMP }
 local LEATHER, PLUNGER = "Base.LeatherStrips", "Base.Plunger"
 -- What vanilla's Leather Strips leave once used (their ReplaceOnUse), which a seal must not.
 local DIRTY_LEATHER = "Base.LeatherStripsDirty"
@@ -44,21 +42,6 @@ local MINUTE = 1 / 60
 
 -- Pumps -------------------------------------------------------------------------------------------------
 
-local function summaryOf(pump)
-    local copy = T.copyOf(pump)
-    return copy and Pumps.summaryOf(copy)
-end
-
---- Queues placing the pump `entity` at `handle` with `fields` on its record, and a wait for this
---- client's copy and its summary. Returns its handle, with `spec`.
-local function placePump(self, handle, entity, fields)
-    local pump = { x = handle.x, y = handle.y, z = handle.z, sprite = SPRITES[entity], spec = Pumps.UNITS[entity],
-        square = handle.square }
-    T.server(self, "pumps.place", T.at(pump, { sprite = pump.sprite, fields = fields }))
-    T.waitFor(self, function() return summaryOf(pump) ~= nil end, "this client's copy of the " .. entity)
-    return pump
-end
-
 -- Queues the server's view of the pump, with `extra` args (tank, well), into self.reads[label].
 local function read(self, pump, label, extra)
     T.read(self, "pumps.state", T.at(pump, extra), label)
@@ -68,29 +51,10 @@ local function readUntil(self, pump, label, done, extra)
     T.readUntil(self, "pumps.state", T.at(pump, extra), label, done)
 end
 
--- Queues plumbing the pump's outlet to `tank` on the server, with `fields` set on its record, and a
--- wait for this client to know of the link and to have the summary.
-local function link(self, pump, tank, fields)
-    T.server(self, "pumps.link", T.at(pump, { tank = T.at(tank), fields = fields }))
-    T.waitFor(self, function()
-        local summary = summaryOf(pump)
-        return Pumps.outletOf(T.at(pump)) ~= nil and summary ~= nil
-            and (not (fields and fields.seal) or summary.seal == fields.seal)
-    end, "this client's copy of the pump's outlet")
-end
-
 -- Queues working the pump for each of `hours` on the server, with `fields` set first and the
 -- `tank`'s state, into self.reads[label] ({ before, steps }).
 local function run(self, pump, label, hours, fields, tank)
     T.read(self, "pumps.run", T.at(pump, { hours = hours, fields = fields, tank = tank and T.at(tank) }), label)
-end
-
--- Queues a wait until this client's summary of the pump satisfies `holds(summary)`.
-local function waitForSummary(self, pump, holds, what)
-    T.waitFor(self, function()
-        local summary = summaryOf(pump)
-        return summary ~= nil and holds(summary)
-    end, what)
 end
 
 local function pumpOption(context)
@@ -145,11 +109,11 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
         run = function(self)
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
-            self.pump = T.buildFromMenu(self, "Base." .. case.entity, spots[1], SPRITES[case.entity], { case.seal })
+            self.pump = T.buildFromMenu(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity], { case.seal })
             if not self.pump then return end
             readUntil(self, self.pump, "built", function(state) return state.record ~= nil end)
             T.count(self, "left", { case.seal, DIRTY_LEATHER, "Base.RubberHose" })
-            waitForSummary(self, self.pump, function(summary) return summary.seal == case.seal end,
+            T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == case.seal end,
                 "this client's summary of the built pump")
             T.readMenu(self, self.pump, "built")
         end,
@@ -189,7 +153,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = placePump(self, spots[1], WOODEN, { seal = LEATHER })
+        self.pump = T.placePump(self, spots[1], WOODEN, { fields = { seal = LEATHER } })
         self.well = T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
@@ -249,10 +213,10 @@ T.test("irrigation_pumps_stop_when_the_character_is_exhausted", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = placePump(self, spots[1], IRON, { seal = LEATHER })
+        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.pump, self.tank)
+        T.linkPump(self, self.pump, self.tank)
         setEndurance(self, Pumps.EXHAUSTED + LAST_ENDURANCE)
         quickRuns(self)
         T.useMenu(self, self.pump, "pump", pumpOption, true)
@@ -296,12 +260,12 @@ T.test("irrigation_pumps_one_worker_per_pump", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = placePump(self, spots[1], IRON, { seal = LEATHER })
+        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
-        link(self, self.pump, self.tank)
+        T.linkPump(self, self.pump, self.tank)
         T.read(self, "pumps.hold", T.at(self.pump, { as = OTHER }), "other")
-        waitForSummary(self, self.pump, function(summary) return summary.heldBy == OTHER end,
+        T.waitForPumpSummary(self, self.pump, function(summary) return summary.heldBy == OTHER end,
             "this client's summary of the pump another player holds")
         T.goNextTo(self, self.pump.square)
         T.useOption(self, function() return T.copyOf(self.pump) end, "while held", pumpOption, false)
@@ -310,11 +274,11 @@ T.test("irrigation_pumps_one_worker_per_pump", {
         -- The other player's action has been silent too long.
         T.server(self, "pumps.lapseHold", T.at(self.pump))
         quickRuns(self)
-        waitForSummary(self, self.pump, function(summary) return summary.heldBy == nil end,
+        T.waitForPumpSummary(self, self.pump, function(summary) return summary.heldBy == nil end,
             "this client's summary of the pump, freed")
         T.step(function()
             T.onTick(self, function()
-                local summary = summaryOf(self.pump)
+                local summary = T.pumpSummary(self.pump)
                 if summary and summary.heldBy == T.player():getUsername() then
                     self.heldByMe = true
                 end
@@ -352,10 +316,10 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = placePump(self, spots[1], IRON, { seal = LEATHER })
+        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
         self.source = T.placeTank(self, spots[2], "ground", SOURCE_LITRES, true)
         self.tank = T.placeTank(self, spots[3], "lidded")
-        link(self, self.pump, self.tank)
+        T.linkPump(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "source")
         T.step(function()
@@ -392,9 +356,9 @@ T.test("irrigation_pumps_river_intake_gives_tainted_water", {
         T.waitFor(self, function()
             return getSquare(self.river.x, self.river.y, self.river.z):getProperties():has(IsoFlagType.water)
         end, "this client's copy of the river square")
-        self.pump = placePump(self, spots[1], IRON, { seal = LEATHER })
+        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
         self.tank = T.placeTank(self, spots[2], "lidded")
-        link(self, self.pump, self.tank)
+        T.linkPump(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "river")
         run(self, self.pump, "ran", { MINUTE }, nil, self.tank)
@@ -421,8 +385,8 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 }, { 1, 1 } }, { bare = true })
         if not spots then return end
-        self.wooden = placePump(self, spots[1], WOODEN, { seal = LEATHER })
-        self.iron = placePump(self, spots[2], IRON, { seal = LEATHER })
+        self.wooden = T.placePump(self, spots[1], WOODEN, { fields = { seal = LEATHER } })
+        self.iron = T.placePump(self, spots[2], IRON, { fields = { seal = LEATHER } })
         self.tank = T.placeTank(self, spots[3], "raisedAbove")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
@@ -479,7 +443,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         self.untapped = untapped
         tapped.fields = T.tapped()
         T.placeLine(self, { untapped[1], untapped[2], tapped }, "iron")
-        self.pump = placePump(self, spots[1], WOODEN, { seal = LEATHER })
+        self.pump = T.placePump(self, spots[1], WOODEN, { fields = { seal = LEATHER } })
         T.placeTank(self, spots[2], "well")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
@@ -531,9 +495,9 @@ local function pumpedLine(self, spots, fields)
     T.placeLine(self, tiles, "iron")
     T.plant(self, tiles[1], 0)
     T.plant(self, tiles[2], 0)
-    local pump = placePump(self, spots[1], WOODEN)
+    local pump = T.placePump(self, spots[1], WOODEN)
     T.placeTank(self, spots[2], "well")
-    link(self, pump, tiles[1], fields)
+    T.linkPump(self, pump, tiles[1], fields)
     return pump, tiles
 end
 
@@ -597,12 +561,12 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = placePump(self, spots[1], IRON)
+        self.pump = T.placePump(self, spots[1], IRON)
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "lidded")
-        link(self, self.pump, self.tank, { seal = PLUNGER, sealWear = Pumps.sealLitres(PLUNGER) - SEAL_LEFT })
+        T.linkPump(self, self.pump, self.tank, { seal = PLUNGER, sealWear = Pumps.sealLitres(PLUNGER) - SEAL_LEFT })
         run(self, self.pump, "worn", { MINUTE }, nil, self.tank)
-        waitForSummary(self, self.pump, function(summary) return summary.sealWorn end, "this client's summary of the worn seal")
+        T.waitForPumpSummary(self, self.pump, function(summary) return summary.sealWorn end, "this client's summary of the worn seal")
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
@@ -617,7 +581,7 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         end, true)
         readUntil(self, self.pump, "replaced", function(state) return state.record.seal == PLUNGER end)
         T.count(self, "left", { LEATHER, DIRTY_LEATHER, PLUNGER, "Base.Screwdriver" })
-        waitForSummary(self, self.pump, function(summary) return summary.seal == PLUNGER and not summary.sealWorn end,
+        T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == PLUNGER and not summary.sealWorn end,
             "this client's summary of the new seal")
         T.readMenu(self, self.pump, "new")
     end,
@@ -656,12 +620,12 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = placePump(self, spots[1], WOODEN)
+        self.pump = T.placePump(self, spots[1], WOODEN)
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        link(self, self.pump, self.tank, { seal = LEATHER, condition = BODY_LEFT })
+        T.linkPump(self, self.pump, self.tank, { seal = LEATHER, condition = BODY_LEFT })
         run(self, self.pump, "worn", { 1 }, nil, self.tank)
-        waitForSummary(self, self.pump, function(summary) return summary.wornOut end, "this client's summary of the worn pump")
+        T.waitForPumpSummary(self, self.pump, function(summary) return summary.wornOut end, "this client's summary of the worn pump")
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)

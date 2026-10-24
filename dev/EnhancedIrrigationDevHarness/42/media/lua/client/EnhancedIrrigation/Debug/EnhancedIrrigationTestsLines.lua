@@ -26,6 +26,7 @@ local CROP_POINTS = 0.25
 local WALL_WEST = "walls_exterior_house_01_0"
 local DOOR_FRAME_WEST = "walls_exterior_house_01_10"
 local TANK_LITRES = 100
+local IRON_PUMP = "EnhancedIrrigation_IronHandPump"
 
 -- Helpers -------------------------------------------------------------------------------------------
 
@@ -253,14 +254,6 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
     end,
 })
 
--- Places the iron hand pump at `handle` as the build menu leaves it, and waits for this client's
--- copy; it goes when the test ends.
-local function placePump(self, handle)
-    T.server(self, "pumps.place", T.at(handle, { sprite = Sprites.IRON_HAND_PUMP }))
-    T.waitFor(self, function() return T.objectWithSprite(handle.square, Sprites.IRON_HAND_PUMP) ~= nil end,
-        "this client's copy of the pump")
-end
-
 -- A pump's outlet can start a line as a tank can: the first tile goes on beside a pump with no tank
 -- in reach, on the cursor and the authority alike, but not two squares off it. Catches a pump that
 -- can't start the line it would feed, or one that starts lines anywhere.
@@ -272,7 +265,7 @@ T.test("irrigation_lines_first_tile_beside_a_pump", {
         local pump, beside, far = spots[1], spots[2], spots[3]
         T.trackLines(self, { beside, far })
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
-        placePump(self, pump)
+        T.placePump(self, pump, IRON_PUMP)
         T.goNextTo(self, beside.square)
         T.step(function()
             if not T.need(self, #Tanks.tanksReaching(beside.x, beside.y, beside.z) == 0
@@ -306,10 +299,8 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
         T.trackLines(self, tiles)
         tiles[1].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
-        placePump(self, spots[1])
-        T.server(self, "pumps.link", T.at(spots[1], { tank = T.at(tiles[3]) }))
-        T.waitFor(self, function() return EnhancedIrrigation.Pumps.outletOf(T.at(spots[1])) ~= nil end,
-            "this client's copy of the pump's outlet")
+        T.placePump(self, spots[1], IRON_PUMP)
+        T.linkPump(self, spots[1], tiles[3])
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tiles[2].square)
         T.step(function() self.refusal = layCursor(self, "iron"):refusal(tiles[2].square) end)
@@ -337,10 +328,8 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         local tiles = rows[1]
         T.trackLines(self, tiles)
         T.placeLine(self, { tiles[2] }, "iron")
-        placePump(self, spots[1])
-        T.server(self, "pumps.link", T.at(spots[1], { tank = T.at(tiles[2]) }))
-        T.waitFor(self, function() return EnhancedIrrigation.Pumps.outletOf(T.at(spots[1])) ~= nil end,
-            "this client's copy of the pump's outlet")
+        T.placePump(self, spots[1], IRON_PUMP)
+        T.linkPump(self, spots[1], tiles[2])
         T.goNextTo(self, tiles[2].square)
         T.useLineJob(self, tiles[2], LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function() return T.lineObject(tiles[2]) == nil end, "this client to lose the taken-up tile")

@@ -3,6 +3,7 @@ require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Pumps/Pumps"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,
 -- menu helpers and fixtures the mod's tests share. Fixtures are placed by the server handlers of
@@ -16,6 +17,7 @@ local T = EnhancedIrrigationTest
 local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 local Sprites = EnhancedIrrigation.Sprites
+local Pumps = EnhancedIrrigation.Pumps
 
 -- How long this client may take to show what the server changed.
 T.SYNC_MS = 5000
@@ -605,6 +607,57 @@ function T.plant(self, handle, water)
     T.waitFor(self, function()
         return CFarmingSystem.instance:getLuaObjectOnSquare(getSquare(handle.x, handle.y, handle.z)) ~= nil
     end, "this client's copy of the crop")
+end
+
+-- Pumps ---------------------------------------------------------------------------------------------
+
+-- The tile of each pump entity: the hand pumps and the Pump Houses.
+T.PUMP_SPRITES = {
+    EnhancedIrrigation_WoodenHandPump = Sprites.WOODEN_HAND_PUMP,
+    EnhancedIrrigation_IronHandPump = Sprites.IRON_HAND_PUMP,
+    EnhancedIrrigation_PumpHouseWood = Sprites.PUMP_HOUSE_WOOD,
+    EnhancedIrrigation_PumpHouseMetal = Sprites.PUMP_HOUSE_METAL,
+}
+
+--- This client's summary of the pump at `handle`, or nil.
+function T.pumpSummary(handle)
+    local copy = T.copyOf(handle)
+    return copy and Pumps.summaryOf(copy)
+end
+
+--- Queues a wait until this client's summary of the pump at `handle` satisfies `holds(summary)`.
+function T.waitForPumpSummary(self, handle, holds, what)
+    T.waitFor(self, function()
+        local summary = T.pumpSummary(handle)
+        return summary ~= nil and holds(summary)
+    end, what)
+end
+
+--- Queues placing the pump `entity` (a T.PUMP_SPRITES key) at `handle`, with `with.part` fitted
+--- as Fit Pump fits it ({ type, condition, ceiling, fraction }) and `with.fields` on its record, if
+--- given, and a wait for this client's copy and its summary. Returns its handle, with `spec`
+--- (Pumps.UNITS, nil for a Pump House).
+function T.placePump(self, handle, entity, with)
+    local pump = { x = handle.x, y = handle.y, z = handle.z, sprite = T.PUMP_SPRITES[entity],
+        spec = Pumps.UNITS[entity], square = handle.square }
+    T.server(self, "pumps.place", T.at(pump, { sprite = pump.sprite, part = with and with.part,
+        fields = with and with.fields }))
+    T.waitFor(self, function() return T.pumpSummary(pump) ~= nil end, "this client's copy of the " .. entity)
+    return pump
+end
+
+--- Queues plumbing the outlet of the pump at `pump` to the tank or line tile at `tank` on the
+--- server, with `fields` set on its record, and a wait for this client to know of the link and,
+--- when `fields.seal` is given, for its summary to have that seal.
+function T.linkPump(self, pump, tank, fields)
+    T.server(self, "pumps.link", T.at(pump, { tank = T.at(tank), fields = fields }))
+    T.waitFor(self, function()
+        if Pumps.outletOf(T.at(pump)) == nil then
+            return false
+        end
+        local summary = fields and fields.seal and T.pumpSummary(pump)
+        return not (fields and fields.seal) or (summary and summary.seal == fields.seal)
+    end, "this client's copy of the pump's outlet")
 end
 
 return T
