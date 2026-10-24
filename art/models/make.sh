@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Rebuilds every tile and icon of the mod with Blender (made with 5.2), from the parts in items.py
-# and the tile layout in tiles.py, the conventions of Renewable Energy's art/models:
+# Rebuilds every tile and icon of the mod with Blender (made with 5.2), from the builders (lines,
+# stands, treatment, pumps, valves, pamphlet), the tile layout in tiles.py and the icons in items.py,
+# the conventions of Renewable Energy's art/models:
 #
 #   render.py    tile sprites (tools/tiles), their depth map (common/media/depthmaps), the
 #                32 x 32 item icons and the 48 x 48 build-menu icons (tools/textures)

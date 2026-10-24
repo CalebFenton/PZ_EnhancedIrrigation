@@ -1,5 +1,5 @@
-"""Renders the tile sprites, their depth map, the inventory icons and the build-menu icons from the
-models in items.py.
+"""Renders the tile sprites of tiles.py, their depth map, the inventory icons of items.py and the
+build-menu icons.
 
     blender -b --factory-startup -P art/models/render.py [-- tiles [INDEX ...]|icons ...]
 

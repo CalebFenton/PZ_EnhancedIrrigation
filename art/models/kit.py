@@ -1,4 +1,4 @@
-"""Geometry and material helpers shared by the builders in items.py, and the stage and pixel helpers
+"""Geometry and material helpers shared by the builders, and the stage and pixel helpers
 that render.py and preview.py share.
 
 Units are metres and the scene is Blender's: +Z up. An item is built standing on z = 0, centred on
@@ -12,7 +12,7 @@ import random
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 # Materials ----------------------------------------------------------------------------------------
 
@@ -325,6 +325,15 @@ def circle(radius, z, step=10):
     return [(radius * math.cos(math.radians(a)), radius * math.sin(math.radians(a)), z) for a in range(0, 361, step)]
 
 
+# The camera's frame: the game's tiles are seen from the south-east.
+LEFT = Vector((-math.sqrt(0.5), -math.sqrt(0.5), 0))  # the viewer's left, south-west
+RIGHT = -LEFT
+TOWARD = Vector((math.sqrt(0.5), -math.sqrt(0.5), 0))  # toward the viewer, south-east
+UP = Vector((0, 0, 1))
+FACING = (90, 0, 45)  # turns an upright cylinder's axis, or a box's -Y face, toward the viewer
+SQUARE = (0, 0, 45)  # turns a box's X along the viewer's right and its Y away from the viewer
+
+
 # Meshes -------------------------------------------------------------------------------------------
 
 
@@ -513,6 +522,38 @@ def parts(collection, build, *args, **options):
     before = set(collection.objects)
     build(collection, *args, **options)
     return [obj for obj in collection.objects if obj not in before and obj.parent is None]
+
+
+def spline(points, steps=6):
+    """Points along a smooth curve through `points` (Catmull-Rom), for a hose's or a wire's run."""
+    points = [Vector(p) for p in points]
+    padded = [points[0]] + points + [points[-1]]
+    out = []
+    for i in range(1, len(padded) - 2):
+        p0, p1, p2, p3 = padded[i - 1:i + 3]
+        for k in range(steps):
+            t = k / steps
+            out.append(0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                              + (3 * p1 - p0 - 3 * p2 + p3) * t ** 3))
+    out.append(points[-1])
+    return out
+
+
+def on_ground(points, radius):
+    """`points` with none lower than `radius`, so a hose or wire the curve dips rests on the ground
+    rather than through it, where a sprite has nothing to draw over."""
+    return [Vector((p.x, p.y, max(p.z, radius))) for p in points]
+
+
+def board(collection, name, mat, start, end, section, face, bevel=0.003):
+    """A board from `start` to `end`, `section` = (width, thickness) across it, its broad side
+    looking toward `face` (a direction)."""
+    obj = beam(collection, name, mat, start, end, section, bevel=bevel)
+    run = (Vector(end) - Vector(start)).normalized()
+    normal = Vector(face) - run * run.dot(Vector(face))
+    normal.normalize()
+    obj.rotation_quaternion = Matrix((normal.cross(run), normal, run)).transposed().to_quaternion()
+    return obj
 
 
 # Stage and pixels ---------------------------------------------------------------------------------
