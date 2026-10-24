@@ -79,10 +79,19 @@ function PumpObject:canLift(litres)
     return math.max(0, math.min(litres, self:sealLeft(), self.condition * spec.wearLitres))
 end
 
---- Wears the seal and the body by `litres` lifted.
+--- Wears the seal and the body by `litres` lifted. What's left of either below the least a pump
+--- moves counts as spent: the litres a draw hands back are a float, which can fall a hair short of
+--- the last litres asked for and leave a seal or body that lifts nothing but never wears out.
 function PumpObject:lift(litres)
+    local wearLitres = self:spec().wearLitres
     self.sealWear = self.sealWear + litres
-    self.condition = math.max(0, self.condition - litres / self:spec().wearLitres)
+    if self:sealLeft() < Pumps.LEAST_LITRES then
+        self.sealWear = Pumps.sealLitres(self.seal) or self.sealWear
+    end
+    self.condition = math.max(0, self.condition - litres / wearLitres)
+    if self.condition * wearLitres < Pumps.LEAST_LITRES then
+        self.condition = 0
+    end
 end
 
 -- Kinds ---------------------------------------------------------------------------------------------

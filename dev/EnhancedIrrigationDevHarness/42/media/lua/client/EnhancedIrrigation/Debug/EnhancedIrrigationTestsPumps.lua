@@ -418,8 +418,9 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
 
 -- Wear ---------------------------------------------------------------------------------------------------
 
--- Litres the worn plunger cup has left: less than a minute's lift.
-local SEAL_LEFT = 5
+-- Litres the worn plunger cup has left: less than a minute's lift, and not a whole float, so what
+-- the well hands over can fall a hair short of it.
+local SEAL_LEFT = 5.1
 
 -- A plunger cup with a few litres left lifts those and no more, and the pump stops: its menu says
 -- the seal is worn out and greys Pump out. Replace Seal with Leather Strips, then with a Plunger,
@@ -474,10 +475,11 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
     end,
 })
 
--- The body's condition the worn wooden pump has left: one point, its wearLitres of lift.
-local BODY_LEFT = 1
+-- The body's condition the worn wooden pump has left: a few litres of its wearLitres of lift, not a
+-- whole float, so what the well hands over can fall a hair short of it.
+local BODY_LEFT = 0.017
 
--- A wooden pump with a point of condition left lifts its last litres and is worn out: its menu says
+-- A wooden pump with its last few litres of condition left lifts them and is worn out: its menu says
 -- so and greys Pump out. A sledgehammer smashes it through vanilla's Destroy cursor and action, and
 -- its record goes with it. Catches a pump that never wears out, one that works on worn out, or a
 -- record outliving its pump.
