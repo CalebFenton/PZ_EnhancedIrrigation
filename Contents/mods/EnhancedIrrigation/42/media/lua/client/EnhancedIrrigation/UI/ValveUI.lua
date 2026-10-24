@@ -108,13 +108,14 @@ end
 
 function ValveUI:update()
     ISPanelJoypad.update(self)
-    local object = self.spec.object
-    if not (EnhancedIrrigation.onSquare(object) and self.spec.stillThere(object))
-            or self.character:DistTo(object:getX(), object:getY()) > REACH then
+    local object, job = self.spec.object, self.spec.job
+    local now = EnhancedIrrigation.onSquare(object) and self.makeSpec()
+    if not (now and now.job == job) or self.character:DistTo(object:getX(), object:getY()) > REACH then
         self:destroy()
         return
     end
-    self.refusal = self.spec.blocker(self.character, object, self:setting())
+    local jobs = EnhancedIrrigationAction.jobsOf(self.spec.feature)
+    self.refusal = jobs.blocker(self.character, job, object, self:setting())
     self.ok:setEnable(self.refusal == nil)
 end
 
@@ -164,7 +165,7 @@ function ValveUI:destroy()
     end
 end
 
-function ValveUI:new(character, spec)
+function ValveUI:new(character, spec, makeSpec)
     local width = 260
     local o = ISPanelJoypad:new(0, 0, width, 300)
     setmetatable(o, self)
@@ -172,7 +173,7 @@ function ValveUI:new(character, spec)
     local playerNum = character:getPlayerNum()
     o.character = character
     o.playerNum = playerNum
-    o.spec = spec
+    o.spec, o.makeSpec = spec, makeSpec
     o.hour = spec.start or 6
     o.moveWithMouse = true
     o.backgroundColor.a = 0.75
@@ -181,17 +182,21 @@ function ValveUI:new(character, spec)
     return o
 end
 
---- Opens `character`'s panel for a valve, in place of one already open. `spec`: title, the valve's
+--- Opens `character`'s panel for the valve `makeSpec()` describes as it stands now, in place of one
+--- already open; it closes once makeSpec() answers nil or another job. A spec: title, the valve's
 --- name; object, the tile or Pump House it is on; feature and job, the job its button queues
 --- (EnhancedIrrigationAction); okKey, the button's text; timer, whether it sets a start hour;
---- start and minutes, its setting now; blocker(character, object, with), the job's refusal;
---- stillThere(object), whether the valve is still there to set. Returns the panel.
-function ValveUI.open(character, spec)
+--- start and minutes, its setting now. Returns the panel, or nil when the valve is gone.
+function ValveUI.open(character, makeSpec)
+    local spec = makeSpec()
+    if not spec then
+        return nil
+    end
     local playerNum = character:getPlayerNum()
     if ValveUI.instances[playerNum] then
         ValveUI.instances[playerNum]:destroy()
     end
-    local panel = ValveUI:new(character, spec)
+    local panel = ValveUI:new(character, spec, makeSpec)
     panel:initialise()
     panel:addToUIManager()
     ValveUI.instances[playerNum] = panel
@@ -219,10 +224,7 @@ end
 
 function OpenAction:perform()
     ISBaseTimedAction.perform(self)
-    local spec = self.makeSpec()
-    if spec then
-        ValveUI.open(self.character, spec)
-    end
+    ValveUI.open(self.character, self.makeSpec)
 end
 
 function OpenAction:new(character, object, makeSpec)

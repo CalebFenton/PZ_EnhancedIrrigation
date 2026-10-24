@@ -74,12 +74,6 @@ local function addHandOptions(menu, playerNum, character, pump)
     addReplaceSeal(menu, playerNum, character, pump)
 end
 
--- Whether the Pump House `pump` still has a timer, for its panel.
-local function hasTimer(pump)
-    local summary = Pumps.currentSummary(pump)
-    return summary ~= nil and summary.timer ~= nil
-end
-
 -- The panel of the Pump House `pump`'s timer as it stands now: its hour and knob; nil once the
 -- timer is gone.
 local function timerPanel(pump)
@@ -97,8 +91,6 @@ local function timerPanel(pump)
         timer = true,
         start = timer.start,
         minutes = timer.minutes,
-        blocker = function(who, object, with) return PumpJobs.blocker(who, PumpJobs.SET_TIMER, object, with) end,
-        stillThere = hasTimer,
     }
 end
 

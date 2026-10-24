@@ -96,14 +96,6 @@ local function addDrill(menu, playerNum, character, line, state)
     end
 end
 
--- Whether the tile `line` still has a valve of `kind`, for its panel.
-local function hasValve(kind)
-    return function(line)
-        local state = Lines.stateOf(line)
-        return state ~= nil and state.valve ~= nil and Valves.kindOf(state.valve.item) == kind
-    end
-end
-
 -- The panel of the valve on the tap tile `line` as it stands now: a Wind-up Valve's knob, or a
 -- timer's hour and knob; nil once the valve is gone.
 local function valvePanel(line)
@@ -112,20 +104,16 @@ local function valvePanel(line)
     if not valve then
         return nil
     end
-    local kind = Valves.kindOf(valve.item)
-    local windUp = kind == "windup"
-    local job = windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER
+    local windUp = Valves.kindOf(valve.item) == "windup"
     return {
         title = getItemNameFromFullType(valve.item),
         object = line,
         feature = "line",
-        job = job,
+        job = windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER,
         okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
         timer = not windUp,
         start = valve.start,
         minutes = windUp and Valves.minutesLeft(valve) or valve.minutes,
-        blocker = function(who, object, with) return LineJobs.blocker(who, job, object, with) end,
-        stillThere = hasValve(kind),
     }
 end
 
