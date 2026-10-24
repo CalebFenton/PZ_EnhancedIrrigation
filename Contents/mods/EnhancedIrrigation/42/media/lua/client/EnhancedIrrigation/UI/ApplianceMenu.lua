@@ -1,6 +1,5 @@
--- The right-click options of washers, washer-dryers and dishwashers (Appliances.lua): Salvage Pump,
--- greyed out saying why when it would be refused (ApplianceJobs); and on a stripped one, vanilla's
--- Turn On greyed out saying its pump is gone, wherever vanilla's menu put it.
+-- The right-click options of washers, washer-dryers and dishwashers: Salvage Pump, and on a
+-- stripped one vanilla's switch greyed out saying its pump is gone, wherever vanilla's menu put it.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"

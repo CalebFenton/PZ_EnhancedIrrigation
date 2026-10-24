@@ -1,10 +1,6 @@
--- The right-click options of treatment units (Treatment.lua): one submenu named for the unit, with
--- a line saying what its head holds and how it is, Pour In, with a submenu of the containers of
--- water carried, its kind's own jobs, and on a unit that takes pipe Plumb Inlet and Plumb Outlet,
--- with submenus of the tanks in reach, and Unplumb. Each is greyed out saying why when its job
--- would be refused (TreatmentJobs, LinkJobs). The basin is vanilla's: its fluid menu drinks,
--- fills and empties it, and offers no pour into it, as it is input-locked. A boiler's options go in
--- the submenu vanilla's fire menu (ISBBQMenu) has already made for it, under its fuel and fire.
+-- The right-click options of treatment units: one submenu named for the unit, with a line saying
+-- what its head holds and how it is, then its jobs and its plumbing. The basin is vanilla's: its
+-- fluid menu drinks, fills and empties it, and offers no pour into it, as it is input-locked.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"

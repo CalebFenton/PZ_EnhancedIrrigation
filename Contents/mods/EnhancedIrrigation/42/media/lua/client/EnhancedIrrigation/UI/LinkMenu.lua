@@ -1,10 +1,6 @@
--- The plumbing options, which tanks, fixtures, treatment units and pumps share: Plumb to Tank, with
--- a submenu of the tanks in reach, and Unplumb, with a submenu of the pipe buried from it, to
--- tanks, fixtures, treatment units, pumps and garden lines. This file offers them on tanks; the
--- floor where a plumbed tank stood, or a pump's line tile, also offers Unplumb, so pipe whose tanks
--- are both gone is found where it was laid. Each option is greyed out saying why when LinkJobs
--- would refuse it. A fixture's own options are FixtureMenu.lua's, a unit's TreatmentMenu.lua's, a
--- pump's PumpMenu.lua's.
+-- The plumbing options tanks, fixtures, treatment units and pumps share, and those of tanks: Plumb
+-- to Tank and Unplumb. The floor where a plumbed tank stood, or a pump's line tile, also offers
+-- Unplumb, so pipe whose tanks are both gone is found where it was laid.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -150,8 +146,7 @@ function LinkMenu.addUnplumbOptions(context, playerNum, character, object)
 end
 
 -- The floor of the first right-clicked square with no tank, fixture, unit or pump on it that buried
--- pipe runs from, or nil. Fixtures, units and pumps offer their own Unplumb (FixtureMenu.lua,
--- TreatmentMenu.lua, PumpMenu.lua).
+-- pipe runs from, or nil: those offer their own Unplumb.
 local function bareEnd(worldobjects)
     for _, clicked in ipairs(worldobjects) do
         local square = clicked:getSquare()

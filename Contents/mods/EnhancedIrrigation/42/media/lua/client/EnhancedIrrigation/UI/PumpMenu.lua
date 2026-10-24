@@ -1,10 +1,5 @@
--- The right-click options of pumps (Pumps.lua): one submenu named for the pump, with a line saying
--- where it draws, how it stands and what it fills; then at a hand pump Pump and Replace Seal, with a
--- submenu of the seals carried; at a Pump House Fit Pump, with a submenu of the pump parts carried,
--- or Take Out Pump, Turn On or Turn Off, and Repair Pump, and Fit Timer, with a submenu of the
--- timers carried, or Set Timer, which opens the timer's panel (ValveUI), and Take Off Timer; then
--- Plumb Outlet, with a submenu of the tanks and garden lines in reach, and Unplumb. Each is greyed
--- out saying why when its job would be refused (PumpJobs, LinkJobs).
+-- The right-click options of pumps: one submenu named for the pump, with a line saying where it
+-- draws, how it stands and what it fills, then its own jobs and its outlet's plumbing.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -99,8 +94,6 @@ function PumpMenu.openTimer(character, pump)
     ValveUI.walkAndOpen(character, pump, function() return timerPanel(pump) end)
 end
 
--- A Pump House with a timer offers its panel and Take Off Timer; one without, Fit Timer with a
--- submenu of the timers carried, or greyed out saying it needs one.
 local function addTimer(menu, playerNum, character, pump, summary)
     if summary and summary.timer then
         menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetValveTimer"), character, PumpMenu.openTimer, pump)
@@ -114,8 +107,6 @@ local function addTimer(menu, playerNum, character, pump, summary)
         PumpJobs.FIT_TIMER, pump, carried)
 end
 
--- A Pump House's own options: Fit Pump while it is empty, else Take Out Pump; its switch; Repair
--- Pump; its timer.
 local function addHouseOptions(menu, playerNum, character, pump, summary)
     if summary and summary.part then
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOutPump", PumpJobs.TAKE_OUT_PUMP, pump)

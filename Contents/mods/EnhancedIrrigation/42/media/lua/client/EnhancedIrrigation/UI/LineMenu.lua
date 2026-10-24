@@ -1,7 +1,5 @@
--- Garden lines on the right-click menu: "Lay Line" on the ground, by the pipe the character
--- carries, which starts the Lay Line cursor; and on a line tile one "Garden Line" submenu with what
--- the tile is and every job it takes, greyed out saying why when LineJobs refuses it: at a tap, its
--- valve's too, whose Wind Valve and Set Timer open the valve's panel (ValveUI).
+-- Garden lines on the right-click menu: Lay Line on the ground, by the pipe the character carries,
+-- and on a line tile one submenu with what the tile is and the jobs it takes.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -74,7 +72,6 @@ local function bestSprinkler(character)
     return best
 end
 
--- Set Sprinkler sets the one carried in the best condition; a tile with one offers Take Sprinkler.
 local function addSprinkler(menu, playerNum, character, line, state)
     if state.sprinkler then
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeSprinkler", LineJobs.TAKE_SPRINKLER, line)
@@ -122,8 +119,6 @@ function LineMenu.openValve(character, line)
     ValveUI.walkAndOpen(character, line, function() return valvePanel(line) end)
 end
 
--- A tap with a valve offers its panel and Take Off Valve; one without, Fit Valve with a submenu of
--- the valves carried, or greyed out saying it needs one.
 local function addValve(menu, playerNum, character, line, state)
     if state.valve then
         local windUp = Valves.kindOf(state.valve.item) == "windup"

@@ -2,8 +2,8 @@
 -- character has walked over: the oven's timer knob (ISOvenUI), which both use for the minutes it
 -- runs, so the run is picked from the knob's few stops; and for a timer the hour it starts, stepped
 -- up and down as vanilla's alarm clock sets its hour (ISAlarmClockDialog). Its button queues the
--- job (LineJobs, PumpJobs), which turns the knob there, greyed out saying why while the job would
--- be refused. It closes once the character walks off or the valve is gone.
+-- job, which turns the knob there, greyed out saying why while the job would be refused. It closes
+-- once the character walks off or the valve is gone.
 
 require "ISUI/ISPanelJoypad"
 require "ISUI/ISButton"

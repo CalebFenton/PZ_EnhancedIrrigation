@@ -57,8 +57,7 @@ end
 
 -- Turn On or Off for a washer with a buffer, as vanilla offers it on one drawing the town's water
 -- (ISWorldObjectContextMenuLogic.toggleClothingWasher): greyed out without power or water, or with
--- its pump salvaged (Appliances.lua). A washer-dryer keeps vanilla's own switch, which the menu
--- gives it either way.
+-- its pump salvaged. A washer-dryer keeps vanilla's own switch, which the menu gives it either way.
 local function addWasherSwitch(context, playerNum, worldobjects, washer)
     if not (instanceof(washer, "IsoClothingWasher") and washer:getContainer() and washer:getFluidContainer()) then
         return
