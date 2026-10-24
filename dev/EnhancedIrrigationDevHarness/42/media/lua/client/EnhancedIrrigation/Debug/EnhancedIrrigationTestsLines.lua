@@ -61,7 +61,6 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
             end
             self.cursor, self.valid = cursor, {}
         end)
-        -- A tile a step, faced first, each once the one before is laid.
         for i, tile in ipairs(tiles) do
             T.step(function()
                 T.face(tile.square)

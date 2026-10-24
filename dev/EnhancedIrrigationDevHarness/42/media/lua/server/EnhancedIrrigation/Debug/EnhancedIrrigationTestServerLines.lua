@@ -1,11 +1,9 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The authority's half of every line test file
--- (EnhancedIrrigationTestsLines, Water, Time and PlantInfo) and of the line and crop fixtures in
--- EnhancedIrrigationTestLib.lua: line tiles and crops placed the way the authority places them,
--- line jobs performed, line records read, aged and run, and the frost; the tanks are
--- EnhancedIrrigationTestServer.lua's.
+-- Development only, not published. The authority's half of the line tests and of the line and
+-- crop fixtures: line tiles and crops placed the way the authority places them, line jobs
+-- performed, line records read, aged and run, and the frost.
 -- Only registers handlers, so a --stay rerun loads it again (RELOAD_FILES). Everything a handler
 -- places goes when its test ends, by its square, so a stale copy left by a reload is no matter. A
 -- tile is { x, y, z }; `args.tiles` lists them.
@@ -237,7 +235,7 @@ local function sow(at, water, defer)
     defer(function()
         local plant = farming:getLuaObjectAt(at.x, at.y, at.z)
         -- Removing the crop's tile takes its record with it (SGlobalObjectSystem); a record whose
-        -- tile is gone goes by itself.
+        -- tile is gone has to be removed on its own.
         if plant and plant:getIsoObject() then
             plant:removeObject()
         elseif plant then
