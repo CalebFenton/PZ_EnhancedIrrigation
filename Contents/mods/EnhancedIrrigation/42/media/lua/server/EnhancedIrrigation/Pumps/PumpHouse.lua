@@ -36,6 +36,10 @@ local function wearOf(part, hours, dryHours)
     return part.wearPerHour * (hours - dryHours + Pumps.DRY_WEAR * dryHours)
 end
 
+-- Condition below which a part counts as burnt out: the wear for the hours it lasted is a float sum
+-- that can leave a hair of condition no hour could wear.
+local LEAST_CONDITION = 0.01
+
 -- The source of the line a Pump House with `part` drives from `source` (Pumps.sourceOf), giving at
 -- most `litres`: what the time it ran wet lifts.
 local function lineSource(part, source, litres)
@@ -84,7 +88,7 @@ local function run(record, pump, part, hours)
         ran = hours - dryHours + (record.partCondition - wetWear) / (part.wearPerHour * Pumps.DRY_WEAR)
     end
     record.partCondition = math.max(0, record.partCondition - wearOf(part, ran, math.max(0, ran - (hours - dryHours))))
-    if record.partCondition < Pumps.LEAST_LITRES then
+    if record.partCondition < LEAST_CONDITION then
         record.partCondition = 0
     end
     if line then
