@@ -332,27 +332,36 @@ end
 
 -- Soil a sprinkler waterlogged off the line rots the roots for as long as it stays so, so the plant
 -- info keeps naming it waterlogged once a tile laid beside the sprinkler turns its rectangle away
--- from the crop, and once the sprinkler is taken. Catches a soil word read only from a sprinkler
--- watering the square now.
+-- from the crop, and once the sprinkler is taken. The crop the same distance the other way along
+-- the line starts dry and takes all it is thrown, so its soil stays dry. Catches a soil word read
+-- only from a sprinkler watering the square now, or read from the square mirrored across the
+-- sprinkler.
 T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
     instant = true,
     run = function(self)
         -- A line north to south, the sprinkler in the middle; the crop past the north tile, which
-        -- only a rectangle along the line reaches; and the square west of the middle, whose tile
-        -- makes the middle a branch, whose rectangle runs east to west.
-        local squares = T.layout(self, { { 0, -1 }, { 0, 0 }, { 0, 1 }, { 0, -Sprinklers.ALONG }, { -1, 0 } },
-            { joined = true })
+        -- only a rectangle along the line reaches, and its mirror past the south tile; and the
+        -- square west of the middle, whose tile makes the middle a branch, whose rectangle runs
+        -- east to west.
+        local squares = T.layout(self, { { 0, -1 }, { 0, 0 }, { 0, 1 }, { 0, -Sprinklers.ALONG }, { -1, 0 },
+            { 0, Sprinklers.ALONG } }, { joined = true })
         if not squares then return end
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
         if not spots then return end
-        local north, middle, south, crop, west = squares[1], squares[2], squares[3], squares[4], squares[5]
+        local north, middle, south, crop, west, mirror = squares[1], squares[2], squares[3], squares[4], squares[5],
+            squares[6]
         middle.fields = { sprinkler = NEW }
         T.placeLine(self, { north, middle, south }, "iron")
         self.pump = pumpInto(self, spots[1], spots[2], north)
-        plantAll(self, { crop })
-        T.server(self, "sprinklers.pump", T.at(self.pump, { squares = { T.at(crop) }, hours = { SOAK_HOURS } }))
+        -- The full crop's soil takes all it is thrown and the dry one none; points halfway between
+        -- waterlogging the one and filling the other.
+        T.plant(self, crop, Lines.PLANT_FULL)
+        T.plant(self, mirror, 0)
+        local hours = (Lines.WATERLOGGED + Lines.PLANT_FULL) / 2 / sprayed(Sprinklers.RATE, 1)
+        T.server(self, "sprinklers.pump", T.at(self.pump, { squares = { T.at(crop) }, hours = { hours } }))
         T.waitFor(self, function() return soilKey(crop) == WATERLOGGED end,
             "this client's plant info naming the crop waterlogged")
+        T.step(function() self.mirrored = soilKey(mirror) end)
         T.placeLine(self, { west }, "iron")
         T.step(function() self.turned = soilKey(crop) end)
         T.give(self, "wrench", { { type = "Base.PipeWrench" } })
@@ -364,6 +373,7 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
         T.step(function() self.taken = soilKey(crop) end)
     end,
     validate = function(self)
+        expect(self.mirrored == nil, "the soil word of the dry crop across the sprinkler: " .. tostring(self.mirrored))
         expect(self.turned == WATERLOGGED, "the soil word once the rectangle turned away: " .. tostring(self.turned))
         T.expectOffered(self, "take")
         expect(self.taken == WATERLOGGED, "the soil word once the sprinkler was taken: " .. tostring(self.taken))
