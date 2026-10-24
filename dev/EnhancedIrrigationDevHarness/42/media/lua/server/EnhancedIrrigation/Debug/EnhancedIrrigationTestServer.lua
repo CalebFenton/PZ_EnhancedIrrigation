@@ -53,6 +53,11 @@ function Server.lineRecordAt(at)
     end
     return record
 end
+--- The Pump House record at args' x, y, z, or nil.
+function Server.pumpHouseRecordAt(args)
+    return mod().Pumps.recordAt(args.x, args.y, args.z)
+end
+
 
 --- Whether `object` is one of the things the tank tests place: a stand, with or without its barrel,
 --- a tank, a treatment unit, a pump, or a well, which isn't a tank.
