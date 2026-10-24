@@ -1,7 +1,6 @@
 -- Development only. What the --art mode and the Enhanced Irrigation QA scenario need besides the
 -- harness: finding a lot near the character, clearing its trees and ground cover, building the
--- mod's tiles and sowing crops on it. Taken from Renewable Energy's RenewableEnergyDevStage.lua,
--- keeping only what this mod's stages use.
+-- mod's tiles and sowing crops on it.
 
 require "PZHarness/Fixtures"
 require "EnhancedIrrigation/Utilities"
