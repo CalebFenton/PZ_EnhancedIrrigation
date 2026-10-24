@@ -59,6 +59,20 @@ BOILER_WELDED = 138
 TILES[BOILER_STONE] = [layer(items.boiler_stone)]
 TILES[BOILER_WELDED] = [layer(items.boiler_welded)]
 
+# The hand pumps, wooden and iron, then the Pump Houses, a plank box and a sheet-steel one.
+WOODEN_HAND_PUMP = 139
+IRON_HAND_PUMP = 140
+PUMP_HOUSE_WOOD = 141
+PUMP_HOUSE_METAL = 142
+TILES[WOODEN_HAND_PUMP] = [layer(items.wooden_hand_pump)]
+TILES[IRON_HAND_PUMP] = [layer(items.iron_hand_pump)]
+TILES[PUMP_HOUSE_WOOD] = [layer(items.pump_house_wood)]
+TILES[PUMP_HOUSE_METAL] = [layer(items.pump_house_metal)]
+
+# The lawn sprinkler: an overlay on a line tile, as the tap is, standing on the tile's middle.
+SPRINKLER = 143
+TILES[SPRINKLER] = [layer(items.sprinkler)]
+
 # Build-menu icons by the name after EnhancedIrrigation_Build_: each thing as it stands built.
 BUILD_ICONS = {
     "TankStand": [layer(items.tank_stand)],
@@ -67,4 +81,8 @@ BUILD_ICONS = {
     "FilterCrock": [layer(items.crock_in_bucket)],
     "BoilerStone": [layer(items.boiler_stone)],
     "BoilerWelded": [layer(items.boiler_welded)],
+    "WoodenHandPump": [layer(items.wooden_hand_pump)],
+    "IronHandPump": [layer(items.iron_hand_pump)],
+    "PumpHouseWood": [layer(items.pump_house_wood)],
+    "PumpHouseMetal": [layer(items.pump_house_metal)],
 }

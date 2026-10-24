@@ -76,6 +76,18 @@ Sprites.FILTER_CROCK = tile(136)
 Sprites.BOILER_STONE = tile(137)
 Sprites.BOILER_WELDED = tile(138)
 
+-- The hand pumps: pitcher pumps worked by hand, homemade of planks and Plastic Pipe or of cast
+-- iron, each drawing through a Rubber Hose from its foot.
+Sprites.WOODEN_HAND_PUMP = tile(139)
+Sprites.IRON_HAND_PUMP = tile(140)
+
+-- The Pump Houses: a plank or sheet-steel box round an electric pump, its hoses and wire out of it.
+Sprites.PUMP_HOUSE_WOOD = tile(141)
+Sprites.PUMP_HOUSE_METAL = tile(142)
+
+-- The lawn sprinkler, drawn over the line tile it is set on, as the tap is.
+Sprites.SPRINKLER = tile(143)
+
 -- The priority every loader of the mod's tiles passes to MapObjects.OnLoadWithSprite. MapObjects
 -- keeps one function per sprite and priority, a later one silently replacing an earlier
 -- (MapObjects.java), so a second loader of the same tiles on one side needs a priority of its own.

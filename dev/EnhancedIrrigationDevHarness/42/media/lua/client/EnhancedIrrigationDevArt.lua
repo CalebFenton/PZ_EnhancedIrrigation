@@ -1,9 +1,11 @@
 -- Development only; dev/run-debug-client.sh --art runs it instead of the tests. It checks the art
 -- from art/models in the world: it lays every pipe material dry and wet, a tap, crops over pipes, a
 -- line along a wall, and the Tank Stand bare and with each raised barrel beside vanilla's rain
--- barrel, then the Barrel and Brick Filters and the Filter Crock, and in a row of their own the
--- boilers lit and unlit either side of vanilla's lit barrel fire, on one open lot, and saves each
--- shot to <cachedir>/Screenshots as <name>.png, the boilers' last also at night, by their fires.
+-- barrel, then the Barrel and Brick Filters and the Filter Crock, in a row of their own the boilers
+-- lit and unlit either side of vanilla's lit barrel fire, in another the hand pumps and Pump Houses
+-- between vanilla's well and rain barrel, and south of them a sprinkler on a plastic and on a clay
+-- line, on one open lot, and saves each shot to <cachedir>/Screenshots as <name>.png, the boilers'
+-- last also at night, by their fires.
 -- Single player only: it lays the lines through the authority's LineSystem.
 
 require "EnhancedIrrigation/Sprites"
@@ -20,13 +22,15 @@ local WALL_NORTH = "walls_exterior_house_01_1"
 local WALL_WEST = "walls_exterior_house_01_0"
 local VANILLA_BARREL = "carpentry_02_122"
 local VANILLA_BARREL_FIRE = "crafted_01_26"
+local VANILLA_WELL = "camping_01_16"
 
 -- The lot, in squares east and south of its north-west corner. Each material takes a band: a block
 -- dry (corners, tees and the cross) with a tail east of its middle row (a straight and an end),
 -- then the same wet, with a column between left free for the character. The stands stand in a row
 -- below the bands, beside vanilla's rain barrel, and east of them a line runs round the inside of
--- a wall corner. The boilers stand in a row further south, out of the stands' shots.
-local AREA = { w = 10, h = 24 }
+-- a wall corner. The boilers stand in a row further south, out of the stands' shots, and the pumps
+-- and sprinklers further south still.
+local AREA = { w = 10, h = 29 }
 -- Ground cover this far round the lot goes too, so none of it stands in front of the shots.
 local MARGIN = 3
 local BLOCK = { dry = 0, wet = 6 }
@@ -62,6 +66,17 @@ local MIDNIGHT = 0
 -- How dark the climate must have gone before a night shot: the light follows the clock on the
 -- climate's next ticks, not at once.
 local NIGHT_STRENGTH = 0.9
+-- The pumps as plain tiles, as the shots need only their sprites, between the well and the barrel
+-- they would draw from, for scale.
+local PUMP_ROW = 26
+local PUMPS = {
+    { x = 1, sprite = VANILLA_WELL }, { x = 2, sprite = Sprites.WOODEN_HAND_PUMP }, { x = 3, sprite = Sprites.IRON_HAND_PUMP },
+    { x = 4, sprite = VANILLA_BARREL }, { x = 5, sprite = Sprites.PUMP_HOUSE_WOOD }, { x = 6, sprite = Sprites.PUMP_HOUSE_METAL },
+}
+-- A line of three tiles each, a sprinkler on the middle one: the thinnest pipe and the widest, whose
+-- fittings the sprinkler's collar must stand over.
+local SPRINKLER_ROW = 28
+local SPRINKLER_LINES = { { material = "plastic", x = 2 }, { material = "clay", x = 6 } }
 
 -- Where the character stands for each shot, and how far it zooms out from the closest zoom. A
 -- material's spot is in the free column below its band, where it hides none of the pipes.
@@ -82,6 +97,11 @@ for _, shot in ipairs({
     { name = "art_stands_behind", x = 2, y = 17, zoomSteps = 0 },
     { name = "art_stands_front", x = 1, y = 19, zoomSteps = 0 },
     { name = "art_wall", x = 8, y = 19, zoomSteps = 0 },
+    -- East of the pumps' row, then diagonally behind the iron pump, which must hide the character's
+    -- legs, then between the sprinklers' lines. Before the boilers' shots, whose last is at night.
+    { name = "art_pumps", x = 8, y = PUMP_ROW, zoomSteps = 0 },
+    { name = "art_pumps_behind", x = 2, y = PUMP_ROW - 1, zoomSteps = 0 },
+    { name = "art_sprinklers", x = 5, y = SPRINKLER_ROW, zoomSteps = 0 },
     -- East of the boilers' row at noon, then diagonally behind the lit stone boiler, which must
     -- hide the character's legs, then east of the row again at night, by the fires' light.
     { name = "art_boilers", x = 7, y = BOILER_ROW, zoomSteps = 0 },
@@ -139,6 +159,15 @@ local function buildStage(lot)
         record.tap = true
         record:afterChange()
     end
+    for _, line in ipairs(SPRINKLER_LINES) do
+        for x = line.x, line.x + 2 do
+            LineSystem.place(lotSquare(lot, x, SPRINKLER_ROW), line.material)
+        end
+        -- As the tap is drawn: an overlay on the line tile, once its neighbours have shaped it.
+        local tile = EnhancedIrrigation.Lines.recordAt(lot.x + line.x + 1, lot.y + SPRINKLER_ROW, lot.z):getIsoObject()
+        tile:addAttachedAnimSpriteByName(Sprites.SPRINKLER)
+        tile:transmitUpdatedSpriteToClients()
+    end
     for _, crop in ipairs(CROPS) do
         local missing = Stage.plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage, CROP_WATER)
         if missing then
@@ -160,6 +189,9 @@ local function buildStage(lot)
             fireplace:setFuelAmount(BOILER_FUEL)
             fireplace:setLit(true)
         end
+    end
+    for _, pump in ipairs(PUMPS) do
+        PZHarness.Fixtures.newTile(lotSquare(lot, pump.x, PUMP_ROW), pump.sprite)
     end
     for x = -1, AREA.w do
         for y = -1, AREA.h do
