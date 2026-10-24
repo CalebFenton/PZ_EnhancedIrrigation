@@ -213,7 +213,7 @@ function LineObject:show()
         return
     end
     local shape = Lines.shapeAt(self.x, self.y, self.z, Lines.recordAt)
-    EnhancedIrrigation.showSprite(isoObject, Sprites.pipe(self.material, self:isWet(), shape))
+    EnhancedIrrigation.ObjectSystem.showSprite(isoObject, Sprites.pipe(self.material, self:isWet(), shape))
     local overlays = {}
     if self.tap then
         table.insert(overlays, Sprites.TAP)
@@ -224,7 +224,7 @@ function LineObject:show()
     if self.sprinkler then
         table.insert(overlays, Sprites.SPRINKLER)
     end
-    EnhancedIrrigation.showOverlays(isoObject, isOverlay, overlays)
+    EnhancedIrrigation.ObjectSystem.showOverlays(isoObject, isOverlay, overlays)
 end
 
 function LineObject:afterChange()

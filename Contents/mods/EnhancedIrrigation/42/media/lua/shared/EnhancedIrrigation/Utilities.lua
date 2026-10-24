@@ -102,46 +102,6 @@ function EnhancedIrrigation.withinReach(character, target, reach)
         and math.abs(character:getZ() - square:getZ()) < 1
 end
 
---- Shows `wanted` (a list of sprite names, in drawing order) as the overlays of the kind
---- `isKind(name)` tells on `isoObject`, and sends the tile on when that changes it. Authority only.
-function EnhancedIrrigation.showOverlays(isoObject, isKind, wanted)
-    local attached = isoObject:getAttachedAnimSprite()
-    local count = attached and attached:size() or 0
-    local shown = {}
-    for i = 0, count - 1 do
-        local name = attached:get(i):getName()
-        if isKind(name) then
-            table.insert(shown, name)
-        end
-    end
-    if EnhancedIrrigation.sameValue(shown, wanted) then return end
-    for i = count - 1, 0, -1 do
-        if isKind(attached:get(i):getName()) then
-            isoObject:RemoveAttachedAnim(i)
-        end
-    end
-    for _, name in ipairs(wanted) do
-        isoObject:addAttachedAnimSpriteByName(name)
-    end
-    isoObject:transmitUpdatedSpriteToClients()
-end
-
---- Shows `wanted` (a sprite name, or nil for none) as the one overlay of the kind `isKind(name)`
---- tells on `isoObject`, as showOverlays does.
-function EnhancedIrrigation.showOverlay(isoObject, isKind, wanted)
-    EnhancedIrrigation.showOverlays(isoObject, isKind, wanted and { wanted } or {})
-end
-
---- Shows `isoObject` as the tile `spriteName` and sends the change on, if it isn't already.
---- Authority only.
-function EnhancedIrrigation.showSprite(isoObject, spriteName)
-    local sprite = isoObject:getSprite()
-    if sprite and sprite:getName() == spriteName then return end
-    -- The tile's own sprite, with its properties; setSprite(name) would make a bare texture.
-    isoObject:setSprite(getSprite(spriteName))
-    isoObject:transmitUpdatedSpriteToClients()
-end
-
 --- The game entity script whose SpriteConfig names the tile `spriteName`, or nil: what an object
 --- on that tile is, found as vanilla's MORainCollectorBarrel finds it.
 function EnhancedIrrigation.tileEntity(spriteName)

@@ -267,7 +267,7 @@ end
 function PumpObject:show()
     local pump = self:getIsoObject()
     if pump and self:isHouse() then
-        EnhancedIrrigation.showOverlays(pump, isTimerOverlay, self.timer and { Sprites.HOUSE_TIMER } or {})
+        EnhancedIrrigation.ObjectSystem.showOverlays(pump, isTimerOverlay, self.timer and { Sprites.HOUSE_TIMER } or {})
     end
 end
 
