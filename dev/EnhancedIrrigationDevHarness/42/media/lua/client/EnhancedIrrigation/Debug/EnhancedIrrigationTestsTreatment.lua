@@ -1118,29 +1118,40 @@ for _, entity in ipairs({ STONE, WELDED }) do
     })
 end
 
--- The build cursor takes a boiler on a clear outdoor square, but not indoors, nor once a wall stands
--- on an edge of the square. Catches a fire built in a house or against its wall.
+-- The build cursor takes each boiler on a clear outdoor square, but not indoors, nor once a wall
+-- stands on an edge of the square. Catches a fire built in a house or against its wall, or a boiler
+-- that can't be built anywhere.
 T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
     instant = true,
     run = function(self)
         local clear = clearSpot(self)
         local indoors = clear and T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not indoors then return end
+        self.placed = {}
         T.step(function()
-            self.clear = placeable(STONE, clear.square)
-            self.indoors = placeable(STONE, indoors[1].square)
+            for _, entity in ipairs({ STONE, WELDED }) do
+                self.placed[entity] = { clear = placeable(entity, clear.square),
+                    indoors = placeable(entity, indoors[1].square) }
+            end
         end)
         local east = { x = clear.x + 1, y = clear.y, z = clear.z }
         T.server(self, "treatment.wall", T.at(east, { sprite = WALL_WEST }))
         T.waitFor(self, function()
             return getSquare(east.x, east.y, east.z):getProperties():has(IsoFlagType.collideW)
         end, "this client's copy of the wall")
-        T.step(function() self.walled = placeable(WELDED, clear.square) end)
+        T.step(function()
+            for entity, placed in pairs(self.placed) do
+                placed.walled = placeable(entity, clear.square)
+            end
+        end)
     end,
     validate = function(self)
-        expect(self.clear, "the build cursor refuses a boiler on a clear outdoor square")
-        expect(not self.indoors, "the build cursor takes a boiler indoors")
-        expect(not self.walled, "the build cursor takes a boiler beside a wall")
+        for _, entity in ipairs({ STONE, WELDED }) do
+            local placed = self.placed[entity]
+            expect(placed.clear, "the build cursor refuses the " .. entity .. " on a clear outdoor square")
+            expect(not placed.indoors, "the build cursor takes the " .. entity .. " indoors")
+            expect(not placed.walled, "the build cursor takes the " .. entity .. " beside a wall")
+        end
     end,
 })
 
