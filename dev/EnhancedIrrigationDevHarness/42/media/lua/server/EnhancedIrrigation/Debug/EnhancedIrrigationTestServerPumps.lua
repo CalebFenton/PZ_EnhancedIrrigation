@@ -69,13 +69,14 @@ local function setFields(record, fields)
     record.lastHour = mod().now()
 end
 
--- Places the pump tile `args.sprite` at x, y, z as the build menu builds it, its record made as its
--- OnCreate makes it, then sends it to the clients, with `args.fields` set on the record. Answers
--- its state. Removed, with its links and record, when the test ends.
+-- Places the pump tile `args.sprite` at x, y, z as the build menu builds it, on a new square where
+-- there is none, as on a floor above open ground, its record made as its OnCreate makes it, then
+-- sends it to the clients, with `args.fields` set on the record. Answers its state. Removed, with
+-- its links and record, when the test ends.
 handler("pumps.place", function(player, args, defer)
-    local square = Server.squareAt(args)
+    local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
     if not square then
-        return nil, "a loaded square for " .. tostring(args.sprite)
+        return nil, "a square for " .. tostring(args.sprite)
     end
     local built, missing = Server.build(square, args.sprite, nil, nil, true)
     if not built then

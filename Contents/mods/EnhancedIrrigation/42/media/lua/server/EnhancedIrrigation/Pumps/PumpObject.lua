@@ -188,24 +188,16 @@ PumpObject.KINDS = {
 
 -- Time -----------------------------------------------------------------------------------------------
 
-local function loaded(at)
-    return getCell():getGridSquare(at.x, at.y, at.z) ~= nil
-end
-
---- Whether every square the pump's water could come from or go to is loaded: its own, the eight
---- around it that hold a well, tank or trough, and its outlet's far end. A river intake counts as
---- loaded, as its water doesn't change. Links reach ten tiles, so these load together; waiting for
---- all of them means the mod never moves water it can't see.
-function PumpObject:endsLoaded()
-    for dx = -1, 1 do
-        for dy = -1, 1 do
-            if not loaded({ x = self.x + dx, y = self.y + dy, z = self.z }) then
-                return false
-            end
-        end
+-- Whether every square the pump's water could come from or go to is loaded: the 3x3 around it,
+-- where a well, tank or trough it draws from stands, and its outlet's far end. A river intake counts
+-- as loaded, as its water doesn't change. Waiting for all of them means the mod never moves water
+-- it can't see.
+local function endsLoaded(record)
+    if not EnhancedIrrigation.loadedAround(record.x, record.y, record.z) then
+        return false
     end
-    local outlet = Pumps.outletOf(self)
-    return outlet == nil or loaded(outlet.b)
+    local outlet = Pumps.outletOf(record)
+    return outlet == nil or EnhancedIrrigation.chunkLoaded(outlet.b.x, outlet.b.y, outlet.b.z)
 end
 
 --- `hours` of time on the pump up to now, in steps of an hour at most, as its kind says. Does
@@ -229,7 +221,7 @@ end
 --- keeps its lastHour, so the whole gap is caught up once they are (at most LONGEST_PASS).
 function PumpObject:catchUp()
     local pump = self:getIsoObject()
-    if pump and self:endsLoaded() then
+    if pump and endsLoaded(self) then
         self:findIntake()
         EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
         local spec = Pumps.specOf(pump)

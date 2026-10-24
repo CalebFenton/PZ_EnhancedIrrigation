@@ -491,6 +491,35 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
     end,
 })
 
+-- A storey up over open ground, beside a well on that floor, a generator below in reach: an hour
+-- switched on lifts the Appliance Pump's rate into a barrel on the ground. Above the ground a square
+-- exists only where something stands, so the squares around the house are missing though their
+-- chunk is loaded. Catches a raised house that waits for them and never runs.
+T.test("irrigation_pump_house_runs_a_storey_up", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, false)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 3, 0 } }, { bare = true,
+            accept = function(squares)
+                return getSquare(squares[1]:getX(), squares[1]:getY(), squares[1]:getZ() + 1) == nil
+            end })
+        if not spots then return end
+        self.generator = spots[4]
+        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
+        local above = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
+        self.house = placeHouse(self, above, WOOD, fitted(APPLIANCE, { on = true }))
+        T.placeTank(self, spots[2], "wellAbove")
+        self.tank = T.placeTank(self, spots[3], "raisedLidded")
+        link(self, self.house, self.tank)
+        update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
+    end,
+    validate = function(self)
+        local hour = self.reads.hour
+        expectNear("the barrel after an hour a storey up", hour.after.tank.litres - hour.before.tank.litres,
+            lifts(APPLIANCE, 1), LITRES)
+    end,
+})
+
 -- Wear -------------------------------------------------------------------------------------------------
 
 -- Indoors on the grid, beside a dry barrel: two hours wear the Appliance Pump ten times as fast as
