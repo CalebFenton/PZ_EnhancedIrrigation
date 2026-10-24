@@ -49,9 +49,14 @@ BRICK_FILTER = 135
 TILES[BARREL_FILTER] = [layer(items.barrel_filter)]
 TILES[BRICK_FILTER] = [layer(items.brick_filter)]
 
+# The Filter Crock in its bucket.
+FILTER_CROCK = 136
+TILES[FILTER_CROCK] = [layer(items.crock_in_bucket)]
+
 # Build-menu icons by the name after EnhancedIrrigation_Build_: each thing as it stands built.
 BUILD_ICONS = {
     "TankStand": [layer(items.tank_stand)],
     "BarrelFilter": [layer(items.barrel_filter)],
     "BrickFilter": [layer(items.brick_filter)],
+    "FilterCrock": [layer(items.crock_in_bucket)],
 }

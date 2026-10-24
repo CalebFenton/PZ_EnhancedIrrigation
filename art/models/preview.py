@@ -7,8 +7,8 @@
   tiles, its shapes chosen from its neighbours by Sprites.lua's rule (north is y - 1), dry on the
   left and wet on the right, the tap on the west arm's end: the pieces have to meet as one pipe.
 - stands.png: the game's own rain barrel (carpentry_02_122, read from its Tiles2x.pack when the
-  game is installed), the tap on a pipe, the stand, the stand with each barrel and the sand
-  filters, at three times their size, so the barrels and filters can be held against the game's.
+  game is installed), the tap on a pipe, the stand, the stand with each barrel, the sand filters
+  and the Filter Crock, at three times their size, so they can be held against the game's.
 - icons.png: every icon at four times its size.
 
 Writes to PREVIEWS (default $TMPDIR/enhanced-irrigation-previews) and prints the folder. PZ_MEDIA
@@ -164,7 +164,7 @@ def stands_sheet():
     over(cell, tile(tiles.pipe_index("plastic", False, 10)), 0, 0)
     over(cell, tile(tiles.TAP), 0, 0)
     cells.append(cell)
-    for index in list(range(tiles.STAND, tiles.STAND + 5)) + [tiles.BARREL_FILTER, tiles.BRICK_FILTER]:
+    for index in list(range(tiles.STAND, tiles.STAND + 5)) + [tiles.BARREL_FILTER, tiles.BRICK_FILTER, tiles.FILTER_CROCK]:
         cell = floor_diamond(fill=GRASS)
         over(cell, tile(index), 0, 0)
         cells.append(cell)

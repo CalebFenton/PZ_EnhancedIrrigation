@@ -1,6 +1,6 @@
 """The parts every tile and icon is built from, in real metres (kit.py has the frame): garden pipe of
-four materials, the tap, the Tank Stand and the rain barrels that sit on it, the sand filters, and
-the pamphlet.
+four materials, the tap, the Tank Stand and the rain barrels that sit on it, the sand filters, the
+Filter Crock in its bucket, and the pamphlet.
 """
 import math
 import random
@@ -47,6 +47,12 @@ def M(name):
         "brick": lambda: material("EI_Brick", "#a5503a", roughness=0.85, grime=0.2, scale=30),
         "brickdark": lambda: material("EI_BrickDark", "#86412d", roughness=0.85, grime=0.2, scale=30),
         "mortar": lambda: material("EI_Mortar", "#b0aa9c", roughness=0.95, grime=0.2, scale=30),
+        # The Filter Crock: unglazed terracotta with the charcoal mixed into its clay showing as faint
+        # dark specks, paler and greyer before it is fired; and the game's galvanised pail it stands in.
+        "terracotta": lambda: material("EI_Terracotta", "#935b45", roughness=0.9, grime=0.15, scale=50,
+                                       speckle=("#654536", 0.35)),
+        "rawclay": lambda: material("EI_RawClay", "#978676", roughness=0.95, grime=0.15, scale=50, speckle=("#76695d", 0.35)),
+        "pail": lambda: material("EI_Pail", "#a3a8ab", roughness=0.65, metallic=0.4, grime=0.15, scale=20),
         # The pamphlet: cream stock, green ink for the band, brown for the drawing and the type.
         "paper": lambda: material("EI_Paper", "#efe5c6", roughness=0.9, grime=0.05),
         "paperback": lambda: material("EI_PaperBack", "#ddd0ab", roughness=0.9, grime=0.05),
@@ -503,6 +509,86 @@ def brick_filter(col):
     _outlet(col, (half - 0.01, -half + 0.2, 2 * BRICK_COURSE), 0, 0.045, 0.07)
 
 
+# The Filter Crock ----------------------------------------------------------------------------------
+#
+# A wide-bellied pot of about 8 litres standing in the game's 10-litre metal bucket (Base.Bucket):
+# its belly sits down in the bucket and its shoulder, neck and rim stand clear above the bucket's
+# rim, so the pot reads as a pot and the bucket as a bucket.
+
+# The crock's outside from its foot up, then its inside back down to its floor, one wall thick.
+CROCK_PROFILE = [(0, 0), (0.07, 0), (0.078, 0.006), (0.095, 0.03), (0.11, 0.07), (0.119, 0.11), (0.121, 0.14),
+                 (0.118, 0.17), (0.108, 0.2), (0.093, 0.23), (0.08, 0.252), (0.075, 0.266), (0.078, 0.278),
+                 (0.088, 0.29), (0.094, 0.298), (0.094, 0.306), (0.088, 0.31), (0.077, 0.308), (0.066, 0.292),
+                 (0.064, 0.27), (0.07, 0.25), (0.085, 0.225), (0.1, 0.195), (0.108, 0.16), (0.109, 0.13),
+                 (0.104, 0.09), (0.09, 0.05), (0.06, 0.022), (0, 0.018)]
+
+
+def filter_crock(col, fired=True):
+    """The Filter Crock standing on z = 0: a round-bellied pot on a narrow foot, its shoulder drawn in
+    to a short neck and a rolled rim, terracotta once `fired`, raw clay before. Returns its parts, to
+    be moved as one."""
+    before = set(col.objects)
+    lathe(col, "Crock", M("terracotta" if fired else "rawclay"), CROCK_PROFILE, segments=36)
+    return [obj for obj in col.objects if obj not in before and obj.parent is None]
+
+
+def crock_icon(col, fired=True):
+    """The Filter Crock tipped onto its side towards the viewer's right, its mouth up and out, as the
+    game draws its clay jars' icons."""
+    group(col, "Crock_Tipped", filter_crock(col, fired), rotate=(0, 40, 0))
+
+
+PAIL_HEIGHT = 0.23
+PAIL_BOTTOM, PAIL_TOP = 0.108, 0.145  # its outside radius at the foot and at the rim
+PAIL_WALL = 0.003
+PAIL_FLOOR = 0.01  # the inside floor's height, which the crock stands on
+PAIL_WIRE = 0.007  # the bail, drawn fatter than life, as the pipes are, so it holds at game size
+PAIL_EARS = 45  # the bail's pivots, on the north-east and south-west sides: square to the camera
+PAIL_LEAN = 15  # how far the bail leans back from upright, away from the camera: its top shows over the crock's rim
+
+
+def _pail_radius(z):
+    return PAIL_BOTTOM + (PAIL_TOP - PAIL_BOTTOM) * z / PAIL_HEIGHT
+
+
+def crock_in_bucket(col):
+    """The fired Filter Crock standing in the game's galvanised bucket: a tapered pail with a rolled
+    rim, two pressed ribs and a foot ring, its wire bail hooked through an ear on either side and
+    leaning back over the rim behind the crock."""
+    top, inner = PAIL_HEIGHT, PAIL_TOP - PAIL_WALL
+    lathe(col, "Pail", M("pail"), [(0, 0.002), (PAIL_BOTTOM - 0.004, 0.002), (PAIL_BOTTOM, 0.008), (PAIL_TOP, top),
+                                   (inner, top), (PAIL_BOTTOM - PAIL_WALL, PAIL_FLOOR + 0.004),
+                                   (PAIL_BOTTOM - PAIL_WALL - 0.004, PAIL_FLOOR), (0, PAIL_FLOOR)], segments=36)
+
+    def ring(name, z, radius, wire):
+        tube(col, name, M("pail"), [(radius * math.cos(math.radians(a)), radius * math.sin(math.radians(a)), z)
+                                    for a in range(0, 361, 10)], wire, sides=8)
+
+    ring("Pail_Rim", top - 0.002, PAIL_TOP + 0.002, 0.007)
+    for z in (0.075, 0.15):
+        ring("Pail_Rib", z, _pail_radius(z), 0.003)
+    ring("Pail_Foot", 0.012, _pail_radius(0.012), 0.004)
+    # The ears, plates riveted under the rim, and the bail: a half hoop between them, leaning back.
+    ear_z = top - 0.035
+    reach = _pail_radius(ear_z) + 0.006
+    pivot = Vector((math.cos(math.radians(PAIL_EARS)), math.sin(math.radians(PAIL_EARS)), 0))
+    back = Vector((-pivot.y, pivot.x, 0))
+    lean = math.radians(PAIL_LEAN)
+    rise = Vector((0, 0, math.cos(lean))) + back * math.sin(lean)
+    for side in (1, -1):
+        at = pivot * side * (reach - 0.004)
+        box(col, "Pail_Ear", M("malleable"), (0.006, 0.026, 0.04), at=(at.x, at.y, ear_z - 0.02),
+            rotate=(0, 0, PAIL_EARS))
+    centre = Vector((0, 0, ear_z))
+    hoop = reach + 0.004
+    bail = [centre + pivot * (reach - 0.008)]
+    bail += [centre + pivot * (hoop * math.cos(t)) + rise * (hoop * math.sin(t))
+             for t in (math.radians(d) for d in range(0, 181, 10))]
+    bail.append(centre - pivot * (reach - 0.008))
+    tube(col, "Pail_Bail", M("galvanised"), bail, PAIL_WIRE, sides=8)
+    group(col, "Pail_Crock", filter_crock(col), at=(0, 0, PAIL_FLOOR))
+
+
 # The pamphlet --------------------------------------------------------------------------------------
 
 LEAFLET = (0.1, 0.22, 0.0015)  # one panel of a tri-fold: width, height, thickness
@@ -544,4 +630,6 @@ def pamphlet(col):
 # leaflet's head turned away from the viewer, so it stands upright in the icon and fills it.
 ITEMS = {
     "CisternsForKentucky": {"model": pamphlet, "icon_elevation": 65, "icon_turn": 45},
+    "FilterCrock": {"model": crock_icon},
+    "FilterCrockUnfired": {"model": lambda col: crock_icon(col, fired=False)},
 }

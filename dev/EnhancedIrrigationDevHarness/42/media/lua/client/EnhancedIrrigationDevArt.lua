@@ -1,8 +1,8 @@
 -- Development only; dev/run-debug-client.sh --art runs it instead of the tests. It checks the art
 -- from art/models in the world: it lays every pipe material dry and wet, a tap, crops over pipes, a
 -- line along a wall, and the Tank Stand bare and with each raised barrel beside vanilla's rain
--- barrel, then the Barrel and Brick Filters, on one open lot, and saves each shot to
--- <cachedir>/Screenshots as <name>.png.
+-- barrel, then the Barrel and Brick Filters and the Filter Crock, on one open lot, and saves each
+-- shot to <cachedir>/Screenshots as <name>.png.
 -- Single player only: it lays the lines through the authority's LineSystem.
 
 require "EnhancedIrrigation/Sprites"
@@ -39,7 +39,7 @@ local CROPS = {
 local CROP_WATER = 100
 local STAND_ROW = 18
 local STANDS = { Sprites.STAND, Sprites.RAISED_BARREL, Sprites.RAISED_BARREL_CLOSED, Sprites.RAISED_TARP_BARREL,
-    Sprites.RAISED_TARP_BARREL_CLOSED, VANILLA_BARREL, Sprites.BARREL_FILTER, Sprites.BRICK_FILTER }
+    Sprites.RAISED_TARP_BARREL_CLOSED, VANILLA_BARREL, Sprites.BARREL_FILTER, Sprites.BRICK_FILTER, Sprites.FILTER_CROCK }
 local WALLS = {
     { x = 7, y = 16, sprite = WALL_NORTH }, { x = 8, y = 16, sprite = WALL_NORTH }, { x = 9, y = 16, sprite = WALL_NORTH },
     { x = 7, y = 16, sprite = WALL_WEST }, { x = 7, y = 17, sprite = WALL_WEST },
@@ -55,10 +55,13 @@ end
 for _, shot in ipairs({
     { name = "art_pipes", x = 5, y = 8, zoomSteps = 2 },
     { name = "art_lot", x = 5, y = 11, zoomSteps = 3 },
-    -- Beside the filters, east of vanilla's barrel, then behind the row, then in front of it,
-    -- diagonally in front of the bare stand, whose legs must draw behind the character.
-    { name = "art_stands", x = 8, y = 18, zoomSteps = 0 },
-    { name = "art_stands_mid", x = 8, y = 18, zoomSteps = 1 },
+    -- Beside the crock at the row's east end, east of vanilla's barrel; on the crock's square, which
+    -- a character walks over, so the crock must draw where it is in front of the character's feet;
+    -- behind the row, then in front of it, diagonally in front of the bare stand, whose legs must
+    -- draw behind the character.
+    { name = "art_stands", x = 9, y = 18, zoomSteps = 0 },
+    { name = "art_stands_mid", x = 9, y = 18, zoomSteps = 1 },
+    { name = "art_stands_crock", x = 8, y = 18, zoomSteps = 0 },
     { name = "art_stands_behind", x = 2, y = 17, zoomSteps = 0 },
     { name = "art_stands_front", x = 1, y = 19, zoomSteps = 0 },
     { name = "art_wall", x = 8, y = 19, zoomSteps = 0 },

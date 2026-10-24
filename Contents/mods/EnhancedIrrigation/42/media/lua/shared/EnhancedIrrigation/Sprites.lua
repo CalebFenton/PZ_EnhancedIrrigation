@@ -68,6 +68,9 @@ Sprites.RAISED_TARP_BARREL_CLOSED = tile(133)
 Sprites.BARREL_FILTER = tile(134)
 Sprites.BRICK_FILTER = tile(135)
 
+-- The Filter Crock: a porous clay pot standing in a bucket, which its water seeps into.
+Sprites.FILTER_CROCK = tile(136)
+
 -- The priority every loader of the mod's tiles passes to MapObjects.OnLoadWithSprite. MapObjects
 -- keeps one function per sprite and priority, a later one silently replacing an earlier
 -- (MapObjects.java), so a second loader of the same tiles on one side needs a priority of its own.

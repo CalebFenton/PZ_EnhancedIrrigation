@@ -20,6 +20,10 @@ values follow the vanilla tile definitions (newtiledefinitions.tiles).
 - The sand filters block as the barrel does too. They hold sand and water the mod keeps track of,
   so the scrap cursor, which would drop all that, can't take them (no CanScrap). The brick filter's
   Material is Brick, as the game's brick fireplaces' is.
+- The Filter Crock, a pot in a bucket, is as small as the game's potted floor plants (Snake Plant,
+  vegetation_indoor_01_10), so it takes their BlocksPlacement and IsLow and, like them, no
+  solidtrans: it doesn't stop a character. Nothing reads Material without CanScrap or IsMoveAble,
+  which it lacks for the filters' reason, so it has none.
 
 The game loads a mod's depth maps (media/depthmaps/DEPTH_<tileset>.png, which art/models/render.py
 renders) only when the mod's common/media has a tileGeometry.txt (TileDepthTextureManager.init),
@@ -37,11 +41,12 @@ MEDIA = os.path.join(HERE, "..", "Contents", "mods", "EnhancedIrrigation", "comm
 TILES_FILE = os.path.join(MEDIA, "enhanced_irrigation.tiles")
 GEOMETRY_FILE = os.path.join(MEDIA, "tileGeometry.txt")
 TILESET = "enhanced_irrigation_01"
-COLUMNS, ROWS = 8, 17
+COLUMNS, ROWS = 8, 18
 
 STAND = 129
 RAISED_BARRELS = (130, 131, 132, 133)
 BARREL_FILTER, BRICK_FILTER = 134, 135
+FILTER_CROCK = 136
 
 
 def stand_like(name, **props):
@@ -53,6 +58,7 @@ for index in RAISED_BARRELS:
     TILES[index] = stand_like("Raised Rain Barrel")
 TILES[BARREL_FILTER] = stand_like("Barrel Filter")
 TILES[BRICK_FILTER] = stand_like("Brick Filter", Material="Brick")
+TILES[FILTER_CROCK] = {"CustomName": "Filter Crock", "BlocksPlacement": "", "IsLow": ""}
 
 
 def main():
