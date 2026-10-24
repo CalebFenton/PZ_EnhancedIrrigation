@@ -135,11 +135,6 @@ function LineObject:dryAndRot(hours)
     self.sprinklerSoak = left
 end
 
--- Read by Treatment until it reads Frost.
-function LineObject.temperatureAt(record)
-    return Frost.celsiusAt(record)
-end
-
 -- Water standing in the pipe may split it in a hard freeze.
 function LineObject:freeze(hours)
     if not self.full or self.cracked or not Frost.isHard(self) then

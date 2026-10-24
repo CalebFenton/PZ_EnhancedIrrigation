@@ -7,7 +7,6 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
-require "EnhancedIrrigation/Frost"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Lines = {}
@@ -55,8 +54,6 @@ Lines.ROOT_ROT_PER_HOUR = (0.5 + 0.4) / 2
 
 -- Holes ---------------------------------------------------------------------------------------------
 
--- Read by Treatment until it reads Frost.
-Lines.HARD_FREEZE_CELSIUS = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS
 -- A punched hole may split brittle pipe as it's made (Pipes.KINDS punchCracks).
 Lines.PUNCH_CRACK_CHANCE = 0.2
 
