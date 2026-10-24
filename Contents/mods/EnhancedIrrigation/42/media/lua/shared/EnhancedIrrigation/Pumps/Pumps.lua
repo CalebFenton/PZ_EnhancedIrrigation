@@ -223,6 +223,22 @@ function Pumps.pumpFeeding(tiles)
     return nil
 end
 
+-- A line takes one tap or one pump: two would each run every outlet on it, and a pump would push
+-- against a tank. The Tooltip key refusing another feed to a line each kind feeds.
+Pumps.FEED_TAKEN = {
+    tap = "Tooltip_EnhancedIrrigation_LineHasTap",
+    pump = "Tooltip_EnhancedIrrigation_LinePumped",
+}
+
+--- What feeds the line of `tiles` (Lines.component): "tap" while a tap is on it, else "pump" while
+--- a pump's outlet is plumbed to it, else nil.
+function Pumps.feedOf(tiles)
+    if Lines.tapIn(tiles) then
+        return "tap"
+    end
+    return Pumps.pumpFeeding(tiles) and "pump" or nil
+end
+
 --- The garden lines the outlet of `pump` reaches, loaded on this side, nearest first: for each, its
 --- nearest tile, { line, at, distance }.
 function Pumps.linesInReach(pump)

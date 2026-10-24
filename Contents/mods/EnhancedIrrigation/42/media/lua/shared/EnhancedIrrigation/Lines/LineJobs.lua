@@ -129,7 +129,7 @@ function LineJobs.layBlocker(square, pending)
                 for _, tile in ipairs(tiles) do
                     seen[EnhancedIrrigation.squareKey(tile.x, tile.y, z)] = true
                 end
-                if Lines.tapIn(tiles) or Pumps.pumpFeeding(tiles) then
+                if Pumps.feedOf(tiles) then
                     fed = fed + 1
                 end
             end
@@ -144,7 +144,7 @@ function LineJobs.layBlocker(square, pending)
     if Pumps.pumpFeeding({ { x = x, y = y, z = z } }) then
         fed = fed + 1
     end
-    -- One line takes one tap or one pump: two would each run every outlet on it.
+    -- Joining two fed lines would give one line two feeds (Pumps.FEED_TAKEN).
     if fed >= 2 then
         return "Tooltip_EnhancedIrrigation_JoinsTwoFeeds"
     end
@@ -225,13 +225,9 @@ LineJobs.JOBS = {
             if state.sprinkler then
                 return "Tooltip_EnhancedIrrigation_TapAndSprinkler"
             end
-            local tiles = Lines.component(x, y, z)
-            if Lines.tapIn(tiles) then
-                return "Tooltip_EnhancedIrrigation_LineHasTap"
-            end
-            -- One line takes a tap or a pump, not both, so a pump never pushes against a tank.
-            if Pumps.pumpFeeding(tiles) then
-                return "Tooltip_EnhancedIrrigation_LinePumped"
+            local taken = Pumps.FEED_TAKEN[Pumps.feedOf(Lines.component(x, y, z))]
+            if taken then
+                return taken
             end
             return #Tanks.pushingAt(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
         end),

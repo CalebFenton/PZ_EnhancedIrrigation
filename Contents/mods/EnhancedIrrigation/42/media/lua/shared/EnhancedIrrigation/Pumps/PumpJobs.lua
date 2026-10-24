@@ -82,9 +82,10 @@ function PumpJobs.deliveryOf(pump, spec, intake)
         return nil, PumpJobs.LIFT_KEYS[spec.lift]
     end
     if Lines.isLine(into) then
-        -- A wall knocked down since may have joined it to a tapped line.
-        if Lines.tapIn(Lines.component(b.x, b.y, b.z)) then
-            return nil, "Tooltip_EnhancedIrrigation_LineHasTap"
+        -- A wall knocked down since may have joined it to a tapped line. This pump feeds it too,
+        -- so only a tap is another feed.
+        if Pumps.feedOf(Lines.component(b.x, b.y, b.z)) == "tap" then
+            return nil, Pumps.FEED_TAKEN.tap
         end
     elseif into:getFluidContainer():getFreeCapacity() < Pumps.LEAST_LITRES then
         return nil, "Tooltip_EnhancedIrrigation_OutletFull"
