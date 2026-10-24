@@ -267,6 +267,9 @@ def pipe(col, material="plastic", shape=0, wet=False):
 # The tap -------------------------------------------------------------------------------------------
 
 TAP_FOOT = 0.15  # the tee's height at the foot of the riser: over the widest pipe's fittings, clay's
+TAP_TOP = TAP_FOOT + 0.24  # the brass body's foot, on the riser
+TAP_OUT = (0.7071, -0.7071)  # the spout's heading: toward the viewer (south-east)
+TAP_SPOUT_END = (TAP_OUT[0] * 0.094, TAP_OUT[1] * 0.094, TAP_TOP - 0.03)  # where its hose thread starts
 
 
 def tap(col):
@@ -276,12 +279,12 @@ def tap(col):
     scale."""
     cylinder(col, "Tap_Tee", M("malleable"), 0.04, TAP_FOOT, segments=16)
     cylinder(col, "Tap_Riser", M("galvanised"), 0.019, 0.25, at=(0, 0, TAP_FOOT - 0.005), segments=12)
-    top = TAP_FOOT + 0.24
+    top = TAP_TOP
     cylinder(col, "Tap_Body", M("brass"), 0.034, 0.07, at=(0, 0, top), segments=14)
-    # The spout toward the viewer (south-east), turned down, its hose thread at the end.
-    out = (0.7071, -0.7071)
+    # The spout turned down, its hose thread at the end.
+    out = TAP_OUT
     spout = [(0, 0, top + 0.035), (out[0] * 0.06, out[1] * 0.06, top + 0.035), (out[0] * 0.09, out[1] * 0.09, top + 0.01),
-             (out[0] * 0.094, out[1] * 0.094, top - 0.03)]
+             TAP_SPOUT_END]
     tube(col, "Tap_Spout", M("brass"), spout, 0.016, sides=10)
     tube(col, "Tap_Thread", M("brass"), [spout[-1], (spout[-1][0], spout[-1][1], spout[-1][2] - 0.025)], 0.02, sides=10)
     cylinder(col, "Tap_Stem", M("brass"), 0.009, 0.04, at=(0, 0, top + 0.07), segments=8)
@@ -1046,6 +1049,7 @@ def iron_hand_pump(col):
 
 
 HOUSE = (0.56, 0.48, 0.46)  # a Pump House's width (east-west), depth (north-south) and height
+HOUSE_PLUG = (HOUSE[0] / 2 + 0.09, -HOUSE[1] / 2 + 0.08 - 0.2)  # where its switch's wire ends on the ground
 
 
 def _plug(col, at, heading):
@@ -1081,7 +1085,7 @@ def _house_fittings(col, width, depth):
     tube(col, "House_Toggle", M("red"), [switch + Vector((0.015, 0, 0.055)), switch + Vector((0.04, 0, 0.075))], 0.006,
          sides=8, up=(0, 1, 0))
     wire = [switch + Vector((0.01, 0, 0.005)), switch + Vector((0.04, -0.01, -0.06)), switch + Vector((0.08, -0.03, -0.2)),
-            Vector((x + 0.1, switch.y - 0.1, WIRE_RADIUS)), Vector((x + 0.09, switch.y - 0.2, WIRE_RADIUS))]
+            Vector((x + 0.1, switch.y - 0.1, WIRE_RADIUS)), Vector((*HOUSE_PLUG, WIRE_RADIUS))]
     cable = _on_ground(_spline(wire), WIRE_RADIUS)
     tube(col, "House_Wire", M("insulation"), cable, WIRE_RADIUS, sides=8, up=(0, 0, 1))
     tail = cable[-1] - cable[-2]
@@ -1349,8 +1353,8 @@ def sprinkler_timer(col, at=(0, 0, 0)):
     tube(col, "SprinklerTimer_Cord", M("insulation"), cord, WIRE_RADIUS * 0.7, sides=6, up=(0, 0, 1))
 
 
-# Where a hose-end valve hangs on the tap: from the spout's thread (tap), toward the viewer.
-TAP_VALVE_AT = (0.0665, -0.0665, TAP_FOOT + 0.24 - 0.13)
+# Where a hose-end valve hangs on the tap: below the spout's thread, to a tenth of a millimetre.
+TAP_VALVE_AT = (round(TAP_SPOUT_END[0], 4), round(TAP_SPOUT_END[1], 4), TAP_SPOUT_END[2] - 0.1)
 
 
 def tap_wind_up_valve(col):
@@ -1371,10 +1375,9 @@ def tap_sprinkler_timer(col):
 
 
 def house_timer(col):
-    """A timer fitted to a Pump House, overlaid on either: a plug-in timer on the ground at the end
-    of its wire (_house_fittings), which the pump's plug goes into."""
-    width, depth, _ = HOUSE
-    sprinkler_timer(col, (width / 2 + 0.1, -depth / 2 - 0.13, 0.016))
+    """A timer fitted to a Pump House, overlaid on either: a plug-in timer on the ground by the end of
+    its wire, which the pump's plug goes into."""
+    sprinkler_timer(col, (HOUSE_PLUG[0] + 0.01, HOUSE_PLUG[1] - 0.01, 0.016))
 
 
 # The pamphlet --------------------------------------------------------------------------------------
