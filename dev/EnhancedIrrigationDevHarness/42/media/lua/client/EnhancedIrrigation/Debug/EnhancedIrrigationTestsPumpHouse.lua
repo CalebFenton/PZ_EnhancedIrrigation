@@ -662,14 +662,19 @@ T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
 
 -- Hours before the shutoff the gap runs the house: less than the barrel holds.
 local BEFORE_SHUTOFF = 1
+-- TimeSinceApo's choice of a world joined a month into the apocalypse (its first is none), so the
+-- grid's days, which count from the apocalypse, aren't the world's own.
+local A_MONTH_IN = 2
 
 -- Indoors, running on the grid at its last pass; then the grid shuts off, and a pass that finds
 -- the house a while past the shutoff runs it for the part of the gap before it only. Catches a gap
--- run on a grid that is gone, or one the shutoff throws away whole.
+-- run on a grid that is gone, one the shutoff throws away whole, or a shutoff at another hour than
+-- vanilla's, such as one that leaves out the months before the world began.
 T.test("irrigation_pump_house_grid_runs_a_gap_until_the_shutoff", {
     instant = true,
     run = function(self)
         T.setGrid(self, true)
+        T.setSandbox(self, "TimeSinceApo", A_MONTH_IN)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
         self.house = placeHouse(self, spots[1], METAL, fitted(APPLIANCE, { on = true }))
@@ -691,8 +696,8 @@ T.test("irrigation_pump_house_grid_runs_a_gap_until_the_shutoff", {
         local from = gap.now - self.gap
         -- Within a minute's water: the clock a multiplayer server reports between two answers
         -- drifts by seconds against the hour the shutoff was set to.
-        expectNear("the barrel after the gap", gap.after.tank.litres, lifts(APPLIANCE, shutoff.shutoff - from),
-            lifts(APPLIANCE, 1 / 60))
+        expectNear("the barrel after the gap", gap.after.tank.litres - gap.before.tank.litres,
+            lifts(APPLIANCE, shutoff.shutoff - from), lifts(APPLIANCE, 1 / 60))
     end,
 })
 

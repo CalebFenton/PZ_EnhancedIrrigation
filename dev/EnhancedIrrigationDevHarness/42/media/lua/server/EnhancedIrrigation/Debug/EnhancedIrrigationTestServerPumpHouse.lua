@@ -116,14 +116,20 @@ handler("pumpHouse.generator", function(_, args, defer)
     return { fuel = generator:getFuel(), running = generator:isActivated() }
 end)
 
--- Moves the grid's shutoff to the last whole day of the world's age that has passed, so the grid is
--- off now, until the test ends. Answers the world hour it went off, `shutoff`, and `now`.
+-- Moves the grid's shutoff to a whole day before the day of the world's age now, so the grid is
+-- off now and has been for a day or more, until the test ends. Answers the world hour it went off,
+-- `shutoff`, worked out by vanilla's rule (SandboxOptions.doesPowerGridExist: the grid is on while
+-- getWorldAgeDaysSinceBegin is at most ElecShutModifier) rather than the mod's, `now`, and whether
+-- the grid exists.
 handler("pumpHouse.shutoff", function(_, args, defer)
     local option = getSandboxOptions():getOptionByName("ElecShutModifier")
     local saved = option:getValue()
     defer(function() option:setValue(saved) end)
-    option:setValue(math.floor(getGameTime():getWorldAgeDaysSinceBegin()))
-    return { shutoff = mod().Power.shutoffHour(), now = mod().now(), grid = getSandboxOptions():doesPowerGridExist() }
+    local days = getGameTime():getWorldAgeDaysSinceBegin()
+    local shutDay = math.floor(days) - 1
+    option:setValue(shutDay)
+    local now = mod().now()
+    return { shutoff = now - (days - shutDay) * 24, now = now, grid = getSandboxOptions():doesPowerGridExist() }
 end)
 
 -- The appliance drawn as `args.sprite` at x, y, z: whether it runs, whether a washer-dryer is set to
