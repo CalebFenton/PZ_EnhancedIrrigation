@@ -160,6 +160,36 @@ function T.useLineJob(self, handle, job, label, choose)
     T.useOption(self, function() return T.lineObject(handle) end, label, T.job("line", job), choose)
 end
 
+--- Queues the names of every option in the world menu of this client's copy of `handle`
+--- (T.copyOf) into self.names[label].
+function T.readMenu(self, handle, label)
+    self.names = self.names or {}
+    T.step(function()
+        local copy = T.copyOf(handle)
+        local context = T.need(self, copy and T.worldMenu(copy), "a world menu for " .. label)
+        if not context then return end
+        local names = {}
+        T.findOption(context, context, function(option)
+            table.insert(names, option.name)
+            return false
+        end)
+        self.names[label] = names
+        context:hideAndChildren()
+    end)
+end
+
+--- Expects (`want`, or not) a line of the menu T.readMenu read as `label` to list `word` whole
+--- among the words of its status line, where a search of the line would find "ripe" in "ripening".
+function T.expectWord(self, label, word, want)
+    local found = false
+    for _, name in ipairs(self.names and self.names[label] or {}) do
+        for part in (name .. ", "):gmatch("(.-), ") do
+            found = found or part == word
+        end
+    end
+    T.expect(found == (want ~= false), label .. ": the menu " .. (found and "lists " or "doesn't list ") .. word)
+end
+
 --- Expects the option T.useOption noted as `label` offered.
 function T.expectOffered(self, label)
     local seen = self.menu and self.menu[label]

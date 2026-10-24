@@ -117,42 +117,13 @@ local function fillBasin(self, unit, litres, tainted)
     waitForCopy(self, unit, litres, nil, "this client's copy of the filled basin")
 end
 
--- Queues the names of every option in the unit's menu into self.names[label].
-local function readMenu(self, unit, label)
-    self.names = self.names or {}
-    T.step(function()
-        local copy = T.copyOf(unit)
-        local context = T.need(self, copy and T.worldMenu(copy), "a world menu for " .. label)
-        if not context then return end
-        local names = {}
-        T.findOption(context, context, function(option)
-            table.insert(names, option.name)
-            return false
-        end)
-        self.names[label] = names
-        context:hideAndChildren()
-    end)
-end
-
--- Expects (`want`, or not) a line of the menu self.names[label] read to contain `text`.
+-- Expects (`want`, or not) a line of the menu T.readMenu read as `label` to contain `text`.
 local function expectLine(self, label, text, want)
     local found = false
     for _, name in ipairs(self.names and self.names[label] or {}) do
         found = found or name:find(text, 1, true) ~= nil
     end
     expect(found == (want ~= false), label .. ": the menu " .. (found and "says " or "doesn't say ") .. text)
-end
-
--- Expects (`want`, or not) a line of the menu self.names[label] to list `word` whole among the
--- words of the unit's state, where expectLine would find "ripe" in "ripening".
-local function expectWord(self, label, word, want)
-    local found = false
-    for _, name in ipairs(self.names and self.names[label] or {}) do
-        for part in (name .. ", "):gmatch("(.-), ") do
-            found = found or part == word
-        end
-    end
-    expect(found == (want ~= false), label .. ": the menu " .. (found and "lists " or "doesn't list ") .. word)
 end
 
 local function expectBasin(who, state, litres, tainted)
@@ -195,7 +166,7 @@ for _, entity in ipairs({ BARREL, BRICK }) do
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
             T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built filter")
-            readMenu(self, self.unit, "built")
+            T.readMenu(self, self.unit, "built")
         end,
         validate = function(self)
             local built = self.reads.built
@@ -300,7 +271,7 @@ T.test("irrigation_treatment_ripe_filter_passes_clean_water", {
         run(self, self.unit, "run", { self.hours }, { head = 50, headTainted = true, ripeHours = Treatment.RIPE_HOURS })
         local litres = self.unit.spec.rate * self.hours
         waitForCopy(self, self.unit, litres, nil, "this client's copy of the filled basin")
-        readMenu(self, self.unit, "ripe")
+        T.readMenu(self, self.unit, "ripe")
         T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), false)
     end,
     validate = function(self)
@@ -308,7 +279,7 @@ T.test("irrigation_treatment_ripe_filter_passes_clean_water", {
         local after = self.reads.run.steps[1]
         expectBasin("the server", after, litres, false)
         expectBasin("this client", clientBasin(self.unit), litres, false)
-        expectWord(self, "ripe", getText("IGUI_EnhancedIrrigation_Ripe"))
+        T.expectWord(self, "ripe", getText("IGUI_EnhancedIrrigation_Ripe"))
         T.expectRefused(self, "clean", "Tooltip_EnhancedIrrigation_NotClogged")
     end,
 })
@@ -328,7 +299,7 @@ T.test("irrigation_treatment_two_dry_days_kill_the_layer", {
         run(self, self.short, "short fed", { 1 }, { head = 10, headTainted = true })
         run(self, self.dead, "dry", { Treatment.DRY_DEATH_HOURS }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
         waitForServer(self, self.dead, "dry", "ripeHours")
-        readMenu(self, self.dead, "dead")
+        T.readMenu(self, self.dead, "dead")
         run(self, self.dead, "fed", { 1 }, { head = 10, headTainted = true })
     end,
     validate = function(self)
@@ -357,15 +328,15 @@ T.test("irrigation_treatment_hard_freeze_kills_the_layer", {
         run(self, self.dry, "dry", { 1 }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
         waitForServer(self, self.wet, "wet", "ripeHours")
         waitForServer(self, self.dry, "dry", "ripeHours")
-        readMenu(self, self.wet, "wet")
-        readMenu(self, self.dry, "dry")
+        T.readMenu(self, self.wet, "wet")
+        T.readMenu(self, self.dry, "dry")
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS + 20 })
         run(self, self.wet, "thawed", { 1 }, { headTainted = true })
     end,
     validate = function(self)
         expectNear("the frozen filter's basin", self.reads.wet.steps[1].basin.litres, 0, LITRES)
         expectLine(self, "wet", getText("IGUI_EnhancedIrrigation_Ripening", Treatment.RIPE_HOURS))
-        expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Ripe"))
+        T.expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Ripe"))
         local thawed = self.reads.thawed
         expectBasin("the thawed filter's hour", thawed.steps[1], thawed.before.basin.litres + self.wet.spec.rate, true)
     end,
@@ -388,12 +359,12 @@ T.test("irrigation_treatment_clogged_filter_trickles_until_cleaned", {
             passed = spec.clogLitres })
         waitForCopy(self, self.unit, nil, function(summary) return summary.clogged end,
             "this client's summary of the clogged filter")
-        readMenu(self, self.unit, "clogged")
+        T.readMenu(self, self.unit, "clogged")
         T.give(self, "tools", { { type = "Base.Shovel" } })
         T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), true)
         readUntil(self, self.unit, "cleaned", function(state) return not state.summary.clogged end)
         waitForServer(self, self.unit, "cleaned", "clogged")
-        readMenu(self, self.unit, "cleaned")
+        T.readMenu(self, self.unit, "cleaned")
         run(self, self.unit, "after", { 1 }, { head = 20, headTainted = true })
     end,
     validate = function(self)
@@ -404,7 +375,7 @@ T.test("irrigation_treatment_clogged_filter_trickles_until_cleaned", {
         expect(clogged.steps[1].basin.tainted == false, "a ripe clogged filter passed tainted water")
         expectLine(self, "clogged", getText("IGUI_EnhancedIrrigation_Clogged"))
         T.expectOffered(self, "clean")
-        expectWord(self, "cleaned", getText("IGUI_EnhancedIrrigation_Clogged"), false)
+        T.expectWord(self, "cleaned", getText("IGUI_EnhancedIrrigation_Clogged"), false)
         expectLine(self, "cleaned", getText("IGUI_EnhancedIrrigation_Ripening",
             Treatment.RIPE_HOURS - Treatment.CLEANED_RIPE_HOURS))
         local after = self.reads.after
@@ -531,13 +502,13 @@ T.test("irrigation_treatment_inlet_keeps_the_film_through_an_absence", {
         T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = gap, tank = T.at(self.raw), into = T.at(self.clean) }),
             "back")
         waitForServer(self, self.unit, "back", "ripeHours")
-        readMenu(self, self.unit, "back")
+        T.readMenu(self, self.unit, "back")
         run(self, self.unit, "next", { 1 }, nil, self.clean)
     end,
     validate = function(self)
         local spec = self.unit.spec
         local before, after = self.reads.back.before, self.reads.back.after
-        expectWord(self, "back", getText("IGUI_EnhancedIrrigation_Ripe"))
+        T.expectWord(self, "back", getText("IGUI_EnhancedIrrigation_Ripe"))
         expect(after.record.head > 0, "the filter came back dry")
         expectNear("what the raw tank fed", before.tank.litres - after.tank.litres,
             after.basin.litres - before.basin.litres + after.record.head - before.record.head
@@ -818,7 +789,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
         T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
             "this client's summary of the crock")
-        readMenu(self, self.unit, "built")
+        T.readMenu(self, self.unit, "built")
         self.litres = 6
         fillBasin(self, self.unit, self.litres)
         T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
@@ -877,7 +848,7 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
             return after ~= nil and summary ~= nil and math.abs(summary.head - after.record.head) < 0.1
                 and math.abs(copy:getFluidContainer():getAmount() - after.basin.litres) < LITRES
         end, "this client's copy of the crock after half a day")
-        readMenu(self, self.unit, "seeping")
+        T.readMenu(self, self.unit, "seeping")
     end,
     validate = function(self)
         local spec = self.unit.spec
@@ -909,7 +880,7 @@ T.test("irrigation_treatment_crock_clogged_until_scrubbed", {
         run(self, self.unit, "clogged", { self.hours }, { head = 8, headTainted = true, passed = self.unit.spec.clogLitres })
         waitForCopy(self, self.unit, nil, function(summary) return summary.clogged end,
             "this client's summary of the clogged crock")
-        readMenu(self, self.unit, "clogged")
+        T.readMenu(self, self.unit, "clogged")
         T.useMenu(self, self.unit, "scrub", T.job("treatment", TreatmentJobs.SCRUB_CROCK), true)
         readUntil(self, self.unit, "scrubbed", function(state) return not state.summary.clogged end)
         run(self, self.unit, "after", { self.hours })
@@ -945,8 +916,8 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         waitForCopy(self, self.wet, nil, function(summary) return summary.cracked end,
             "this client's summary of the cracked crock")
         waitForServer(self, self.dry, "dry", "cracked")
-        readMenu(self, self.wet, "cracked")
-        readMenu(self, self.dry, "dry")
+        T.readMenu(self, self.wet, "cracked")
+        T.readMenu(self, self.dry, "dry")
         T.give(self, "carried", { { type = "Base.Bucket" } })
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 5 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
@@ -959,7 +930,7 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         local wet = self.reads.wet
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Head", 0, self.wet.spec.head))
         expectNear("the cracked crock's basin", wet.steps[1].basin.litres, wet.before.basin.litres, LITRES)
-        expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Cracked"), false)
+        T.expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Cracked"), false)
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Cracked"))
         T.expectRefused(self, "pour", "Tooltip_EnhancedIrrigation_CrockCracked")
     end,
@@ -1053,7 +1024,7 @@ for _, entity in ipairs({ STONE, WELDED }) do
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
             T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built boiler")
-            readMenu(self, self.unit, "built")
+            T.readMenu(self, self.unit, "built")
             T.step(function()
                 local copy = T.copyOf(self.unit)
                 self.clientFire = copy ~= nil and instanceof(copy, "IsoFireplace")
@@ -1067,8 +1038,8 @@ for _, entity in ipairs({ STONE, WELDED }) do
             expect(built.record and built.record.head == 0, "the built boiler has no record, or water in its head")
             expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the built boiler's basin isn't empty and locked")
             expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, self.unit.spec.head))
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Cold"))
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Cold"))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
             expectLine(self, "built", campingText.addFuel)
             expectLine(self, "built", campingText.lightCampfire)
         end,
@@ -1133,7 +1104,7 @@ local function burning(self)
         local copy = T.copyOf(self.unit)
         return copy ~= nil and copy:isLit() and copy:hasAnimatedAttachments()
     end, "this client's copy of the boiler burning, with vanilla's flames")
-    readMenu(self, self.unit, "burning")
+    T.readMenu(self, self.unit, "burning")
 end
 
 -- Vanilla's fire menu on the boiler adds fuel and offers to light it; lit as vanilla's Light leaves
@@ -1155,7 +1126,7 @@ T.test("irrigation_treatment_boiler_vanilla_fuels_it_and_draws_its_flames", {
         T.expectOffered(self, "add fuel")
         expect(self.reads.fuelled.fuel > 0, "Add Fuel gave the boiler no fuel")
         T.expectOffered(self, "light")
-        expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
+        T.expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
         T.expectOffered(self, "put out")
     end,
 })
@@ -1181,7 +1152,7 @@ T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
         expect(self.reads.fuelled.fuel > 0, "Add Fuel gave the boiler no fuel")
         T.expectOffered(self, "light")
         expect(self.reads.lit.lit, "Light didn't light the boiler")
-        expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
+        T.expectWord(self, "burning", getText("IGUI_EnhancedIrrigation_Heating"))
         T.expectOffered(self, "put out")
         expect(not self.reads.out.lit, "Put Out left the boiler burning")
     end,
@@ -1204,37 +1175,37 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
         self.head = self.unit.spec.rate * 4
         run(self, self.unit, "raw", {}, { head = self.head, headTainted = true })
         setFire(self, self.unit, "lit", true, FUEL)
-        readMenu(self, self.unit, "heating")
+        T.readMenu(self, self.unit, "heating")
         -- Each run starts the drum at the heat the steps before left it, which a ten-minute pass in
         -- between would have moved on a little.
         run(self, self.unit, "heating", { 1 }, { hotHours = 0 })
         run(self, self.unit, "hot", { 1 })
         waitForServer(self, self.unit, "hot", "hot")
-        readMenu(self, self.unit, "hot")
+        T.readMenu(self, self.unit, "hot")
         setFire(self, self.unit, "out", false)
         run(self, self.unit, "cooling", { 1, 1 }, { hotHours = Treatment.HEAT_MAX_HOURS })
         waitForServer(self, self.unit, "cooling", "hot")
-        readMenu(self, self.unit, "cooled")
+        T.readMenu(self, self.unit, "cooled")
         run(self, self.cold, "cold", { 2 }, { head = self.head, headTainted = true })
-        readMenu(self, self.cold, "cold")
+        T.readMenu(self, self.cold, "cold")
     end,
     validate = function(self)
         local rate = self.unit.spec.rate
         local heating = self.reads.heating
         expectNear("the first hour's water", heating.steps[1].basin.litres - heating.before.basin.litres, 0, LITRES)
-        expectWord(self, "heating", getText("IGUI_EnhancedIrrigation_Heating"))
+        T.expectWord(self, "heating", getText("IGUI_EnhancedIrrigation_Heating"))
         local hot = self.reads.hot
         expectBasin("the hot hour's water", hot.steps[1], hot.before.basin.litres + rate, false)
-        expectWord(self, "hot", getText("IGUI_EnhancedIrrigation_Hot"))
-        expectWord(self, "hot", getText("IGUI_EnhancedIrrigation_Drum",
+        T.expectWord(self, "hot", getText("IGUI_EnhancedIrrigation_Hot"))
+        T.expectWord(self, "hot", getText("IGUI_EnhancedIrrigation_Drum",
             Treatment.DRUM_CONDITION - 2 * Treatment.WEAR_WET))
         local cooling = self.reads.cooling
         expectNear("the first hour put out", cooling.steps[1].basin.litres - cooling.before.basin.litres,
             rate * (Treatment.HEAT_MAX_HOURS - Treatment.HOT_HOURS) / Treatment.COOLING, LITRES)
         expectNear("the second hour put out", cooling.steps[2].basin.litres - cooling.steps[1].basin.litres, 0, LITRES)
-        expectWord(self, "cooled", getText("IGUI_EnhancedIrrigation_Cold"))
+        T.expectWord(self, "cooled", getText("IGUI_EnhancedIrrigation_Cold"))
         expectNear("a boiler never lit", self.reads.cold.steps[1].basin.litres, 0, LITRES)
-        expectWord(self, "cold", getText("IGUI_EnhancedIrrigation_Cold"))
+        T.expectWord(self, "cold", getText("IGUI_EnhancedIrrigation_Cold"))
     end,
 })
 
@@ -1272,7 +1243,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         setFire(self, self.unit, "relit", true, FUEL)
         run(self, self.unit, "holed", { 1 })
         waitForServer(self, self.unit, "holed", "burntThrough")
-        readMenu(self, self.unit, "burnt")
+        T.readMenu(self, self.unit, "burnt")
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
             "this client's copy of the refilled bucket")
@@ -1287,7 +1258,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.useMenu(self, self.unit, "patch", T.job("treatment", TreatmentJobs.PATCH_DRUM), true)
         readUntil(self, self.unit, "patched", function(state) return not state.summary.burntThrough end)
         waitForServer(self, self.unit, "patched", "condition")
-        readMenu(self, self.unit, "patched")
+        T.readMenu(self, self.unit, "patched")
         run(self, self.unit, "after patch", { 1 }, { head = 20, headTainted = true })
         T.useMenu(self, self.unit, "again", T.job("treatment", TreatmentJobs.PATCH_DRUM), false)
         T.count(self, "used", { "Base.SmallSheetMetal" })
@@ -1301,13 +1272,13 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         expect(holed.steps[1].summary.burntThrough, "the wet drum's last hour didn't burn it through")
         expectNear("the head of a drum burnt through", holed.steps[1].record.head, 0, LITRES)
         expectNear("a burnt-through boiler's hour", holed.steps[1].basin.litres, holed.before.basin.litres, LITRES)
-        expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_BurntThrough"))
+        T.expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_BurntThrough"))
         T.expectRefused(self, "holed pour", "Tooltip_EnhancedIrrigation_BurntThrough")
         T.expectOffered(self, "patch")
-        expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Drum",
+        T.expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Drum",
             Treatment.DRUM_CONDITION - Treatment.PATCH_LOSS))
         T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_DrumSound")
-        expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Cold"))
+        T.expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Cold"))
         local after = self.reads["after patch"]
         expectNear("a patched, unlit boiler's hour", after.steps[1].basin.litres, after.before.basin.litres, LITRES)
         expect(self.counts.used["Base.SmallSheetMetal"] == 0, "Patch Drum left the sheet metal")

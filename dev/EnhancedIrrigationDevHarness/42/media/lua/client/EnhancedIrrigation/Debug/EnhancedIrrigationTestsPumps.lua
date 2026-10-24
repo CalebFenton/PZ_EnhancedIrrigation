@@ -106,35 +106,6 @@ local function inSubmenu(context, nameKey, label)
     return sub and T.findNamed(context, sub, label) or nil
 end
 
--- Queues the names of every option in the pump's menu into self.names[label].
-local function readMenu(self, pump, label)
-    self.names = self.names or {}
-    T.step(function()
-        local copy = T.copyOf(pump)
-        local context = T.need(self, copy and T.worldMenu(copy), "a world menu for " .. label)
-        if not context then return end
-        local names = {}
-        T.findOption(context, context, function(option)
-            table.insert(names, option.name)
-            return false
-        end)
-        self.names[label] = names
-        context:hideAndChildren()
-    end)
-end
-
--- Expects a line of the menu self.names[label] read to list `word` whole among the words of the
--- pump's status line.
-local function expectWord(self, label, word)
-    local found = false
-    for _, name in ipairs(self.names and self.names[label] or {}) do
-        for part in (name .. ", "):gmatch("(.-), ") do
-            found = found or part == word
-        end
-    end
-    expect(found, label .. ": the menu's status doesn't list " .. word)
-end
-
 -- How near this client's endurance comes to what the server set, a frame or two of rest later.
 local ENDURANCE_SLACK = 0.01
 -- The fatigue the tests' character works the pump at, and vanilla's slowest Endurance Regen
@@ -180,7 +151,7 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
             T.count(self, "left", { case.seal, DIRTY_LEATHER, "Base.RubberHose" })
             waitForSummary(self, self.pump, function(summary) return summary.seal == case.seal end,
                 "this client's summary of the built pump")
-            readMenu(self, self.pump, "built")
+            T.readMenu(self, self.pump, "built")
         end,
         validate = function(self)
             local built = self.reads.built
@@ -194,10 +165,10 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
             for _, fullType in ipairs({ case.seal, DIRTY_LEATHER, "Base.RubberHose" }) do
                 expect(left[fullType] == 0, "building left " .. tostring(left[fullType]) .. " " .. fullType)
             end
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoWaterToDraw"))
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Seal", 100))
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_PumpCondition", Pumps.BODY_CONDITION))
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoOutlet"))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoWaterToDraw"))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Seal", 100))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_PumpCondition", Pumps.BODY_CONDITION))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoOutlet"))
         end,
     })
 end
@@ -386,14 +357,14 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         self.tank = T.placeTank(self, spots[3], "lidded")
         link(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
-        readMenu(self, self.pump, "source")
+        T.readMenu(self, self.pump, "source")
         T.step(function()
             self.sourceName = T.copyOf(self.source):getFluidContainer():getTranslatedContainerName()
         end)
         run(self, self.pump, "ran", { MINUTE, 1 }, nil, self.tank)
     end,
     validate = function(self)
-        expectWord(self, "source", self.sourceName)
+        T.expectWord(self, "source", self.sourceName)
         local rate = self.pump.spec.rate
         local ran = self.reads.ran
         local minute, hour = ran.steps[1], ran.steps[2]
@@ -425,12 +396,12 @@ T.test("irrigation_pumps_river_intake_gives_tainted_water", {
         self.tank = T.placeTank(self, spots[2], "lidded")
         link(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
-        readMenu(self, self.pump, "river")
+        T.readMenu(self, self.pump, "river")
         run(self, self.pump, "ran", { MINUTE }, nil, self.tank)
     end,
     validate = function(self)
         expect(self.reads.water.water, "the server's square isn't water")
-        expectWord(self, "river", getText("IGUI_EnhancedIrrigation_SourceRiver"))
+        T.expectWord(self, "river", getText("IGUI_EnhancedIrrigation_SourceRiver"))
         local step = self.reads.ran.steps[1]
         local intake = step.record.intake
         expect(intake and intake.x == self.river.x and intake.y == self.river.y, "the hose drinks at "
@@ -521,7 +492,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         T.useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
         readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
-        readMenu(self, self.pump, "plumbed")
+        T.readMenu(self, self.pump, "plumbed")
         T.step(function()
             local b = Pumps.outletEnd(T.at(self.pump))
             self.unplumbLabel = LinkMenu.linkLabel(T.at(self.pump), b)
@@ -539,7 +510,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed the pump to a tapped line")
         T.expectOffered(self, "untapped")
-        expectWord(self, "plumbed", getText("IGUI_EnhancedIrrigation_OutletToLine"))
+        T.expectWord(self, "plumbed", getText("IGUI_EnhancedIrrigation_OutletToLine"))
         T.expectOffered(self, "unplumb")
         T.expectRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_LinePumped")
     end,
@@ -633,7 +604,7 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         run(self, self.pump, "worn", { MINUTE }, nil, self.tank)
         waitForSummary(self, self.pump, function(summary) return summary.sealWorn end, "this client's summary of the worn seal")
         T.goNextTo(self, self.pump.square)
-        readMenu(self, self.pump, "worn")
+        T.readMenu(self, self.pump, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
         T.give(self, "seals", { { type = "Base.Screwdriver" }, { type = LEATHER }, { type = PLUNGER } })
         T.step(function() self.leather, self.plunger = self.items.seals[2], self.items.seals[3] end)
@@ -648,13 +619,13 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         T.count(self, "left", { LEATHER, DIRTY_LEATHER, PLUNGER, "Base.Screwdriver" })
         waitForSummary(self, self.pump, function(summary) return summary.seal == PLUNGER and not summary.sealWorn end,
             "this client's summary of the new seal")
-        readMenu(self, self.pump, "new")
+        T.readMenu(self, self.pump, "new")
     end,
     validate = function(self)
         local worn = self.reads.worn.steps[1]
         expectNear("the tank after the seal's last litres", worn.tank.litres, SEAL_LEFT, LITRES)
         expect(worn.stopped == "Tooltip_EnhancedIrrigation_SealWornOut", "the pump stopped for " .. tostring(worn.stopped))
-        expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_SealWornOut"))
+        T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_SealWornOut"))
         T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_SealWornOut")
         T.expectOffered(self, "leather")
         T.expectOffered(self, "plunger")
@@ -668,7 +639,7 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
             expect(left[fullType] == 0, "Replace Seal left " .. tostring(left[fullType]) .. " " .. fullType)
         end
         expect(left["Base.Screwdriver"] == 1, "Replace Seal took the screwdriver")
-        expectWord(self, "new", getText("IGUI_EnhancedIrrigation_Seal", 100))
+        T.expectWord(self, "new", getText("IGUI_EnhancedIrrigation_Seal", 100))
     end,
 })
 
@@ -692,7 +663,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         run(self, self.pump, "worn", { 1 }, nil, self.tank)
         waitForSummary(self, self.pump, function(summary) return summary.wornOut end, "this client's summary of the worn pump")
         T.goNextTo(self, self.pump.square)
-        readMenu(self, self.pump, "worn")
+        T.readMenu(self, self.pump, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
         T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
         -- The cursor lists what it can smash on the square it hovers, once the character sees it.
@@ -715,7 +686,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         local worn = self.reads.worn.steps[1]
         expectNear("the tank after the body's last litres", worn.tank.litres, BODY_LEFT * self.pump.spec.wearLitres, LITRES)
         expect(worn.stopped == "Tooltip_EnhancedIrrigation_PumpWornOut", "the pump stopped for " .. tostring(worn.stopped))
-        expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_PumpWornOut"))
+        T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_PumpWornOut"))
         T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_PumpWornOut")
         local smashed = self.reads.smashed
         expect(not smashed.found and smashed.record == nil, "the smashed pump or its record is still there")

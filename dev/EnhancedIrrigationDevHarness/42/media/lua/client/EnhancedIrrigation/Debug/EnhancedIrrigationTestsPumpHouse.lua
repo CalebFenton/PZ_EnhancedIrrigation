@@ -105,35 +105,6 @@ local function waitForSummary(self, house, holds, what)
     end, what)
 end
 
--- Queues the names of every option in the world menu of `getObject()` into self.names[label].
-local function readMenu(self, getObject, label)
-    self.names = self.names or {}
-    T.step(function()
-        local object = getObject()
-        local context = T.need(self, object and T.worldMenu(object), "a world menu for " .. label)
-        if not context then return end
-        local names = {}
-        T.findOption(context, context, function(option)
-            table.insert(names, option.name)
-            return false
-        end)
-        self.names[label] = names
-        context:hideAndChildren()
-    end)
-end
-
--- Expects a line of the menu self.names[label] read to list `word` whole among the words of the
--- status line.
-local function expectWord(self, label, word)
-    local found = false
-    for _, name in ipairs(self.names and self.names[label] or {}) do
-        for part in (name .. ", "):gmatch("(.-), ") do
-            found = found or part == word
-        end
-    end
-    expect(found, label .. ": the menu's status doesn't list " .. word)
-end
-
 local function partWord(part, condition)
     return getText("IGUI_EnhancedIrrigation_PartCondition", getItemNameFromFullType(part), condition)
 end
@@ -193,7 +164,7 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
             waitForSummary(self, self.house, function() return true end, "this client's summary of the built house")
-            readMenu(self, function() return T.copyOf(self.house) end, "built")
+            T.readMenu(self, self.house, "built")
             T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         end,
         validate = function(self)
@@ -201,7 +172,7 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
             if not expect(record, "the built house has no record") then return end
             expect(record.unit == case.entity and record.part == nil, "the built house is " .. tostring(record.unit)
                 .. " with " .. tostring(record.part) .. " in it")
-            expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
+            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
             T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_NoPumpFitted")
         end,
     })
@@ -229,7 +200,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         end, true)
         readUntil(self, self.house, "fitted", function(state) return state.record.part ~= nil end)
         waitForSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
-        readMenu(self, function() return T.copyOf(self.house) end, "fitted")
+        T.readMenu(self, self.house, "fitted")
         T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
         T.read(self, "items.carried", { type = APPLIANCE }, "carried")
@@ -244,7 +215,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         expect(record.part == APPLIANCE and record.partCondition == WORN and record.partCeiling == CEILING,
             "the fitted part is " .. tostring(record.part) .. " at " .. tostring(record.partCondition) .. " of "
             .. tostring(record.partCeiling))
-        expectWord(self, "fitted", partWord(APPLIANCE, WORN))
+        T.expectWord(self, "fitted", partWord(APPLIANCE, WORN))
         T.expectOffered(self, "take out")
         expect(self.reads.taken.record.part == nil, "Take Out Pump left " .. tostring(self.reads.taken.record.part)
             .. " in the house")
@@ -358,7 +329,7 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
             return EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum of the running house")
         update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
-        readMenu(self, function() return T.copyOf(self.house) end, "running")
+        T.readMenu(self, self.house, "running")
         T.useMenu(self, self.house, "off", T.job("pump", PumpJobs.TURN_OFF), true)
         readUntil(self, self.house, "off", function(state) return not state.record.on end)
         waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
@@ -375,7 +346,7 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
         expect(not hour.after.tank.tainted, "the well's water came out tainted")
         expectNear("the part after an hour", hour.before.record.partCondition - hour.after.record.partCondition,
             Pumps.PARTS[APPLIANCE].wearPerHour, 0.001)
-        expectWord(self, "running", getText("IGUI_EnhancedIrrigation_Running"))
+        T.expectWord(self, "running", getText("IGUI_EnhancedIrrigation_Running"))
         T.expectOffered(self, "off")
         expect(not self.reads.off.record.on, "Turn Off left the house switched on")
     end,
@@ -488,7 +459,7 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
         link(self, self.house, self.tank)
         update(self, self.house, "spent", { hoursAgo = 2 * FUEL_HOURS, tank = self.tank, generator = self.generator })
         waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
-        readMenu(self, function() return T.copyOf(self.house) end, "spent")
+        T.readMenu(self, self.house, "spent")
     end,
     validate = function(self)
         local before, after = self.reads.spent.before, self.reads.spent.after
@@ -497,7 +468,7 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
             lifts(APPLIANCE, before.generator.fuel / burns(APPLIANCE, 1)), LITRES)
         expect(after.generator.fuel == 0 and not after.generator.running, "the generator is left at "
             .. after.generator.fuel .. (after.generator.running and ", running" or ", off"))
-        expectWord(self, "spent", getText("IGUI_EnhancedIrrigation_NoPower"))
+        T.expectWord(self, "spent", getText("IGUI_EnhancedIrrigation_NoPower"))
     end,
 })
 
@@ -576,14 +547,14 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
             { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
         waitForSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
-        readMenu(self, function() return T.copyOf(self.house) end, "burnt")
+        T.readMenu(self, self.house, "burnt")
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         T.setPerk(self, Perks.Electricity, 2)
         T.give(self, "kit", { { type = "Base.Screwdriver" }, { type = "Base.ElectronicsScrap" }, { type = "Base.TirePiece" } })
         T.useMenu(self, self.house, "repair", T.job("pump", PumpJobs.REPAIR_PUMP), true)
         readUntil(self, self.house, "repaired", function(state) return state.record.partCondition > 0 end)
         waitForSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
-        readMenu(self, function() return T.copyOf(self.house) end, "repaired")
+        T.readMenu(self, self.house, "repaired")
         T.useMenu(self, self.house, "again", T.job("pump", PumpJobs.REPAIR_PUMP), false)
         T.count(self, "used", { "Base.ElectronicsScrap", "Base.TirePiece", "Base.Screwdriver" })
     end,
@@ -592,14 +563,14 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         expect(burnt.record.partCondition == 0 and burnt.summary.burntOut, "the part is left at "
             .. burnt.record.partCondition)
         expect(not burnt.record.on and not burnt.summary.running, "the burnt-out house is still switched on")
-        expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_PartBurntOut", getItemNameFromFullType(APPLIANCE)))
+        T.expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_PartBurntOut", getItemNameFromFullType(APPLIANCE)))
         T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpBurntOut")
         T.expectOffered(self, "repair")
         local restored = CEILING - Pumps.REPAIR_LOSS
         local repaired = self.reads.repaired.record
         expect(repaired.partCondition == restored and repaired.partCeiling == restored, "the repair left the part at "
             .. repaired.partCondition .. " of " .. repaired.partCeiling)
-        expectWord(self, "repaired", partWord(APPLIANCE, restored))
+        T.expectWord(self, "repaired", partWord(APPLIANCE, restored))
         T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSound")
         local used = self.counts.used
         expect(used["Base.ElectronicsScrap"] == 0 and used["Base.TirePiece"] == 0, "the repair left its scrap or tire piece")
@@ -725,7 +696,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         update(self, self.house, "hours", { hoursAgo = 3, tank = self.tank })
         waitForSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
             "this client's summary of the set timer")
-        readMenu(self, function() return T.copyOf(self.house) end, "set")
+        T.readMenu(self, self.house, "set")
         T.useMenu(self, self.house, "take off", T.job("pump", PumpJobs.TAKE_TIMER), true)
         readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
         T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
@@ -741,7 +712,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         expectNear("the part after its window", hours.before.record.partCondition - hours.after.record.partCondition,
             Pumps.PARTS[APPLIANCE].wearPerHour * 0.5, 0.001)
         expect(not hours.after.record.running, "the house runs outside its timer's window")
-        expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
+        T.expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
         T.expectOffered(self, "take off")
         expect(self.reads.off.record.timer == nil, "Take Off Timer left the timer in the house")
         expect(#self.reads.carried.items == 1, "Take Off Timer gave back " .. #self.reads.carried.items .. " timers")
