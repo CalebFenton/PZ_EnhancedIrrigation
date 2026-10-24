@@ -688,51 +688,19 @@ local UNFIRED = "EnhancedIrrigation.FilterCrockUnfired"
 -- A bucket other than the one Take Down gives when it doesn't know, so a test sees the right one come back.
 local FORGED_BUCKET = "Base.BucketForged"
 
--- Queues crafting `name` at a bench of `bench` ({ entity script, sprite }) set next to the character,
--- from the first carried `from`, the way the bench's window does: the character knows the recipe
--- (until the test ends), has its skill and carries exactly one craft's inputs, each the first of
--- `prefer` it takes; `ready(self)`, if given, queues what the inputs need first. Then counts
--- `counted` (full types) into self.counts.craft. T.craftTest teaches every recipe of the mod and
--- sets a work table down for good, which leaves both behind for the leak check.
-local function craftAtBench(self, name, from, bench, prefer, counted, ready)
-    local recipe = T.need(self, getScriptManager():getCraftRecipe(name), "the recipe " .. name)
-    if not recipe then return end
-    T.knowRecipes(self, { name }, true)
-    for i = 0, recipe:getRequiredSkillCount() - 1 do
-        local skill = recipe:getRequiredSkill(i)
-        T.setPerk(self, skill:getPerk(), skill:getLevel())
-    end
-    local placed = T.placeBench(self, bench[1], bench[2])
-    if not placed then return end
-    local inputs, unmatched = T.recipeInputs(recipe, prefer)
-    if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return end
-    T.give(self, "inputs", inputs)
-    if ready then
-        ready(self)
-    end
-    T.step(function()
-        local item = T.need(self, T.player():getInventory():getFirstTypeRecurse(from), "a " .. from .. " to craft from")
-        if not item then return end
-        T.startCraft(self, recipe, item, placed.object)
-        -- Queued after the craft's actions, which T.startCraft has just queued.
-        T.count(self, "craft", counted, { dropped = true })
-    end)
-end
-
 -- Shape Filter Crock at a pottery wheel makes an unfired crock from the clay and charcoal, with
 -- water from the carried bottle. Catches a recipe the wheel won't make, or one that leaves its
 -- inputs.
 T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
     instant = true,
     run = function(self)
-        craftAtBench(self, "EnhancedIrrigation_ShapeFilterCrock", "Base.Clay", { "Base.Pottery_Wheel", "crafted_01_65" },
-            { "Base.WaterBottle", "Base.Charcoal" }, { UNFIRED, "Base.Clay", "Base.Charcoal" }, function()
-                T.server(self, "treatment.fillCarried", { type = "Base.WaterBottle", fluid = "Water", litres = 1 })
-                T.waitFor(self, function()
-                    local bottle = T.player():getInventory():getFirstTypeRecurse("Base.WaterBottle")
-                    return bottle ~= nil and math.abs(bottle:getFluidContainer():getAmount() - 1) < T.LITRES
-                end, "this client's copy of the filled bottle")
-            end)
+        T.craft(self, "EnhancedIrrigation_ShapeFilterCrock", "Base.Clay", { UNFIRED, "Base.Clay", "Base.Charcoal" }, { bench = { "Base.Pottery_Wheel", "crafted_01_65" }, prefer = { "Base.WaterBottle", "Base.Charcoal" }, ready = function()
+            T.server(self, "treatment.fillCarried", { type = "Base.WaterBottle", fluid = "Water", litres = 1 })
+            T.waitFor(self, function()
+                local bottle = T.player():getInventory():getFirstTypeRecurse("Base.WaterBottle")
+                return bottle ~= nil and math.abs(bottle:getFluidContainer():getAmount() - 1) < T.LITRES
+            end, "this client's copy of the filled bottle")
+        end })
     end,
     validate = function(self)
         local craft = self.counts and self.counts.craft or {}
@@ -746,8 +714,7 @@ T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
 T.test("irrigation_treatment_crock_fired_in_a_kiln", {
     instant = true,
     run = function(self)
-        craftAtBench(self, "EnhancedIrrigation_FireFilterCrock", UNFIRED, { "Base.Kiln_Small", "crafted_01_56" },
-            { "Base.Charcoal" }, { Treatment.CROCK_ITEM, UNFIRED })
+        T.craft(self, "EnhancedIrrigation_FireFilterCrock", UNFIRED, { Treatment.CROCK_ITEM, UNFIRED }, { bench = { "Base.Kiln_Small", "crafted_01_56" }, prefer = { "Base.Charcoal" } })
     end,
     validate = function(self)
         local craft = self.counts and self.counts.craft or {}

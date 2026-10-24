@@ -976,30 +976,15 @@ T.test("irrigation_pumps_salvage_drying_combo_stops_it", {
 -- Make Utility Pump from a Blower Fan, at a table, with the skills, the knowledge and exactly a
 -- craft's inputs, makes a Utility Pump at the made ceiling, taking the fan, the sheet metal and the
 -- hose, two uses of the torch and one of the rods. Catches a recipe the game won't craft, a made
--- pump as good as a found one, or welding that takes whole items. T.craftTest would teach every
--- recipe of the mod, so the test teaches this one alone; its surface is the work table the
--- scenario sets beside the start (T.placeWorkTable only checks it is there).
+-- pump as good as a found one, or welding that takes whole items. Its surface is the work table
+-- the scenario sets beside the start (T.placeWorkTable only checks it is there).
 T.test("irrigation_pump_house_make_utility_pump", {
     instant = true,
     run = function(self)
-        local name = "EnhancedIrrigation_MakeUtilityPump"
-        local recipe = T.need(self, getScriptManager():getCraftRecipe(name), "the recipe " .. name)
-        if not recipe then return end
-        T.knowRecipes(self, { name }, true)
-        T.placeWorkTable(T.player())
-        for i = 0, recipe:getRequiredSkillCount() - 1 do
-            local skill = recipe:getRequiredSkill(i)
-            T.setPerk(self, skill:getPerk(), skill:getLevel())
+        if not T.craft(self, "EnhancedIrrigation_MakeUtilityPump", "Base.BlowerFan",
+            { UTILITY, "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }, { workTable = true }) then
+            return
         end
-        local inputs, unmatched = T.recipeInputs(recipe)
-        if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return end
-        T.give(self, "inputs", inputs)
-        T.step(function()
-            local fan = T.need(self, T.player():getInventory():getFirstTypeRecurse("Base.BlowerFan"), "a Blower Fan")
-            if not fan then return end
-            T.startCraft(self, recipe, fan)
-            T.count(self, "craft", { UTILITY, "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }, { dropped = true })
-        end)
         T.read(self, "items.carried", { type = UTILITY }, "made")
         T.read(self, "items.carried", { type = "Base.BlowTorch" }, "torch")
         T.read(self, "items.carried", { type = "Base.WeldingRods" }, "rods")

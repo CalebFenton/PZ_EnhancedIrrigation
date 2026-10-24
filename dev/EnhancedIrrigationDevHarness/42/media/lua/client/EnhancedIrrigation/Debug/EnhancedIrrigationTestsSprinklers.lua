@@ -355,30 +355,16 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
 
 -- Making --------------------------------------------------------------------------------------------
 
-local RECIPE = "EnhancedIrrigation_MakePipeSprinkler"
-
 -- Make Pipe Sprinkler from an iron pipe, in hand, with the skill, the knowledge and exactly a
 -- craft's inputs, makes one Lawn Sprinkler at the made ceiling (its OnCreate). Catches a recipe the
 -- game won't craft, or a made sprinkler as good as a found one.
 T.test("irrigation_sprinklers_make_pipe_sprinkler", {
     instant = true,
     run = function(self)
-        local recipe = T.need(self, getScriptManager():getCraftRecipe(RECIPE), "the recipe " .. RECIPE)
-        if not recipe then return end
-        T.knowRecipes(self, { RECIPE }, true)
-        for i = 0, recipe:getRequiredSkillCount() - 1 do
-            local skill = recipe:getRequiredSkill(i)
-            T.setPerk(self, skill:getPerk(), skill:getLevel())
+        if not T.craft(self, "EnhancedIrrigation_MakePipeSprinkler", "Base.MetalPipe", { Sprinklers.ITEM },
+            { prefer = { "Base.Pliers" } }) then
+            return
         end
-        local inputs, unmatched = T.recipeInputs(recipe, { "Base.Pliers" })
-        if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return end
-        T.give(self, "inputs", inputs)
-        T.step(function()
-            local pipe = T.need(self, T.player():getInventory():getFirstTypeRecurse("Base.MetalPipe"), "an iron pipe")
-            if not pipe then return end
-            T.startCraft(self, recipe, pipe)
-            T.count(self, "craft", { Sprinklers.ITEM }, { dropped = true })
-        end)
         T.read(self, "items.carried", { type = Sprinklers.ITEM }, "made")
     end,
     validate = function(self)
