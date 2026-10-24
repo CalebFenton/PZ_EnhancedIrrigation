@@ -35,8 +35,8 @@ end
 --- The unit at args' x, y, z as plain values: whether its square is `loaded` and it stands there,
 --- its record's fields and summary (`record`, `summary`, nil without one), what its basin holds,
 --- whether it has an `inlet` and an `outlet`, whether it is a vanilla `fireplace` and its fire
---- (`lit`, `fuel` in minutes), and the tank at `args.tank` ({ x, y, z }) if given, as
---- Server.stateAt sees it.
+--- (`lit`, `fuel` in minutes), and the tanks at `args.tank` and `args.into` ({ x, y, z }) if given,
+--- as Server.stateAt sees them.
 local function stateAt(args)
     local square = Server.squareAt(args)
     local unit = square and unitAt(args)
@@ -63,6 +63,7 @@ local function stateAt(args)
         }
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
+    state.into = args.into and Server.stateAt(args.into) or nil
     return state
 end
 
@@ -202,12 +203,6 @@ handler("treatment.update", function(_, args)
     record:update()
     reply.after = stateAt(args)
     return reply
-end)
-
--- Runs a link pass of `args.hours` (LinkSystem:pass) and answers the unit's state after.
-handler("treatment.pass", function(_, args)
-    mod().LinkSystem.instance:pass(args.hours)
-    return stateAt(args)
 end)
 
 -- Drops every link with an end on x, y, z without giving its pipe back: for an end that can't be

@@ -1,9 +1,9 @@
--- The authority's record of one treatment unit (shared/EnhancedIrrigation/Treatment/Treatment.lua): the raw
--- water in its head and what time and use have done to it. Time tops the head up from an inlet's
--- tank and treats it into the basin as its kind says (KINDS); Pour In and the jobs
--- (TreatmentSystem.lua) change the rest. Unlike a line tile's, a unit's record waits while its chunk
--- is unloaded, as the basin it fills lives on the unit, and catches up the whole gap when it loads,
--- its inlet feeding it through the gap as it would have loaded.
+-- The authority's record of one treatment unit: the raw water in its head and what time and use
+-- have done to it. Time tops the head up from an inlet's tank, treats it into the basin as its kind
+-- says (KINDS) and empties the basin into an outlet's tank; Pour In and the jobs change the rest.
+-- Unlike a line tile's, a unit's record waits while its chunk is unloaded, as the basin it fills
+-- lives on the unit, and catches up the whole gap when it loads, its inlet and outlet running
+-- through the gap as they would have loaded.
 
 if isClient() then return end
 
@@ -78,13 +78,13 @@ function TreatmentObject:fill(litres, tainted)
     self.headTainted = self.headTainted or tainted == true
 end
 
---- The tank the unit's inlet draws from: the one at the far end of its inlet link, while it is
---- loaded and stands at least level with `unit` (design, Tanks and height); or nil.
-function TreatmentObject:inletTank(unit)
-    local link = Links.roleAt(self, "inlet")
+--- The tank at the far end of the unit's `role` link ("inlet" or "outlet"), while it is loaded and
+--- water runs that way between it and `unit` (Treatment.runsFor); or nil.
+function TreatmentObject:tankOf(unit, role)
+    local link = Links.roleAt(self, role)
     local at = link and Links.otherEnd(link, self)
     local tank = at and Tanks.tankAt(at.x, at.y, at.z)
-    if tank and Treatment.runsFor("inlet", tank, unit) then
+    if tank and Treatment.runsFor(role, tank, unit) then
         return tank
     end
     return nil
@@ -104,6 +104,19 @@ function TreatmentObject:draw(tank, hours)
     local tainted = fluid:isTainted()
     fluid:removeFluid(litres, false)
     self:fill(litres, tainted)
+    return true
+end
+
+--- Empties the basin of `unit` into `tank` by what a link carries in `hours`, as far as the tank
+--- has room; the mixture moves as it is. Returns whether any moved.
+function TreatmentObject:drain(unit, tank, hours)
+    local basin, fluid = unit:getFluidContainer(), tank:getFluidContainer()
+    local litres = math.min(Links.RATE * hours, basin:getAmount(), fluid:getFreeCapacity())
+    if litres < Links.LEAST_FLOW then
+        return false
+    end
+    FluidContainer.Transfer(basin, fluid, litres)
+    self.basinChanged = true
     return true
 end
 
@@ -197,9 +210,10 @@ TreatmentObject.KINDS.crock = {
 -- Time -----------------------------------------------------------------------------------------------
 
 --- `hours` of time on the unit, in steps of an hour at most, the inlet topping the head up before
---- each, so a long catch-up drains the head and then dries the sand in order, unless the inlet keeps
---- it wet. A kind may look at the unit before the steps (`begin`) and, however short the time, after
---- (`finish`). Does nothing while the unit is unloaded.
+--- each and the outlet emptying the basin after, so a long catch-up drains the head and then dries
+--- the sand in order, unless the inlet keeps it wet, and the basin fills only while the outlet
+--- can't keep up. A kind may look at the unit before the steps (`begin`) and, however short the
+--- time, after (`finish`). Does nothing while the unit is unloaded.
 function TreatmentObject:advance(hours)
     local unit = self:getIsoObject()
     local spec = unit and Treatment.specOf(unit)
@@ -211,13 +225,16 @@ function TreatmentObject:advance(hours)
         if kind.begin then
             kind.begin(self, unit, hours)
         end
-        local tank = self:inletTank(unit)
+        local inlet, outlet = self:tankOf(unit, "inlet"), self:tankOf(unit, "outlet")
         while hours > 0 do
             local step = math.min(1, hours)
-            if tank and self:draw(tank, step) then
-                self.drewFrom = tank
+            if inlet and self:draw(inlet, step) then
+                self.drewFrom = inlet
             end
             kind.step(self, unit, spec, step)
+            if outlet and self:drain(unit, outlet, step) then
+                self.drainedInto = outlet
+            end
             hours = hours - step
         end
     end
@@ -226,26 +243,32 @@ function TreatmentObject:advance(hours)
     end
 end
 
---- Whether the unit's inlet runs from a square this side hasn't loaded: its tank may hold water
---- that would have kept the head topped up, which can't be known until it loads. A loaded square
---- with no tank on it feeds nothing, and the unit runs on.
-function TreatmentObject:inletUnloaded()
-    local link = Links.roleAt(self, "inlet")
-    local at = link and Links.otherEnd(link, self)
-    return at ~= nil and getCell():getGridSquare(at.x, at.y, at.z) == nil
+--- Whether the far end of the unit's inlet or outlet is in a chunk this side hasn't loaded: its
+--- tank may hold the water, or the room, that would have kept the unit running, which can't be
+--- known until it loads. A loaded square with no tank on it feeds and takes nothing, and the unit
+--- runs on.
+function TreatmentObject:endsUnloaded()
+    for _, role in ipairs({ "inlet", "outlet" }) do
+        local link = Links.roleAt(self, role)
+        local at = link and Links.otherEnd(link, self)
+        if at and not EnhancedIrrigation.chunkLoaded(at.x, at.y, at.z) then
+            return true
+        end
+    end
+    return false
 end
 
---- Brings the record up to now while its unit is loaded, and its inlet's tank too if it has one;
---- otherwise it keeps its lastHour, so the whole gap is caught up once both load (at most
---- LONGEST_PASS), the inlet feeding it through the gap as it would have.
+--- Brings the record up to now while its unit is loaded, and the tanks at its inlet's and outlet's
+--- far ends too; otherwise it keeps its lastHour, so the whole gap is caught up once all load (at
+--- most LONGEST_PASS), the pipes running through the gap as they would have.
 function TreatmentObject:catchUp()
-    if self:getIsoObject() and not self:inletUnloaded() then
+    if self:getIsoObject() and not self:endsUnloaded() then
         EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
     end
 end
 
--- Sends the basin the clients drink from on, the tank the inlet drew from, and the summary, when
--- they changed.
+-- Sends the basin the clients drink from on, the tanks the inlet drew from and the outlet filled,
+-- and the summary, when they changed.
 function TreatmentObject:afterChange()
     local unit = self:getIsoObject()
     if unit and self.basinChanged then
@@ -254,7 +277,10 @@ function TreatmentObject:afterChange()
     if self.drewFrom then
         Tanks.sync(self.drewFrom)
     end
-    self.basinChanged, self.drewFrom = nil, nil
+    if self.drainedInto then
+        Tanks.sync(self.drainedInto)
+    end
+    self.basinChanged, self.drewFrom, self.drainedInto = nil, nil, nil
     self:sendSummary()
 end
 

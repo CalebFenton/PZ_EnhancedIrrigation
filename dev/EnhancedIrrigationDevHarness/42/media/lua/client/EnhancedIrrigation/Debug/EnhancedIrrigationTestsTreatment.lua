@@ -478,9 +478,9 @@ T.test("irrigation_treatment_inlet_refuses_a_lower_tank", {
     end,
 })
 
--- Plumb Outlet to a clean tank on the filter's level lays the pipe, and a pass empties the basin
--- into it; a raised barrel, a level up, is greyed out saying so. Catches an outlet that leaves the
--- basin full, or one that runs uphill.
+-- Plumb Outlet to a clean tank on the filter's level lays the pipe, and an hour on the filter
+-- empties the basin into it; a raised barrel, a level up, is greyed out saying so. Catches an outlet
+-- that leaves the basin full, or one that runs uphill.
 T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
     instant = true,
     run = function(self)
@@ -501,25 +501,25 @@ T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
         T.useOption(self, function() return copyOf(self.unit) end, "outlet",
             linkJob(LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
-        T.read(self, "treatment.pass", T.at(self.unit, { hours = 1, tank = T.at(self.tank) }), "passed")
+        run(self, self.unit, "passed", { 1 }, nil, self.tank)
     end,
     validate = function(self)
         T.expectRefused(self, "higher tank", "Tooltip_EnhancedIrrigation_OutletTankTooHigh")
         T.expectOffered(self, "outlet")
-        local passed = self.reads.passed
+        local passed = self.reads.passed.steps[1]
         expect(passed.outlet, "the server didn't plumb the outlet")
-        expectNear("the basin after a pass", passed.basin.litres, 0, LITRES)
-        expectNear("the clean tank after a pass", passed.tank.litres, self.litres, LITRES)
+        expectNear("the basin after an hour", passed.basin.litres, 0, LITRES)
+        expectNear("the clean tank after an hour", passed.tank.litres, self.litres, LITRES)
         expect(not passed.tank.tainted, "the clean tank's water is tainted")
     end,
 })
 
 -- A plumbed filter's inlet keeps its sand wet through the time it wasn't caught up, as it would have
 -- loaded: its clock wound back past the hours its head takes to run through and the film to die
--- dry, it comes back ripe, its head full and the raw tank down by what it fed; drained into its
--- outlet's tank, its next hour passes clean water. The chunk stays loaded, as the catch-up is the
--- record's own, so this runs in multiplayer too. Catches a catch-up that runs the gap on the head
--- alone.
+-- dry, it comes back ripe and wet, the raw tank down by what went into the head, the basin and the
+-- outlet's tank, which holds it clean; its next hour passes clean water on into that tank. The
+-- chunk stays loaded, as the catch-up is the record's own, so this runs in multiplayer too. Catches
+-- a catch-up that runs the gap on the head alone.
 T.test("irrigation_treatment_inlet_keeps_the_film_through_an_absence", {
     instant = true,
     run = function(self)
@@ -528,62 +528,100 @@ T.test("irrigation_treatment_inlet_keeps_the_film_through_an_absence", {
         local spec = Treatment.UNITS[BARREL]
         self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = spec.head, headTainted = true,
             ripeHours = Treatment.RIPE_HOURS } })
-        self.raw = T.placeTank(self, spots[2], "lidded", 100, true)
+        self.raw = T.placeTank(self, spots[2], "lidded", 300, true)
         self.clean = T.placeTank(self, spots[3], "lidded")
         T.server(self, "links.make", T.at(self.unit, { to = T.at(self.raw), kind = "iron", lengths = 1, role = "inlet" }))
         T.server(self, "links.make", T.at(self.unit, { to = T.at(self.clean), kind = "iron", lengths = 1,
             role = "outlet" }))
         local gap = spec.head / spec.rate + Treatment.DRY_DEATH_HOURS + 6
-        T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = gap, tank = T.at(self.raw) }), "back")
+        T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = gap, tank = T.at(self.raw), into = T.at(self.clean) }),
+            "back")
         waitForServer(self, self.unit, "back", "ripeHours")
         readMenu(self, self.unit, "back")
-        T.read(self, "treatment.pass", T.at(self.unit, { hours = 1, tank = T.at(self.clean) }), "drained")
-        run(self, self.unit, "next", { 1 }, nil, self.raw)
+        run(self, self.unit, "next", { 1 }, nil, self.clean)
     end,
     validate = function(self)
         local spec = self.unit.spec
         local before, after = self.reads.back.before, self.reads.back.after
         expectWord(self, "back", getText("IGUI_EnhancedIrrigation_Ripe"))
-        expectNear("the head, back", after.record.head, spec.head, LITRES)
+        expect(after.record.head > 0, "the filter came back dry")
         expectNear("what the raw tank fed", before.tank.litres - after.tank.litres,
-            after.basin.litres - before.basin.litres + after.record.head - before.record.head, LITRES)
+            after.basin.litres - before.basin.litres + after.record.head - before.record.head
+            + after.into.litres - before.into.litres, LITRES)
         expect(not after.basin.tainted, "the filter caught up passed tainted water")
-        expect(not self.reads.drained.tank.tainted, "the outlet's tank holds tainted water")
+        expect(not after.into.tainted, "the outlet's tank holds tainted water")
         local hour = self.reads.next
-        expectBasin("the next hour", hour.steps[1], hour.before.basin.litres + spec.rate, false)
+        expectNear("the outlet's tank after the next hour", hour.steps[1].tank.litres - hour.before.tank.litres,
+            hour.before.basin.litres + spec.rate - hour.steps[1].basin.litres, LITRES)
+        expect(not hour.steps[1].tank.tainted, "the next hour's water reached the outlet's tank tainted")
     end,
 })
 
--- A plumbed filter whose inlet's tank stands where no chunk is loaded waits for it: however long
--- ago it last ran, its pass leaves the head and basin as they were, since the tank might have kept
--- it wet. With that pipe gone, its next pass treats the whole gap at its rate, so the wait lost no
--- time. The far end is far past any loaded chunk, as a tank beyond the edge of the loaded area is
--- when the filter's chunk loads first; so this runs in multiplayer too. Catches a filter that runs
--- the gap dry, its film lost, before its tank loads.
-T.test("irrigation_treatment_waits_for_an_unloaded_inlet_tank", {
+-- A plumbed filter's outlet empties the basin through the time the filter wasn't caught up, as it
+-- would have loaded: its clock wound back longer than its basin takes to fill, it comes back with
+-- the basin empty and the outlet's tank holding all the gap passed, the inlet keeping the head
+-- topped up. The chunk stays loaded, so this runs in multiplayer too. Catches a catch-up that fills
+-- the basin and stops, leaving the outlet only what one pass carries on reload.
+T.test("irrigation_treatment_outlet_drains_through_an_absence", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
         if not spots then return end
-        self.gap, self.head = 5, 40
-        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = self.head, ripeHours = Treatment.RIPE_HOURS } })
-        local far = { x = self.unit.x + 3000, y = self.unit.y, z = self.unit.z }
-        T.server(self, "links.make", T.at(self.unit, { to = far, kind = "iron", lengths = 1, role = "inlet" }))
-        T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap, tank = far }), "waiting")
-        T.server(self, "treatment.unlink", far)
-        T.read(self, "treatment.update", T.at(self.unit), "back")
+        local spec = Treatment.UNITS[BARREL]
+        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = spec.head, ripeHours = Treatment.RIPE_HOURS } })
+        self.raw = T.placeTank(self, spots[2], "lidded", 100)
+        self.clean = T.placeTank(self, spots[3], "lidded")
+        T.server(self, "links.make", T.at(self.unit, { to = T.at(self.raw), kind = "iron", lengths = 1, role = "inlet" }))
+        T.server(self, "links.make", T.at(self.unit, { to = T.at(self.clean), kind = "iron", lengths = 1,
+            role = "outlet" }))
+        self.gap = 24
+        T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap, tank = T.at(self.raw),
+            into = T.at(self.clean) }), "back")
     end,
     validate = function(self)
-        local waiting, back = self.reads.waiting, self.reads.back
-        expect(waiting.after.inlet and not waiting.after.tank.loaded, "the inlet's far end isn't plumbed, or is loaded")
-        expectNear("the head while its inlet's tank is away", waiting.after.record.head, self.head, LITRES)
-        expectNear("the basin while its inlet's tank is away", waiting.after.basin.litres, 0, LITRES)
-        -- From the clock wound back to the pass after the pipe went, whichever pass ran it.
-        local litres = self.unit.spec.rate * (back.now - (waiting.now - self.gap))
-        expectBasin("the filter after its inlet went", back.after, litres, false)
-        expectNear("the head after its inlet went", back.after.record.head, self.head - litres, LITRES)
+        local before, after = self.reads.back.before, self.reads.back.after
+        local passed = self.unit.spec.rate * self.gap
+        expect(passed > before.basin.capacity, "the gap passes no more than the basin holds, so it can't tell")
+        expectNear("the outlet's tank, back", after.into.litres, passed, LITRES)
+        expectNear("the basin, back", after.basin.litres, 0, LITRES)
+        expectNear("what the raw tank fed", before.tank.litres - after.tank.litres,
+            passed + after.record.head - before.record.head, LITRES)
     end,
 })
+
+-- A plumbed filter whose inlet's or outlet's tank stands where no chunk is loaded waits for it:
+-- however long ago it last ran, its pass leaves the head and basin as they were, since the tank
+-- might have kept it wet or taken its water. With that pipe gone, its next pass treats the whole
+-- gap at its rate, so the wait lost no time. The far end is far past any loaded chunk, as a tank
+-- beyond the edge of the loaded area is when the filter's chunk loads first; so this runs in
+-- multiplayer too. Catches a filter that runs the gap without its tank.
+for _, role in ipairs({ "inlet", "outlet" }) do
+    T.test("irrigation_treatment_waits_for_an_unloaded_" .. role .. "_tank", {
+        instant = true,
+        run = function(self)
+            local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+            if not spots then return end
+            self.gap, self.head = 5, 40
+            self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = self.head, ripeHours = Treatment.RIPE_HOURS } })
+            local far = { x = self.unit.x + 3000, y = self.unit.y, z = self.unit.z }
+            T.server(self, "links.make", T.at(self.unit, { to = far, kind = "iron", lengths = 1, role = role }))
+            T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap, tank = far }), "waiting")
+            T.server(self, "treatment.unlink", far)
+            T.read(self, "treatment.update", T.at(self.unit), "back")
+        end,
+        validate = function(self)
+            local waiting, back = self.reads.waiting, self.reads.back
+            expect(waiting.after[role] and not waiting.after.tank.loaded,
+                "the " .. role .. "'s far end isn't plumbed, or is loaded")
+            expectNear("the head while the " .. role .. "'s tank is away", waiting.after.record.head, self.head, LITRES)
+            expectNear("the basin while the " .. role .. "'s tank is away", waiting.after.basin.litres, 0, LITRES)
+            -- From the clock wound back to the pass after the pipe went, whichever pass ran it.
+            local litres = self.unit.spec.rate * (back.now - (waiting.now - self.gap))
+            expectBasin("the filter after its " .. role .. " went", back.after, litres, false)
+            expectNear("the head after its " .. role .. " went", back.after.record.head, self.head - litres, LITRES)
+        end,
+    })
+end
 
 -- Vanilla's menus ----------------------------------------------------------------------------------------
 
@@ -1273,9 +1311,9 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
 })
 
 -- Plumb Inlet from a raw tank on the boiler's level and Plumb Outlet to a clean one, from the
--- boiler's menu: lit, its first hour fills the drum from the raw tank, its second passes clean water
--- at its rate, and a link pass carries that on into the clean tank. Catches a boiler the pipes
--- can't reach, water lost or made on the way, or the taint carried into the clean tank.
+-- boiler's menu: lit, its first hour fills the drum from the raw tank, and its second passes clean
+-- water at its rate on into the clean tank. Catches a boiler the pipes can't reach, water lost or
+-- made on the way, or the taint carried into the clean tank.
 T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
     instant = true,
     run = function(self)
@@ -1294,23 +1332,20 @@ T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
         setFire(self, self.unit, "lit", true, FUEL)
         -- From a cold drum, which a ten-minute pass since the fire was lit would have warmed a little.
-        run(self, self.unit, "hours", { 1, 1 }, { hotHours = 0 }, self.tank)
-        T.read(self, "treatment.pass", T.at(self.unit, { hours = 1, tank = T.at(self.clean) }), "drained")
+        T.read(self, "treatment.run", T.at(self.unit, { hours = { 1, 1 }, fields = { hotHours = 0 }, tank = T.at(self.tank),
+            into = T.at(self.clean) }), "hours")
     end,
     validate = function(self)
         T.expectOffered(self, "inlet")
         T.expectOffered(self, "outlet")
         local rate = self.unit.spec.rate
         local before, first, second = self.reads.hours.before, self.reads.hours.steps[1], self.reads.hours.steps[2]
-        expectNear("the drum after the first hour", first.record.head + first.basin.litres, self.raw, LITRES)
-        expectNear("the first hour's water", first.basin.litres - before.basin.litres, 0, LITRES)
-        expectBasin("the second hour's water", second, before.basin.litres + rate, false)
+        local function out(state) return state.basin.litres + state.into.litres end
+        expectNear("the drum after the first hour", first.record.head + out(first) - out(before), self.raw, LITRES)
+        expectNear("the first hour's water", out(first) - out(before), 0, LITRES)
+        expectNear("the second hour's water", out(second) - out(first), rate, LITRES)
+        expectNear("the basin after the second hour", second.basin.litres, 0, LITRES)
+        expect(not second.into.tainted, "the clean tank's water is tainted")
         expectNear("the raw tank", second.tank.litres, 0, LITRES)
-        local drained = self.reads.drained
-        expectNear("the basin after a pass", drained.basin.litres, 0, LITRES)
-        -- At least the second hour's water: a ten-minute pass before the link pass may add more.
-        expect(drained.tank.litres > rate - LITRES, "the clean tank after a pass holds " .. drained.tank.litres
-            .. " L, expected the " .. rate .. " L the basin held")
-        expect(not drained.tank.tainted, "the clean tank's water is tainted")
     end,
 })

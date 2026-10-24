@@ -1,14 +1,11 @@
--- The authority's side of treatment units (shared/EnhancedIrrigation/Treatment/Treatment.lua): their Global
--- Object System, a record for each unit built, the jobs of TreatmentJobs done for real, and what
--- an outlet link (LinkSystem.lua) moves out of a unit's basin. What an inlet link moves into its
--- head is the record's time (TreatmentObject.advance).
+-- The authority's side of treatment units: their Global Object System, a record for each unit
+-- built, and the jobs of TreatmentJobs done for real.
 
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
-require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/ObjectSystem"
@@ -19,7 +16,6 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentSystem = {}
 EnhancedIrrigation.TreatmentSystem = TreatmentSystem
 
-local Tanks = EnhancedIrrigation.Tanks
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
 
 TreatmentSystem.System = EnhancedIrrigation.ObjectSystem.define({
@@ -124,26 +120,6 @@ function TreatmentSystem.perform(character, job, unit, with)
         record:afterChange()
     end
     return done
-end
-
--- Links ----------------------------------------------------------------------------------------------
-
---- Empties the basin of the unit at the `a` end of the outlet `link` into the tank at its `b` end by
---- up to `litres`, while both are loaded and the tank stands no higher than the unit, as far as the
---- tank has room; the mixture moves as it is. Returns the tank when any water moved.
-function TreatmentSystem.drain(link, litres)
-    local unit, tank = Treatment.unitAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
-    if not (unit and tank) or not Treatment.runsFor("outlet", tank, unit) then
-        return nil
-    end
-    local basin, fluid = unit:getFluidContainer(), tank:getFluidContainer()
-    litres = math.min(litres, basin:getAmount(), fluid:getFreeCapacity())
-    if litres < EnhancedIrrigation.Links.LEAST_FLOW then
-        return nil
-    end
-    FluidContainer.Transfer(basin, fluid, litres)
-    unit:sync()
-    return tank
 end
 
 return TreatmentSystem

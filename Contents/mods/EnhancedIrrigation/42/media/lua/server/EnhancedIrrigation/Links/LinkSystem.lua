@@ -1,14 +1,13 @@
--- The authority's side of the links (shared/EnhancedIrrigation/Links/Links.lua): a Global Object System
--- with no objects, used for what it saves with the world (its own modData keys) and sends the
--- clients (its initial state on connect, then a command on each change). Every ten minutes water
--- finds its level through each link between two tanks loaded at both ends, each plumbed fixture's
--- tank refills its buffer, and each treatment unit's outlet empties its basin; its inlet fills its
--- head in the unit's own time (TreatmentObject.advance), which catches up the time the unit was
--- unloaded, and a pump's outlet carries what the pump lifts as it lifts it (PumpSystem.pump). A
--- link is buried pipe, run through walls and under floors as vanilla's plumbing is, so it never
--- freezes or wears: unlike a garden line it has nothing to age. Nor does it go with a tank,
--- fixture, unit or pump: taken down, picked up or smashed, it leaves the pipe in the ground, and
--- one set on that square again is on it.
+-- The authority's side of the links: a Global Object System with no objects, used for what it
+-- saves with the world (its own modData keys) and sends the clients (its initial state on connect,
+-- then a command on each change). Every ten minutes water finds its level through each link
+-- between two tanks loaded at both ends, and each plumbed fixture's tank refills its buffer. A
+-- treatment unit's inlet and outlet run in the unit's own time, which catches up the time the unit
+-- was unloaded, and a pump's outlet carries what the pump lifts as it lifts it. A link is buried
+-- pipe, run through walls and under floors as vanilla's plumbing is, so it never freezes or wears:
+-- unlike a garden line it has nothing to age. Nor does it go with a tank, fixture, unit or pump:
+-- taken down, picked up or smashed, it leaves the pipe in the ground, and one set on that square
+-- again is on it.
 
 if isClient() then return end
 
@@ -21,7 +20,6 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/FixtureSystem"
-require "EnhancedIrrigation/Treatment/TreatmentSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -31,7 +29,6 @@ EnhancedIrrigation.LinkSystem = LinkSystem
 local Links, LinkJobs, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes,
     EnhancedIrrigation.Tanks
 local Materials, FixtureSystem = EnhancedIrrigation.Materials, EnhancedIrrigation.FixtureSystem
-local TreatmentSystem = EnhancedIrrigation.TreatmentSystem
 
 -- What the system saves with the world (its modData keys): `links`, the list; `lastHour`, when
 -- water last moved, so a pass moves what the time since allows however often the event fires.
@@ -181,10 +178,10 @@ local function flow(tankA, tankB, hours)
     return true
 end
 
---- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks,
---- from a tank into a fixture's buffer, or out of a unit's basin into a tank. A link with an end
---- unloaded, or gone from it, waits; an inlet runs in its unit's time (TreatmentObject.advance),
---- and a pump's outlet in its pump's, so neither can carry one gap's water twice.
+--- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks, or
+--- from a tank into a fixture's buffer. A link with an end unloaded, or gone from it, waits; a
+--- unit's inlet and outlet run in its unit's time, and a pump's outlet in its pump's, so none can
+--- carry one gap's water twice.
 function LinkSystem:pass(hours)
     local changed = {}
     for _, link in ipairs(self.links) do
@@ -192,8 +189,6 @@ function LinkSystem:pass(hours)
         local role = Links.roleOf(link)
         if role == "fixture" then
             tank = FixtureSystem.refill(link, hours)
-        elseif role == "outlet" then
-            tank = TreatmentSystem.drain(link, Links.RATE * hours)
         elseif not role then
             local a, b = Links.ends(link)
             local tankA, tankB = Tanks.tankAt(a.x, a.y, a.z), Tanks.tankAt(b.x, b.y, b.z)

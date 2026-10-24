@@ -30,6 +30,7 @@ Set up with `dev/run-debug-client.sh`, then main menu > Scenarios > **Enhanced I
 - **The welded boiler and the welding mask.** Build the welded-firebox Boiler with the mask carried but not worn. Pass or fail: say which the build menu accepts, and whether that matches vanilla's welding builds.
 - **A stripped washer moved.** Salvage a washer's pump, pick the washer up, put it down elsewhere. Pass: it still won't switch on and says its pump has been salvaged.
 - **Other mods' sinks.** With a mod that adds sink tiles, plumb one to a tank. Old saves' plumbed sinks of other mods keep vanilla's plumbing until plumbed again; check that's all that happens.
+- **A plumbed filter across a real absence.** Plumb a Barrel Filter's inlet from a full raw barrel and its outlet to an empty lidded barrel, walk far enough that all three unload (in single player), wait two in-game days, and come back. Pass: the clean barrel holds about 4 L for every hour you were away, up to what the raw barrel and the head held; the filter's basin isn't standing full; its menu still says Ripe. The tests wind the record's clock back with the chunks loaded, so none sees the three chunks load in their own order.
 
 ## Art
 
