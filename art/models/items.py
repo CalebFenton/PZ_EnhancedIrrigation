@@ -1,6 +1,6 @@
 """The parts every tile and icon is built from, in real metres (kit.py has the frame): garden pipe of
 four materials, the tap, the Tank Stand and the rain barrels that sit on it, the sand filters, the
-Filter Crock in its bucket, and the pamphlet.
+Filter Crock in its bucket, the boilers, and the pamphlet.
 """
 import math
 import random
@@ -53,6 +53,20 @@ def M(name):
                                        speckle=("#654536", 0.35)),
         "rawclay": lambda: material("EI_RawClay", "#978676", roughness=0.95, grime=0.15, scale=50, speckle=("#76695d", 0.35)),
         "pail": lambda: material("EI_Pail", "#a3a8ab", roughness=0.65, metallic=0.4, grime=0.15, scale=20),
+        # The boilers: the game's grey steel Metal Drum, its lid a shade bluer, sooted round its foot
+        # by the fire under it; the firebox's soot, ash and charred wood, the bricks blackened over its
+        # mouth, and the welded box's sheet steel, rust running down it, and its darker angle iron.
+        "drum": lambda: material("EI_Drum", "#808283", roughness=0.55, metallic=0.45, grime=0.35, scale=20,
+                                 scorch=("#2a2624", "#6e5a45", 0.09)),
+        "drumlid": lambda: material("EI_DrumLid", "#7c878b", roughness=0.55, metallic=0.4, grime=0.25, scale=20),
+        "drumdark": lambda: material("EI_DrumDark", "#4a4c4e", roughness=0.6, metallic=0.4, grime=0.15),
+        "soot": lambda: material("EI_Soot", "#1e1b1a", roughness=0.95, grime=0.2, scale=30),
+        "ash": lambda: material("EI_Ash", "#6d6964", roughness=0.95, grime=0.3, scale=60, speckle=("#3a3633", 0.4)),
+        "charcoal": lambda: material("EI_Charcoal", "#2a2420", roughness=0.9, grime=0.3, scale=40, speckle=("#4a3a30", 0.3)),
+        "brickscorch": lambda: material("EI_BrickScorch", "#4d3229", roughness=0.9, grime=0.3, scale=30),
+        "plate": lambda: material("EI_Plate", "#4f5356", roughness=0.6, metallic=0.5, grime=0.35, scale=20,
+                                  streaks=("#7d4a2c", 0.45)),
+        "ironwork": lambda: material("EI_Ironwork", "#3a3d40", roughness=0.6, metallic=0.5, grime=0.3, scale=20),
         # The pamphlet: cream stock, green ink for the band, brown for the drawing and the type.
         "paper": lambda: material("EI_Paper", "#efe5c6", roughness=0.9, grime=0.05),
         "paperback": lambda: material("EI_PaperBack", "#ddd0ab", roughness=0.9, grime=0.05),
@@ -472,37 +486,73 @@ BRICK_LENGTH = 0.21  # a brick's length and its joint
 BRICK_JOINT = 0.01
 
 
+def _brick_walls(col, name, rng, width, courses, mouth=None):
+    """Four walls of red bricks one brick thick, `width` outside both ways and `courses` high, in
+    stretcher bond, the corners lapped course by course, mortar showing in every joint. `mouth` =
+    (west, east, sill, head) leaves an opening in the south wall, the bricks beside it cut square to
+    its sides and those round it sooted."""
+    half = width / 2
+    height = courses * BRICK_COURSE
+    # The mortar behind each wall's bricks, set in from every face further than a joint sets a brick's
+    # end back, so it shows only in the joints and no face of it lies in a brick's, where the render
+    # draws black.
+    for sx, sy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+        length, thickness = width - 0.03, BRICK_WALL - 0.016
+        y = sy * (half - BRICK_WALL / 2)
+        if mouth and sy == -1:
+            # Round the mouth, set back from its sides as from the walls' ends.
+            west, east, sill, head = mouth
+            for a, b, bottom, top in ((-length / 2, west - 0.008, 0, height - 0.006),
+                                      (east + 0.008, length / 2, 0, height - 0.006),
+                                      (west - 0.008, east + 0.008, 0, sill - 0.008),
+                                      (west - 0.008, east + 0.008, head + BRICK_JOINT, height - 0.006)):
+                box(col, name + "_Mortar", M("mortar"), (b - a, thickness, top - bottom), at=((a + b) / 2, y, bottom))
+            continue
+        size = (length, thickness, height - 0.006) if sy else (thickness, length, height - 0.006)
+        box(col, name + "_Mortar", M("mortar"), size, at=(sx * (half - BRICK_WALL / 2), y, 0))
+    for course in range(courses):
+        z = course * BRICK_COURSE
+        cut = mouth is not None and mouth[2] <= z < mouth[3]
+        over = mouth is not None and mouth[3] <= z < mouth[3] + 2 * BRICK_COURSE
+        # The north and south walls run to the corners on even courses, the east and west walls on
+        # odd ones, so each corner laps; a wall a brick's width shorter at both ends puts its joints
+        # about half a brick along from the course below's, which is the bond.
+        for sx, sy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+            long_wall = (sy != 0) == (course % 2 == 0)
+            length = width if long_wall else width - 2 * BRICK_WALL
+            count = max(1, round(length / BRICK_LENGTH))
+            module = length / count
+            for i in range(count):
+                along = -length / 2 + (i + 0.5) * module
+                mat = M("brick" if rng.random() < 0.6 else "brickdark")
+                size = (module - BRICK_JOINT, BRICK_WALL, BRICK_COURSE - BRICK_JOINT)
+                at = (along, sy * (half - BRICK_WALL / 2), z + BRICK_JOINT)
+                if sx:
+                    size, at = (size[1], size[0], size[2]), (sx * (half - BRICK_WALL / 2), along, z + BRICK_JOINT)
+                if sy != -1 or not (cut or over):
+                    box(col, name + "_Brick", mat, size, at=at, bevel=0.004)
+                    continue
+                west, east = mouth[0], mouth[1]
+                start, end = along - size[0] / 2, along + size[0] / 2
+                if over:
+                    # The fire's smoke blackens the bricks over the mouth's head.
+                    sooted = end > west - 0.03 and start < east + 0.03
+                    box(col, name + "_Brick", M("brickscorch") if sooted else mat, size, at=at, bevel=0.004)
+                    continue
+                for a, b in ((start, min(end, west)), (max(start, east), end)):
+                    if b - a > 0.03:
+                        sooted = b == west or a == east
+                        box(col, name + "_Brick", M("brickscorch") if sooted else mat, (b - a, size[1], size[2]),
+                            at=((a + b) / 2, at[1], at[2]), bevel=0.004)
+
+
 def brick_filter(col):
     """A square tank of red bricks in stretcher bond, the corners lapped course by course, mortar
     showing in every joint, filled with sand to a course below its top; a nipple out of the east
     wall near its south corner turns down over the ground."""
     half = BRICK_TANK / 2
     height = BRICK_COURSES * BRICK_COURSE
-    rng = random.Random(135)
-    # The mortar behind each wall's bricks, set in from every face further than a joint sets a brick's
-    # end back, so it shows only in the joints and no face of it lies in a brick's, where the render
-    # draws black.
-    for sx, sy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-        length, thickness = BRICK_TANK - 0.03, BRICK_WALL - 0.016
-        size = (length, thickness, height - 0.006) if sy else (thickness, length, height - 0.006)
-        box(col, "BrickFilter_Mortar", M("mortar"), size, at=(sx * (half - BRICK_WALL / 2), sy * (half - BRICK_WALL / 2), 0))
-    for course in range(BRICK_COURSES):
-        z = course * BRICK_COURSE
-        # The north and south walls run to the corners on even courses, the east and west walls on
-        # odd ones, so each corner laps; a wall a brick's width shorter at both ends puts its joints
-        # about half a brick along from the course below's, which is the bond.
-        for sx, sy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-            long_wall = (sy != 0) == (course % 2 == 0)
-            length = BRICK_TANK if long_wall else BRICK_TANK - 2 * BRICK_WALL
-            count = max(1, round(length / BRICK_LENGTH))
-            module = length / count
-            for i in range(count):
-                along = -length / 2 + (i + 0.5) * module
-                size = (module - BRICK_JOINT, BRICK_WALL, BRICK_COURSE - BRICK_JOINT)
-                at = (along, sy * (half - BRICK_WALL / 2), z + BRICK_JOINT)
-                if sx:
-                    size, at = (size[1], size[0], size[2]), (sx * (half - BRICK_WALL / 2), along, z + BRICK_JOINT)
-                box(col, "BrickFilter_Brick", M("brick" if rng.random() < 0.6 else "brickdark"), size, at=at, bevel=0.004)
+    _brick_walls(col, "BrickFilter", random.Random(135), BRICK_TANK, BRICK_COURSES)
     inside = BRICK_TANK - 2 * BRICK_WALL
     sand = height - BRICK_COURSE
     box(col, "BrickFilter_Sand", M("sand"), (inside - 0.004, inside - 0.004, sand), at=(0, 0, 0))
@@ -587,6 +637,175 @@ def crock_in_bucket(col):
     bail.append(centre - pivot * (reach - 0.008))
     tube(col, "Pail_Bail", M("galvanised"), bail, PAIL_WIRE, sides=8)
     group(col, "Pail_Crock", filter_crock(col), at=(0, 0, PAIL_FLOOR))
+
+
+# The boilers ---------------------------------------------------------------------------------------
+#
+# The game's Metal Drum (crafted_01_32) standing on a firebox. A lit boiler is a vanilla fireplace,
+# and its CustomName, Metal Drum, has the game draw its barrel fire's flames (IsoFireplace's
+# updateFireSprite) at a fixed place on the tile: their foot where a barrel fire's front rim is, a
+# drum's height over the tile's middle seen from the camera. So the firebox stands about that high,
+# its top open at the corners under the drum's round foot, and the flames rise out of the front
+# corner and up the drum's side, as a fire under a pot licks up it. Below the flames they would hide
+# nothing they could seem to burn: the fire mouth is in the south wall, the tap on the east side.
+
+DRUM_RADIUS = 0.355  # measured off crafted_01_32, as the game draws it: wider than a real drum
+DRUM_HEIGHT = 0.87
+DRUM_SEAM = 0.4  # the rolled seam round it, below the middle as on the game's drum
+DRUM_WELD = -8  # the welded seam up its side (degrees from east), where the game's drum has it
+FIREBOX = BRICK_TANK  # outside width, both ways
+FIREBOX_COURSES = 12
+FIREBOX_HEIGHT = FIREBOX_COURSES * BRICK_COURSE
+FIREBOX_INSIDE = FIREBOX - 2 * BRICK_WALL  # its top's opening: narrower than the drum, which rests on its walls
+BRICK_MOUTH = (-0.13, 0.15, BRICK_COURSE, 4 * BRICK_COURSE)  # the fire mouth: west and east sides, sill, head
+PLATE = 0.006  # the welded firebox's sheet steel
+PLATE_MOUTH = (-0.06, 0.2, 0.12, 0.36)
+DRUM_INLET = (-110, DRUM_HEIGHT - 0.12)  # heading (degrees from east) and height on the drum
+DRUM_TAP = (15, 0.09)
+
+
+def metal_drum(col):
+    """The game's Metal Drum standing on z = 0: grey steel, its lid's chime rolled over, a rolled seam
+    round it studded with rivets, a welded seam up its side, two bungs in its lid, its foot sooted by
+    the fire under it. Returns its parts, to be moved as one."""
+    before = set(col.objects)
+    r, h = DRUM_RADIUS, DRUM_HEIGHT
+    lathe(col, "Drum_Shell", M("drum"), [(0, 0.004), (r - 0.012, 0.004), (r - 0.003, 0), (r, 0.012), (r, h - 0.014),
+                                         (r + 0.004, h - 0.006), (r - 0.002, h), (r - 0.014, h - 0.004),
+                                         (r - 0.018, h - 0.014)], segments=48)
+    cylinder(col, "Drum_Lid", M("drumlid"), r - 0.016, 0.002, at=(0, 0, h - 0.016), segments=48)
+    for x, y, radius in ((-0.2, 0.03, 0.03), (0.17, 0.15, 0.018)):
+        cylinder(col, "Drum_Bung", M("drumdark"), radius, 0.006, at=(x, y, h - 0.016), segments=12)
+    lathe(col, "Drum_Seam", M("drum"), [(r, DRUM_SEAM - 0.012), (r + 0.006, DRUM_SEAM), (r, DRUM_SEAM + 0.012)], segments=48)
+    for angle in range(-150, 61, 30):
+        a = math.radians(angle)
+        cylinder(col, "Drum_Rivet", M("drumdark"), 0.009, 0.01, at=(r * math.cos(a), r * math.sin(a), DRUM_SEAM - 0.02),
+                 rotate=(90, 0, angle + 90), segments=6)
+    a = math.radians(DRUM_WELD)
+    box(col, "Drum_Weld", M("drumdark"), (0.006, 0.03, h - 0.05), at=(r * math.cos(a), r * math.sin(a), 0.025), rotate=(0, 0, DRUM_WELD))
+    return [obj for obj in col.objects if obj not in before and obj.parent is None]
+
+
+def _stub(col, start, angle, length):
+    """A galvanised nipple out of a wall at `start` (x, y, z), heading `angle` degrees from east,
+    `length` long, a sleeve where it leaves the wall and a coupling on its end for the pipe that
+    feeds it."""
+    out = Vector((math.cos(math.radians(angle)), math.sin(math.radians(angle)), 0))
+    start = Vector(start)
+    end = start + out * length
+    tube(col, "Stub_Pipe", M("galvanised"), [start, end], OUTLET_RADIUS, sides=10, up=(0, 0, 1))
+    tube(col, "Stub_Sleeve", M("malleable"), [start - out * 0.01, start + out * 0.03], OUTLET_RADIUS * 1.35, sides=10, up=(0, 0, 1))
+    tube(col, "Stub_Coupling", M("malleable"), [end - out * 0.035, end], OUTLET_RADIUS * 1.4, sides=10, up=(0, 0, 1))
+
+
+def _boiler_drum(col):
+    """The Metal Drum resting on the firebox's walls, an inlet stub near its top and a tap near its
+    foot, its spout hanging past the firebox's east side."""
+    group(col, "Boiler_Drum", metal_drum(col), at=(0, 0, FIREBOX_HEIGHT))
+    wall = DRUM_RADIUS - 0.01
+    angle, z = DRUM_INLET
+    a = math.radians(angle)
+    _stub(col, (wall * math.cos(a), wall * math.sin(a), FIREBOX_HEIGHT + z), angle, 0.06)
+    angle, z = DRUM_TAP
+    a = math.radians(angle)
+    start = Vector((wall * math.cos(a), wall * math.sin(a), FIREBOX_HEIGHT + z))
+    _outlet(col, start, angle, 0.09, 0.05)
+    # A brass globe valve on the run, its red handwheel uppermost, as on the tap at a line's head.
+    valve = start + Vector((math.cos(a), math.sin(a), 0)) * 0.05
+    cylinder(col, "Boiler_Valve", M("brass"), 0.026, 0.05, at=(valve.x, valve.y, valve.z - 0.025), segments=12)
+    cylinder(col, "Boiler_ValveStem", M("brass"), 0.007, 0.035, at=(valve.x, valve.y, valve.z + 0.025), segments=8)
+    cylinder(col, "Boiler_ValveWheel", M("red"), 0.035, 0.01, at=(valve.x, valve.y, valve.z + 0.055), segments=16)
+
+
+def _firebox_inside(col, half, mouth):
+    """A firebox's inside, `half` its inside half-width: its walls sooted black, a bed of ash up to
+    the mouth's sill and two charred logs on it, seen through the mouth and down the gaps round the
+    drum's foot."""
+    west, east, sill, head = mouth
+    t = 0.004
+    edge = half - 0.002 - t / 2
+    top = FIREBOX_HEIGHT - 0.01
+    for sx, sy in ((-1, 0), (1, 0), (0, 1)):
+        size = (t, 2 * edge, top) if sx else (2 * edge, t, top)
+        box(col, "Firebox_Soot", M("soot"), size, at=(sx * edge, sy * edge, 0.005))
+    for a, b, bottom, upper in ((-edge, west, 0.005, top), (east, edge, 0.005, top), (west, east, 0.005, sill), (west, east, head, top)):
+        box(col, "Firebox_Soot", M("soot"), (b - a, t, upper - bottom), at=((a + b) / 2, -edge, bottom))
+    box(col, "Firebox_Ash", M("ash"), (2 * edge - t, 2 * edge - t, sill - 0.005), at=(0, 0, 0))
+    for at, turn in (((-0.2, -0.06, sill - 0.01), 12), ((-0.05, -0.2, sill + 0.02), 70)):
+        cylinder(col, "Firebox_Log", M("charcoal"), 0.035, 0.36, at=at, rotate=(0, 90, turn), segments=8)
+
+
+def boiler_stone(col):
+    """A Metal Drum on a firebox of red brick, the brick filter's walls, open at the top under the
+    drum, a fire mouth in its south wall under an iron bar, the bricks round it sooted."""
+    _brick_walls(col, "Boiler", random.Random(137), FIREBOX, FIREBOX_COURSES, mouth=BRICK_MOUTH)
+    west, east, sill, head = BRICK_MOUTH
+    # The bar the bricks over the mouth rest on, in the bed joint over its head.
+    box(col, "Boiler_Lintel", M("ironwork"), (east - west + 0.12, BRICK_WALL + 0.004, BRICK_JOINT),
+        at=((west + east) / 2, -(FIREBOX - BRICK_WALL) / 2, head))
+    _firebox_inside(col, FIREBOX_INSIDE / 2, BRICK_MOUTH)
+    _boiler_drum(col)
+
+
+def boiler_welded(col):
+    """A Metal Drum on a box of sheet steel welded up, angle iron riveted up its corners, a strap
+    round it and a plate over its top round the drum's foot; in its south side a fire door shut over
+    the mouth, framed in flat bar, hung on two hinges, a spring handle on its latch side, and a
+    spinner draught vent under it."""
+    half = FIREBOX / 2
+    side = FIREBOX_HEIGHT - PLATE
+    west, east, sill, head = PLATE_MOUTH
+    box(col, "Firebox_Plate", M("plate"), (FIREBOX, PLATE, side), at=(0, half - PLATE / 2, 0))
+    for sx in (-1, 1):
+        box(col, "Firebox_Plate", M("plate"), (PLATE, FIREBOX - 2 * PLATE, side), at=(sx * (half - PLATE / 2), 0, 0))
+    for a, b, bottom, top in ((-half, west, 0, side), (east, half, 0, side), (west, east, 0, sill), (west, east, head, side)):
+        box(col, "Firebox_Plate", M("plate"), (b - a, PLATE, top - bottom), at=((a + b) / 2, -(half - PLATE / 2), bottom))
+    # The top, round an opening as wide as the brick firebox's.
+    rim = (FIREBOX - FIREBOX_INSIDE) / 2
+    for sy in (-1, 1):
+        box(col, "Firebox_Top", M("plate"), (FIREBOX, rim, PLATE), at=(0, sy * (half - rim / 2), side))
+    for sx in (-1, 1):
+        box(col, "Firebox_Top", M("plate"), (rim, FIREBOX_INSIDE, PLATE), at=(sx * (half - rim / 2), 0, side))
+    # Angle iron up each corner, a flange on each face, riveted through the plates.
+    flange, thick = 0.045, 0.005
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            box(col, "Firebox_Angle", M("ironwork"), (flange, thick, FIREBOX_HEIGHT),
+                at=(sx * (half - flange / 2), sy * (half + thick / 2), 0))
+            box(col, "Firebox_Angle", M("ironwork"), (thick, flange, FIREBOX_HEIGHT),
+                at=(sx * (half + thick / 2), sy * (half - flange / 2), 0))
+            for z in (0.08, 0.3, 0.52, 0.74):
+                box(col, "Firebox_Rivet", M("malleable"), (0.012, 0.004, 0.012), at=(sx * (half - flange / 2), sy * (half + thick + 0.002), z))
+                box(col, "Firebox_Rivet", M("malleable"), (0.004, 0.012, 0.012), at=(sx * (half + thick + 0.002), sy * (half - flange / 2), z))
+    # The strap welded round it above the mouth, which keeps the hot plates from bowing.
+    strap = 0.6
+    for sy in (-1, 1):
+        box(col, "Firebox_Strap", M("ironwork"), (FIREBOX + 2 * thick, 0.004, 0.04), at=(0, sy * (half + thick + 0.002), strap))
+    for sx in (-1, 1):
+        box(col, "Firebox_Strap", M("ironwork"), (0.004, FIREBOX + 2 * thick, 0.04), at=(sx * (half + thick + 0.002), 0, strap))
+    # The door over the mouth, lapping its sides, its edges framed in flat bar.
+    face = -(half + 0.002)
+    lap, bar = 0.015, 0.015
+    left, right, bottom, top = west - lap, east + lap, sill - lap, head + lap
+    middle = (sill + head) / 2
+    box(col, "Firebox_Door", M("plate"), (right - left, 0.008, top - bottom), at=((left + right) / 2, face - 0.004, bottom))
+    for a, b, z, height in ((left, right, bottom, bar), (left, right, top - bar, bar),
+                            (left, left + bar, bottom, top - bottom), (right - bar, right, bottom, top - bottom)):
+        box(col, "Firebox_DoorFrame", M("ironwork"), (b - a, 0.004, height), at=((a + b) / 2, face - 0.01, z))
+    for z in (bottom + 0.03, top - 0.07):
+        cylinder(col, "Firebox_Hinge", M("ironwork"), 0.009, 0.04, at=(left - 0.006, face - 0.008, z), segments=8)
+    handle = right - 0.03
+    tube(col, "Firebox_Handle", M("galvanised"), [(handle, face - 0.01, middle - 0.05), (handle, face - 0.035, middle - 0.04),
+                                                  (handle, face - 0.035, middle + 0.04), (handle, face - 0.01, middle + 0.05)],
+         0.007, sides=8)
+    # The draught vent: a disc turned over a row of slots to let air in under the fire.
+    vent = ((west + east) / 2, bottom / 2)
+    cylinder(col, "Firebox_Vent", M("ironwork"), 0.04, 0.006, at=(vent[0], face, vent[1]), rotate=(90, 0, 0), segments=16)
+    for dx in (-0.02, 0, 0.02):
+        box(col, "Firebox_VentSlot", M("soot"), (0.009, 0.002, 0.04), at=(vent[0] + dx, face - 0.0075, vent[1] - 0.02))
+    _firebox_inside(col, half - PLATE, PLATE_MOUTH)
+    _boiler_drum(col)
+
 
 
 # The pamphlet --------------------------------------------------------------------------------------

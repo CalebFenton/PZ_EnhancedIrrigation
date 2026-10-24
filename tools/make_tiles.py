@@ -24,6 +24,14 @@ values follow the vanilla tile definitions (newtiledefinitions.tiles).
   vegetation_indoor_01_10), so it takes their BlocksPlacement and IsLow and, like them, no
   solidtrans: it doesn't stop a character. Nothing reads Material without CanScrap or IsMoveAble,
   which it lacks for the filters' reason, so it has none.
+- The boilers block as the filters do, and keep water the mod tracks, so no CanScrap either. Each is
+  a vanilla fireplace once built (the entity's OnCreate makes it one, as vanilla's Barrel Oven), and
+  IsoFireplace draws its flames only on its own sprites, on walls (collideN or collideW, which
+  would wall the square off from the mod's pipe lines) or on a CustomName of exactly "Metal Drum",
+  which the boilers take for the barrel fire's flames. The game names a moveable by GroupName and
+  CustomName, so GroupName "Boiler" makes it "Boiler Metal Drum", which Moveables.json calls the
+  Boiler. No container, which would make the fireplace an oven with an inventory. Material as the
+  filters': Brick for the brick firebox, Metal for the welded one.
 
 The game loads a mod's depth maps (media/depthmaps/DEPTH_<tileset>.png, which art/models/render.py
 renders) only when the mod's common/media has a tileGeometry.txt (TileDepthTextureManager.init),
@@ -47,6 +55,7 @@ STAND = 129
 RAISED_BARRELS = (130, 131, 132, 133)
 BARREL_FILTER, BRICK_FILTER = 134, 135
 FILTER_CROCK = 136
+BOILER_STONE, BOILER_WELDED = 137, 138
 
 
 def stand_like(name, **props):
@@ -59,6 +68,8 @@ for index in RAISED_BARRELS:
 TILES[BARREL_FILTER] = stand_like("Barrel Filter")
 TILES[BRICK_FILTER] = stand_like("Brick Filter", Material="Brick")
 TILES[FILTER_CROCK] = {"CustomName": "Filter Crock", "BlocksPlacement": "", "IsLow": ""}
+TILES[BOILER_STONE] = stand_like("Metal Drum", GroupName="Boiler", Material="Brick")
+TILES[BOILER_WELDED] = stand_like("Metal Drum", GroupName="Boiler", Material="Metal")
 
 
 def main():

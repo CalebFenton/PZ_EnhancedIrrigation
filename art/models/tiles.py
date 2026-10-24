@@ -53,10 +53,18 @@ TILES[BRICK_FILTER] = [layer(items.brick_filter)]
 FILTER_CROCK = 136
 TILES[FILTER_CROCK] = [layer(items.crock_in_bucket)]
 
+# The boilers: a Metal Drum on a brick firebox, then on a welded one.
+BOILER_STONE = 137
+BOILER_WELDED = 138
+TILES[BOILER_STONE] = [layer(items.boiler_stone)]
+TILES[BOILER_WELDED] = [layer(items.boiler_welded)]
+
 # Build-menu icons by the name after EnhancedIrrigation_Build_: each thing as it stands built.
 BUILD_ICONS = {
     "TankStand": [layer(items.tank_stand)],
     "BarrelFilter": [layer(items.barrel_filter)],
     "BrickFilter": [layer(items.brick_filter)],
     "FilterCrock": [layer(items.crock_in_bucket)],
+    "BoilerStone": [layer(items.boiler_stone)],
+    "BoilerWelded": [layer(items.boiler_welded)],
 }

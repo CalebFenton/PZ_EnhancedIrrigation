@@ -71,6 +71,11 @@ Sprites.BRICK_FILTER = tile(135)
 -- The Filter Crock: a porous clay pot standing in a bucket, which its water seeps into.
 Sprites.FILTER_CROCK = tile(136)
 
+-- The boilers: a Metal Drum over a firebox, stone or welded plate. Their CustomName is vanilla's
+-- "Metal Drum" so the fireplace they are draws vanilla's barrel-fire flames when lit.
+Sprites.BOILER_STONE = tile(137)
+Sprites.BOILER_WELDED = tile(138)
+
 -- The priority every loader of the mod's tiles passes to MapObjects.OnLoadWithSprite. MapObjects
 -- keeps one function per sprite and priority, a later one silently replacing an earlier
 -- (MapObjects.java), so a second loader of the same tiles on one side needs a priority of its own.
