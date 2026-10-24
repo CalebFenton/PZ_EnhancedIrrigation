@@ -31,6 +31,25 @@ function EnhancedIrrigation.sameSquare(p, q)
     return p.x == q.x and p.y == q.y and p.z == q.z
 end
 
+--- Whether the chunk of the square x, y, z is loaded on this side. Above the ground a loaded chunk
+--- has squares only where something stands and around it (IsoChunk.loadInWorldStreamerThread), so
+--- a missing square there says nothing of whether it is loaded.
+function EnhancedIrrigation.chunkLoaded(x, y, z)
+    return getCell():getChunkForGridSquare(x, y, z) ~= nil
+end
+
+--- Whether the chunks of the square x, y, z and the eight around it are loaded (chunkLoaded).
+function EnhancedIrrigation.loadedAround(x, y, z)
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            if not EnhancedIrrigation.chunkLoaded(x + dx, y + dy, z) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
 --- Whether two values are the same, tables by what they hold, at any depth. Summaries compare
 --- so, to send only what changed.
 function EnhancedIrrigation.sameValue(a, b)

@@ -40,21 +40,6 @@ function ValveSystem.track(record)
     valved[record] = true
 end
 
--- Whether the chunks of the tap and the 3x3 around it are loaded, where the tanks it draws on stand
--- (Tanks.tanksReaching), on its floor or the one above, which share its chunks. A square there may
--- not exist even loaded, so the chunk is asked.
-local function endsLoaded(record)
-    local cell = getCell()
-    for dx = -1, 1 do
-        for dy = -1, 1 do
-            if not cell:getChunkForGridSquare(record.x + dx, record.y + dy, record.z) then
-                return false
-            end
-        end
-    end
-    return true
-end
-
 -- The stretches of [from, to], as { from, to } world hours in order, the valve of `record` at the
 -- tap `tap` held the tap open.
 local function openStretches(record, tap, from, to)
@@ -104,7 +89,9 @@ end
 function ValveSystem.update(record)
     local valve = record.valve
     local tap = valve and record:getIsoObject()
-    if not (tap and endsLoaded(record)) then
+    -- The tanks it draws on (Tanks.tanksReaching) stand in the 3x3 around it, on its floor or the
+    -- one above, which share its chunks.
+    if not (tap and EnhancedIrrigation.loadedAround(record.x, record.y, record.z)) then
         return
     end
     local now = EnhancedIrrigation.now()
