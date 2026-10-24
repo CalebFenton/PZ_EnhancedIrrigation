@@ -13,6 +13,7 @@ require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Treatment/TreatmentObject"
+require "EnhancedIrrigation/Treatment/Boiler"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentSystem = {}
