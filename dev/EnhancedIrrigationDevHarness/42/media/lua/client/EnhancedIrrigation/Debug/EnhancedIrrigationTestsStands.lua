@@ -7,8 +7,7 @@ require "EnhancedIrrigation/UI/TankMenu"
 -- through the vanilla lid, and taking the barrel down. Each job goes through the build menu or the
 -- right-click menu and its timed action; what the menu greys out, the server is also asked to do
 -- directly (tanks.perform), to show it refuses on its own. EnhancedIrrigationTestServerStands.lua
--- holds the server's half. ISBuildIsoEntity is server Lua, which loads after this file, so
--- buildFromMenu reaches it at call time rather than through a require.
+-- holds the server's half.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -44,55 +43,6 @@ local function counted(self, fullType)
     return self.counts.left and self.counts.left[fullType] or 0
 end
 
--- The build menu entry of `entity` (a game entity script's full name), or nil.
-local function buildEntry(entity)
-    local script = getScriptManager():getGameEntityScript(entity)
-    local spriteConfig = script and script:getComponentScriptFor(ComponentType.SpriteConfig)
-    local infos = SpriteConfigManager.GetObjectInfoList()
-    for i = 0, infos:size() - 1 do
-        if spriteConfig and infos:get(i):getScript() == spriteConfig then
-            return infos:get(i)
-        end
-    end
-    return nil
-end
-
--- Queues building `entity` (a full name) from the build menu at `handle`, through the build menu's
--- own path (ISBuildIsoEntity, ISBuildAction): the character gets the recipe's skill levels and
--- knowledge and exactly its inputs, and the build waits for this client's copy of the tile
--- `sprite`. Whether the build menu could build it lands in self.canBuild and self.validSquare.
--- Returns the built tile's handle, or nil.
-local function buildFromMenu(self, entity, handle, sprite)
-    local info = T.need(self, buildEntry(entity), "the build menu entry of " .. entity)
-    local recipe = info and info:getRecipe() and info:getRecipe():getCraftRecipe()
-    if not T.need(self, recipe, "the build recipe of " .. entity) then return nil end
-    local built = T.at(handle, { square = handle.square, sprite = sprite })
-    for i = 0, recipe:getRequiredSkillCount() - 1 do
-        local skill = recipe:getRequiredSkill(i)
-        T.setPerk(self, skill:getPerk(), skill:getLevel())
-    end
-    T.knowRecipes(self, { recipe:getName() }, true)
-    local inputs, unmatched = T.recipeInputs(recipe)
-    if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return nil end
-    T.give(self, "materials", inputs)
-    T.server(self, "tanks.track", T.at(handle))
-    T.step(function()
-        local player = T.player()
-        T.standNextTo(handle.square)
-        local build = ISBuildIsoEntity:new(player, info, 1, ISInventoryPaneContextMenu.getContainers(player))
-        -- What the build panel does before the cursor can build (ISBuildPanel): the player number
-        -- the drag sets (IsoCell.setDrag), and the recipe's inputs picked from what is carried.
-        build.player = player:getPlayerNum()
-        build.buildPanelLogic:refresh()
-        build.buildPanelLogic:autoPopulateInputs()
-        self.canBuild = build.buildPanelLogic:canPerformCurrentRecipe()
-        self.validSquare = build:isValid(handle.square)
-        build:tryBuild(handle.x, handle.y, handle.z)
-    end)
-    T.waitFor(self, function() return T.tankCopy(built) ~= nil end, "this client's copy of the built " .. entity)
-    return built
-end
-
 -- The build menu builds a Tank Stand from its recipe on a bare square. Catches a recipe or entity
 -- the build menu can't place.
 T.test("irrigation_stands_stand_built_from_build_menu", {
@@ -100,7 +50,7 @@ T.test("irrigation_stands_stand_built_from_build_menu", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.stand = buildFromMenu(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.STAND)
+        self.stand = T.buildFromMenu(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.STAND)
         if not self.stand then return end
         T.read(self, "tanks.read", T.at(self.stand), "built")
     end,

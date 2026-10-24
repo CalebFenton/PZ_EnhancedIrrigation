@@ -186,6 +186,77 @@ function T.knowRecipes(self, names, known)
     T.server(self, "recipes.know", { names = names, known = known })
 end
 
+-- The build menu -------------------------------------------------------------------------------------
+
+--- The build menu entry of `entity` (a game entity script's full name), or nil.
+function T.buildEntry(entity)
+    local script = getScriptManager():getGameEntityScript(entity)
+    local spriteConfig = script and script:getComponentScriptFor(ComponentType.SpriteConfig)
+    local infos = SpriteConfigManager.GetObjectInfoList()
+    for i = 0, infos:size() - 1 do
+        if spriteConfig and infos:get(i):getScript() == spriteConfig then
+            return infos:get(i)
+        end
+    end
+    return nil
+end
+
+-- What one build of `recipe` takes, as T.give items (T.recipeInputs), with as many full drainables
+-- as an input's uses need, where T.recipeInputs gives one: two sand bags for eight uses. Also the
+-- inputs that had no possible item.
+local function buildInputs(recipe)
+    local items, unmatched = T.recipeInputs(recipe)
+    if #unmatched > 0 then
+        return items, unmatched
+    end
+    local inputs = recipe:getInputs()
+    for i = 0, inputs:size() - 1 do
+        local input, item = inputs:get(i), T.inputItem(inputs:get(i))
+        if item:isItemType(ItemType.DRAINABLE) and not input:isItemCount() then
+            local perItem = math.floor(1 / item:getUseDelta() + 0.0001)
+            items[i + 1].count = math.ceil(input:getIntAmount() / perItem)
+        end
+    end
+    return items, unmatched
+end
+
+--- Queues building `entity` (a full name) from the build menu at `handle`, through the build menu's
+--- own path (ISBuildIsoEntity, ISBuildAction): the character gets the recipe's skill levels and
+--- knowledge and exactly its inputs, and the build waits for this client's copy of the tile
+--- `sprite`. Whether the build menu could build it lands in self.canBuild and self.validSquare.
+--- Returns the built tile's handle, or nil. ISBuildIsoEntity is server Lua, which loads after this
+--- file, so it is reached at call time rather than through a require.
+function T.buildFromMenu(self, entity, handle, sprite)
+    local info = T.need(self, T.buildEntry(entity), "the build menu entry of " .. entity)
+    local recipe = info and info:getRecipe() and info:getRecipe():getCraftRecipe()
+    if not T.need(self, recipe, "the build recipe of " .. entity) then return nil end
+    local built = T.at(handle, { square = handle.square, sprite = sprite })
+    for i = 0, recipe:getRequiredSkillCount() - 1 do
+        local skill = recipe:getRequiredSkill(i)
+        T.setPerk(self, skill:getPerk(), skill:getLevel())
+    end
+    T.knowRecipes(self, { recipe:getName() }, true)
+    local inputs, unmatched = buildInputs(recipe)
+    if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return nil end
+    T.give(self, "materials", inputs)
+    T.server(self, "tanks.track", T.at(handle))
+    T.step(function()
+        local player = T.player()
+        T.standNextTo(handle.square)
+        local build = ISBuildIsoEntity:new(player, info, 1, ISInventoryPaneContextMenu.getContainers(player))
+        -- What the build panel does before the cursor can build (ISBuildPanel): the player number
+        -- the drag sets (IsoCell.setDrag), and the recipe's inputs picked from what is carried.
+        build.player = player:getPlayerNum()
+        build.buildPanelLogic:refresh()
+        build.buildPanelLogic:autoPopulateInputs()
+        self.canBuild = build.buildPanelLogic:canPerformCurrentRecipe()
+        self.validSquare = build:isValid(handle.square)
+        build:tryBuild(handle.x, handle.y, handle.z)
+    end)
+    T.waitFor(self, function() return T.tankCopy(built) ~= nil end, "this client's copy of the built " .. entity)
+    return built
+end
+
 -- Squares -------------------------------------------------------------------------------------------
 
 --- A tile handle of `square`.
