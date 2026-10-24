@@ -6,19 +6,25 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Recipes = {}
 EnhancedIrrigation.Recipes = Recipes
 
--- The mod's recipes with AutoLearnAny or AutoLearnAll. Vanilla's AutoLearn check
--- (ScriptManager.checkAutoLearn) walks only the craftRecipe scripts, which hold no entity's recipe,
--- so the build recipes' AutoLearn never teaches anything unless the mod asks for it. Plumb to Tank,
--- Salvage Pump, Make Utility Pump, Make Pipe Sprinkler, Make Timer Valve and the crock's wheel and
--- kiln recipes are craftRecipes vanilla checks too; they are here so that a level up that teaches
--- them reaches the client whichever LevelPerk hook runs first.
-Recipes.AUTO_LEARN = {
-    "EnhancedIrrigation_TankStand", "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter",
-    "EnhancedIrrigation_PlumbToTank", "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
-    "EnhancedIrrigation_FilterCrock", "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded",
-    "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump", "EnhancedIrrigation_SalvagePump",
-    "EnhancedIrrigation_MakeUtilityPump", "EnhancedIrrigation_MakePipeSprinkler", "EnhancedIrrigation_MakeTimerValve",
-}
+-- Vanilla's AutoLearn check (ScriptManager.checkAutoLearn) walks only the craftRecipe scripts,
+-- which hold no entity's recipe, so a build recipe's AutoLearn never teaches anything unless the
+-- mod asks for it. The craftRecipes are asked for here too, so that a level up that teaches one
+-- reaches the client whichever LevelPerk hook runs first.
+local PREFIX = "EnhancedIrrigation_"
+
+-- The mod's recipes, craftRecipes and entity recipes, with AutoLearnAny or AutoLearnAll, read from
+-- the scripts, which each side loads before its Lua.
+local AUTO_LEARN = {}
+local scripts = getScriptManager()
+for _, recipes in ipairs({ scripts:getAllCraftRecipes(), scripts:getAllBuildableRecipes() }) do
+    for i = 0, recipes:size() - 1 do
+        local recipe = recipes:get(i)
+        if recipe:getName():sub(1, #PREFIX) == PREFIX
+                and recipe:getAutoLearnAnySkillCount() + recipe:getAutoLearnAllSkillCount() > 0 then
+            table.insert(AUTO_LEARN, recipe)
+        end
+    end
+end
 
 -- Vanilla items that teach the mod's recipes when researched, by full type: what a player who
 -- handles one could work out from it. A vanilla item's script can't be edited in place, so the
@@ -36,7 +42,6 @@ Recipes.RESEARCH = {
 --- only recipes that need learning, as a script's own list does. Each side reads its own scripts,
 --- and loads them before its Lua, so this runs as the file loads.
 function Recipes.addResearch()
-    local scripts = getScriptManager()
     for fullType, names in pairs(Recipes.RESEARCH) do
         local item = scripts:getItem(fullType)
         if item then
@@ -82,15 +87,12 @@ end
 ---@param perk PerkFactory.Perk?
 ---@param level integer?
 function Recipes.autoLearn(character, perk, level)
-    local scripts = getScriptManager()
     local taught = false
-    for _, name in ipairs(Recipes.AUTO_LEARN) do
-        local recipe = scripts:getCraftRecipe(name)
-        if recipe then
-            recipe:checkAutoLearnAnySkills(character)
-            recipe:checkAutoLearnAllSkills(character)
-            taught = taught or (perk ~= nil and character:isRecipeActuallyKnown(name) and autoLearnsAt(recipe, perk, level))
-        end
+    for _, recipe in ipairs(AUTO_LEARN) do
+        recipe:checkAutoLearnAnySkills(character)
+        recipe:checkAutoLearnAllSkills(character)
+        taught = taught or (perk ~= nil and character:isRecipeActuallyKnown(recipe:getName())
+            and autoLearnsAt(recipe, perk, level))
     end
     if taught and isServer() then
         sendSyncPlayerFields(character, SYNC_RECIPES)
@@ -99,8 +101,8 @@ end
 
 local function knownCount(character)
     local count = 0
-    for _, name in ipairs(Recipes.AUTO_LEARN) do
-        if character:isRecipeActuallyKnown(name) then
+    for _, recipe in ipairs(AUTO_LEARN) do
+        if character:isRecipeActuallyKnown(recipe:getName()) then
             count = count + 1
         end
     end
