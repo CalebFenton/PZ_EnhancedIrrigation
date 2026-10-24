@@ -245,36 +245,54 @@ T.test("irrigation_water_one_person_per_tap", {
 })
 
 -- Each time the water runs, the tap draws on the highest tank reaching it that holds water, the
--- fuller of two on one level: an empty barrel two storeys up and a full one on the ground give
--- none, and the fuller of two a storey up gives it all. Catches a tap tied to one tank, an empty
--- tank chosen, or a tank without the head drawn on.
+-- fuller of two on one level: an empty barrel two storeys up, a fuller one a storey up and a full
+-- one on the ground give none, and the one two storeys up holding less gives it all, at its head.
+-- A second tap with two tanks a storey up draws on the fuller. Catches a tap tied to one tank, an
+-- empty tank chosen, the fullest tank chosen whatever its level, or a tank without the head
+-- drawn on.
 T.test("irrigation_water_tap_draws_from_the_highest_tank_holding_water", {
     run = function(self)
-        local rows = T.row(self, 3)
+        -- The second tap stands out of reach of the first's tanks, and the first out of the second's.
+        local rows = T.row(self, 6)
         if not rows then return end
         local west, tile, east = rows[1][1], rows[1][2], rows[1][3]
+        local pairWest, pairTile = rows[1][5], rows[1][6]
         tile.fields = T.tapped({ holed = true })
+        pairTile.fields = T.tapped({ holed = true })
         T.placeLine(self, { tile }, "iron")
-        -- Each holding more than an hour draws, the fuller twice the emptier.
-        self.start = { empty = 0, fuller = 4 * Lines.HOLE_RATE, emptier = 2 * Lines.HOLE_RATE, ground = TANK_LITRES }
+        T.placeLine(self, { pairTile }, "iron")
+        -- Each holding more than an hour draws; the higher less than the lower, the fuller twice
+        -- the emptier.
+        self.start = {
+            empty = 0, higher = 2 * Lines.HOLE_RATE, lower = 4 * Lines.HOLE_RATE, ground = TANK_LITRES,
+            fuller = 4 * Lines.HOLE_RATE, emptier = 2 * Lines.HOLE_RATE,
+        }
         self.tanks = {
             empty = T.placeTank(self, east, "raisedAbove", self.start.empty),
-            fuller = T.placeTank(self, tile, "above", self.start.fuller),
-            emptier = T.placeTank(self, west, "raised", self.start.emptier),
+            higher = T.placeTank(self, west, "raisedAbove", self.start.higher),
+            lower = T.placeTank(self, tile, "above", self.start.lower),
             ground = T.placeTank(self, east, "lidded", self.start.ground),
+            fuller = T.placeTank(self, pairTile, "above", self.start.fuller),
+            emptier = T.placeTank(self, pairWest, "raised", self.start.emptier),
         }
         T.batch(function()
             T.flow(self, tile, 1, {}, "hour")
+            T.flow(self, pairTile, 1, {}, "pair hour")
             for name, tank in pairs(self.tanks) do
                 T.read(self, "tanks.read", T.at(tank), name)
             end
         end)
     end,
     validate = function(self)
-        local hour = self.reads.hour
-        if not expect(hour.drawn, "the line didn't run: " .. tostring(hour.stopped)) then return end
-        -- The fuller tank stands a storey over the line: one storey of head.
-        local want = { empty = 0, fuller = Lines.HOLE_RATE, emptier = 0, ground = 0 }
+        for _, label in ipairs({ "hour", "pair hour" }) do
+            local hour = self.reads[label]
+            if not expect(hour.drawn, "the line didn't run (" .. label .. "): " .. tostring(hour.stopped)) then return end
+        end
+        -- The higher tank stands two storeys of head over its line, the fuller one storey.
+        local want = {
+            empty = 0, higher = Lines.HOLE_RATE * math.sqrt(2), lower = 0, ground = 0,
+            fuller = Lines.HOLE_RATE, emptier = 0,
+        }
         for name, drawn in pairs(want) do
             expectNear("the " .. name .. " tank's water", self.reads[name].litres, self.start[name] - drawn, LITRES)
         end
