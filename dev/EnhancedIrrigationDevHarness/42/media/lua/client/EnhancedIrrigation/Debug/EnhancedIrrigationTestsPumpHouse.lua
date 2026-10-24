@@ -699,29 +699,34 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
 
 -- Renewable Energy ------------------------------------------------------------------------------------
 
--- What a running Utility Pump's house tells a Renewable Energy bank it draws (PumpHouse.bankDraw,
--- which the bank's scan asks when that mod is loaded): its part's draw under the house's own load
--- label while nothing else pays; nothing while a vanilla generator pays for it, so the two never
--- both bill one run, nor while it is stopped. Catches a house a bank powers for free, or one billed
--- twice.
+-- What a Utility Pump's house tells a Renewable Energy bank it draws (PumpHouse.bankDraw, which
+-- the bank's scan asks when that mod is loaded), with no power, as a bank that cut it for an
+-- overload leaves it: its part's draw under the house's own load label while it is switched on or
+-- its timer is open and nothing else pays; nothing while a vanilla generator pays for it, so the
+-- two never both bill one run, nor while it is off with its timer shut. Catches a house a bank
+-- powers for free, one billed twice, or one an overloaded bank loses sight of and powers again.
 T.test("irrigation_pump_house_tells_a_bank_what_it_draws", {
     instant = true,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        local timer = EnhancedIrrigation.Valves.TIMER
         T.read(self, "pumpHouse.bankDraw", T.at(self.house, { cases = {
-            { running = true },
-            { running = true, payer = T.at(spots[1]) },
-            {},
+            { on = true },
+            { timer = { item = timer, openNow = true } },
+            { on = true, payer = T.at(spots[1]) },
+            { timer = { item = timer, start = 0, minutes = 0 } },
         } }), "draws")
     end,
     validate = function(self)
         local draws = self.reads.draws.draws
-        expect(draws[1].kind == "IGUI_EnhancedIrrigation_PumpHouseLoad", "the running house reports the load " .. tostring(draws[1].kind))
-        expectNear("the running house's draw", draws[1].fuel or 0, Pumps.PARTS[UTILITY].draw, 0.0001)
-        expect(draws[2].kind == nil, "a house a generator pays for also bills the bank")
-        expect(draws[3].kind == nil, "a stopped house bills the bank")
+        for i, what in ipairs({ "the switched-on house", "the house in its timer's window" }) do
+            expect(draws[i].kind == "IGUI_EnhancedIrrigation_PumpHouseLoad", what .. " reports the load " .. tostring(draws[i].kind))
+            expectNear(what .. "'s draw", draws[i].fuel or 0, Pumps.PARTS[UTILITY].draw, 0.0001)
+        end
+        expect(draws[3].kind == nil, "a house a generator pays for also bills the bank")
+        expect(draws[4].kind == nil, "a house off with its timer unset bills the bank")
     end,
 })
 

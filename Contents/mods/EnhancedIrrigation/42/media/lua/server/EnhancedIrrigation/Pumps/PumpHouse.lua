@@ -356,15 +356,20 @@ end)
 
 --- What the Pump House `object` draws from a Renewable Energy bank now, as its Loads.addConsumer
 --- asks: the kind its status lists it as and the generator fuel an hour its part burns in vanilla's
---- units, while it runs with no vanilla generator paying for it, as one in reach pays first
---- (PumpHouse.payerOf); else nil. The bank decides whether the grid powers it.
+--- units, while it would run if powered (a sound part, switched on or its timer open) with no
+--- vanilla generator paying for it, as one in reach pays first (PumpHouse.payerOf); else nil. As a
+--- vanilla appliance's switch does, it answers whether or not it has power: a bank that cut its
+--- power for an overload must still count it, or the power would come back, the house start and
+--- the bank cut again. The timer is read at the hour asked, so a bank's pass at the hour a window
+--- opens counts it before the house's own pass starts it. The bank decides whether the grid powers
+--- it.
 function PumpHouse.bankDraw(object)
     if not Pumps.isHouse(object) then
         return nil
     end
     local record = Pumps.recordOf(object)
-    local part = record and record.running and not record.payer and Pumps.partSpec(record.part)
-    if not part then
+    local part = record and not record.payer and not record:isBurntOut() and Pumps.partSpec(record.part)
+    if not (part and (record.on or PumpHouse.timerOpen(record, EnhancedIrrigation.now()))) then
         return nil
     end
     return "IGUI_EnhancedIrrigation_PumpHouseLoad", part.draw
