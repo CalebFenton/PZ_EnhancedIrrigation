@@ -5,9 +5,10 @@ require "PZHarness/Fixtures"
 
 PZHarness.registerTests({
     hour = 10,
-    -- The perks the mod reads, for the plant info's soil line and the recipes' skills: each test
-    -- gets their levels back.
-    perks = { Perks.Farming, Perks.Woodwork, Perks.MetalWelding, Perks.Masonry, Perks.Pottery },
+    -- Farming, which the plant info's soil line reads, and every skill the mod's recipes and
+    -- builds require: each test gets their levels back.
+    perks = { Perks.Farming, Perks.Woodwork, Perks.MetalWelding, Perks.Masonry, Perks.Pottery,
+        Perks.Electricity },
     sandbox = "EnhancedIrrigation",
     recipePrefix = "EnhancedIrrigation_",
     -- The pottery wheel T.placeBench sets down for the crock's tests is one tile of vanilla's

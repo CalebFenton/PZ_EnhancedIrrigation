@@ -22,7 +22,7 @@ local AREA = { w = 12, h = 20 }
 local MARGIN = 1
 -- Where the character is put: between the first two beds, beside their tanks.
 local ARRIVE = { x = 2, y = 2 }
--- Every perk the mod reads (the tests' `perks` setting) goes to this level.
+-- Every perk the tests' `perks` setting lists goes to this level.
 local SKILL = 10
 
 -- Vanilla's open round rain barrel, the one a Tank Stand takes, as it stands on the ground.
