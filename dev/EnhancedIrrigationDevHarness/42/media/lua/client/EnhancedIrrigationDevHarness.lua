@@ -4,13 +4,15 @@
 require "PZHarness/Runner"
 require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugScenario"
 local Art = require "EnhancedIrrigationDevArt"
+local Promo = require "EnhancedIrrigationDevPromo"
 
 PZHarness.register({
     scenario = "EnhancedIrrigationScenario",
     prefix = "irrigation_",
     modes = {
-        -- It waits on the lighting, the zoom and the UI rather than on frame counts, so it draws
-        -- uncapped, and it shoots a clear day.
+        -- They wait on the lighting, the zoom and the UI rather than on frame counts, so they draw
+        -- uncapped, and they shoot a clear day.
         art = { uncapped = true, clearWeather = true, fastUI = true, run = function(_, done) Art.capture(done) end },
+        promo = { uncapped = true, clearWeather = true, fastUI = true, run = Promo.capture },
     },
 })

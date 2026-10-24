@@ -1,0 +1,2125 @@
+{
+  "items": [
+    {
+      "fullType": "EnhancedIrrigation.CisternsForKentucky",
+      "icon": "icon_EnhancedIrrigation_CisternsForKentucky",
+      "name": "Cisterns for Kentucky"
+    },
+    {
+      "fullType": "EnhancedIrrigation.LawnSprinkler",
+      "icon": "icon_EnhancedIrrigation_LawnSprinkler",
+      "name": "Lawn Sprinkler"
+    },
+    {
+      "fullType": "EnhancedIrrigation.WaterValve",
+      "icon": "icon_EnhancedIrrigation_WaterValve",
+      "name": "Water Valve"
+    },
+    {
+      "fullType": "EnhancedIrrigation.WindUpValve",
+      "icon": "icon_EnhancedIrrigation_WindUpValve",
+      "name": "Wind-up Valve"
+    },
+    {
+      "fullType": "EnhancedIrrigation.TimerValve",
+      "icon": "icon_EnhancedIrrigation_TimerValve",
+      "name": "Timer Valve"
+    },
+    {
+      "fullType": "EnhancedIrrigation.SprinklerTimer",
+      "icon": "icon_EnhancedIrrigation_SprinklerTimer",
+      "name": "Sprinkler Timer"
+    },
+    {
+      "fullType": "EnhancedIrrigation.FilterCrockUnfired",
+      "icon": "icon_EnhancedIrrigation_FilterCrockUnfired",
+      "name": "Filter Crock (Unfired)"
+    },
+    {
+      "fullType": "EnhancedIrrigation.FilterCrock",
+      "icon": "icon_EnhancedIrrigation_FilterCrock",
+      "name": "Filter Crock"
+    },
+    {
+      "fullType": "EnhancedIrrigation.AppliancePump",
+      "icon": "icon_EnhancedIrrigation_AppliancePump",
+      "name": "Appliance Pump"
+    },
+    {
+      "fullType": "EnhancedIrrigation.UtilityPump",
+      "icon": "icon_EnhancedIrrigation_UtilityPump",
+      "name": "Utility Pump"
+    },
+    {
+      "fullType": "Base.Pipe",
+      "icon": "icon_Base_Pipe",
+      "name": "Plastic Pipe"
+    },
+    {
+      "fullType": "Base.MetalPipe",
+      "icon": "icon_Base_MetalPipe",
+      "name": "Iron Pipe"
+    },
+    {
+      "fullType": "Base.LeadPipe",
+      "icon": "icon_Base_LeadPipe",
+      "name": "Lead Pipe"
+    },
+    {
+      "fullType": "Base.ClayPipeSegment",
+      "icon": "icon_Base_ClayPipeSegment",
+      "name": "Clay Pipe Segment"
+    },
+    {
+      "fullType": "Base.PipeWrench",
+      "icon": "icon_Base_PipeWrench",
+      "name": "Pipe Wrench"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "EnhancedIrrigation_MakeWindUpValve",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Screwdriver",
+              "icon": "icon_Base_Screwdriver",
+              "name": "Screwdriver"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Timer",
+              "icon": "icon_Base_Timer",
+              "name": "Timer"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.Screws",
+              "icon": "icon_Base_Screws",
+              "name": "Screws"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.RubberHose",
+              "icon": "icon_Base_RubberHose",
+              "name": "Rubber Hose"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [],
+        "autoAll": [],
+        "magazines": [],
+        "needed": false,
+        "research": []
+      },
+      "name": "Make Wind-up Valve",
+      "outputs": [
+        {
+          "count": 1,
+          "fullType": "EnhancedIrrigation.WindUpValve",
+          "icon": "icon_EnhancedIrrigation_WindUpValve",
+          "name": "Wind-up Valve"
+        }
+      ],
+      "skills": []
+    },
+    {
+      "id": "EnhancedIrrigation_MakePipeSprinkler",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.HandDrill",
+              "icon": "icon_Base_HandDrill",
+              "name": "Hand Drill"
+            }
+          ],
+          "keep": true,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Pliers",
+              "icon": "icon_Base_Pliers",
+              "name": "Pliers"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.MetalPipe",
+              "icon": "icon_Base_MetalPipe",
+              "name": "Iron Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.GardeningSprayEmpty",
+              "icon": "icon_Base_GardeningSprayEmpty",
+              "name": "Empty Gardening Spray Can"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.Screws",
+              "icon": "icon_Base_Screws",
+              "name": "Screws"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 4,
+            "name": "Welding"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Lawn Sprinkler"
+        ]
+      },
+      "name": "Make Pipe Sprinkler",
+      "outputs": [
+        {
+          "count": 1,
+          "fullType": "EnhancedIrrigation.LawnSprinkler",
+          "icon": "icon_EnhancedIrrigation_LawnSprinkler",
+          "name": "Lawn Sprinkler"
+        }
+      ],
+      "skills": [
+        {
+          "level": 2,
+          "name": "Welding"
+        }
+      ]
+    },
+    {
+      "id": "EnhancedIrrigation_MakeTimerValve",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Screwdriver",
+              "icon": "icon_Base_Screwdriver",
+              "name": "Screwdriver"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Pliers",
+              "icon": "icon_Base_Pliers",
+              "name": "Pliers"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.PipeWrench",
+              "icon": "icon_Base_PipeWrench",
+              "name": "Pipe Wrench"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.AlarmClock2",
+              "icon": "icon_Base_AlarmClock2",
+              "name": "Alarm Clock"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "EnhancedIrrigation.WaterValve",
+              "icon": "icon_EnhancedIrrigation_WaterValve",
+              "name": "Water Valve"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.ElectricWire",
+              "icon": "icon_Base_ElectricWire",
+              "name": "Electrical Wire"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.ElectronicsScrap",
+              "icon": "icon_Base_ElectronicsScrap",
+              "name": "Scrap Electronics"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 4,
+            "name": "Electrical"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Sprinkler Timer",
+          "Timer Valve",
+          "Water Valve"
+        ]
+      },
+      "name": "Make Timer Valve",
+      "outputs": [
+        {
+          "count": 1,
+          "fullType": "EnhancedIrrigation.TimerValve",
+          "icon": "icon_EnhancedIrrigation_TimerValve",
+          "name": "Timer Valve"
+        }
+      ],
+      "skills": [
+        {
+          "level": 2,
+          "name": "Electrical"
+        }
+      ]
+    },
+    {
+      "id": "EnhancedIrrigation_SalvagePump",
+      "inputs": [],
+      "learn": {
+        "auto": [
+          {
+            "level": 2,
+            "name": "Electrical"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": []
+      },
+      "name": "Salvage Pump",
+      "outputs": [],
+      "skills": []
+    },
+    {
+      "id": "EnhancedIrrigation_FireFilterCrock",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "EnhancedIrrigation.FilterCrockUnfired",
+              "icon": "icon_EnhancedIrrigation_FilterCrockUnfired",
+              "name": "Filter Crock (Unfired)"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Matches",
+              "icon": "icon_Base_Matches",
+              "name": "Matchbook"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": true
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Charcoal",
+              "icon": "icon_Base_Charcoal",
+              "name": "Charcoal"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Pottery"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Ceramic Jar",
+          "Filter Crock"
+        ]
+      },
+      "name": "Fire Filter Crock",
+      "outputs": [
+        {
+          "count": 1,
+          "fullType": "EnhancedIrrigation.FilterCrock",
+          "icon": "icon_EnhancedIrrigation_FilterCrock",
+          "name": "Filter Crock"
+        }
+      ],
+      "skills": [
+        {
+          "level": 4,
+          "name": "Pottery"
+        }
+      ]
+    },
+    {
+      "id": "EnhancedIrrigation_ShapeFilterCrock",
+      "inputs": [
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Clay",
+              "icon": "icon_Base_Clay",
+              "name": "Clay"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.Charcoal",
+              "icon": "icon_Base_Charcoal",
+              "name": "Charcoal"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "fluid": {
+            "litres": 0.5,
+            "name": "Water"
+          },
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.WaterBottle",
+              "icon": "icon_Base_WaterBottle",
+              "name": "Water Bottle"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Pottery"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Ceramic Jar",
+          "Filter Crock",
+          "Filter Crock (Unfired)"
+        ]
+      },
+      "name": "Shape Filter Crock",
+      "outputs": [
+        {
+          "count": 1,
+          "fullType": "EnhancedIrrigation.FilterCrockUnfired",
+          "icon": "icon_EnhancedIrrigation_FilterCrockUnfired",
+          "name": "Filter Crock (Unfired)"
+        }
+      ],
+      "skills": [
+        {
+          "level": 4,
+          "name": "Pottery"
+        }
+      ]
+    },
+    {
+      "id": "EnhancedIrrigation_PlumbToTank",
+      "inputs": [],
+      "learn": {
+        "auto": [
+          {
+            "level": 4,
+            "name": "Carpentry"
+          },
+          {
+            "level": 3,
+            "name": "Welding"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": []
+      },
+      "name": "Plumb to Tank",
+      "outputs": [],
+      "skills": []
+    },
+    {
+      "id": "EnhancedIrrigation_MakeUtilityPump",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.WeldingMask",
+              "icon": "icon_Base_WeldingMask",
+              "name": "Welder Mask"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Screwdriver",
+              "icon": "icon_Base_Screwdriver",
+              "name": "Screwdriver"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.BlowTorch",
+              "icon": "icon_Base_BlowTorch",
+              "name": "Welding Torch"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.WeldingRods",
+              "icon": "icon_Base_WeldingRods",
+              "name": "Welding Rods"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.BlowerFan",
+              "icon": "icon_Base_BlowerFan",
+              "name": "Blower Fan"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.SmallSheetMetal",
+              "icon": "icon_Base_SmallSheetMetal",
+              "name": "Steel Sheet - Small"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Screws",
+              "icon": "icon_Base_Screws",
+              "name": "Screws"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.ElectricWire",
+              "icon": "icon_Base_ElectricWire",
+              "name": "Electrical Wire"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.RubberHose",
+              "icon": "icon_Base_RubberHose",
+              "name": "Rubber Hose"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 6,
+            "name": "Electrical"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Utility Pump"
+        ]
+      },
+      "name": "Make Utility Pump",
+      "outputs": [
+        {
+          "count": 1,
+          "fullType": "EnhancedIrrigation.UtilityPump",
+          "icon": "icon_EnhancedIrrigation_UtilityPump",
+          "name": "Utility Pump"
+        }
+      ],
+      "skills": [
+        {
+          "level": 3,
+          "name": "Electrical"
+        },
+        {
+          "level": 2,
+          "name": "Welding"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_FilterCrock",
+        "name": "Filter Crock"
+      },
+      "id": "EnhancedIrrigation_FilterCrock",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "EnhancedIrrigation.FilterCrock",
+              "icon": "icon_EnhancedIrrigation_FilterCrock",
+              "name": "Filter Crock"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Bucket",
+              "icon": "icon_Base_Bucket",
+              "name": "Bucket"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Pottery"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Ceramic Jar",
+          "Filter Crock"
+        ]
+      },
+      "name": "Filter Crock",
+      "outputs": [],
+      "skills": []
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_IronHandPump",
+        "name": "Iron Hand Pump"
+      },
+      "id": "EnhancedIrrigation_IronHandPump",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.WeldingMask",
+              "icon": "icon_Base_WeldingMask",
+              "name": "Welder Mask"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.HandDrill",
+              "icon": "icon_Base_HandDrill",
+              "name": "Hand Drill"
+            }
+          ],
+          "keep": true,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.BlowTorch",
+              "icon": "icon_Base_BlowTorch",
+              "name": "Welding Torch"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.WeldingRods",
+              "icon": "icon_Base_WeldingRods",
+              "name": "Welding Rods"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.MetalPipe",
+              "icon": "icon_Base_MetalPipe",
+              "name": "Iron Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.SmallSheetMetal",
+              "icon": "icon_Base_SmallSheetMetal",
+              "name": "Steel Sheet - Small"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Screws",
+              "icon": "icon_Base_Screws",
+              "name": "Screws"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.RubberHose",
+              "icon": "icon_Base_RubberHose",
+              "name": "Rubber Hose"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.LeatherStrips",
+              "icon": "icon_Base_LeatherStrips",
+              "name": "Leather Strips"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.TirePiece",
+              "icon": "icon_Base_TirePiece",
+              "name": "Tire Piece"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.TarpPiece",
+              "icon": "icon_Base_TarpPiece",
+              "name": "Tarp Piece"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Welding"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": []
+      },
+      "name": "Iron Hand Pump",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 3,
+          "name": "Welding"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_BoilerStone",
+        "name": "Boiler (Stone Firebox)"
+      },
+      "id": "EnhancedIrrigation_BoilerStone",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.MasonsTrowel",
+              "icon": "icon_Base_MasonsTrowel",
+              "name": "Mason's Trowel"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.PipeWrench",
+              "icon": "icon_Base_PipeWrench",
+              "name": "Pipe Wrench"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.MetalDrum",
+              "icon": "icon_Base_MetalDrum",
+              "name": "Metal Drum"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 12,
+          "items": [
+            {
+              "count": 12,
+              "fullType": "Base.ClayBrick",
+              "icon": "icon_Base_ClayBrick",
+              "name": "Brick"
+            },
+            {
+              "count": 12,
+              "fullType": "Base.StoneBlock",
+              "icon": "icon_Base_StoneBlock",
+              "name": "Stone Block"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.BucketConcreteFull",
+              "icon": "icon_Base_BucketConcreteFull",
+              "name": "Bucket of Concrete"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": true
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.MetalPipe",
+              "icon": "icon_Base_MetalPipe",
+              "name": "Iron Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 4,
+            "name": "Masonry"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Metal Drum"
+        ]
+      },
+      "name": "Boiler (Stone Firebox)",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 2,
+          "name": "Masonry"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_TankStand",
+        "name": "Tank Stand"
+      },
+      "id": "EnhancedIrrigation_TankStand",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Hammer",
+              "icon": "icon_Base_Hammer",
+              "name": "Claw Hammer"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Saw",
+              "icon": "icon_Base_Saw",
+              "name": "Hacksaw"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Log",
+              "icon": "icon_Base_Log",
+              "name": "Log"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 6,
+          "items": [
+            {
+              "count": 6,
+              "fullType": "Base.Plank",
+              "icon": "icon_Base_Plank",
+              "name": "Plank"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 8,
+          "items": [
+            {
+              "count": 8,
+              "fullType": "Base.Nails",
+              "icon": "icon_Base_Nails",
+              "name": "Nails"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Carpentry"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": []
+      },
+      "name": "Tank Stand",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 3,
+          "name": "Carpentry"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_BarrelFilter",
+        "name": "Barrel Filter"
+      },
+      "id": "EnhancedIrrigation_BarrelFilter",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Hammer",
+              "icon": "icon_Base_Hammer",
+              "name": "Claw Hammer"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Shovel2",
+              "icon": "icon_Base_Shovel2",
+              "name": "Shovel"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 6,
+          "items": [
+            {
+              "count": 6,
+              "fullType": "Base.Plank",
+              "icon": "icon_Base_Plank",
+              "name": "Plank"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 5,
+          "items": [
+            {
+              "count": 5,
+              "fullType": "Base.Nails",
+              "icon": "icon_Base_Nails",
+              "name": "Nails"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Gravelbag",
+              "icon": "icon_Base_Gravelbag",
+              "name": "Sack of Gravel"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 8,
+          "items": [
+            {
+              "count": 8,
+              "fullType": "Base.Sandbag",
+              "icon": "icon_Base_Sandbag",
+              "name": "Sack of Sand"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 5,
+          "items": [
+            {
+              "count": 5,
+              "fullType": "Base.Charcoal",
+              "icon": "icon_Base_Charcoal",
+              "name": "Charcoal"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Pipe",
+              "icon": "icon_Base_Pipe",
+              "name": "Plastic Pipe"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.MetalPipe",
+              "icon": "icon_Base_MetalPipe",
+              "name": "Iron Pipe"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.LeadPipe",
+              "icon": "icon_Base_LeadPipe",
+              "name": "Lead Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Glue",
+              "icon": "icon_Base_Glue",
+              "name": "Glue"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.Epoxy",
+              "icon": "icon_Base_Epoxy",
+              "name": "Epoxy"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.DuctTape",
+              "icon": "icon_Base_DuctTape",
+              "name": "Duct Tape"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 6,
+            "name": "Carpentry"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": []
+      },
+      "name": "Barrel Filter",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 2,
+          "name": "Carpentry"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_PumpHouseMetal",
+        "name": "Pump House (Sheet Metal)"
+      },
+      "id": "EnhancedIrrigation_PumpHouseMetal",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Screwdriver",
+              "icon": "icon_Base_Screwdriver",
+              "name": "Screwdriver"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.SmallSheetMetal",
+              "icon": "icon_Base_SmallSheetMetal",
+              "name": "Steel Sheet - Small"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Screws",
+              "icon": "icon_Base_Screws",
+              "name": "Screws"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.ElectricWire",
+              "icon": "icon_Base_ElectricWire",
+              "name": "Electrical Wire"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.RubberHose",
+              "icon": "icon_Base_RubberHose",
+              "name": "Rubber Hose"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": [
+          "Appliance Pump",
+          "Utility Pump"
+        ]
+      },
+      "name": "Pump House (Sheet Metal)",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 1,
+          "name": "Welding"
+        },
+        {
+          "level": 1,
+          "name": "Electrical"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_PumpHouseWood",
+        "name": "Pump House (Wood)"
+      },
+      "id": "EnhancedIrrigation_PumpHouseWood",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Hammer",
+              "icon": "icon_Base_Hammer",
+              "name": "Claw Hammer"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Screwdriver",
+              "icon": "icon_Base_Screwdriver",
+              "name": "Screwdriver"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Plank",
+              "icon": "icon_Base_Plank",
+              "name": "Plank"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Nails",
+              "icon": "icon_Base_Nails",
+              "name": "Nails"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.ElectricWire",
+              "icon": "icon_Base_ElectricWire",
+              "name": "Electrical Wire"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.RubberHose",
+              "icon": "icon_Base_RubberHose",
+              "name": "Rubber Hose"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": [
+          "Appliance Pump",
+          "Utility Pump"
+        ]
+      },
+      "name": "Pump House (Wood)",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 2,
+          "name": "Carpentry"
+        },
+        {
+          "level": 1,
+          "name": "Electrical"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_BrickFilter",
+        "name": "Brick Filter"
+      },
+      "id": "EnhancedIrrigation_BrickFilter",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.MasonsTrowel",
+              "icon": "icon_Base_MasonsTrowel",
+              "name": "Mason's Trowel"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Shovel2",
+              "icon": "icon_Base_Shovel2",
+              "name": "Shovel"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 24,
+          "items": [
+            {
+              "count": 24,
+              "fullType": "Base.ClayBrick",
+              "icon": "icon_Base_ClayBrick",
+              "name": "Brick"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.BucketConcreteFull",
+              "icon": "icon_Base_BucketConcreteFull",
+              "name": "Bucket of Concrete"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": true
+        },
+        {
+          "count": 8,
+          "items": [
+            {
+              "count": 8,
+              "fullType": "Base.Gravelbag",
+              "icon": "icon_Base_Gravelbag",
+              "name": "Sack of Gravel"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 24,
+          "items": [
+            {
+              "count": 24,
+              "fullType": "Base.Sandbag",
+              "icon": "icon_Base_Sandbag",
+              "name": "Sack of Sand"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 15,
+          "items": [
+            {
+              "count": 15,
+              "fullType": "Base.Charcoal",
+              "icon": "icon_Base_Charcoal",
+              "name": "Charcoal"
+            }
+          ],
+          "keep": false,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.MetalPipe",
+              "icon": "icon_Base_MetalPipe",
+              "name": "Iron Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Masonry"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": []
+      },
+      "name": "Brick Filter",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 3,
+          "name": "Masonry"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_BoilerWelded",
+        "name": "Boiler (Welded Firebox)"
+      },
+      "id": "EnhancedIrrigation_BoilerWelded",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.WeldingMask",
+              "icon": "icon_Base_WeldingMask",
+              "name": "Welder Mask"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.BlowTorch",
+              "icon": "icon_Base_BlowTorch",
+              "name": "Welding Torch"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.WeldingRods",
+              "icon": "icon_Base_WeldingRods",
+              "name": "Welding Rods"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": true
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.MetalDrum",
+              "icon": "icon_Base_MetalDrum",
+              "name": "Metal Drum"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.SmallSheetMetal",
+              "icon": "icon_Base_SmallSheetMetal",
+              "name": "Steel Sheet - Small"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Screws",
+              "icon": "icon_Base_Screws",
+              "name": "Screws"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.MetalPipe",
+              "icon": "icon_Base_MetalPipe",
+              "name": "Iron Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 5,
+            "name": "Welding"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [],
+        "needed": true,
+        "research": [
+          "Metal Drum"
+        ]
+      },
+      "name": "Boiler (Welded Firebox)",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 3,
+          "name": "Welding"
+        }
+      ]
+    },
+    {
+      "build": {
+        "icon": "icon_build_EnhancedIrrigation_WoodenHandPump",
+        "name": "Wooden Hand Pump"
+      },
+      "id": "EnhancedIrrigation_WoodenHandPump",
+      "inputs": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Hammer",
+              "icon": "icon_Base_Hammer",
+              "name": "Claw Hammer"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.Saw",
+              "icon": "icon_Base_Saw",
+              "name": "Hacksaw"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.HandDrill",
+              "icon": "icon_Base_HandDrill",
+              "name": "Hand Drill"
+            }
+          ],
+          "keep": true,
+          "tag": true,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Plank",
+              "icon": "icon_Base_Plank",
+              "name": "Plank"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 4,
+          "items": [
+            {
+              "count": 4,
+              "fullType": "Base.Nails",
+              "icon": "icon_Base_Nails",
+              "name": "Nails"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "count": 2,
+              "fullType": "Base.Pipe",
+              "icon": "icon_Base_Pipe",
+              "name": "Plastic Pipe"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.RubberHose",
+              "icon": "icon_Base_RubberHose",
+              "name": "Rubber Hose"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "count": 1,
+              "fullType": "Base.LeatherStrips",
+              "icon": "icon_Base_LeatherStrips",
+              "name": "Leather Strips"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.TirePiece",
+              "icon": "icon_Base_TirePiece",
+              "name": "Tire Piece"
+            },
+            {
+              "count": 1,
+              "fullType": "Base.TarpPiece",
+              "icon": "icon_Base_TarpPiece",
+              "name": "Tarp Piece"
+            }
+          ],
+          "keep": false,
+          "tag": false,
+          "uses": false
+        }
+      ],
+      "learn": {
+        "auto": [
+          {
+            "level": 4,
+            "name": "Carpentry"
+          }
+        ],
+        "autoAll": [],
+        "magazines": [
+          "Cisterns for Kentucky"
+        ],
+        "needed": true,
+        "research": []
+      },
+      "name": "Wooden Hand Pump",
+      "outputs": [],
+      "skills": [
+        {
+          "level": 2,
+          "name": "Carpentry"
+        }
+      ]
+    }
+  ],
+  "strings": {
+    "modName": "Enhanced Irrigation"
+  },
+  "captures": {
+    "icons": [
+      "icon_Base_AlarmClock2",
+      "icon_Base_BlowTorch",
+      "icon_Base_BlowerFan",
+      "icon_Base_Bucket",
+      "icon_Base_BucketConcreteFull",
+      "icon_Base_Charcoal",
+      "icon_Base_Clay",
+      "icon_Base_ClayBrick",
+      "icon_Base_ClayPipeSegment",
+      "icon_Base_DuctTape",
+      "icon_Base_ElectricWire",
+      "icon_Base_ElectronicsScrap",
+      "icon_Base_Epoxy",
+      "icon_Base_GardeningSprayEmpty",
+      "icon_Base_Glue",
+      "icon_Base_Gravelbag",
+      "icon_Base_Hammer",
+      "icon_Base_HandDrill",
+      "icon_Base_LeadPipe",
+      "icon_Base_LeatherStrips",
+      "icon_Base_Log",
+      "icon_Base_MasonsTrowel",
+      "icon_Base_Matches",
+      "icon_Base_MetalDrum",
+      "icon_Base_MetalPipe",
+      "icon_Base_Nails",
+      "icon_Base_Pipe",
+      "icon_Base_PipeWrench",
+      "icon_Base_Plank",
+      "icon_Base_Pliers",
+      "icon_Base_RubberHose",
+      "icon_Base_Sandbag",
+      "icon_Base_Saw",
+      "icon_Base_Screwdriver",
+      "icon_Base_Screws",
+      "icon_Base_Shovel2",
+      "icon_Base_SmallSheetMetal",
+      "icon_Base_StoneBlock",
+      "icon_Base_TarpPiece",
+      "icon_Base_Timer",
+      "icon_Base_TirePiece",
+      "icon_Base_WaterBottle",
+      "icon_Base_WeldingMask",
+      "icon_Base_WeldingRods",
+      "icon_EnhancedIrrigation_AppliancePump",
+      "icon_EnhancedIrrigation_CisternsForKentucky",
+      "icon_EnhancedIrrigation_FilterCrock",
+      "icon_EnhancedIrrigation_FilterCrockUnfired",
+      "icon_EnhancedIrrigation_LawnSprinkler",
+      "icon_EnhancedIrrigation_SprinklerTimer",
+      "icon_EnhancedIrrigation_TimerValve",
+      "icon_EnhancedIrrigation_UtilityPump",
+      "icon_EnhancedIrrigation_WaterValve",
+      "icon_EnhancedIrrigation_WindUpValve",
+      "icon_build_EnhancedIrrigation_BarrelFilter",
+      "icon_build_EnhancedIrrigation_BoilerStone",
+      "icon_build_EnhancedIrrigation_BoilerWelded",
+      "icon_build_EnhancedIrrigation_BrickFilter",
+      "icon_build_EnhancedIrrigation_FilterCrock",
+      "icon_build_EnhancedIrrigation_IronHandPump",
+      "icon_build_EnhancedIrrigation_PumpHouseMetal",
+      "icon_build_EnhancedIrrigation_PumpHouseWood",
+      "icon_build_EnhancedIrrigation_TankStand",
+      "icon_build_EnhancedIrrigation_WoodenHandPump"
+    ],
+    "menu": [
+      "menu_tap",
+      "timer"
+    ],
+    "poster": [
+      "poster"
+    ],
+    "water": [
+      "filters",
+      "pumps",
+      "sprinklers"
+    ],
+    "world": [
+      "banner",
+      "homestead"
+    ]
+  }
+}
