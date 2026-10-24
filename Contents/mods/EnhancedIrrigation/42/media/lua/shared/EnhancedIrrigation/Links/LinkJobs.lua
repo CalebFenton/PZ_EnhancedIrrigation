@@ -23,6 +23,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
 EnhancedIrrigation.LinkJobs = LinkJobs
 
+local Jobs = EnhancedIrrigation.Jobs
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
 local Lines = EnhancedIrrigation.Lines
 local Fixtures, Treatment = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Treatment
@@ -92,7 +93,7 @@ end
 function LinkJobs.fixtureBlocker(fixture, with)
     local here, other = endsOf(fixture, with)
     if not (here and Fixtures.isFixture(fixture)) then
-        return "Tooltip_EnhancedIrrigation_UnknownJob"
+        return Jobs.UNKNOWN
     end
     local tank = Tanks.tankAt(other.x, other.y, other.z)
     if not tank then
@@ -131,7 +132,7 @@ function LinkJobs.unitBlocker(unit, with, role)
     local here, other = endsOf(unit, with)
     local spec = Treatment.specOf(unit)
     if not (here and spec and spec.plumbed and Treatment.isUnit(unit) and UNIT_ENDS[role]) then
-        return "Tooltip_EnhancedIrrigation_UnknownJob"
+        return Jobs.UNKNOWN
     end
     local tank = Tanks.tankAt(other.x, other.y, other.z)
     if not tank then
@@ -157,7 +158,7 @@ end
 function LinkJobs.pumpBlocker(pump, with)
     local here, other = endsOf(pump, with)
     if not (here and Pumps.isPump(pump)) then
-        return "Tooltip_EnhancedIrrigation_UnknownJob"
+        return Jobs.UNKNOWN
     end
     local spec = Pumps.liftingSpec(pump)
     if not spec then
@@ -202,7 +203,7 @@ local function plumbJobFor(blocker)
             if Links.distance(here, other) > Links.MAX_TILES then
                 return "Tooltip_EnhancedIrrigation_OutOfReach"
             end
-            return not LinkJobs.pipeFor(object, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not LinkJobs.pipeFor(object, with) and Jobs.UNKNOWN or nil
         end,
         materials = plumbMaterials,
     }
@@ -229,7 +230,7 @@ LinkJobs.JOBS = {
                 return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
             end
             -- Only a client that made up a job asks for pipe no kind has.
-            return not LinkJobs.pipeFor(tank, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not LinkJobs.pipeFor(tank, with) and Jobs.UNKNOWN or nil
         end,
         materials = plumbMaterials,
     },
@@ -244,7 +245,7 @@ LinkJobs.JOBS = {
             if Links.distance(here, other) > Links.MAX_TILES then
                 return "Tooltip_EnhancedIrrigation_OutOfReach"
             end
-            return not LinkJobs.pipeFor(fixture, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not LinkJobs.pipeFor(fixture, with) and Jobs.UNKNOWN or nil
         end,
         materials = plumbMaterials,
     },
@@ -253,7 +254,7 @@ LinkJobs.JOBS = {
         minutes = Links.BASE_MINUTES, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
         blocker = function(character, fixture, with)
             if not Fixtures.plumbingKeepsTaint() then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
             if blocker then
@@ -276,6 +277,6 @@ LinkJobs.JOBS = {
     },
 }
 
-EnhancedIrrigation.Jobs.define(LinkJobs)
+Jobs.define(LinkJobs)
 
 return LinkJobs

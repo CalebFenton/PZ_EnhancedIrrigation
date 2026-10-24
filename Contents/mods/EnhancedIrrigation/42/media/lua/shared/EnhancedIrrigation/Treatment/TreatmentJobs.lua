@@ -14,6 +14,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentJobs = {}
 EnhancedIrrigation.TreatmentJobs = TreatmentJobs
 
+local Jobs = EnhancedIrrigation.Jobs
 local Treatment = EnhancedIrrigation.Treatment
 
 TreatmentJobs.POUR_IN = "PourIn"
@@ -94,10 +95,9 @@ TreatmentJobs.JOBS = {
         equip = function(character, unit, item) return item end,
         blocker = function(character, unit, item)
             if not Treatment.isUnit(unit) then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
-            local fluid = instanceof(item, "InventoryItem") and character:getInventory():containsRecursive(item)
-                and item:getFluidContainer()
+            local fluid = Jobs.carries(character, item) and item:getFluidContainer()
             if not fluid or fluid:isEmpty() then
                 return "Tooltip_EnhancedIrrigation_NoWaterCarried"
             end
@@ -127,7 +127,7 @@ TreatmentJobs.JOBS = {
         blocker = function(character, unit)
             local spec = Treatment.specOf(unit)
             if not (spec and spec.kind == "sand" and Treatment.isUnit(unit)) then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             local summary = Treatment.currentSummary(unit)
             return not (summary and summary.clogged) and "Tooltip_EnhancedIrrigation_NotClogged" or nil
@@ -138,7 +138,7 @@ TreatmentJobs.JOBS = {
         position = "Low",
         blocker = function(character, unit)
             if not TreatmentJobs.isCrock(unit) then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             local summary = Treatment.currentSummary(unit)
             if summary and summary.cracked then
@@ -152,7 +152,7 @@ TreatmentJobs.JOBS = {
         minutes = TreatmentJobs.TAKE_DOWN_MINUTES,
         position = "Low",
         blocker = function(character, unit)
-            return not TreatmentJobs.isCrock(unit) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not TreatmentJobs.isCrock(unit) and Jobs.UNKNOWN or nil
         end,
     },
     -- A small sheet welded over the worn steel, as vanilla mends metal: each patch restores less.
@@ -162,11 +162,11 @@ TreatmentJobs.JOBS = {
         equip = function(character) return TreatmentJobs.weldingTorch(character) end,
         blocker = function(character, unit)
             if not TreatmentJobs.isBoiler(unit) then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             local summary = Treatment.currentSummary(unit)
             if not summary then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             local restores = summary.ceiling - Treatment.PATCH_LOSS
             if restores <= 0 then
@@ -184,6 +184,6 @@ TreatmentJobs.JOBS = {
     },
 }
 
-EnhancedIrrigation.Jobs.define(TreatmentJobs)
+Jobs.define(TreatmentJobs)
 
 return TreatmentJobs

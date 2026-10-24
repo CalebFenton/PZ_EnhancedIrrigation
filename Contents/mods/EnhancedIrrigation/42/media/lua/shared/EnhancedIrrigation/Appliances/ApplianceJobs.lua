@@ -11,6 +11,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceJobs = {}
 EnhancedIrrigation.ApplianceJobs = ApplianceJobs
 
+local Jobs = EnhancedIrrigation.Jobs
 local Appliances = EnhancedIrrigation.Appliances
 
 ApplianceJobs.SALVAGE_PUMP = "SalvagePump"
@@ -34,7 +35,7 @@ ApplianceJobs.JOBS = {
         minutes = ApplianceJobs.SALVAGE_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, appliance)
             if not Appliances.hasPumpTile(appliance) then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             return Appliances.isStripped(appliance) and "Tooltip_EnhancedIrrigation_PumpSalvaged" or nil
         end,
@@ -47,6 +48,6 @@ ApplianceJobs.JOBS = {
     },
 }
 
-EnhancedIrrigation.Jobs.define(ApplianceJobs)
+Jobs.define(ApplianceJobs)
 
 return ApplianceJobs

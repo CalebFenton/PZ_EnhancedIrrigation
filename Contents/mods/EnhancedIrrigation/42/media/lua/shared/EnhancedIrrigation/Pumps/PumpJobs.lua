@@ -18,6 +18,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpJobs = {}
 EnhancedIrrigation.PumpJobs = PumpJobs
 
+local Jobs = EnhancedIrrigation.Jobs
 local Pumps, Tanks, Lines = EnhancedIrrigation.Pumps, EnhancedIrrigation.Tanks, EnhancedIrrigation.Lines
 local Valves = EnhancedIrrigation.Valves
 
@@ -101,7 +102,7 @@ end
 function PumpJobs.flowOf(pump)
     local spec, summary = Pumps.specOf(pump), Pumps.currentSummary(pump)
     if not (spec and spec.kind == "hand" and summary) then
-        return nil, "Tooltip_EnhancedIrrigation_UnknownJob"
+        return nil, Jobs.UNKNOWN
     end
     if summary.wornOut then
         return nil, "Tooltip_EnhancedIrrigation_PumpWornOut"
@@ -127,7 +128,7 @@ end
 local function fittedBlocker(pump)
     local summary = houseSummary(pump)
     if not summary then
-        return "Tooltip_EnhancedIrrigation_UnknownJob"
+        return Jobs.UNKNOWN
     end
     return not summary.part and "Tooltip_EnhancedIrrigation_NoPumpFitted" or nil, summary
 end
@@ -139,19 +140,18 @@ end
 
 local SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
 
---- Whether `item` is a pump part `character` carries.
-function PumpJobs.carriesPart(character, item)
-    return instanceof(item, "InventoryItem") and Pumps.partSpec(item:getFullType()) ~= nil
-        and character:getInventory():containsRecursive(item)
+local function isPart(item)
+    return Pumps.partSpec(item:getFullType()) ~= nil
 end
 
---- Whether `item` is a timer that switches a Pump House (Valves.ITEMS `house`) `character` carries.
-function PumpJobs.carriesTimer(character, item)
-    if not instanceof(item, "InventoryItem") then
-        return false
-    end
+local function isSeal(item)
+    return Pumps.sealLitres(item:getFullType()) ~= nil
+end
+
+-- A timer that switches a Pump House (Valves.ITEMS `house`).
+local function isHouseTimer(item)
     local spec = Valves.ITEMS[item:getFullType()]
-    return spec ~= nil and spec.house == true and character:getInventory():containsRecursive(item)
+    return spec ~= nil and spec.house == true
 end
 
 PumpJobs.JOBS = {
@@ -176,10 +176,9 @@ PumpJobs.JOBS = {
         blocker = function(character, pump, item)
             local spec = Pumps.specOf(pump)
             if not (spec and spec.kind == "hand") then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
-            if not (instanceof(item, "InventoryItem") and Pumps.sealLitres(item:getFullType())
-                    and character:getInventory():containsRecursive(item)) then
+            if not Jobs.carries(character, item, isSeal) then
                 return "Tooltip_EnhancedIrrigation_NoSeal"
             end
             local summary = Pumps.currentSummary(pump)
@@ -200,12 +199,12 @@ PumpJobs.JOBS = {
         blocker = function(character, pump, item)
             local summary = houseSummary(pump)
             if not summary then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             if summary.part then
                 return "Tooltip_EnhancedIrrigation_PumpFitted"
             end
-            return not PumpJobs.carriesPart(character, item) and "Tooltip_EnhancedIrrigation_NoPumpPart" or nil
+            return not Jobs.carries(character, item, isPart) and "Tooltip_EnhancedIrrigation_NoPumpPart" or nil
         end,
         materials = { SCREWDRIVER },
     },
@@ -224,7 +223,7 @@ PumpJobs.JOBS = {
                 return refusal
             end
             if summary.on then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             if summary.burntOut then
                 return "Tooltip_EnhancedIrrigation_PumpBurntOut"
@@ -236,7 +235,7 @@ PumpJobs.JOBS = {
         minutes = PumpJobs.SWITCH_MINUTES, position = "Mid",
         blocker = function(character, pump)
             local summary = houseSummary(pump)
-            return not (summary and summary.on) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not (summary and summary.on) and Jobs.UNKNOWN or nil
         end,
     },
     -- The burnt windings and the shaft seal made good from scrap, as Patch Drum mends a boiler: each
@@ -267,12 +266,12 @@ PumpJobs.JOBS = {
         blocker = function(character, pump, item)
             local summary = houseSummary(pump)
             if not summary then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             if summary.timer then
                 return "Tooltip_EnhancedIrrigation_HasTimer"
             end
-            return not PumpJobs.carriesTimer(character, item) and "Tooltip_EnhancedIrrigation_NoTimer" or nil
+            return not Jobs.carries(character, item, isHouseTimer) and "Tooltip_EnhancedIrrigation_NoTimer" or nil
         end,
         materials = { SCREWDRIVER },
     },
@@ -291,11 +290,11 @@ PumpJobs.JOBS = {
             if not (summary and summary.timer) then
                 return "Tooltip_EnhancedIrrigation_NoTimerHere"
             end
-            return not Valves.decodeTimer(with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+            return not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil
         end,
     },
 }
 
-EnhancedIrrigation.Jobs.define(PumpJobs)
+Jobs.define(PumpJobs)
 
 return PumpJobs

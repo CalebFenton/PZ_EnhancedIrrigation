@@ -18,6 +18,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local LineJobs = {}
 EnhancedIrrigation.LineJobs = LineJobs
 
+local Jobs = EnhancedIrrigation.Jobs
 local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 local Pipes = EnhancedIrrigation.Pipes
@@ -165,16 +166,12 @@ local function atLine(check)
     end
 end
 
--- Whether `item` is a Lawn Sprinkler `character` carries.
-local function carriesSprinkler(character, item)
-    return instanceof(item, "InventoryItem") and item:getFullType() == Sprinklers.ITEM
-        and character:getInventory():containsRecursive(item)
+local function isSprinkler(item)
+    return item:getFullType() == Sprinklers.ITEM
 end
 
--- Whether `item` is a valve (Valves.ITEMS) `character` carries.
-local function carriesValve(character, item)
-    return instanceof(item, "InventoryItem") and Valves.kindOf(item:getFullType()) ~= nil
-        and character:getInventory():containsRecursive(item)
+local function isValve(item)
+    return Valves.kindOf(item:getFullType()) ~= nil
 end
 
 -- Why a job at a tap's valve of `kind` ("windup" or "timer") can't be done at `object`, a Tooltip
@@ -293,7 +290,7 @@ LineJobs.JOBS = {
             if state.sprinkler then
                 return "Tooltip_EnhancedIrrigation_HasSprinkler"
             end
-            return not carriesSprinkler(character, item) and "Tooltip_EnhancedIrrigation_NoSprinkler" or nil
+            return not Jobs.carries(character, item, isSprinkler) and "Tooltip_EnhancedIrrigation_NoSprinkler" or nil
         end,
         materials = { Pipes.WRENCH },
     },
@@ -319,7 +316,7 @@ LineJobs.JOBS = {
             if state.valve then
                 return "Tooltip_EnhancedIrrigation_HasValve"
             end
-            return not carriesValve(character, item) and "Tooltip_EnhancedIrrigation_NoValve" or nil
+            return not Jobs.carries(character, item, isValve) and "Tooltip_EnhancedIrrigation_NoValve" or nil
         end,
         materials = { Pipes.WRENCH },
     },
@@ -341,7 +338,7 @@ LineJobs.JOBS = {
             end
             local minutes = Valves.decodeWind(with)
             if not minutes then
-                return "Tooltip_EnhancedIrrigation_UnknownJob"
+                return Jobs.UNKNOWN
             end
             if minutes == 0 then
                 return nil
@@ -357,11 +354,11 @@ LineJobs.JOBS = {
         minutes = LineJobs.VALVE_MINUTES, position = "Mid",
         blocker = function(character, object, with)
             return valveBlocker(object, "timer")
-                or (not Valves.decodeTimer(with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil)
+                or (not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil)
         end,
     },
 }
 
-EnhancedIrrigation.Jobs.define(LineJobs)
+Jobs.define(LineJobs)
 
 return LineJobs

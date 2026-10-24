@@ -10,6 +10,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local StandJobs = {}
 EnhancedIrrigation.StandJobs = StandJobs
 
+local Jobs = EnhancedIrrigation.Jobs
 local Stands = EnhancedIrrigation.Stands
 
 StandJobs.SET_BARREL = "SetBarrel"
@@ -24,7 +25,7 @@ StandJobs.JOBS = {
             if not Stands.isStand(object) then
                 return "Tooltip_EnhancedIrrigation_NotAStand"
             end
-            if not (Stands.barrelSpec(barrel) and character:getInventory():containsRecursive(barrel)) then
+            if not Jobs.carries(character, barrel, Stands.barrelSpec) then
                 return "Tooltip_EnhancedIrrigation_NoBarrel"
             end
             return not Stands.isEmptyBarrel(barrel) and "Tooltip_EnhancedIrrigation_BarrelNotEmpty" or nil
@@ -42,6 +43,6 @@ StandJobs.JOBS = {
     },
 }
 
-EnhancedIrrigation.Jobs.define(StandJobs)
+Jobs.define(StandJobs)
 
 return StandJobs

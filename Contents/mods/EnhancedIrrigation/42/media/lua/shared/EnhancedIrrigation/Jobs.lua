@@ -10,8 +10,16 @@ EnhancedIrrigation.Jobs = Jobs
 
 local Materials = EnhancedIrrigation.Materials
 
--- Only a client that made up a job of its own asks for one no module has.
-local UNKNOWN_JOB = "Tooltip_EnhancedIrrigation_UnknownJob"
+--- The refusal of a job no row has, or of a `with` no menu offers: only a client that made up a
+--- job of its own asks for one.
+Jobs.UNKNOWN = "Tooltip_EnhancedIrrigation_UnknownJob"
+
+--- Whether `item` is an inventory item `character` carries, bags included, of a kind `isKind(item)`
+--- accepts (any kind without it): a job whose `with` is the item it works with checks it so.
+function Jobs.carries(character, item, isKind)
+    return instanceof(item, "InventoryItem") and (not isKind or isKind(item))
+        and character:getInventory():containsRecursive(item)
+end
 
 --- Why a job is refused: its `blocker` (a Tooltip key) if any, else Short while any of `needs` is
 --- unmet, else nil.
@@ -32,7 +40,7 @@ function Jobs.define(Module)
     function Module.blocker(character, job, object, with)
         local row = Module.JOBS[job]
         if not row then
-            return UNKNOWN_JOB
+            return Jobs.UNKNOWN
         end
         return row.blocker and row.blocker(character, object, with) or nil
     end
