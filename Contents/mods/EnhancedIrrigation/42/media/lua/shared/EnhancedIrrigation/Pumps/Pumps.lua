@@ -399,6 +399,63 @@ function Pumps.flowOf(pump)
     return Pumps.deliveryOf(pump, spec, summary.intake)
 end
 
+--- The litres an hour a pump lifting by `spec` (a row of UNITS or PARTS) moves while it has water.
+function Pumps.perHour(spec)
+    return spec.rate * 60
+end
+
+--- Moves `litres` from `source` (Pumps.sourceOf) into `fluid` (a FluidContainer), or into a garden
+--- line when `fluid` is nil, and returns the litres moved. A well's or river's water comes from its
+--- tile, which is endless (vanilla's own draw, IsoObject.transferFluidTo), never from a well's own
+--- container, which vanilla never draws either; a tank or trough gives its mixture, taint and all,
+--- and is sent to the clients. A river whose square isn't loaded is still water, always tainted. A
+--- line's plants take no notice of taint (server/Farming), so a line's water is only counted from
+--- an endless source, and taken out of a tank or trough. Authority only.
+function Pumps.draw(source, fluid, litres)
+    if not fluid then
+        if source.infinite then
+            return litres
+        end
+        local moved = Tanks.take(source.object, litres)
+        if moved > 0 then
+            Tanks.sync(source.object)
+        end
+        return moved
+    end
+    if not source.object then
+        fluid:addFluid(FluidType.TaintedWater, litres)
+        return litres
+    end
+    local moved = source.object:transferFluidTo(fluid, litres)
+    if not source.infinite then
+        source.object:sync()
+    end
+    return moved
+end
+
+--- The source of a garden line a pump lifting by `spec` drives, as Flow reads one: the push and
+--- rate of `spec`, and `draw(litres)`, which lifts what the line asks and returns the litres lifted.
+function Pumps.lineSource(spec, draw)
+    return { push = spec.push, perHour = Pumps.perHour(spec), pumped = true, holds = true, draw = draw }
+end
+
+--- Lifts up to `litres` from `source` into the tank `into`, as far as its room and a finite
+--- source's water go, and returns the litres moved: none below what counts as a fill. Authority
+--- only.
+function Pumps.fillTank(source, into, litres)
+    local fluid = into:getFluidContainer()
+    litres = math.min(litres, fluid:getFreeCapacity())
+    if not source.infinite then
+        litres = math.min(litres, source.litres)
+    end
+    if litres < Pumps.LEAST_LITRES then
+        return 0
+    end
+    local moved = Pumps.draw(source, fluid, litres)
+    Tanks.sync(into)
+    return moved
+end
+
 -- What the menu says ---------------------------------------------------------------------------------
 
 --- The menu's name for `source` (Pumps.sourceOf): the well, the tank's container ("Rain Barrel"),

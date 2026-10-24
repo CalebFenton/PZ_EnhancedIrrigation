@@ -115,35 +115,6 @@ function PumpObject:repairPart()
     self.partCondition = self.partCeiling
 end
 
---- Moves `litres` from `source` (Pumps.sourceOf) into `fluid` (a FluidContainer), or into a garden
---- line when `fluid` is nil, and returns the litres moved. A well's or river's water comes from its
---- tile, which is endless (vanilla's own draw, IsoObject.transferFluidTo), never from a well's own
---- container, which vanilla never draws either; a tank or trough gives its mixture, taint and all,
---- and is sent to the clients. A river whose square isn't loaded is still water, always tainted. A
---- line's plants take no notice of taint (server/Farming), so a line's water is only counted from
---- an endless source, and taken out of a tank or trough.
-function PumpObject.draw(source, fluid, litres)
-    if not fluid then
-        if source.infinite then
-            return litres
-        end
-        local container = source.object:getFluidContainer()
-        local moved = math.min(litres, container:getAmount())
-        container:removeFluid(moved, false)
-        source.object:sync()
-        return moved
-    end
-    if not source.object then
-        fluid:addFluid(FluidType.TaintedWater, litres)
-        return litres
-    end
-    local moved = source.object:transferFluidTo(fluid, litres)
-    if not source.infinite then
-        source.object:sync()
-    end
-    return moved
-end
-
 --- Finds again where the hose drinks, while the pump's square is loaded (Pumps.intakeFor), keeping
 --- the one it had while that square is unloaded or still water.
 function PumpObject:findIntake()

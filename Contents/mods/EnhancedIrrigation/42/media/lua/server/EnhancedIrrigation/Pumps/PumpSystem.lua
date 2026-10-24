@@ -8,7 +8,6 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
-require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
@@ -22,8 +21,8 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpSystem = {}
 EnhancedIrrigation.PumpSystem = PumpSystem
 
-local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
-local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
+local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
+local Lines, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow
 
 PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Pump",
@@ -146,24 +145,14 @@ local function tire(character, hours)
     end
 end
 
--- The source of the line the hand pump of `record` feeds from `source` (Pumps.sourceOf), as Flow
--- reads one: its spec's push, as much as it lifts an hour, and the draw, which lifts what the line
--- takes as far as a finite source's water and the seal and body last, and wears them by it.
-local function lineSource(record, spec, source)
-    return {
-        push = spec.push,
-        perHour = spec.rate * 60,
-        pumped = true,
-        holds = true,
-        draw = function(litres)
-            if not source.infinite then
-                litres = math.min(litres, source.litres)
-            end
-            local moved = PumpObject.draw(source, nil, record:canLift(litres))
-            record:lift(moved)
-            return moved
-        end,
-    }
+-- The draw of the line the hand pump of `record` drives from `source` (Pumps.sourceOf): what the
+-- line asks, as far as the seal and body last, which it wears by what it lifted.
+local function handDraw(record, source)
+    return function(litres)
+        local moved = Pumps.draw(source, nil, record:canLift(litres))
+        record:lift(moved)
+        return moved
+    end
 end
 
 --- `character` works the hand pump `pump` for `hours`: it lifts its rate from its source into its
@@ -184,18 +173,9 @@ function PumpSystem.pump(character, pump, hours)
     end
     local spec = Pumps.specOf(pump)
     if Lines.isLine(into) then
-        Flow.run(Lines.recordOf(into), lineSource(record, spec, source), hours)
+        Flow.run(Lines.recordOf(into), Pumps.lineSource(spec, handDraw(record, source)), hours)
     else
-        local fluid = into:getFluidContainer()
-        local litres = math.min(spec.rate * 60 * hours, fluid:getFreeCapacity())
-        if not source.infinite then
-            litres = math.min(litres, source.litres)
-        end
-        litres = record:canLift(litres)
-        if litres > 0 then
-            record:lift(PumpObject.draw(source, fluid, litres))
-            Tanks.sync(into)
-        end
+        record:lift(Pumps.fillTank(source, into, record:canLift(Pumps.perHour(spec) * hours)))
     end
     if hours > 0 then
         tire(character, hours)

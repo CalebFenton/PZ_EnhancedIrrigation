@@ -150,7 +150,7 @@ end
 
 -- The litres `part` lifts in `hours`.
 local function lifts(part, hours)
-    return Pumps.PARTS[part].rate * 60 * hours
+    return Pumps.perHour(Pumps.PARTS[part]) * hours
 end
 
 -- The generator fuel `part` burns in `hours`.

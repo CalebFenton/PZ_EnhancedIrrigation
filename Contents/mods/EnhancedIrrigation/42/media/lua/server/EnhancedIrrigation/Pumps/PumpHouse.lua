@@ -21,7 +21,6 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpObject"
@@ -33,7 +32,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
-local Pumps, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.Tanks
+local Pumps = EnhancedIrrigation.Pumps
 local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
 local Timers, Power = EnhancedIrrigation.Timers, EnhancedIrrigation.Power
 
@@ -188,16 +187,10 @@ local function wearOf(part, hours, dryHours)
     return part.wearPerHour * (hours - dryHours + Pumps.DRY_WEAR * dryHours)
 end
 
--- The source of a line a Pump House with `part` feeds from `source` (Pumps.sourceOf), as Flow reads
--- one, giving at most `litres`: what the time it ran wet lifts.
+-- The source of the line a Pump House with `part` drives from `source` (Pumps.sourceOf), giving at
+-- most `litres`: what the time it ran wet lifts.
 local function lineSource(part, source, litres)
-    return {
-        push = part.push,
-        perHour = part.rate * 60,
-        pumped = true,
-        holds = true,
-        draw = function(asked) return PumpObject.draw(source, nil, math.min(asked, litres)) end,
-    }
+    return Pumps.lineSource(part, function(asked) return Pumps.draw(source, nil, math.min(asked, litres)) end)
 end
 
 --- Runs the record's Pump House `pump` with `part` for up to `hours`: lifts the part's rate from
@@ -212,7 +205,7 @@ function PumpHouse.run(record, pump, part, hours)
     end
     local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
     -- The litres an hour it lifts while it has water, and how many its outlet takes at most.
-    local perHour, room = part.rate * 60, math.huge
+    local perHour, room = Pumps.perHour(part), math.huge
     if line then
         perHour = Flow.takesPerHour(line, lineSource(part, source, 0))
     elseif into then
@@ -251,9 +244,8 @@ function PumpHouse.run(record, pump, part, hours)
         if wet > 0 then
             Flow.run(line, lineSource(part, source, litres), wet)
         end
-    elseif into and litres >= Pumps.LEAST_LITRES then
-        PumpObject.draw(source, into:getFluidContainer(), litres)
-        Tanks.sync(into)
+    elseif into then
+        Pumps.fillTank(source, into, litres)
     end
     return ran
 end
