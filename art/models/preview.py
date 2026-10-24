@@ -28,6 +28,7 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, os.path.join(REPO, "dev", "harness", "check"))
 import items  # noqa: E402
 import kit  # noqa: E402
+import render  # noqa: E402
 import sprites  # noqa: E402
 import tiles  # noqa: E402
 from packs import read_index  # noqa: E402
@@ -35,7 +36,6 @@ from packs import read_index  # noqa: E402
 OUT = os.environ.get("PREVIEWS", os.path.join(tempfile.gettempdir(), "enhanced-irrigation-previews"))
 PZ_MEDIA = os.environ.get("PZ_MEDIA", os.path.expanduser(
     "~/Library/Application Support/Steam/steamapps/common/ProjectZomboid/Project Zomboid.app/Contents/Java/media"))
-TILE_PATH = os.path.join(REPO, "tools/tiles/enhanced_irrigation_01_%d.png")
 BACKGROUND = np.array([0.3, 0.3, 0.3, 1.0], dtype=np.float32)
 GRASS = np.array([0.36, 0.42, 0.22, 1.0], dtype=np.float32)
 
@@ -61,13 +61,14 @@ def enlarge(pixels, factor):
     return pixels.repeat(factor, axis=0).repeat(factor, axis=1)
 
 
-def floor_diamond(width=128, height=256, fill=None):
-    """A tile's floor: its outline, or filled with `fill`, so a sprite's placement on its square
-    shows."""
+def floor_diamond(fill=None):
+    """A tile's floor in its cell: its outline, or filled with `fill`, so a sprite's placement on its
+    square shows."""
+    width, height = render.TILE_W, render.TILE_H
     cell = np.zeros((height, width, 4), dtype=np.float32)
     for x in range(width):
         dy = round(abs(x - width / 2 + 0.5) / 2)
-        top, bottom = height - 64 + dy, height - 1 - dy
+        top, bottom = height - width // 2 + dy, height - 1 - dy
         if fill is not None:
             cell[top:bottom + 1, x] = fill
         else:
@@ -77,7 +78,7 @@ def floor_diamond(width=128, height=256, fill=None):
 
 
 def tile(index):
-    return kit.load_pixels(TILE_PATH % index)
+    return kit.load_pixels(render.tile_path(index))
 
 
 def tile_sheet():
@@ -86,7 +87,7 @@ def tile_sheet():
         cell = floor_diamond()
         over(cell, tile(index), 0, 0)
         cells.append(enlarge(cell, 2))
-    kit.save_pixels(os.path.join(OUT, "tiles.png"), grid(cells, 8, 256, 512))
+    kit.save_pixels(os.path.join(OUT, "tiles.png"), grid(cells, sprites.COLUMNS, 2 * render.TILE_W, 2 * render.TILE_H))
 
 
 # A 5 x 5 frame of pipe with a cross through it, a stub off each side and a lone piece in a corner:
@@ -181,14 +182,12 @@ def stands_sheet():
         add(tile(index))
     if barrel is not None:
         add(barrel)
-    kit.save_pixels(os.path.join(OUT, "stands.png"), enlarge(grid(cells, len(cells), 128, 256), 3))
+    kit.save_pixels(os.path.join(OUT, "stands.png"), enlarge(grid(cells, len(cells), render.TILE_W, render.TILE_H), 3))
 
 
 def icon_sheet():
-    cells = [enlarge(kit.load_pixels(os.path.join(REPO, "tools/textures/Item_EnhancedIrrigation_%s.png" % name)), 4)
-             for name in items.ITEMS]
-    cells += [enlarge(kit.load_pixels(os.path.join(REPO, "tools/textures/EnhancedIrrigation_Build_%s.png" % name)), 4)
-              for name in tiles.BUILD_ICONS]
+    cells = [enlarge(kit.load_pixels(render.icon_path(name)), 4) for name in items.ITEMS]
+    cells += [enlarge(kit.load_pixels(render.build_icon_path(name)), 4) for name in tiles.BUILD_ICONS]
     kit.save_pixels(os.path.join(OUT, "icons.png"), grid(cells, len(cells), 200, 200))
 
 
@@ -201,4 +200,5 @@ def main():
     print("previews:", OUT)
 
 
-main()
+if __name__ == "__main__":
+    main()

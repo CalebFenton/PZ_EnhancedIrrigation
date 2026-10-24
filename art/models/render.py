@@ -44,6 +44,24 @@ ICON_SIZE = 32
 BUILD_ICON_SIZE = 48
 ICON_OVERSAMPLE = 8  # rendered larger, then averaged down, so edges stay clean
 
+# The game finds a packed icon by its sprite name: Item_ and the item's name for an item's Icon,
+# Build_ and a name for a build-menu icon, each carrying the mod's name to keep clear of other mods'.
+ICON_PREFIX = "Item_EnhancedIrrigation_"
+BUILD_ICON_PREFIX = "EnhancedIrrigation_Build_"
+
+
+def tile_path(index):
+    return os.path.join(TILE_DIR, "%s_%d.png" % (TILESET, index))
+
+
+def icon_path(name):
+    return os.path.join(ICON_DIR, ICON_PREFIX + name + ".png")
+
+
+def build_icon_path(name):
+    return os.path.join(ICON_DIR, BUILD_ICON_PREFIX + name + ".png")
+
+
 
 def view_direction(elevation=30.0):
     """From the camera into the scene: from the south-east, `elevation` degrees down."""
@@ -186,7 +204,7 @@ def render_tiles(camera, stage, only=None):
         raw = os.path.join(SCRATCH, "tile.png")
         render(raw, TILE_W, TILE_H)
         pixels = kit.load_pixels(raw)
-        kit.save_pixels(os.path.join(TILE_DIR, "%s_%d.png" % (TILESET, index)), pixels)
+        kit.save_pixels(tile_path(index), pixels)
         depth = depth_map(camera, pixels[..., 3])
         cell = atlas[index // COLUMNS * TILE_H:(index // COLUMNS + 1) * TILE_H,
                      index % COLUMNS * TILE_W:(index % COLUMNS + 1) * TILE_W]
@@ -248,14 +266,14 @@ def render_icons(camera, stage):
     # Only this script's icons: an item or build icon that's gone leaves none behind.
     os.makedirs(ICON_DIR, exist_ok=True)
     for stale in os.listdir(ICON_DIR):
-        if stale.startswith(("Item_EnhancedIrrigation_", "EnhancedIrrigation_Build_")):
+        if stale.startswith((ICON_PREFIX, BUILD_ICON_PREFIX)):
             os.remove(os.path.join(ICON_DIR, stale))
     for name, spec in items.ITEMS.items():
         render_icon(camera, stage, [tiles.layer(spec["model"], turn=spec.get("icon_turn", 0))],
-                    spec.get("icon_elevation", 30), ICON_SIZE, os.path.join(ICON_DIR, "Item_EnhancedIrrigation_%s.png" % name))
+                    spec.get("icon_elevation", 30), ICON_SIZE, icon_path(name))
         print("icon %s" % name)
     for name, layers in tiles.BUILD_ICONS.items():
-        render_icon(camera, stage, layers, 30, BUILD_ICON_SIZE, os.path.join(ICON_DIR, "EnhancedIrrigation_Build_%s.png" % name))
+        render_icon(camera, stage, layers, 30, BUILD_ICON_SIZE, build_icon_path(name))
         print("build icon %s" % name)
 
 
@@ -270,4 +288,5 @@ def main():
         render_icons(camera, stage)
 
 
-main()
+if __name__ == "__main__":
+    main()
