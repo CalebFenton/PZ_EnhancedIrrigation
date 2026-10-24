@@ -8,14 +8,8 @@ require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/PlantInfo"
 
--- Lawn Sprinklers (Sprinklers.lua, the sprinkler's part of Flow.lua and LineObject.lua, Set and Take
--- Sprinkler in LineJobs.lua and LineSystem.lua, the line menu's options, the plant info's soil
--- word, Make Pipe Sprinkler in Recipes.txt): a sprinkler on a pumped line watering its rectangle at
--- the pump's rate, soaking it and rotting what's left waterlogged under it, overlapping sprinklers
--- keeping one soak; nothing from a tapped line; setting and taking one, the soil word outlasting
--- it; making one. Lines run for set hours on the server
--- by what runs them there (pumps.run, lines.age and lines.flow), so the clock doesn't decide
--- the sums.
+-- Lines run for set hours on the server by what runs them there (pumps.run, lines.age and
+-- lines.flow), so the clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -29,7 +23,7 @@ local LEATHER = "Base.LeatherStrips"
 local MINUTE = 1 / 60
 -- A sprinkler as a new one goes on.
 local NEW = { condition = 100, ceiling = 100 }
--- The squares a sprinkler waters.
+-- How many squares a sprinkler waters.
 local SQUARES = (2 * Sprinklers.ALONG + 1) * (2 * Sprinklers.ACROSS + 1)
 -- The plant info's soil word for waterlogged soil.
 local WATERLOGGED = "IGUI_EnhancedIrrigation_Waterlogged"
@@ -103,14 +97,14 @@ local function indexOf(dx, dy)
 end
 
 -- Hours the second run soaks the rectangle for: past full, so every square waterlogs, a dry crop
--- filling and its soil soaking at the sprinkler's 90 points an hour.
+-- filling and then its soil soaking.
 local SOAK_HOURS = 3
 -- Hours the soaked rectangle is left after, while its roots rot.
 local ROT_HOURS = 2
 
 -- A sprinkler in the middle of a three-tile line running north to south, driven by an iron hand
--- pump, which lifts more than the sprinkler asks: a minute's work waters every crop of the five by
--- three rectangle along the line the same, at the sprinkler's rate less what the air takes, and
+-- pump, which lifts more than the sprinkler asks: a minute's work waters every crop of the
+-- rectangle along the line the same, at the sprinkler's rate less what the air takes, and
 -- none past it, and wears the seal by what the line took. Left on, it fills every crop and
 -- waterlogs the soil, on the line's tiles and off them, which the plant info says of a crop off the
 -- line; left a while, that crop's roots rot and its soil dries as a line tile's do. Catches a
