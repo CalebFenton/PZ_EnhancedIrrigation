@@ -188,7 +188,6 @@ for _, entity in ipairs({ BARREL, BRICK }) do
             readMenu(self, self.unit, "built")
         end,
         validate = function(self)
-            expect(self.canBuild and self.validSquare, "the build menu can't build the filter from its materials on a bare square")
             local built = self.reads.built
             expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
             expect(built.record and built.record.head == 0, "the built filter has no record, or water in its head")
@@ -827,7 +826,6 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         T.count(self, "taken", { Treatment.CROCK_ITEM, FORGED_BUCKET })
     end,
     validate = function(self)
-        expect(self.canBuild and self.validSquare, "the build menu can't set up the crock from a crock and a bucket")
         local built = self.reads.built
         expect(built.entity == CROCK, "the build menu built " .. tostring(built.entity))
         expect(built.record and built.record.head == 0, "the crock has no record, or water in its head")
@@ -1073,7 +1071,6 @@ for _, entity in ipairs({ STONE, WELDED }) do
             end)
         end,
         validate = function(self)
-            expect(self.canBuild and self.validSquare, "the build menu can't build the boiler from its materials on a clear square")
             local built = self.reads.built
             expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
             expect(built.fireplace, "the built boiler isn't a vanilla fireplace on the server")

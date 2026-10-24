@@ -53,7 +53,6 @@ T.test("irrigation_stands_stand_built_from_build_menu", {
         T.read(self, "tanks.read", T.at(self.stand), "built")
     end,
     validate = function(self)
-        expect(self.canBuild and self.validSquare, "the build menu can't build a Tank Stand from its materials on a bare square")
         local built = self.reads.built
         expect(built.isStand, "the build menu built " .. tostring(built.entity) .. ", not a Tank Stand")
         expect(built.sprite == Sprites.STAND, "the built stand is drawn as " .. tostring(built.sprite))

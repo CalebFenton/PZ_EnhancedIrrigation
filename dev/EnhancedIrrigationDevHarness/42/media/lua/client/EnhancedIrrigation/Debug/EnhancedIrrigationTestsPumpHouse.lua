@@ -206,7 +206,6 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
             useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), false)
         end,
         validate = function(self)
-            expect(self.canBuild and self.validSquare, "the build menu can't build the house from its materials on a bare square")
             local record = self.reads.built.record
             if not expect(record, "the built house has no record") then return end
             expect(record.unit == case.entity and record.part == nil, "the built house is " .. tostring(record.unit)

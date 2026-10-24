@@ -200,7 +200,6 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
             readMenu(self, self.pump, "built")
         end,
         validate = function(self)
-            expect(self.canBuild and self.validSquare, "the build menu can't build the pump from its materials on a bare square")
             local built = self.reads.built
             expect(built.entity == case.entity, "the build menu built " .. tostring(built.entity))
             local record = built.record

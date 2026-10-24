@@ -223,10 +223,10 @@ end
 --- Queues building `entity` (a full name) from the build menu at `handle`, through the build menu's
 --- own path (ISBuildIsoEntity, ISBuildAction): the character gets the recipe's skill levels and
 --- knowledge and exactly its inputs, each the first of `prefer` (full names) it takes if any
---- (T.inputItem), and the build waits for this client's copy of the tile `sprite`. Whether the
---- build menu could build it lands in self.canBuild and self.validSquare. Returns the built tile's
---- handle, or nil. ISBuildIsoEntity is server Lua, which loads after this file, so it is reached at
---- call time rather than through a require.
+--- (T.inputItem), and the build waits for this client's copy of the tile `sprite`. A build the
+--- menu refuses, for its inputs or its square, is missing. Returns the built tile's handle, or nil.
+--- ISBuildIsoEntity is server Lua, which loads after this file, so it is reached at call time
+--- rather than through a require.
 function T.buildFromMenu(self, entity, handle, sprite, prefer)
     local info = T.need(self, T.buildEntry(entity), "the build menu entry of " .. entity)
     local recipe = info and info:getRecipe() and info:getRecipe():getCraftRecipe()
@@ -252,9 +252,12 @@ function T.buildFromMenu(self, entity, handle, sprite, prefer)
         build.player = player:getPlayerNum()
         build.buildPanelLogic:refresh()
         build.buildPanelLogic:autoPopulateInputs()
-        self.canBuild = build.buildPanelLogic:canPerformCurrentRecipe()
-        self.validSquare = build:isValid(handle.square)
-        build:tryBuild(handle.x, handle.y, handle.z)
+        local canBuild = build.buildPanelLogic:canPerformCurrentRecipe()
+        local validSquare = build:isValid(handle.square)
+        if T.need(self, canBuild, "the build menu building " .. entity .. " from its inputs")
+            and T.need(self, validSquare, "the build menu taking " .. entity .. "'s square") then
+            build:tryBuild(handle.x, handle.y, handle.z)
+        end
     end)
     T.waitFor(self, function() return T.tankCopy(built) ~= nil end, "this client's copy of the built " .. entity)
     return built
