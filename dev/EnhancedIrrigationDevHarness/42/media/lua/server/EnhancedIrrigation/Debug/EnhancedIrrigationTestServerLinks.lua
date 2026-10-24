@@ -1,9 +1,8 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsLinks.lua: links
--- made, read and run on the authority; placing the tanks and running Plumb and Unplumb is
--- EnhancedIrrigationTestServer.lua's. Only registers handlers, so a --stay rerun loads it again.
+-- Development only, not published. Test handlers for links made, read and run on the authority.
+-- Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 

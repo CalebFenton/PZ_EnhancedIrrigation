@@ -8,7 +8,7 @@ require "EnhancedIrrigation/UI/LinkMenu"
 -- Pipe between tanks: plumbing tanks together from the right-click menu and taking the pipe out,
 -- how water moves through a link, and this client's copy of the list. What the menu greys out, the
 -- server is also asked to do directly (tanks.perform), to show it refuses on its own. Link passes
--- run through the server's link handlers, so the clock doesn't decide them.
+-- run on the server in one call, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -18,8 +18,9 @@ local Links, LinkJobs, Pipes = EnhancedIrrigation.Links, EnhancedIrrigation.Link
 -- so the rate shows before the water levels.
 local PASS_LITRES = 60
 
--- How many links with an end on the handle's square this client's own copy of the list holds, which
--- the server's commands set in single player too (Links.linksAt reads the server's list there).
+-- How many links with an end on the handle's square this client's own copy of the list holds. Reads
+-- clientSystem, which the server's commands set in single player too, since Links.linksAt reads the
+-- server's list there.
 local function viewedLinks(handle)
     local at, count = T.at(handle), 0
     for _, link in ipairs(Links.clientSystem.links) do
