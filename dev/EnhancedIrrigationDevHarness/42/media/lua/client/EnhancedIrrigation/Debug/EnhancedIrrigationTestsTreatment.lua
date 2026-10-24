@@ -1281,12 +1281,14 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
     end,
 })
 
--- A boiler lit with nothing in its drum scorches it fast; burnt through, its menu says so, Pour In
--- is refused, and water in it passes nothing however hot. Patch Drum, put out and with a welder's
--- kit, restores it to less than new, and its menu says how much; a second patch would leave it no
--- better and is refused. A drum that cooled while holed comes back from its patch cold, and passes
--- nothing unlit. Catches a dry fire that doesn't wear, a holed drum still working, a patch that
--- restores it new, or one that finds it as hot as when it failed.
+-- A boiler lit with nothing in its drum scorches it fast. Worn nearly through, water poured in
+-- goes with the drum as its fire burns it through, running out rather than passing; burnt through,
+-- its menu says so and Pour In is refused. Patch Drum, put out and with a welder's kit, restores it
+-- to less than new, and its menu says how much; a second patch would leave it no better and is
+-- refused. A drum that cooled while holed comes back from its patch cold, and passes nothing unlit.
+-- Catches a dry fire that doesn't wear, a drum burnt through that keeps its water or passes it, a
+-- holed drum poured into, a patch that restores it new, or one that finds it as hot as when it
+-- failed.
 T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
     instant = true,
     run = function(self)
@@ -1295,15 +1297,29 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         self.unit = placeUnit(self, spots[1], WELDED)
         setFire(self, self.unit, "lit", true, FUEL)
         run(self, self.unit, "scorched", { 1 })
-        run(self, self.unit, "burnt", { Treatment.DRUM_CONDITION / Treatment.WEAR_DRY - 1 })
-        run(self, self.unit, "holed", { 1 }, { head = 50 })
-        waitForServer(self, self.unit, "holed", "burntThrough")
-        readMenu(self, self.unit, "burnt")
+        -- Burnt dry to less than an hour's wear with water in it, then put out at once, as the fire's
+        -- minutes until the pour would wear it on dry; lit again once the water is in.
+        T.step(function()
+            local condition = self.reads.scorched.steps[1].record.condition
+            run(self, self.unit, "burnt", { (condition - Treatment.WEAR_WET / 2) / Treatment.WEAR_DRY })
+            setFire(self, self.unit, "doused", false)
+        end)
         T.give(self, "carried", { { type = "Base.Bucket" } })
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
             "this client's copy of the filled bucket")
         useMenu(self, self.unit, "pour", function(context)
+            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
+        end, true)
+        readUntil(self, self.unit, "poured", function(state) return state.record and state.record.head > 0 end)
+        setFire(self, self.unit, "relit", true, FUEL)
+        run(self, self.unit, "holed", { 1 })
+        waitForServer(self, self.unit, "holed", "burntThrough")
+        readMenu(self, self.unit, "burnt")
+        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
+        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
+            "this client's copy of the refilled bucket")
+        useMenu(self, self.unit, "holed pour", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
         end, false)
         setFire(self, self.unit, "out", false)
@@ -1322,10 +1338,14 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
     validate = function(self)
         expect(self.reads.scorched.steps[1].summary.condition == Treatment.DRUM_CONDITION - Treatment.WEAR_DRY,
             "an hour burning dry left the drum at " .. tostring(self.reads.scorched.steps[1].summary.condition))
+        T.expectOffered(self, "pour")
         local holed = self.reads.holed
+        expect(holed.before.record.head > 0, "the drum held no water as its last hour began")
+        expect(holed.steps[1].summary.burntThrough, "the wet drum's last hour didn't burn it through")
+        expectNear("the head of a drum burnt through", holed.steps[1].record.head, 0, LITRES)
         expectNear("a burnt-through boiler's hour", holed.steps[1].basin.litres, holed.before.basin.litres, LITRES)
         expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_BurntThrough"))
-        T.expectRefused(self, "pour", "Tooltip_EnhancedIrrigation_BurntThrough")
+        T.expectRefused(self, "holed pour", "Tooltip_EnhancedIrrigation_BurntThrough")
         T.expectOffered(self, "patch")
         expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Drum",
             Treatment.DRUM_CONDITION - Treatment.PATCH_LOSS))
