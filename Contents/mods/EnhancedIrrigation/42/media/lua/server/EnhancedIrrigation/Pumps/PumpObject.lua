@@ -14,6 +14,7 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
+require "EnhancedIrrigation/Pumps/PumpHouse"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
@@ -146,17 +147,6 @@ function PumpObject:lift(litres)
     end
 end
 
--- Kinds ---------------------------------------------------------------------------------------------
-
---- What time does to a pump of each kind: `step(record, pump, spec, hours, from)`, what an hour or
---- less from the world hour `from` does; and `settle(record, pump)`, what follows from how things
---- stand once it has caught up, loaded. A hand pump has neither: it runs only while worked. The
---- Pump House's are Pumps/PumpHouse.lua's.
-PumpObject.KINDS = {
-    hand = {},
-    house = {},
-}
-
 -- Time -----------------------------------------------------------------------------------------------
 
 -- Whether every square the pump's water could come from or go to is loaded: the 3x3 around it,
@@ -171,19 +161,18 @@ local function endsLoaded(record)
     return into == nil or EnhancedIrrigation.chunkLoaded(into.x, into.y, into.z)
 end
 
---- `hours` of time on the pump up to now, in steps of an hour at most, as its kind says. Does
---- nothing while the pump is unloaded.
+--- `hours` of time on the pump up to now, in steps of an hour at most. Time alone runs only a Pump
+--- House (PumpHouse.step); a hand pump runs only while worked. Does nothing while the pump is
+--- unloaded.
 function PumpObject:advance(hours)
     local pump = self:getIsoObject()
-    local spec = pump and Pumps.specOf(pump)
-    local kind = spec and PumpObject.KINDS[spec.kind]
-    if not (kind and kind.step) then
+    if not (pump and self:isHouse()) then
         return
     end
     local from = EnhancedIrrigation.now() - hours
     while hours > 0 do
         local step = math.min(1, hours)
-        kind.step(self, pump, spec, step, from)
+        EnhancedIrrigation.PumpHouse.step(self, pump, step, from)
         hours, from = hours - step, from + step
     end
 end
@@ -195,10 +184,8 @@ function PumpObject:catchUp()
     if pump and endsLoaded(self) then
         self:findIntake()
         EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
-        local spec = Pumps.specOf(pump)
-        local kind = spec and PumpObject.KINDS[spec.kind]
-        if kind and kind.settle then
-            kind.settle(self, pump)
+        if self:isHouse() then
+            EnhancedIrrigation.PumpHouse.settle(self, pump)
         end
     end
 end

@@ -32,7 +32,7 @@ Pumps.SYSTEM_NAME = "enhanced_irrigation_pump"
 Pumps.SPRITES = { EnhancedIrrigation.Sprites.WOODEN_HAND_PUMP, EnhancedIrrigation.Sprites.IRON_HAND_PUMP,
     EnhancedIrrigation.Sprites.PUMP_HOUSE_WOOD, EnhancedIrrigation.Sprites.PUMP_HOUSE_METAL }
 
--- Each pump's entity script name: `kind`, the row of PumpObject.KINDS that says what runs it;
+-- Each pump's entity script name: `kind`, "hand" (run only while worked) or "house" (run by time);
 -- `lift`, the storeys above its floor it fills a tank to; `rate`, the litres a game minute it
 -- moves; `push`, the head it gives a garden line it feeds; `wearLitres`, the litres that take a
 -- point of its body's condition; `squeals`, whether it squeals as it works; `noise`, the radius

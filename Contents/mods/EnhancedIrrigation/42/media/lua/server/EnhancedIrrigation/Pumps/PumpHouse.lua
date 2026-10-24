@@ -1,4 +1,4 @@
--- What time does to a Pump House (PumpObject.KINDS.house): while it is switched on, or its timer
+-- What time does to a Pump House: while it is switched on, or its timer
 -- holds it open (Timers.lua), has a pump part fitted that isn't burnt out, and has power, it runs,
 -- lifting its part's rate from its source into its outlet's tank as far as its lift, the tank's
 -- room and a finite source's water go, or driving the line its outlet feeds with what that takes
@@ -16,7 +16,6 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
-require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/Power"
@@ -27,7 +26,7 @@ local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps = EnhancedIrrigation.Pumps
-local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
+local Lines, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow
 local Timers, Power, HousePower = EnhancedIrrigation.Timers, EnhancedIrrigation.Power, EnhancedIrrigation.HousePower
 
 -- Running --------------------------------------------------------------------------------------------
@@ -121,7 +120,7 @@ end
 --- with a sound part: runs it for as long as it has power, the whole time while it is switched on,
 --- else the stretches its timer holds it open; and bills its payer for the hours it ran off the
 --- grid.
-function PumpHouse.step(record, pump, spec, hours, from)
+function PumpHouse.step(record, pump, hours, from)
     local part = Pumps.partSpec(record.part)
     if not (part and not record:isBurntOut()) then
         return
@@ -158,9 +157,6 @@ function PumpHouse.settle(record, pump)
     end
     record.running = running or nil
 end
-
-PumpObject.KINDS.house.step = PumpHouse.step
-PumpObject.KINDS.house.settle = PumpHouse.settle
 
 -- Noise ----------------------------------------------------------------------------------------------
 
