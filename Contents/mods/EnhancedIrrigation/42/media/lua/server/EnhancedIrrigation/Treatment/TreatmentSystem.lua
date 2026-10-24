@@ -26,11 +26,11 @@ TreatmentSystem.System = EnhancedIrrigation.ObjectSystem.define({
     isObject = Treatment.isUnit,
 })
 
---- Swaps the built `thumpable` for a vanilla fireplace of its tile, given its entity's components
---- (its basin, and the name that makes it a unit), as vanilla's Barrel Oven's OnCreate makes one
---- (BuildRecipeCode.barrelOven): the game's fire menus, burn-down and sync then run its fire.
---- Returns the fireplace.
-function TreatmentSystem.makeFireplace(thumpable)
+-- Swaps the built `thumpable` for a vanilla fireplace of its tile, given its entity's components
+-- (its basin, and the name that makes it a unit), as vanilla's Barrel Oven's OnCreate makes one
+-- (BuildRecipeCode.barrelOven): the game's fire menus, burn-down and sync then run its fire.
+-- Returns the fireplace.
+local function makeFireplace(thumpable)
     local square = thumpable:getSquare()
     local fireplace = IsoFireplace.new(getCell(), square, thumpable:getSprite())
     GameEntityFactory.CreateIsoObjectEntity(fireplace, thumpable:getEntityScript(), true)
@@ -50,7 +50,7 @@ end
 function TreatmentSystem.onCreate(params)
     local unit, result = params.thumpable, nil
     if Treatment.specOf(unit).kind == "boiler" then
-        unit = TreatmentSystem.makeFireplace(unit)
+        unit = makeFireplace(unit)
         result = { replaceObject = true, object = unit }
     end
     TreatmentSystem.System.instance:loadIsoObject(unit)
