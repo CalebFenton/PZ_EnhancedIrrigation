@@ -2,10 +2,13 @@
 -- which the renders and tools/make_tiles.py read.
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Lines/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Sprites = {}
 EnhancedIrrigation.Sprites = Sprites
+
+local Valves = EnhancedIrrigation.Valves
 
 local TILESET = "enhanced_irrigation_01"
 
@@ -88,12 +91,12 @@ Sprites.PUMP_HOUSE_METAL = tile(142)
 -- The lawn sprinkler, drawn over the line tile it is set on, as the tap is.
 Sprites.SPRINKLER = tile(143)
 
--- The valves fitted to a tap, drawn over the tap hung off its spout, by the valve's full type
--- (Valves.ITEMS); and a timer fitted to a Pump House, drawn over either house by its plug.
+-- The valves fitted to a tap, drawn over the tap hung off its spout, by the valve's full type; and
+-- a timer fitted to a Pump House, drawn over either house by its plug.
 Sprites.TAP_VALVES = {
-    ["EnhancedIrrigation.WindUpValve"] = tile(144),
-    ["EnhancedIrrigation.TimerValve"] = tile(145),
-    ["EnhancedIrrigation.SprinklerTimer"] = tile(146),
+    [Valves.WIND_UP] = tile(144),
+    [Valves.TIMER] = tile(145),
+    [Valves.SPRINKLER_TIMER] = tile(146),
 }
 Sprites.HOUSE_TIMER = tile(147)
 
