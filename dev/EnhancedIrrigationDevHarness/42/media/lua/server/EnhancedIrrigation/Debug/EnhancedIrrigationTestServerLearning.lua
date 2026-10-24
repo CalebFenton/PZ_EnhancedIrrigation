@@ -60,10 +60,23 @@ end)
 
 -- Loot ----------------------------------------------------------------------------------------------
 
+-- The server's Distributions, once it has an entry for each item the player guide's Loot table
+-- promises, so a dropped entry fails rather than leaving the item unfindable.
 local function distributions(expect)
-    local D = EnhancedIrrigation and EnhancedIrrigation.Distributions
-    return expect(D ~= nil, "EnhancedIrrigation.Distributions did not load on the authority")
-        and expect(#D.LOOT > 0, "Distributions.LOOT names no item") and D
+    local mod = EnhancedIrrigation
+    local D = mod and mod.Distributions
+    if not expect(D ~= nil, "EnhancedIrrigation.Distributions did not load on the authority") then
+        return nil
+    end
+    local listed = {}
+    for _, loot in ipairs(D.LOOT) do
+        listed[loot.item] = true
+    end
+    for _, item in ipairs({ D.PAMPHLET, mod.Pumps.UTILITY_PUMP, mod.Sprinklers.ITEM, mod.Valves.SPRINKLER_TIMER,
+            mod.Valves.WATER_VALVE }) do
+        expect(listed[item], "Distributions.LOOT has no " .. item)
+    end
+    return D
 end
 
 -- The first room and container type whose procList picks each ProceduralDistributions list.
