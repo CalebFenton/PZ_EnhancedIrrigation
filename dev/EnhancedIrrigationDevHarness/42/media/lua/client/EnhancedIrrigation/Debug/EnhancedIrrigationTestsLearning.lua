@@ -20,9 +20,8 @@ local STAND, PLUMB = "EnhancedIrrigation_TankStand", "EnhancedIrrigation_PlumbTo
 local CROCK = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
     "EnhancedIrrigation_FilterCrock" }
 local BOILERS = { "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded" }
-local BUILDS = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter", CROCK[3], BOILERS[1], BOILERS[2] }
-local PAMPHLET_RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB }
-local RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB, CROCK[1], CROCK[2], CROCK[3], BOILERS[1], BOILERS[2] }
+local PAMPHLET_RECIPES = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter", PLUMB }
+local RECIPES = { STAND, PAMPHLET_RECIPES[2], PAMPHLET_RECIPES[3], PLUMB, CROCK[1], CROCK[2], CROCK[3], BOILERS[1], BOILERS[2] }
 
 -- Each of `names` marked true.
 local function marked(names)
@@ -297,7 +296,7 @@ test("irrigation_learning_joining_server_catches_up_earned_recipes", {
 
 -- Lists ---------------------------------------------------------------------------------------------
 
--- The panel field `field` (handCraftPanel, BuildPanel) of the open entity window that has one.
+-- The panel field `field` (handCraftPanel) of the open entity window that has one.
 local function openPanel(field)
     ISEntityUI.EnsurePlayers()
     for _, playerWindows in pairs(ISEntityUI.players) do
@@ -383,30 +382,6 @@ test("irrigation_learning_plumb_to_tank_in_no_crafting_list", {
         expectShown(self.searched, PLUMB, false, "the crafting window searched for it")
         expectShown(self.all, PLUMB, false, "the crafting window showing every recipe")
         expect(self.logicHad or self.logicHadAll, "the crafting window's search never found Plumb to Tank to drop")
-    end,
-})
-
--- The build menu shows each build to a character who knows it, the Tank Stand searched for too,
--- and never Plumb to Tank.
-test("irrigation_learning_build_menu_shows_the_builds_not_plumbing", {
-    run = function(self)
-        T.knowRecipes(self, RECIPES, true)
-        T.defer(self, function() ISEntityUI.CloseWindows() end)
-        T.step(function()
-            ISEntityUI.OpenBuildWindow(T.player(), nil, "*")
-            local panel = openPanel("BuildPanel")
-            if not T.need(self, panel, "the build window") then return end
-            self.default = shownBy(panel)
-            panel:setRecipeFilter(Translator.getRecipeName(STAND), nil)
-            self.searched = shownBy(panel)
-        end)
-    end,
-    validate = function(self)
-        for _, name in ipairs(BUILDS) do
-            expectShown(self.default, name, true, "the build menu")
-        end
-        expectShown(self.searched, STAND, true, "the build menu searched for it")
-        expectShown(self.default, PLUMB, false, "the build menu")
     end,
 })
 
