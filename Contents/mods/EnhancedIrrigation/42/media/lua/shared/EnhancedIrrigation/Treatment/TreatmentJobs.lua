@@ -59,15 +59,28 @@ local function pourLitres(unit, item)
     return fluid and math.min(fluid:getAmount(), headRoom(unit)) or 0
 end
 
--- Whether `unit` is a Filter Crock standing in its bucket.
-local function isCrock(unit)
-    local spec = Treatment.specOf(unit)
-    return spec ~= nil and spec.kind == "crock" and Treatment.isUnit(unit)
+--- Each kind's own jobs, with the ContextMenu key naming each, in menu order.
+TreatmentJobs.KIND_JOBS = {
+    sand = { { job = TreatmentJobs.CLEAN_FILTER, nameKey = "ContextMenu_EnhancedIrrigation_CleanFilter" } },
+    crock = {
+        { job = TreatmentJobs.SCRUB_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_ScrubCrock" },
+        { job = TreatmentJobs.TAKE_DOWN_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_TakeDownCrock" },
+    },
+    boiler = { { job = TreatmentJobs.PATCH_DRUM, nameKey = "ContextMenu_EnhancedIrrigation_PatchDrum" } },
+}
+
+local KIND_OF_JOB = {}
+for kind, entries in pairs(TreatmentJobs.KIND_JOBS) do
+    for _, entry in ipairs(entries) do
+        KIND_OF_JOB[entry.job] = kind
+    end
 end
 
-local function isBoiler(unit)
+-- Why a job of KIND_JOBS is refused before anything else: `unit` is no unit of the job's kind. A
+-- crock counts while it stands in its bucket.
+local function kindBlocker(unit, job)
     local spec = Treatment.specOf(unit)
-    return spec ~= nil and spec.kind == "boiler" and Treatment.isUnit(unit)
+    return not (spec and spec.kind == KIND_OF_JOB[job] and Treatment.isUnit(unit)) and Jobs.UNKNOWN or nil
 end
 
 -- The welding torch with the most fuel `character` carries, or nil.
@@ -122,9 +135,9 @@ TreatmentJobs.JOBS = {
         position = "Mid", heavy = true, sound = "Shoveling",
         equip = function(character) return cleaningTool(character) end,
         blocker = function(character, unit)
-            local spec = Treatment.specOf(unit)
-            if not (spec and spec.kind == "sand" and Treatment.isUnit(unit)) then
-                return Jobs.UNKNOWN
+            local refusal = kindBlocker(unit, TreatmentJobs.CLEAN_FILTER)
+            if refusal then
+                return refusal
             end
             local summary = Treatment.currentSummary(unit)
             return not (summary and summary.clogged) and "Tooltip_EnhancedIrrigation_NotClogged" or nil
@@ -134,8 +147,9 @@ TreatmentJobs.JOBS = {
         minutes = SCRUB_MINUTES,
         position = "Low",
         blocker = function(character, unit)
-            if not isCrock(unit) then
-                return Jobs.UNKNOWN
+            local refusal = kindBlocker(unit, TreatmentJobs.SCRUB_CROCK)
+            if refusal then
+                return refusal
             end
             local summary = Treatment.currentSummary(unit)
             if summary and summary.cracked then
@@ -149,7 +163,7 @@ TreatmentJobs.JOBS = {
         minutes = TAKE_DOWN_MINUTES,
         position = "Low",
         blocker = function(character, unit)
-            return not isCrock(unit) and Jobs.UNKNOWN or nil
+            return kindBlocker(unit, TreatmentJobs.TAKE_DOWN_CROCK)
         end,
     },
     -- A small sheet welded over the worn steel, as vanilla mends metal: each patch restores less.
@@ -158,8 +172,9 @@ TreatmentJobs.JOBS = {
         anim = "BlowTorch", position = "Mid", sound = "BlowTorch",
         equip = function(character) return weldingTorch(character) end,
         blocker = function(character, unit)
-            if not isBoiler(unit) then
-                return Jobs.UNKNOWN
+            local refusal = kindBlocker(unit, TreatmentJobs.PATCH_DRUM)
+            if refusal then
+                return refusal
             end
             local summary = Treatment.currentSummary(unit)
             if not summary then

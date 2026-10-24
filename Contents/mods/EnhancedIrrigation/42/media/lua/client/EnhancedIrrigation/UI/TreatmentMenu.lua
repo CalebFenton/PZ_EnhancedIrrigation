@@ -25,16 +25,6 @@ local Treatment, TreatmentJobs, LinkMenu = EnhancedIrrigation.Treatment, Enhance
     EnhancedIrrigation.LinkMenu
 local JobOptions = EnhancedIrrigation.JobOptions
 
--- Each kind's own jobs, by their ContextMenu keys, in menu order.
-local KIND_JOBS = {
-    sand = { { job = TreatmentJobs.CLEAN_FILTER, nameKey = "ContextMenu_EnhancedIrrigation_CleanFilter" } },
-    crock = {
-        { job = TreatmentJobs.SCRUB_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_ScrubCrock" },
-        { job = TreatmentJobs.TAKE_DOWN_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_TakeDownCrock" },
-    },
-    boiler = { { job = TreatmentJobs.PATCH_DRUM, nameKey = "ContextMenu_EnhancedIrrigation_PatchDrum" } },
-}
-
 -- Each end of a unit's pipe: the job and the option's ContextMenu key.
 local PLUMB_ENDS = {
     { role = "inlet", job = LinkJobs.PLUMB_INLET, nameKey = "ContextMenu_EnhancedIrrigation_PlumbInlet" },
@@ -95,7 +85,7 @@ function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
         menu:addOption(Treatment.statusText(unit, spec, summary)).notAvailable = true
     end
     addPourIn(menu, playerNum, character, unit)
-    for _, entry in ipairs(KIND_JOBS[spec.kind] or {}) do
+    for _, entry in ipairs(TreatmentJobs.KIND_JOBS[spec.kind] or {}) do
         JobOptions.add(menu, playerNum, character, "treatment", getText(entry.nameKey), entry.job, unit)
     end
     if spec.plumbed then
