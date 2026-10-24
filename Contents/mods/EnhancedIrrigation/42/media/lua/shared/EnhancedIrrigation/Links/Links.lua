@@ -4,7 +4,7 @@
 -- drops its modData, and the tank on the square stays the link's end. The pipe stays buried when a
 -- tank leaves its square, and carries water again once a tank stands there. The authority keeps
 -- the links in its system (server/EnhancedIrrigation/Links/LinkSystem.lua), which sends every
--- client the list (client/EnhancedIrrigation/Links/LinkView.lua).
+-- client the list (client/EnhancedIrrigation/Links/LinkClient.lua).
 --
 -- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, conditions }: its ends, the pipe in
 -- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), all of which Unplumb gives

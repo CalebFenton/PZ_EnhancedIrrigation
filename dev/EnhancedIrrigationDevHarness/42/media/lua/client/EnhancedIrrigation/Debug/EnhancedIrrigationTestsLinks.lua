@@ -2,10 +2,10 @@ require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Links/Links"
-require "EnhancedIrrigation/Links/LinkView"
+require "EnhancedIrrigation/Links/LinkClient"
 require "EnhancedIrrigation/UI/TankMenu"
 
--- Pipe between tanks (Links.lua, LinkJobs.lua, LinkSystem.lua, LinkView.lua and TankMenu.lua's
+-- Pipe between tanks (Links.lua, LinkJobs.lua, LinkSystem.lua, LinkClient.lua and TankMenu.lua's
 -- Plumb to Tank and Unplumb): plumbing tanks together from the right-click menu and taking the pipe
 -- out, how water moves through a link, and this client's copy of the list. What the menu greys out,
 -- the server is also asked to do directly (tanks.perform), to show it refuses on its own. Link
@@ -455,16 +455,16 @@ T.test("irrigation_links_keep_the_newest_list", {
         T.waitFor(self, function() return viewedLinks(self.a) == 1 end, "this client's copy of the link")
         -- Notes each list's version as it lands, before the view takes or ignores it.
         T.step(function()
-            local LinkView = EnhancedIrrigation.LinkView
-            local original = LinkView.OnServerCommand
+            local LinkClient = EnhancedIrrigation.LinkClient
+            local original = LinkClient.OnServerCommand
             self.landed = {}
-            LinkView.OnServerCommand = function(view, command, args)
+            LinkClient.OnServerCommand = function(view, command, args)
                 if command == "links" then
                     self.landed[args.version] = true
                 end
                 original(view, command, args)
             end
-            T.defer(self, function() LinkView.OnServerCommand = original end)
+            T.defer(self, function() LinkClient.OnServerCommand = original end)
         end)
         T.read(self, "links.stale", {}, "stale")
         T.waitFor(self, function() return self.landed[self.reads.stale.version] end, "the stale list of links")
