@@ -182,8 +182,22 @@ function LinkJobs.pumpBlocker(pump, with)
     return nil, here, other
 end
 
--- The row of a plumbing job at a unit or pump toward the tank `with` names, refused as
--- `blocker(object, with)` refuses it as far as both ends go: Plumb Fixture's.
+-- Why the tank `tank` can't be plumbed to the tank on the square `with` names, as far as both ends
+-- go, a Tooltip key, or nil; and the two squares.
+local function tankBlocker(tank, with)
+    local here, other = endsOf(tank, with)
+    if not (here and Tanks.isTank(tank) and Tanks.tankAt(other.x, other.y, other.z)) then
+        return "Tooltip_EnhancedIrrigation_TankGone"
+    end
+    if Links.find(here, other) then
+        return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
+    end
+    return nil, here, other
+end
+
+-- The row of a plumbing job toward the square `with` names, refused as `blocker(object, with)`
+-- refuses it as far as both ends go, then by the run's length and the pipe `with` names, which
+-- only a client that made up a job leaves out.
 local function plumbJobFor(blocker)
     return {
         minutes = function(object, with) return Links.minutesFor(runTiles(object, with)) end,
@@ -208,40 +222,8 @@ local function unitPlumbJob(role)
 end
 
 LinkJobs.JOBS = {
-    [LinkJobs.PLUMB] = {
-        minutes = function(tank, with) return Links.minutesFor(runTiles(tank, with)) end,
-        position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
-        blocker = function(character, tank, with)
-            local here, other = endsOf(tank, with)
-            if not (here and Tanks.isTank(tank) and Tanks.tankAt(other.x, other.y, other.z)) then
-                return "Tooltip_EnhancedIrrigation_TankGone"
-            end
-            if Links.distance(here, other) > Links.MAX_TILES then
-                return "Tooltip_EnhancedIrrigation_OutOfReach"
-            end
-            if Links.find(here, other) then
-                return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
-            end
-            -- Only a client that made up a job asks for pipe no kind has.
-            return not LinkJobs.pipeFor(tank, with) and Jobs.UNKNOWN or nil
-        end,
-        materials = plumbMaterials,
-    },
-    [LinkJobs.PLUMB_FIXTURE] = {
-        minutes = function(fixture, with) return Links.minutesFor(runTiles(fixture, with)) end,
-        position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
-        blocker = function(character, fixture, with)
-            local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
-            if blocker then
-                return blocker
-            end
-            if Links.distance(here, other) > Links.MAX_TILES then
-                return "Tooltip_EnhancedIrrigation_OutOfReach"
-            end
-            return not LinkJobs.pipeFor(fixture, with) and Jobs.UNKNOWN or nil
-        end,
-        materials = plumbMaterials,
-    },
+    [LinkJobs.PLUMB] = plumbJobFor(tankBlocker),
+    [LinkJobs.PLUMB_FIXTURE] = plumbJobFor(LinkJobs.fixtureBlocker),
     -- The pipe of vanilla's plumbing runs up through the ceiling; like vanilla's it takes none.
     [LinkJobs.PLUMB_ABOVE] = {
         minutes = Links.BASE_MINUTES, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
