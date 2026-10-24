@@ -152,14 +152,14 @@ function LineJobs.layBlocker(square, pending)
 end
 
 -- A row's blocker for a job at a line tile: refuses where there is none, else asks
--- `check(character, object, state)` with the tile as Lines.stateAt knows it.
+-- `check(character, object, state, with)` with the tile as Lines.stateAt knows it.
 local function atLine(check)
-    return function(character, object)
+    return function(character, object, with)
         local state = Lines.stateOf(object)
         if not state then
             return "Tooltip_EnhancedIrrigation_NoLine"
         end
-        return check(character, object, state)
+        return check(character, object, state, with)
     end
 end
 
@@ -171,17 +171,15 @@ local function isValve(item)
     return Valves.kindOf(item:getFullType()) ~= nil
 end
 
--- Why a job at a tap's valve of `kind` ("windup" or "timer") can't be done at `object`, a Tooltip
--- key, or nil: it's no line tile, or has no such valve.
-local function valveBlocker(object, kind)
-    local state = Lines.stateOf(object)
-    if not state then
-        return "Tooltip_EnhancedIrrigation_NoLine"
-    end
-    if not (state.valve and Valves.kindOf(state.valve.item) == kind) then
-        return "Tooltip_EnhancedIrrigation_NoValveHere"
-    end
-    return nil
+-- A row's blocker for a job at a tap's valve of `kind` ("windup" or "timer"): refuses at a tile
+-- with no such valve, else asks `check` as atLine does.
+local function atValve(kind, check)
+    return atLine(function(character, object, state, with)
+        if not (state.valve and Valves.kindOf(state.valve.item) == kind) then
+            return "Tooltip_EnhancedIrrigation_NoValveHere"
+        end
+        return check(character, object, state, with)
+    end)
 end
 
 -- Lay's `with` is the pipe kind, Set Sprinkler's the sprinkler carried, Fit Valve's the valve
@@ -276,11 +274,7 @@ LineJobs.JOBS = {
     -- than any of its type. A tap's riser takes the tile's fitting.
     [LineJobs.SET_SPRINKLER] = {
         minutes = 5, sound = "RepairWithWrench", equip = holdWrench,
-        blocker = function(character, object, item)
-            local state = Lines.stateOf(object)
-            if not state then
-                return "Tooltip_EnhancedIrrigation_NoLine"
-            end
+        blocker = atLine(function(character, object, state, item)
             if state.tap then
                 return "Tooltip_EnhancedIrrigation_TapAndSprinkler"
             end
@@ -288,7 +282,7 @@ LineJobs.JOBS = {
                 return "Tooltip_EnhancedIrrigation_HasSprinkler"
             end
             return not Jobs.carries(character, item, isSprinkler) and "Tooltip_EnhancedIrrigation_NoSprinkler" or nil
-        end,
+        end),
         materials = { Pipes.WRENCH },
     },
     [LineJobs.TAKE_SPRINKLER] = {
@@ -302,11 +296,7 @@ LineJobs.JOBS = {
     -- job itself.
     [LineJobs.FIT_VALVE] = {
         minutes = 5, sound = "RepairWithWrench", equip = holdWrench,
-        blocker = function(character, object, item)
-            local state = Lines.stateOf(object)
-            if not state then
-                return "Tooltip_EnhancedIrrigation_NoLine"
-            end
+        blocker = atLine(function(character, object, state, item)
             if not state.tap then
                 return "Tooltip_EnhancedIrrigation_NoTap"
             end
@@ -314,7 +304,7 @@ LineJobs.JOBS = {
                 return "Tooltip_EnhancedIrrigation_HasValve"
             end
             return not Jobs.carries(character, item, isValve) and "Tooltip_EnhancedIrrigation_NoValve" or nil
-        end,
+        end),
         materials = { Pipes.WRENCH },
     },
     [LineJobs.TAKE_VALVE] = {
@@ -328,11 +318,7 @@ LineJobs.JOBS = {
     -- run: nobody holding it, and a tank to feed it.
     [LineJobs.WIND_VALVE] = {
         minutes = LineJobs.VALVE_MINUTES, position = "Mid",
-        blocker = function(character, object, with)
-            local refusal = valveBlocker(object, "windup")
-            if refusal then
-                return refusal
-            end
+        blocker = atValve("windup", function(character, object, state, with)
             local minutes = Valves.decodeWind(with)
             if not minutes then
                 return Jobs.UNKNOWN
@@ -340,19 +326,18 @@ LineJobs.JOBS = {
             if minutes == 0 then
                 return nil
             end
-            if Lines.stateOf(object).heldBy then
+            if state.heldBy then
                 return "Tooltip_EnhancedIrrigation_TapInUse"
             end
             local _, noTank = Taps.tankFor(object)
             return noTank
-        end,
+        end),
     },
     [LineJobs.SET_VALVE_TIMER] = {
         minutes = LineJobs.VALVE_MINUTES, position = "Mid",
-        blocker = function(character, object, with)
-            return valveBlocker(object, "timer")
-                or (not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil)
-        end,
+        blocker = atValve("timer", function(character, object, state, with)
+            return not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil
+        end),
     },
 }
 

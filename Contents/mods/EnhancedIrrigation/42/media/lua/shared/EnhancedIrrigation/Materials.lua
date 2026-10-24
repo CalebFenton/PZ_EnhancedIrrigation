@@ -164,7 +164,7 @@ function Materials.giveItems(character, itemOrType, count)
     end
 end
 
-function Materials.notBroken(item)
+local function notBroken(item)
     return not item:isBroken()
 end
 
@@ -173,7 +173,7 @@ Materials.SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
 
 --- The first working tool with `tag` (an ItemTag value) `character` carries, bags included, or nil.
 function Materials.workingTool(character, tag)
-    return character:getInventory():getFirstTagEvalRecurse(tag, Materials.notBroken)
+    return character:getInventory():getFirstTagEvalRecurse(tag, notBroken)
 end
 
 --- Whether `character` carries a working tool with `tag` (an ItemTag value), bags included.
