@@ -159,13 +159,13 @@ handler("appliances.toggle", function(player, args)
 end)
 
 -- Every item of `args.type` the server's copy of the character carries, bags included: its
--- condition, the ceiling it carries (Pumps.ceilingOf) and, for a drainable, its uses left.
+-- condition, the ceiling it carries (Parts.ceilingOf) and, for a drainable, its uses left.
 handler("pumpHouse.carried", function(player, args)
     local items = player:getInventory():getAllTypeRecurse(args.type)
     local found = {}
     for i = 0, items:size() - 1 do
         local item = items:get(i)
-        table.insert(found, { condition = item:getCondition(), ceiling = mod().Pumps.ceilingOf(item),
+        table.insert(found, { condition = item:getCondition(), ceiling = mod().Parts.ceilingOf(item),
             uses = instanceof(item, "DrainableComboItem") and item:getCurrentUses() or nil })
     end
     return { items = found }

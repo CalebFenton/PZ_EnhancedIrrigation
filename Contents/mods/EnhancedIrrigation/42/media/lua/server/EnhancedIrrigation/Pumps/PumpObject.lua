@@ -91,7 +91,7 @@ end
 function PumpObject:fitPart(item)
     self.part = item:getFullType()
     self.partCondition = item:getCondition() + (item:getModData()[Pumps.FRACTION_KEY] or 0)
-    self.partCeiling = Pumps.ceilingOf(item)
+    self.partCeiling = EnhancedIrrigation.Parts.ceilingOf(item)
 end
 
 --- Takes the Pump House's part out and switches it off. Returns the part as an item, as worn as it
@@ -103,7 +103,7 @@ function PumpObject:takeOutPart()
     item:setCondition(whole)
     local fraction = self.partCondition - whole
     item:getModData()[Pumps.FRACTION_KEY] = fraction > 0 and fraction or nil
-    Pumps.setCeiling(item, self.partCeiling)
+    EnhancedIrrigation.Parts.setCeiling(item, self.partCeiling)
     self.part, self.partCondition, self.partCeiling = nil, nil, nil
     self.on, self.running = nil, nil
     return item
@@ -111,7 +111,7 @@ end
 
 --- Mends the Pump House's part: its ceiling lowered by a repair's loss, and it restored to that.
 function PumpObject:repairPart()
-    self.partCeiling = self.partCeiling - Pumps.REPAIR_LOSS
+    self.partCeiling = EnhancedIrrigation.Parts.restores(self.partCeiling, Pumps.REPAIR_LOSS)
     self.partCondition = self.partCeiling
 end
 

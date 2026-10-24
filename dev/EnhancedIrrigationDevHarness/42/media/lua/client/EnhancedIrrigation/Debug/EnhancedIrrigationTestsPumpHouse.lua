@@ -5,6 +5,7 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Power"
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -29,6 +30,7 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Pumps, PumpJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 local ApplianceJobs, Lines, LineJobs = EnhancedIrrigation.ApplianceJobs, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
+local Parts = EnhancedIrrigation.Parts
 
 local LITRES = 0.05
 local WOOD, METAL = "EnhancedIrrigation_PumpHouseWood", "EnhancedIrrigation_PumpHouseMetal"
@@ -55,7 +57,7 @@ end
 
 -- The record's fields of a new part fitted: `part` (a full type) at full condition.
 local function fitted(part, fields)
-    local all = { part = part, partCondition = Pumps.PART_CONDITION, partCeiling = Pumps.PART_CONDITION }
+    local all = { part = part, partCondition = Parts.CONDITION, partCeiling = Parts.CONDITION }
     for key, value in pairs(fields or {}) do
         all[key] = value
     end
@@ -235,7 +237,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         if not spots then return end
         self.house = placeHouse(self, spots[1], WOOD)
         T.give(self, "parts", { { type = "Base.Screwdriver" },
-            { type = APPLIANCE, condition = WORN, modData = { [Pumps.CEILING_KEY] = CEILING } } })
+            { type = APPLIANCE, condition = WORN, modData = { [Parts.CEILING_KEY] = CEILING } } })
         useMenu(self, self.house, "fit", function(context)
             return T.jobOption(context, "pump", PumpJobs.FIT_PUMP, self.items.parts[2])
         end, true)
@@ -261,7 +263,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         local items = self.reads.carried.items
         expect(#items == 1 and items[1].condition == WORN and items[1].ceiling == CEILING, "the server's part came back as "
             .. (items[1] and (items[1].condition .. " of " .. items[1].ceiling) or "nothing"))
-        expect(self.back and self.back:getCondition() == WORN and Pumps.ceilingOf(self.back) == CEILING,
+        expect(self.back and self.back:getCondition() == WORN and Parts.ceilingOf(self.back) == CEILING,
             "this client's part came back at " .. tostring(self.back and self.back:getCondition()))
     end,
 })
@@ -582,7 +584,7 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_PartBurntOut", getItemNameFromFullType(APPLIANCE)))
         T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpBurntOut")
         T.expectOffered(self, "repair")
-        local restored = Pumps.PART_CONDITION - Pumps.REPAIR_LOSS
+        local restored = Parts.CONDITION - Pumps.REPAIR_LOSS
         local repaired = self.reads.repaired.record
         expect(repaired.partCondition == restored and repaired.partCeiling == restored, "the repair left the part at "
             .. repaired.partCondition .. " of " .. repaired.partCeiling)

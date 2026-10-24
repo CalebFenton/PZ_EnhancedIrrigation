@@ -6,6 +6,7 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/Power"
 
@@ -42,12 +43,6 @@ local TAKE_TIMER_MINUTES = 3
 
 local function exhausted(character)
     return character:getStats():get(CharacterStat.ENDURANCE) <= Pumps.EXHAUSTED
-end
-
--- What a Pump House's next Repair Pump would restore its part to, from its `summary`: the ceiling,
--- lowered by a repair's loss.
-local function repairRestores(summary)
-    return summary.partCeiling - Pumps.REPAIR_LOSS
 end
 
 -- A Pump House's summary as this side knows it, when `pump` is one; else nil.
@@ -174,11 +169,8 @@ PumpJobs.JOBS = {
             if refusal then
                 return refusal
             end
-            local restores = repairRestores(summary)
-            if restores <= 0 then
-                return "Tooltip_EnhancedIrrigation_PumpTooRepaired"
-            end
-            return summary.partCondition >= restores and "Tooltip_EnhancedIrrigation_PumpSound" or nil
+            return EnhancedIrrigation.Parts.mendRefusal(summary.partCondition, summary.partCeiling, Pumps.REPAIR_LOSS,
+                "Tooltip_EnhancedIrrigation_PumpTooRepaired", "Tooltip_EnhancedIrrigation_PumpSound")
         end,
         materials = {
             { skill = "Electricity", level = 2 },

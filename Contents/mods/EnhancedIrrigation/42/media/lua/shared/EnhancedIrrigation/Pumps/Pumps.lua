@@ -18,6 +18,7 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/Jobs"
+require "EnhancedIrrigation/Parts"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Pumps = {}
@@ -76,13 +77,9 @@ Pumps.PARTS = {
 -- cools its seal and bearings.
 Pumps.DRY_WEAR = 10
 
--- A pump part's condition new, the most a repair restores; the item modData key of a lower ceiling
--- a part carries, made or repaired, absent at that; the key of the wear past its whole points a
--- part taken out carries, as an item's condition is whole; what each Repair Pump takes off the
--- ceiling, as vanilla's repairs fall short; and the ceiling of a Utility Pump made from a Blower
--- Fan, as a home-made pump falls short of a bought one.
-Pumps.PART_CONDITION = 100
-Pumps.CEILING_KEY = "EnhancedIrrigation_ceiling"
+-- The item modData key of the wear past its whole points a part taken out carries, as an item's
+-- condition is whole; what each Repair Pump takes off its ceiling (Parts.restores); and the ceiling
+-- of a Utility Pump made from a Blower Fan.
 Pumps.FRACTION_KEY = "EnhancedIrrigation_conditionFraction"
 Pumps.REPAIR_LOSS = 10
 Pumps.MADE_CEILING = 80
@@ -155,22 +152,13 @@ function Pumps.liftingSpec(pump)
     return spec
 end
 
---- The most condition a repair brings the pump part `item` back to.
-function Pumps.ceilingOf(item)
-    return item:getModData()[Pumps.CEILING_KEY] or Pumps.PART_CONDITION
-end
+Pumps.ceilingOf = EnhancedIrrigation.Parts.ceilingOf
+Pumps.setCeiling = EnhancedIrrigation.Parts.setCeiling
+Pumps.CEILING_KEY = EnhancedIrrigation.Parts.CEILING_KEY
 
---- Gives the pump part `item` the ceiling `ceiling`, which travels with it.
-function Pumps.setCeiling(item, ceiling)
-    item:getModData()[Pumps.CEILING_KEY] = ceiling < Pumps.PART_CONDITION and ceiling or nil
-end
-
---- OnCreate of Make Utility Pump (Recipes.txt): the pump comes out at its lower ceiling.
-function Pumps.onMadePump(craftRecipeData, character)
-    local pump = craftRecipeData:getFirstCreatedItem()
-    Pumps.setCeiling(pump, Pumps.MADE_CEILING)
-    pump:setCondition(Pumps.MADE_CEILING)
-    pump:syncItemFields()
+--- OnCreate of Make Utility Pump (Recipes.txt).
+function Pumps.onMadePump(craftRecipeData)
+    EnhancedIrrigation.Parts.made(craftRecipeData, Pumps.MADE_CEILING)
 end
 
 --- The pump on `square`, or nil. Takes a nil square.
