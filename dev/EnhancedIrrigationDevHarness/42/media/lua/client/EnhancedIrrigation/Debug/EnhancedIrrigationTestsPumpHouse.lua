@@ -582,17 +582,20 @@ T.test("irrigation_pump_house_runs_a_storey_up", {
 
 -- Wear -------------------------------------------------------------------------------------------------
 
--- Indoors on the grid, beside a dry barrel: two hours wear the Appliance Pump ten times as fast as
--- running wet. Catches a dry pump that wears as if it lifted water.
+-- Indoors on the grid, beside a dry barrel, its outlet plumbed to another: two hours wear the
+-- Appliance Pump ten times as fast as running wet, and lift nothing. Catches a dry pump that wears
+-- as if it lifted water, or one that wears dry only with nowhere to pump to.
 T.test("irrigation_pump_house_dry_source_wears_it_fast", {
     instant = true,
     run = function(self)
         T.setGrid(self, true)
-        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true, indoors = true })
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
         self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
         T.placeTank(self, spots[2], "ground", 0)
-        update(self, self.house, "dry", { hoursAgo = 2 })
+        self.tank = T.placeTank(self, spots[3], "raisedLidded")
+        link(self, self.house, self.tank)
+        update(self, self.house, "dry", { hoursAgo = 2, tank = self.tank })
     end,
     validate = function(self)
         local dry = self.reads.dry
@@ -600,6 +603,7 @@ T.test("irrigation_pump_house_dry_source_wears_it_fast", {
         -- was placed.
         expectNear("the part after two dry hours", dry.before.record.partCondition - dry.after.record.partCondition,
             2 * Pumps.PARTS[APPLIANCE].wearPerHour * Pumps.DRY_WEAR, 0.001)
+        expectNear("the outlet's barrel after two dry hours", dry.after.tank.litres, 0, LITRES)
     end,
 })
 
