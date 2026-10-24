@@ -491,8 +491,9 @@ function T.trackLines(self, handles)
     T.server(self, "lines.track", { tiles = T.tiles(handles) })
 end
 
---- Queues running the line tapped at `tap` for `hours` on the server; the reply, the litres
---- `drawn` or the refusal `stopped`, and `handles`' tiles, lands in self.reads[label].
+--- Queues running the line tapped at `tap` for `hours` on the server as the tap runs it; the reply,
+--- the litres `drawn` (nil when no tank fed it), why the water stops, `stopped`, if it does, and
+--- `handles`' tiles, lands in self.reads[label].
 function T.flow(self, tap, hours, handles, label)
     T.read(self, "lines.flow", T.at(tap, { hours = hours, tiles = T.tiles(handles) }), label)
 end
