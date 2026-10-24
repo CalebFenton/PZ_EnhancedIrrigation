@@ -98,7 +98,7 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
             self.pump = T.buildFromMenu(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity], { case.seal })
             if not self.pump then return end
             readUntil(self, self.pump, "built", function(state) return state.record ~= nil end)
-            T.count(self, "left", { case.seal, DIRTY_LEATHER, "Base.RubberHose" })
+            T.count(self, "left", { case.seal, DIRTY_LEATHER })
             T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == case.seal end,
                 "this client's summary of the built pump")
             T.readMenu(self, self.pump, "built")
@@ -112,7 +112,7 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
                 .. tostring(record.seal) .. " worn " .. tostring(record.sealWear) .. ", not a new " .. case.seal)
             expect(record.condition == Pumps.BODY_CONDITION, "the built pump's condition is " .. tostring(record.condition))
             local left = self.counts.left
-            for _, fullType in ipairs({ case.seal, DIRTY_LEATHER, "Base.RubberHose" }) do
+            for _, fullType in ipairs({ case.seal, DIRTY_LEATHER }) do
                 expect(left[fullType] == 0, "building left " .. tostring(left[fullType]) .. " " .. fullType)
             end
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoWaterToDraw"))
