@@ -119,15 +119,17 @@ handler("pumps.state", function(player, args)
     return stateAt(player, args)
 end)
 
--- Sets `args.fields` on the pump's record and plumbs its outlet to the tank at `args.tank` with a
--- length of iron pipe, as Plumb Outlet does once its job is done. Answers the state.
+-- Sets `args.fields` on the pump's record and plumbs its outlet to the tank at `args.tank` with the
+-- new iron pipe Plumb Outlet lays for the run (LinkJobs.pipeFor), as its job does once done.
+-- Answers the state.
 handler("pumps.link", function(player, args)
-    local record = recordAt(args)
-    if not record then
-        return nil, "the record of the pump at " .. args.x .. "," .. args.y
+    local pump, record = pumpAt(args), recordAt(args)
+    if not (pump and record) then
+        return nil, "the pump at " .. args.x .. "," .. args.y
     end
     setFields(record, args.fields)
-    mod().LinkSystem.instance:addLink(args, args.tank, "iron", 1, { 100 }, "pump")
+    local kind, lengths = mod().LinkJobs.pipeFor(pump, mod().Links.encode(args.tank, "iron"))
+    mod().LinkSystem.instance:addLink(mod().squareOf(pump), args.tank, kind, lengths, nil, "pump")
     record:sendSummary()
     return stateAt(player, args)
 end)
