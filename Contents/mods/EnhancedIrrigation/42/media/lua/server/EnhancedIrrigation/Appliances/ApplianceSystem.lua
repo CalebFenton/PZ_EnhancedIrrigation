@@ -1,5 +1,5 @@
--- The authority's side of the job at an appliance (shared/EnhancedIrrigation/Appliances/ApplianceJobs.lua):
--- Salvage Pump done for real, which takes out the drain pump and the water inlet valve beside it.
+-- The authority's side of Salvage Pump, which takes out an appliance's drain pump and the water
+-- inlet valve beside it.
 
 if isClient() then return end
 

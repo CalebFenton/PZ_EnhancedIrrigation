@@ -1,10 +1,9 @@
 -- Plumbed fixtures: the sinks, baths, showers, toilets and washers the game marks waterPiped, each
 -- plumbed to one tank. A plumbed fixture holds its own water in a FluidContainer, its buffer, the
--- size of vanilla's reserve for it, which its tank refills (server/EnhancedIrrigation/Fixtures/
--- FixtureSystem.lua). Vanilla's drink, fill, wash and washer read the buffer, and the engine keeps
--- its taint (docs/research.md, "Fixture buffers, run in game"). While the town's water runs to it,
--- that wins and the buffer waits empty. The pipe is a link like the one between two tanks, of the
--- role `fixture` (Links.lua).
+-- size of vanilla's reserve for it, which its tank refills. Vanilla's drink, fill, wash and washer
+-- read the buffer, and the engine keeps its taint (docs/research.md, "Fixture buffers, run in
+-- game"). While the town's water runs to it, that wins and the buffer waits empty. The pipe is a
+-- link of the role `fixture`.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
@@ -44,7 +43,7 @@ local function tileNumber(isoObject, name)
     return value and tonumber(value) or nil
 end
 
---- The litres `fixture`'s buffer holds: vanilla's reserve for its tile, sink 20 and bath 100.
+--- The litres `fixture`'s buffer holds: vanilla's reserve for its tile.
 function Fixtures.capacityOf(fixture)
     return tileNumber(fixture, "waterMaxAmount") or tileNumber(fixture, "waterAmount") or DEFAULT_LITRES
 end

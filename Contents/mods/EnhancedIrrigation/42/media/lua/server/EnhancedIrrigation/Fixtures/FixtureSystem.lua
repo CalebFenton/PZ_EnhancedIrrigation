@@ -18,11 +18,11 @@ EnhancedIrrigation.FixtureSystem = FixtureSystem
 local Fixtures, Tanks, Links = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 
 --- `fixture`'s buffer, given it first if it has none: an empty FluidContainer of its reserve's
---- size, which the engine serves its drink, fill, wash and washer from, taint and all, once the
---- town's water stops (IsoObject.isWaterInfinite comes first). Vanilla's rooftop plumbing goes, so
---- with its reserve held back the buffer is all it has after the shutoff. A buffer stays once
---- given: a client copy is told of a container added (IsoObject.syncFluidContainerSend), never of
---- one taken away.
+--- size. The engine serves the fixture's drink, fill, wash and washer from it, taint and all, once
+--- the town's water stops (IsoObject.isWaterInfinite comes first). Vanilla's rooftop plumbing
+--- goes, so with its reserve held back the buffer is all it has after the shutoff. A buffer stays
+--- once given: a client copy is told of a container added (IsoObject.syncFluidContainerSend),
+--- never of one taken away.
 function FixtureSystem.ensureBuffer(fixture)
     local buffer = fixture:getFluidContainer()
     if buffer then

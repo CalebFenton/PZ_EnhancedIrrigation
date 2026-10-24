@@ -1,8 +1,7 @@
--- The authority's side of the Tank Stand jobs (shared/EnhancedIrrigation/Stands/StandJobs.lua): setting a
--- barrel on a stand and taking it down swap the object on the square, as vanilla's lid action
--- swaps a barrel (ISOpenCloseLid:complete): the old object goes, and a new one of the other entity
--- comes in its place, sent whole to the clients (IsoGridSquare.addWorkstationEntity), keeping the
--- old one's health.
+-- The authority's side of the Tank Stand jobs: setting a barrel on a stand and taking it down swap
+-- the object on the square, as vanilla's lid action swaps a barrel (ISOpenCloseLid:complete): the
+-- old object goes, and a new one of the other entity comes in its place, sent whole to the clients
+-- (IsoGridSquare.addWorkstationEntity), keeping the old one's health.
 
 if isClient() then return end
 
