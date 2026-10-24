@@ -8,7 +8,7 @@ import random
 
 from mathutils import Matrix, Quaternion, Vector
 
-from kit import beam, box, cylinder, group, lathe, material, stain, text, tube
+from kit import beam, box, cylinder, group, lathe, material, profile_radius, stain, text, tube
 
 
 def M(name):
@@ -373,25 +373,19 @@ BARREL_HEIGHT = 0.8
 BARREL_PROFILE = ((0.335, 0.0), (0.353, 0.18), (0.362, 0.4), (0.353, 0.62), (0.335, BARREL_HEIGHT))
 BARREL_STAVES = 18
 BARREL_HOOPS = (0.27, 0.53)
-
-
-def _barrel_radius(z):
-    for (r0, z0), (r1, z1) in zip(BARREL_PROFILE, BARREL_PROFILE[1:]):
-        if z0 <= z <= z1:
-            return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
-    return BARREL_PROFILE[-1][0]
+# The dark core between the staves, closed at its floor.
+BARREL_CORE = ((0, 0.004), (0.315, 0.004), (0.335, 0.44), (0.315, BARREL_HEIGHT - 0.01))
 
 
 def _barrel_shell(col):
     """The rain barrel's staves and hoops standing on z = 0, and the dark core between the staves."""
-    lathe(col, "Barrel_Core", M("barrelinside"), [(0, 0.004), (0.315, 0.004), (0.335, 0.44), (0.315, BARREL_HEIGHT - 0.01)],
-          segments=24)
+    lathe(col, "Barrel_Core", M("barrelinside"), BARREL_CORE, segments=24)
     step = 360 / BARREL_STAVES
     for i in range(BARREL_STAVES):
         lathe(col, "Barrel_Stave", M("stavedark" if i % 3 == 1 else "stave"), BARREL_PROFILE, segments=3,
               arc=(i * step + 0.3, (i + 1) * step - 0.3))
     for z in BARREL_HOOPS + (0.035,):
-        r = _barrel_radius(z) + 0.004
+        r = profile_radius(BARREL_PROFILE, z) + 0.004
         lathe(col, "Barrel_Hoop", M("hoop"), [(r, z - 0.022), (r + 0.004, z), (r, z + 0.022)], segments=36)
 
 
@@ -485,14 +479,14 @@ def barrel_filter(col):
     # The staves' cut ends round the rim, and the sand's surface, heaped a little in the middle.
     rim = BARREL_HEIGHT
     lathe(col, "Filter_Rim", M("stave"), [(0.313, rim - 0.012), (0.317, rim), (0.337, rim)], segments=36, smooth=False)
-    edge = 0.335 + (0.315 - 0.335) * (BARREL_SAND - 0.44) / (rim - 0.01 - 0.44) - 0.002
+    edge = profile_radius(BARREL_CORE, BARREL_SAND) - 0.002
     rng = random.Random(134)
     ripples = [rng.uniform(-1, 1) for _ in range(36)]
     lathe(col, "Filter_Sand", M("sand"), [(0, BARREL_SAND + 0.014), (edge * 0.5, BARREL_SAND + 0.01), (edge, BARREL_SAND)],
           segments=36, shape=lambda angle, row: (0.0, 0.003 * ripples[int(round(angle / 10)) % 36] * (row == 1)))
     angle, z = BARREL_OUTLET
     a = math.radians(angle)
-    wall = _barrel_radius(z) - 0.01
+    wall = profile_radius(BARREL_PROFILE, z) - 0.01
     mouth = _outlet(col, (wall * math.cos(a), wall * math.sin(a), z), angle, 0.06, 0.06)
     # The dish under the spout, its rim a few fingers below the mouth.
     lathe(col, "Filter_Dish", M("clay"), [(0, 0.004), (0.06, 0.004), (0.085, 0.045), (0.079, 0.047), (0.058, 0.012), (0, 0.012)],
@@ -616,10 +610,7 @@ PAIL_FLOOR = 0.01  # the inside floor's height, which the crock stands on
 PAIL_WIRE = 0.007  # the bail, drawn fatter than life, as the pipes are, so it holds at game size
 PAIL_EARS = 45  # the bail's pivots, on the north-east and south-west sides: square to the camera
 PAIL_LEAN = 15  # how far the bail leans back from upright, away from the camera: its top shows over the crock's rim
-
-
-def _pail_radius(z):
-    return PAIL_BOTTOM + (PAIL_TOP - PAIL_BOTTOM) * z / PAIL_HEIGHT
+PAIL_SIDE = ((PAIL_BOTTOM, 0), (PAIL_TOP, PAIL_HEIGHT))  # its outside from foot to rim, as a lathe profile
 
 
 def crock_in_bucket(col):
@@ -637,11 +628,11 @@ def crock_in_bucket(col):
 
     ring("Pail_Rim", top - 0.002, PAIL_TOP + 0.002, 0.007)
     for z in (0.075, 0.15):
-        ring("Pail_Rib", z, _pail_radius(z), 0.003)
-    ring("Pail_Foot", 0.012, _pail_radius(0.012), 0.004)
+        ring("Pail_Rib", z, profile_radius(PAIL_SIDE, z), 0.003)
+    ring("Pail_Foot", 0.012, profile_radius(PAIL_SIDE, 0.012), 0.004)
     # The ears, plates riveted under the rim, and the bail: a half hoop between them, leaning back.
     ear_z = top - 0.035
-    reach = _pail_radius(ear_z) + 0.006
+    reach = profile_radius(PAIL_SIDE, ear_z) + 0.006
     pivot = Vector((math.cos(math.radians(PAIL_EARS)), math.sin(math.radians(PAIL_EARS)), 0))
     back = Vector((-pivot.y, pivot.x, 0))
     lean = math.radians(PAIL_LEAN)

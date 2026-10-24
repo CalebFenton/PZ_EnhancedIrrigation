@@ -444,6 +444,16 @@ def lathe(collection, name, mat, profile, segments=24, arc=(0.0, 360.0), at=(0, 
     return obj
 
 
+def profile_radius(profile, z):
+    """The radius of a lathe `profile` at height `z`, held at its end radii beyond its ends."""
+    if z < profile[0][1]:
+        return profile[0][0]
+    for (r0, z0), (r1, z1) in zip(profile, profile[1:]):
+        if z0 <= z <= z1 and z0 < z1:
+            return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
+    return profile[-1][0]
+
+
 def text(collection, name, mat, body, size, at=(0, 0, 0), rotate=(90, 0, 0), align="CENTER"):
     """Flat lettering as a mesh, by default standing upright and reading from the front (-Y), its
     baseline centre at `at`. Lift it a millimetre off the surface it is printed on."""
