@@ -10,7 +10,7 @@ require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
-require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
@@ -25,7 +25,7 @@ local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
 local Materials = EnhancedIrrigation.Materials
 local Pipes = EnhancedIrrigation.Pipes
-local Pumps, Sprinklers = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers
+local Parts, Sprinklers = EnhancedIrrigation.Parts, EnhancedIrrigation.Sprinklers
 
 LineSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Line",
@@ -174,7 +174,7 @@ local DO = {
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
     [LineJobs.SET_SPRINKLER] = function(character, object, item)
         EnhancedIrrigation.Materials.takeItem(character, item)
-        Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Pumps.ceilingOf(item) }
+        Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Parts.ceilingOf(item) }
     end,
     [LineJobs.TAKE_SPRINKLER] = function(character, object)
         EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
@@ -198,7 +198,7 @@ local DO = {
 function LineSystem.takeSprinkler(record)
     local item = instanceItem(Sprinklers.ITEM)
     item:setCondition(record.sprinkler.condition)
-    Pumps.setCeiling(item, record.sprinkler.ceiling)
+    Parts.setCeiling(item, record.sprinkler.ceiling)
     record.sprinkler = nil
     return item
 end

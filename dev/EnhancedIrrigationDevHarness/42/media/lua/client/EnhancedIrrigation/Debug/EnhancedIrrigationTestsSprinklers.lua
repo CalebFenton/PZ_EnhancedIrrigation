@@ -5,6 +5,7 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Sprinklers"
+require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/PlantInfo"
 
@@ -21,6 +22,7 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Lines, LineJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, Sprinklers, PlantInfo = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers, EnhancedIrrigation.PlantInfo
+local Parts = EnhancedIrrigation.Parts
 
 local POINTS = 0.05
 local LITRES = 0.05
@@ -283,7 +285,7 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         useJob(self, tap, LineJobs.SET_SPRINKLER, "on the tap", false)
         useJob(self, tile, LineJobs.SET_SPRINKLER, "carrying none", false)
         T.give(self, "sprinkler", { { type = Sprinklers.ITEM, condition = WORN.condition,
-            modData = { [Pumps.CEILING_KEY] = WORN.ceiling } } })
+            modData = { [Parts.CEILING_KEY] = WORN.ceiling } } })
         useJob(self, tile, LineJobs.SET_SPRINKLER, "set", true)
         T.readUntil(self, "lines.read", { tiles = { T.at(tile) } }, "set", function(reply)
             return reply.tiles[1].record.sprinkler ~= nil

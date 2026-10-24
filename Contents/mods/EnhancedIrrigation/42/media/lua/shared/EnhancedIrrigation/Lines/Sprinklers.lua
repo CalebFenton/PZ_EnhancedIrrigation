@@ -7,13 +7,13 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
-require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Parts"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Sprinklers = {}
 EnhancedIrrigation.Sprinklers = Sprinklers
 
-local Sprites, Lines, Pumps = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.Pumps
+local Sprites, Lines, Parts = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.Parts
 
 Sprinklers.ITEM = "EnhancedIrrigation.LawnSprinkler"
 
@@ -27,8 +27,7 @@ Sprinklers.LOST = 0.5
 Sprinklers.ALONG = 2
 Sprinklers.ACROSS = 1
 
--- The ceiling a sprinkler made from pipe comes out at, as a home-made part falls short of a bought
--- one (Pumps.MADE_CEILING).
+-- The ceiling a sprinkler made from pipe comes out at.
 Sprinklers.MADE_CEILING = 80
 
 -- The shapes (Sprites.pipe) of a tile the line runs through north to south: straight, or its end.
@@ -85,13 +84,9 @@ function Sprinklers.soilKeyAt(x, y, z)
     return Lines.wetterKey(own and own.soil, holder and holder.sprinklerSoil[key])
 end
 
---- OnCreate of Make Pipe Sprinkler (Recipes.txt): the sprinkler comes out at its lower ceiling,
---- which travels with it as a pump part's does (Pumps.setCeiling).
-function Sprinklers.onMade(craftRecipeData, character)
-    local sprinkler = craftRecipeData:getFirstCreatedItem()
-    Pumps.setCeiling(sprinkler, Sprinklers.MADE_CEILING)
-    sprinkler:setCondition(Sprinklers.MADE_CEILING)
-    sprinkler:syncItemFields()
+--- OnCreate of Make Pipe Sprinkler (Recipes.txt).
+function Sprinklers.onMade(craftRecipeData)
+    Parts.made(craftRecipeData, Sprinklers.MADE_CEILING)
 end
 
 return Sprinklers
