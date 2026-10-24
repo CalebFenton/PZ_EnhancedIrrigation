@@ -7,9 +7,8 @@ require "EnhancedIrrigation/UI/TreatmentMenu"
 require "ISUI/ISBBQMenu"
 require "Camping/ISCampingMenu"
 
--- The Boilers: where one can be built, vanilla's fire menu on it, the hot drum that passes clean
--- water, scorching and patching, and plumbing. Time runs on the server through the record's own
--- advance for set hours, so the clock doesn't decide what a test sees.
+-- Time runs on the server through the record's own advance for set hours, so the clock doesn't
+-- decide what a test sees.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -215,7 +214,7 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
         if not spots then return end
         self.unit = placeUnit(self, spots[1], STONE)
         self.cold = placeUnit(self, spots[2], WELDED)
-        -- More than three hours of the boiler's water, so the head lasts the test, in the drum before
+        -- Enough of the boiler's water that the head lasts the test, in the drum before
         -- the fire is lit so that it never burns dry.
         self.head = self.unit.spec.rate * 4
         run(self, self.unit, "raw", {}, { head = self.head, headTainted = true })
@@ -370,6 +369,5 @@ T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
     end,
 })
 
--- The boiler's basin through vanilla's menus (T.vanillaBasinTest).
 T.vanillaBasinTest({ name = "irrigation_treatment_boiler_vanilla_menu_drinks_fills_and_empties_the_basin",
     entity = STONE, litres = 20, tainted = false, inBucket = 0 })
