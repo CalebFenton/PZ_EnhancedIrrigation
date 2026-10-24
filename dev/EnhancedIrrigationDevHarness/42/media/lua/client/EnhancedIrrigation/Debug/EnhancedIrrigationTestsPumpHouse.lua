@@ -5,24 +5,28 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/ApplianceJobs"
+require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Pumps/PumpClient"
 require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/ApplianceMenu"
+require "EnhancedIrrigation/UI/LineMenu"
 
 -- The Pump Houses and their parts (Pumps.lua, PumpJobs.lua, Pumps/PumpHouse.lua, PumpObject.lua,
 -- PumpSystem.lua, PumpClient.lua, PumpMenu.lua, their entities in Entities.txt), Salvage Pump
 -- (Appliances.lua, ApplianceJobs.lua, ApplianceSystem.lua, ApplianceMenu.lua) and Make Utility Pump
 -- (Recipes.txt): building the houses from the build menu, fitting and taking out a part, the
 -- switch, running on the grid beside a room and on a generator that pays for it in fuel, a dry
--- source and burning out, Repair Pump, the time a house was away and the grid's shutoff, a washer's
--- pump salvaged, and a Utility Pump made. Houses are placed and plumbed by
--- EnhancedIrrigationTestServerPumps.lua's handlers, and run for set hours by its own pass from
--- EnhancedIrrigationTestServerPumpHouse.lua's, so the clock doesn't decide the sums.
+-- source and burning out, Repair Pump, the time a house was away and the grid's shutoff, a
+-- garden line a house drives, a washer's pump salvaged, and a Utility Pump made. Houses are placed
+-- and plumbed by EnhancedIrrigationTestServerPumps.lua's handlers, and run for set hours by its own
+-- pass from EnhancedIrrigationTestServerPumpHouse.lua's and EnhancedIrrigationTestServerSprinklers.lua's,
+-- so the clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Pumps, PumpJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
-local ApplianceJobs = EnhancedIrrigation.ApplianceJobs
+local ApplianceJobs, Lines, LineJobs = EnhancedIrrigation.ApplianceJobs, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 
 local LITRES = 0.05
 local WOOD, METAL = "EnhancedIrrigation_PumpHouseWood", "EnhancedIrrigation_PumpHouseMetal"
@@ -654,6 +658,114 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         expect(away.after.record.lastHour == away.before.record.lastHour, "the house's record ran while away")
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
         expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), LITRES)
+    end,
+})
+
+-- Lines ------------------------------------------------------------------------------------------------
+
+-- Where the line tests set a house, the barrel it draws from beside it, and two line tiles below.
+local LINE_SPOTS = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } }
+-- Litres in that barrel.
+local SOURCE_LITRES = 100
+local HALF_HOUR = 0.5
+
+-- Queues a Pump House `entity` fitted with a new `part` at spots[1], a lidded barrel of
+-- SOURCE_LITRES beside it at spots[2] for its water, and its outlet plumbed to the first of two holed
+-- line tiles on spots[3] and spots[4], with dry crops on them. Returns the house, the barrel and the
+-- tiles.
+local function houseLine(self, spots, entity, part)
+    local tiles = { spots[3], spots[4] }
+    for _, tile in ipairs(tiles) do
+        tile.fields = { holed = true }
+    end
+    T.placeLine(self, tiles, "iron")
+    T.plant(self, tiles[1], 0)
+    T.plant(self, tiles[2], 0)
+    local house = placeHouse(self, spots[1], entity, fitted(part))
+    local barrel = T.placeTank(self, spots[2], "lidded", SOURCE_LITRES)
+    link(self, house, tiles[1])
+    return house, barrel, tiles
+end
+
+local function useLineJob(self, tile, job, label, choose)
+    T.useOption(self, function() return T.lineObject(tile) end, label, function(context)
+        return T.jobOption(context, "line", job)
+    end, choose)
+end
+
+-- A Pump House with a Utility Pump on the grid, its outlet on a line of two holed tiles: switched
+-- on, every client's copy of the line runs and its Drain Line is greyed out saying so; half an hour
+-- pushes each hole's water out at the part's push, drawing only what the holes took from its barrel
+-- and wearing the part by the hour; switched off, the line stops and drains. The switch is the
+-- authority's own job, whose menu the tests above play. Catches a pumped line run at a tank's head,
+-- a pump that draws its whole rate into a line, or a line drained under its pump.
+T.test("irrigation_pump_house_drives_its_line_while_on", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, true)
+        local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
+        if not spots then return end
+        self.house, self.barrel, self.tiles = houseLine(self, spots, METAL, UTILITY)
+        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "turned on")
+        readUntil(self, self.house, "on", function(state) return state.record.running == true end)
+        T.waitForLines(self, self.tiles, "this client's copy of the running line", function(summary) return summary.running end)
+        useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain running", false)
+        T.read(self, "sprinklers.house", T.at(self.house, { hoursAgo = HALF_HOUR, squares = T.tiles(self.tiles),
+            tank = T.at(self.barrel) }), "half")
+        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
+        T.waitForLines(self, self.tiles, "this client's copy of the stopped line", function(summary)
+            return not summary.running
+        end)
+        useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain stopped", false)
+    end,
+    validate = function(self)
+        expect(self.reads["turned on"].done and self.reads.on.record.running, "Turn On didn't run the house")
+        T.expectRefused(self, "drain running", "Tooltip_EnhancedIrrigation_LineRunning")
+        local half = self.reads.half
+        local each = Lines.HOLE_RATE * Pumps.PARTS[UTILITY].push * HALF_HOUR
+        for i = 1, 2 do
+            expectNear("crop " .. i .. "'s water", half.after.squares[i].water - half.before.squares[i].water,
+                each * Lines.POINTS_PER_LITRE, 0.05)
+        end
+        expectNear("the barrel's water drawn", half.before.tank.litres - half.after.tank.litres, 2 * each, LITRES)
+        expectNear("the part's wear", half.before.pump.partCondition - half.after.pump.partCondition,
+            Pumps.PARTS[UTILITY].wearPerHour * HALF_HOUR, 0.001)
+        expect(self.reads.off.done, "Turn Off wasn't done")
+        T.expectOffered(self, "drain stopped")
+    end,
+})
+
+-- A running house's line waits with the house while its chunk is away, and once loaded again the
+-- house runs the whole gap on the grid it still has, pushing each hole's water out at its part's
+-- push for all of it. Catches a pumped line that loses the time it was away, or runs unseen. As the
+-- catch-up test above, the house is switched on only once away.
+T.test("irrigation_pump_house_catches_up_its_line_after_a_reload", {
+    spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
+    instant = true,
+    timeoutSeconds = T.RELOAD_SECONDS,
+    run = function(self)
+        T.setGrid(self, true)
+        local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
+        if not spots then return end
+        self.house, self.barrel, self.tiles = houseLine(self, spots, WOOD, APPLIANCE)
+        update(self, self.house, "lit", {})
+        T.reload(self, T.at(self.house), function()
+            T.read(self, "sprinklers.house", T.at(self.house, { hoursAgo = AWAY_HOURS, fields = { on = true } }), "away")
+        end)
+        T.read(self, "sprinklers.house", T.at(self.house, { squares = T.tiles(self.tiles), tank = T.at(self.barrel) }),
+            "back")
+    end,
+    validate = function(self)
+        expect((self.chunkLoads or 0) > 0, "the house's chunk came back without LoadChunk, from a cache")
+        local away, back = self.reads.away, self.reads.back
+        expect(away.after.pump.lastHour == away.before.pump.lastHour, "the house's record ran while away")
+        -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
+        local perHour = 2 * Lines.HOLE_RATE * Pumps.PARTS[APPLIANCE].push
+        expectNear("the barrel's water drawn, back", SOURCE_LITRES - back.after.tank.litres,
+            perHour * (back.now - (away.now - AWAY_HOURS)), LITRES)
+        for i = 1, 2 do
+            expect((back.after.squares[i].water or 0) > 0, "crop " .. i .. " got no water from the gap")
+        end
     end,
 })
 

@@ -1,17 +1,19 @@
 -- The authority's side of pumps (shared/EnhancedIrrigation/Pumps.lua): their Global Object System,
 -- a record for each pump built, the jobs of PumpJobs done for real, who holds each hand pump, and
--- the water a hand pump lifts from its source into its outlet's tank. A Pump House runs in its
--- record's own time (Pumps/PumpHouse.lua).
+-- the water a hand pump lifts from its source into its outlet's tank or line. A Pump House runs in
+-- its record's own time (Pumps/PumpHouse.lua).
 
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
+require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Pumps/PumpHouse"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
@@ -20,6 +22,7 @@ local PumpSystem = {}
 EnhancedIrrigation.PumpSystem = PumpSystem
 
 local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
+local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
 
 PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Pump",
@@ -28,6 +31,16 @@ PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
     Object = EnhancedIrrigation.PumpObject,
     isObject = Pumps.isPump,
 })
+
+-- A pump taken away, smashed or by another mod, no longer runs the line its outlet fed.
+function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
+    local outlet = self:isValidIsoObject(isoObject) and Pumps.outletOf(EnhancedIrrigation.squareOf(isoObject))
+    SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
+    local b = outlet and outlet.b
+    if b and Lines.recordAt(b.x, b.y, b.z) then
+        EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, false)
+    end
+end
 
 --- The SpriteConfig OnCreate of every pump's entity (Entities.txt), which the build menu calls on
 --- the authority once the pump stands on its square (ISBuildIsoEntity:setInfo): its record, at
@@ -126,7 +139,7 @@ local function letGo(record)
     held[record] = nil
     -- Unless the pump went while held, taking its record.
     if record.x and Pumps.recordAt(record.x, record.y, record.z) == record then
-        record:sendSummary()
+        record:afterChange()
     end
 end
 
@@ -152,7 +165,7 @@ function PumpSystem.hold(pump, action)
     end
     record.holder, record.heldBy, record.heldMs = action, action.character:getUsername(), getTimestampMs()
     held[record] = true
-    record:sendSummary()
+    record:afterChange()
     return true
 end
 
@@ -185,32 +198,56 @@ local function tire(character, hours)
     end
 end
 
+-- The source of the line the hand pump of `record` feeds from `source` (Pumps.sourceOf), as Flow
+-- reads one: its spec's push, as much as it lifts an hour, and the draw, which lifts what the line
+-- takes as far as a finite source's water and the seal and body last, and wears them by it.
+local function lineSource(record, spec, source)
+    return {
+        push = spec.push,
+        perHour = spec.rate * 60,
+        pumped = true,
+        holds = true,
+        draw = function(litres)
+            if not source.infinite then
+                litres = math.min(litres, source.litres)
+            end
+            local moved = PumpObject.draw(source, nil, record:canLift(litres))
+            record:lift(moved)
+            return moved
+        end,
+    }
+end
+
 --- `character` works the hand pump `pump` for `hours`: it lifts its rate from its source into its
 --- outlet's tank, as far as the tank has room, a finite source has water and the seal and body
---- last, wears them by what it lifted, and tires the character; zombies hear it. Returns the
---- Tooltip key of why the work stops now (the tank full, the source dry, the seal or pump worn
---- out, the character exhausted), or nil while it goes on.
+--- last, or drives the line its outlet feeds, lifting what that takes up to its rate; it wears them
+--- by what it lifted, and tires the character; zombies hear it. Returns the Tooltip key of why the
+--- work stops now (the tank full, the source dry, the seal or pump worn out, the character
+--- exhausted), or nil while it goes on.
 function PumpSystem.pump(character, pump, hours)
     local record = Pumps.recordOf(pump)
     if not record then
         return "Tooltip_EnhancedIrrigation_UnknownJob"
     end
     record:catchUp()
-    local tank, source = PumpJobs.flowOf(pump)
-    if not tank then
+    local into, source = PumpJobs.flowOf(pump)
+    if not into then
         return source
     end
     local spec = Pumps.specOf(pump)
-    local fluid = tank:getFluidContainer()
-    local litres = math.min(spec.rate * 60 * hours, fluid:getFreeCapacity())
-    if not source.infinite then
-        litres = math.min(litres, source.litres)
-    end
-    litres = record:canLift(litres)
-    if litres > 0 then
-        local moved = EnhancedIrrigation.PumpObject.draw(source, fluid, litres)
-        record:lift(moved)
-        Tanks.sync(tank)
+    if Lines.isLine(into) then
+        Flow.run(Lines.recordOf(into), lineSource(record, spec, source), hours)
+    else
+        local fluid = into:getFluidContainer()
+        local litres = math.min(spec.rate * 60 * hours, fluid:getFreeCapacity())
+        if not source.infinite then
+            litres = math.min(litres, source.litres)
+        end
+        litres = record:canLift(litres)
+        if litres > 0 then
+            record:lift(PumpObject.draw(source, fluid, litres))
+            Tanks.sync(into)
+        end
     end
     if hours > 0 then
         tire(character, hours)

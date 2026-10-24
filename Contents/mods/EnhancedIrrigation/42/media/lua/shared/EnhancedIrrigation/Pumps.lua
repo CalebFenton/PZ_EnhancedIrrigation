@@ -1,25 +1,27 @@
--- Pumps: placed things that lift water from a source beside them into a tank (docs/design.md,
--- Pumps). A pump draws from the first source it finds (Pumps.sourceOf): a well beside it, the
--- fullest tank or trough beside it, or natural water its hose reaches; and it delivers through one
--- outlet, a link with `pump` set from its square to a tank (Links.lua), which it may fill up to
--- its lift above its floor whatever the filling rule says. Water moves only while something runs
--- it: a hand pump while a character works it (TimedActions/EnhancedIrrigationPumpAction.lua), a
--- Pump House while it is switched on, has a pump part fitted and has power. The authority keeps a
--- record of each pump (server/EnhancedIrrigation/Pumps/PumpObject.lua): a hand pump's seal and how
--- worn it and the pump are, a Pump House's part, its switch and who pays for its power, and where
--- its hose drinks.
+-- Pumps: placed things that lift water from a source beside them into a tank or a garden line
+-- (docs/design.md, Pumps). A pump draws from the first source it finds (Pumps.sourceOf): a well
+-- beside it, the fullest tank or trough beside it, or natural water its hose reaches; and it
+-- delivers through one outlet, a link with `pump` set from its square (Links.lua) to a tank, which
+-- it may fill up to its lift above its floor whatever the filling rule says, or to a tile of a
+-- line, which it drives as a tap's tank does, with the push of its spec (Lines/Flow.lua). Water
+-- moves only while something runs it: a hand pump while a character works it
+-- (TimedActions/EnhancedIrrigationPumpAction.lua), a Pump House while it is switched on, has a
+-- pump part fitted and has power. The authority keeps a record of each pump
+-- (server/EnhancedIrrigation/Pumps/PumpObject.lua): a hand pump's seal and how worn it and the pump
+-- are, a Pump House's part, its switch and who pays for its power, and where its hose drinks.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
+require "EnhancedIrrigation/Lines"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Pumps = {}
 EnhancedIrrigation.Pumps = Pumps
 
-local Tanks, Links = EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
+local Tanks, Links, Lines = EnhancedIrrigation.Tanks, EnhancedIrrigation.Links, EnhancedIrrigation.Lines
 
 Pumps.SYSTEM_NAME = "enhanced_irrigation_pump"
 
@@ -206,6 +208,36 @@ function Pumps.outletOf(at)
     return nil
 end
 
+--- The outlet link of a pump that feeds the line of `tiles` (Lines.component), or nil.
+function Pumps.pumpFeeding(tiles)
+    for _, link in ipairs(Links.all()) do
+        if link.pump then
+            for _, tile in ipairs(tiles) do
+                if EnhancedIrrigation.sameSquare(link.b, tile) then
+                    return link
+                end
+            end
+        end
+    end
+    return nil
+end
+
+--- The garden lines the outlet of `pump` reaches, loaded on this side, nearest first: for each, its
+--- nearest tile, { line, at, distance }.
+function Pumps.linesInReach(pump)
+    local found, seen = {}, {}
+    for _, entry in ipairs(Links.inReach(pump, Lines.lineAt)) do
+        local key = EnhancedIrrigation.squareKey(entry.at.x, entry.at.y, entry.at.z)
+        if not seen[key] then
+            for _, tile in ipairs(Lines.component(entry.at.x, entry.at.y, entry.at.z)) do
+                seen[EnhancedIrrigation.squareKey(tile.x, tile.y, tile.z)] = true
+            end
+            table.insert(found, { line = entry.found, at = entry.at, distance = entry.distance })
+        end
+    end
+    return found
+end
+
 -- Sources --------------------------------------------------------------------------------------------
 
 local function isWell(object)
@@ -348,7 +380,7 @@ local function houseWords(words, summary)
 end
 
 --- The menu's line for `pump` with `summary`: where it draws; a hand pump's seal and body, or a Pump
---- House's part and switch; where it fills.
+--- House's part and switch; the tank it fills or the line it feeds.
 function Pumps.statusText(pump, summary)
     local outlet = Pumps.outletOf(EnhancedIrrigation.squareOf(pump))
     local words = { Pumps.sourceName(Pumps.sourceOf(pump, summary.intake, outlet and outlet.b)) }
@@ -362,6 +394,8 @@ function Pumps.statusText(pump, summary)
         table.insert(words, getText("IGUI_EnhancedIrrigation_NoOutlet"))
     elseif tank then
         table.insert(words, getText("IGUI_EnhancedIrrigation_OutletTo", tank:getFluidContainer():getTranslatedContainerName()))
+    elseif Lines.lineAt(outlet.b.x, outlet.b.y, outlet.b.z) then
+        table.insert(words, getText("IGUI_EnhancedIrrigation_OutletToLine"))
     end
     return table.concat(words, ", ")
 end

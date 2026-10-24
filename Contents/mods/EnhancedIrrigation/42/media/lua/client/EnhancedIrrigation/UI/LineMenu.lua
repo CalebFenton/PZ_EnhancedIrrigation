@@ -9,6 +9,7 @@ require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Taps"
+require "EnhancedIrrigation/Sprinklers"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationWaterAction"
@@ -38,15 +39,45 @@ function LineMenu.describe(state)
     if state.tap then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_Tapped"))
     end
+    if state.sprinkler then
+        table.insert(parts, getText("IGUI_EnhancedIrrigation_WithSprinkler"))
+    end
+    if state.running then
+        table.insert(parts, getText("IGUI_EnhancedIrrigation_LineRunning"))
+    end
     return getText("IGUI_EnhancedIrrigation_Pipe_" .. state.material) .. ": " .. table.concat(parts, ", ")
 end
 
 -- Options -------------------------------------------------------------------------------------------
 
-local function addJob(menu, playerNum, character, nameKey, job, object)
-    local option = menu:addOption(getText(nameKey), playerNum, EnhancedIrrigationAction.queue, "line", job, object)
-    Needs.show(option, LineJobs.needs(character, job, object), LineJobs.blocker(character, job, object))
+local function addJob(menu, playerNum, character, nameKey, job, object, with)
+    local option = menu:addOption(getText(nameKey), playerNum, EnhancedIrrigationAction.queue, "line", job, object, with)
+    Needs.show(option, LineJobs.needs(character, job, object, with), LineJobs.blocker(character, job, object, with))
     return option
+end
+
+-- The Lawn Sprinkler carried in the best condition, or nil.
+local function bestSprinkler(character)
+    local items = character:getInventory():getAllTypeRecurse(EnhancedIrrigation.Sprinklers.ITEM)
+    local best = nil
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if not best or item:getCondition() > best:getCondition() then
+            best = item
+        end
+    end
+    return best
+end
+
+-- Set Sprinkler sets the one carried in the best condition; a tile with one offers Take Sprinkler.
+local function addSprinkler(menu, playerNum, character, line, state)
+    if state.sprinkler then
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeSprinkler", LineJobs.TAKE_SPRINKLER, line)
+        return
+    end
+    local option = addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_SetSprinkler",
+        LineJobs.SET_SPRINKLER, line, bestSprinkler(character))
+    option.itemForTexture = bestSprinkler(character)
 end
 
 -- Drill Holes uses the first tool carried that gets into the pipe (LineJobs.holeTool), which its
@@ -76,6 +107,7 @@ local function addLineOptions(context, playerNum, character, line, state)
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_PatchCrack", LineJobs.PATCH, line)
     end
     addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_DrainLine", LineJobs.DRAIN, line)
+    addSprinkler(menu, playerNum, character, line, state)
     addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeUpPipe", LineJobs.TAKE_UP, line)
 end
 

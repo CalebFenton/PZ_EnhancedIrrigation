@@ -1,5 +1,5 @@
 -- The authority's side of garden lines: their Global Object System, laying and taking up tiles
--- (which reshapes the neighbours), and the jobs of LineJobs done for real.
+-- (which reshapes the neighbours), the jobs of LineJobs done for real, and which lines a pump runs.
 
 if isClient() then return end
 
@@ -10,6 +10,8 @@ require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
+require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Sprinklers"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
 
@@ -22,6 +24,7 @@ local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
 local Materials = EnhancedIrrigation.Materials
 local Pipes = EnhancedIrrigation.Pipes
+local Pumps, Sprinklers = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers
 
 LineSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Line",
@@ -45,6 +48,31 @@ function LineSystem.reshapeAround(x, y, z)
         local neighbour = Lines.recordAt(x + step.dx, y + step.dy, z)
         if neighbour then
             neighbour:show()
+        end
+    end
+end
+
+--- Marks every tile of the line through x, y, z as run by its pump now, or not (`running`), for the
+--- menus: a pumped line is held while its pump runs, as a tap is while someone holds it
+--- (LineJobs' Drain Line). Tells the clients of each tile that changed. The pump says so again as
+--- it runs (PumpObject.afterChange), so a tile laid on since, or a line split, is right by its
+--- next pass.
+function LineSystem.showRunning(x, y, z, running)
+    for _, tile in ipairs(Lines.component(x, y, z)) do
+        -- Single player's client copy of a tile whose record just went is in the line too.
+        local record = Lines.recordAt(tile.x, tile.y, tile.z)
+        if record then
+            record.running = running or nil
+            record:sendSummary()
+        end
+    end
+end
+
+-- A line split by a tile taken away is no longer known to run, each part until its pump says so.
+local function forgetRunningAround(x, y, z)
+    for _, step in ipairs(Lines.STEPS) do
+        if Lines.recordAt(x + step.dx, y + step.dy, z) then
+            LineSystem.showRunning(x + step.dx, y + step.dy, z, false)
         end
     end
 end
@@ -75,6 +103,7 @@ function LineSystem.remove(isoObject)
     end
     square:transmitRemoveItemFromSquare(isoObject)
     LineSystem.reshapeAround(x, y, z)
+    forgetRunningAround(x, y, z)
 end
 
 -- A tile removed any other way (a sledgehammer, a mod's RemoveTileObject) loses its record, tap and
@@ -86,6 +115,7 @@ function LineSystem.System:OnObjectAboutToBeRemoved(isoObject)
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
     if record then
         LineSystem.reshapeAround(isoObject:getX(), isoObject:getY(), isoObject:getZ())
+        forgetRunningAround(isoObject:getX(), isoObject:getY(), isoObject:getZ())
     end
 end
 
@@ -132,8 +162,8 @@ local DO = {
         record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
         return true
     end,
-    -- Each item comes back as it went in. A length still cracked is scrap. The tap's length comes
-    -- back with its tile.
+    -- Each item comes back as it went in. A length still cracked is scrap. The tap's length and the
+    -- sprinkler come back with their tile.
     [LineJobs.TAKE_UP] = function(character, object)
         local record = Lines.recordOf(object)
         if not record.cracked then
@@ -142,10 +172,32 @@ local DO = {
         if record.tap and record.tapMaterial then
             Pipes.giveBack(character, record.tapMaterial, 1, record.tapConditions)
         end
+        if record.sprinkler then
+            EnhancedIrrigation.giveItems(character, LineSystem.takeSprinkler(record))
+        end
         LineSystem.remove(object)
         return true
     end,
+    -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
+    [LineJobs.SET_SPRINKLER] = function(character, object, item)
+        EnhancedIrrigation.takeItem(character, item)
+        Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Pumps.ceilingOf(item) }
+        return true
+    end,
+    [LineJobs.TAKE_SPRINKLER] = function(character, object)
+        EnhancedIrrigation.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
+        return true
+    end,
 }
+
+--- Takes the sprinkler off the tile of `record`. Returns it as an item, as it went on.
+function LineSystem.takeSprinkler(record)
+    local item = instanceItem(Sprinklers.ITEM)
+    item:setCondition(record.sprinkler.condition)
+    Pumps.setCeiling(item, record.sprinkler.ceiling)
+    record.sprinkler = nil
+    return item
+end
 
 --- Does `job` at `object` with `with` for `character` on the authority (Jobs.perform), on the
 --- tile as time has left it, then shows and tells what changed. Returns whether it was done.

@@ -4,9 +4,9 @@ require "Items/Distributions"
 require "Items/ProceduralDistributions"
 
 -- Where the mod's found items turn up: Cisterns for Kentucky wherever a 1993 extension leaflet on
--- farm water would have been left, and the Utility Pump wherever tools and garage kit are, each a
--- find rather than a given. apply() puts them into the game's loot lists in OnInitGlobalModData,
--- each scaled by its sandbox option.
+-- farm water would have been left, the Utility Pump wherever tools and garage kit are, and the Lawn
+-- Sprinkler wherever garden kit is, each a find rather than a given. apply() puts them into the
+-- game's loot lists in OnInitGlobalModData, each scaled by its sandbox option.
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Distributions = {}
@@ -16,6 +16,7 @@ local procLists = ProceduralDistributions.list
 
 Distributions.PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
 Distributions.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
+Distributions.LAWN_SPRINKLER = "EnhancedIrrigation.LawnSprinkler"
 
 -- { ProceduralDistributions list, weight } before the option. A weight w spawns with
 -- ceil(w x 100 x the literature loot rarity) in 10,000 per roll, and each of these lists rolls
@@ -61,10 +62,26 @@ Distributions.UTILITY_PUMP_LISTS = {
     { "CrateToolsOld", 1 },
 }
 
+-- The same for the Lawn Sprinkler, by vanilla's Empty Gardening Spray Can, the nearest garden kit:
+-- a fifth to a tenth of its weight in garden stores, less where garden kit is kept at home, and worn
+-- ones in old tool crates. It is a garden part, so the parts option scales it too.
+Distributions.LAWN_SPRINKLER_LISTS = {
+    -- Garden stores: by the hoses and sprayers.
+    { "GardenStoreTools", 2 },
+    { "GardenStoreMisc", 1 },
+    -- Garages and sheds, and the farm and garden crates of sheds, barns and garages.
+    { "GarageTools", 0.5 },
+    { "CrateFarming", 0.5 },
+    { "CrateGardening", 1 },
+    -- Old tool crates, in sheds and basements: a sprinkler that has seen use.
+    { "CrateToolsOld", 0.5 },
+}
+
 -- Each found item: its full type, its lists and the sandbox option that scales their weights.
 Distributions.LOOT = {
     { item = Distributions.PAMPHLET, lists = Distributions.PAMPHLET_LISTS, option = "PamphletLoot" },
     { item = Distributions.UTILITY_PUMP, lists = Distributions.UTILITY_PUMP_LISTS, option = "PartsLoot" },
+    { item = Distributions.LAWN_SPRINKLER, lists = Distributions.LAWN_SPRINKLER_LISTS, option = "PartsLoot" },
 }
 
 -- Items lists are flat name, weight pairs.

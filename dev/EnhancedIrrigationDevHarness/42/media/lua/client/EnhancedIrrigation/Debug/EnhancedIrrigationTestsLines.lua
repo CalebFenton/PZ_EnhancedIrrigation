@@ -3,6 +3,7 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
+require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/UI/LineMenu"
 
 -- The jobs at a garden line (LineJobs.lua, LineSystem.lua's jobs, LineCursor.lua, LineMenu.lua and
@@ -245,13 +246,83 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         T.read(self, "lines.perform", lay, "one tap")
     end,
     validate = function(self)
-        expect(self.twoTaps == "Tooltip_EnhancedIrrigation_JoinsTwoTaps", "between two taps: " .. tostring(self.twoTaps))
+        expect(self.twoTaps == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "between two taps: " .. tostring(self.twoTaps))
         local twoTaps, oneTap = self.reads["two taps"], self.reads["one tap"]
         expect(twoTaps.done == false and twoTaps.tiles[2].record == nil, "the server laid a tile between two taps")
         expect(self.oneTap == nil, "between a tapped and an untapped line: " .. tostring(self.oneTap))
         local joined = oneTap.tiles[2].record
         expect(oneTap.done and joined and joined.tiles == self.size,
             "the server didn't lay the tile joining a tapped and an untapped line")
+    end,
+})
+
+-- Places the iron hand pump at `handle` as the build menu leaves it, and waits for this client's
+-- copy; it goes when the test ends.
+local function placePump(self, handle)
+    T.server(self, "pumps.place", T.at(handle, { sprite = Sprites.IRON_HAND_PUMP }))
+    T.waitFor(self, function() return T.objectWithSprite(handle.square, Sprites.IRON_HAND_PUMP) ~= nil end,
+        "this client's copy of the pump")
+end
+
+-- A pump's outlet can start a line as a tank can: the first tile goes on beside a pump with no tank
+-- in reach, on the cursor and the authority alike, but not two squares off it. Catches a pump that
+-- can't start the line it would feed, or one that starts lines anywhere.
+T.test("irrigation_lines_first_tile_beside_a_pump", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 3, 0 } }, { bare = true, minDistance = 2 })
+        if not spots then return end
+        local pump, beside, far = spots[1], spots[2], spots[3]
+        T.trackLines(self, { beside, far })
+        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
+        placePump(self, pump)
+        T.goNextTo(self, beside.square)
+        T.step(function()
+            if not T.need(self, #Tanks.tanksReaching(beside.x, beside.y, beside.z) == 0
+                    and #Tanks.tanksReaching(far.x, far.y, far.z) == 0, "squares out of every tank's reach") then
+                return
+            end
+            local cursor = layCursor(self, "iron")
+            self.beside, self.far = cursor:refusal(beside.square), cursor:refusal(far.square)
+        end)
+        T.read(self, "lines.perform", T.at(beside, { job = LineJobs.LAY, with = "iron" }), "laid")
+    end,
+    validate = function(self)
+        expect(self.beside == nil, "a first tile beside a pump: " .. tostring(self.beside))
+        expect(self.far == "Tooltip_EnhancedIrrigation_NoTankReach", "a first tile two squares off a pump: " .. tostring(self.far))
+        local laid = self.reads.laid
+        expect(laid.done and laid.tiles[1].record ~= nil, "the server didn't lay the first tile beside the pump")
+    end,
+})
+
+-- A line takes a tap or a pump, not both: a tile between a tapped line and one a pump feeds is
+-- refused on the cursor and by the authority, laying nothing. Catches a tank and a pump pushing
+-- into one line.
+T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
+    instant = true,
+    run = function(self)
+        local rows = T.row(self, 3)
+        if not rows then return end
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        local tiles = rows[1]
+        T.trackLines(self, tiles)
+        tiles[1].fields = T.tapped()
+        T.placeLine(self, { tiles[1], tiles[3] }, "iron")
+        placePump(self, spots[1])
+        T.server(self, "pumps.link", T.at(spots[1], { tank = T.at(tiles[3]) }))
+        T.waitFor(self, function() return EnhancedIrrigation.Pumps.outletOf(T.at(spots[1])) ~= nil end,
+            "this client's copy of the pump's outlet")
+        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
+        T.goNextTo(self, tiles[2].square)
+        T.step(function() self.refusal = layCursor(self, "iron"):refusal(tiles[2].square) end)
+        T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
+            "forced")
+    end,
+    validate = function(self)
+        expect(self.refusal == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "between a tap and a pump: " .. tostring(self.refusal))
+        local forced = self.reads.forced
+        expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile between a tap and a pump")
     end,
 })
 

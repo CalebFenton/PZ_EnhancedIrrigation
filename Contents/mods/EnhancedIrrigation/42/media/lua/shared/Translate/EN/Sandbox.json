@@ -2,8 +2,8 @@
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
     "Sandbox_EnhancedIrrigation_PamphletLoot": "Cisterns for Kentucky loot",
     "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden and hardware stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry still teaches its plans, and Welding the plumbing.",
-    "Sandbox_EnhancedIrrigation_PartsLoot": "Utility Pump loot",
-    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "How often a Utility Pump turns up in hardware stores, the Gigamart's tools, garages and basement tool crates, worn in old tool crates, as a multiple of its usual chance.<br>0 leaves it out of loot; a Pump House still takes an Appliance Pump salvaged from a washer or dishwasher, or a Utility Pump made from a Blower Fan.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Utility Pump and Lawn Sprinkler loot",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "How often a Utility Pump turns up in hardware stores, the Gigamart's tools, garages and basement tool crates, and a Lawn Sprinkler in garden stores, garages and farm and garden crates, each worn in old tool crates, as a multiple of its usual chance.<br>0 leaves them out of loot; a Pump House still takes an Appliance Pump salvaged from a washer or dishwasher, or a Utility Pump made from a Blower Fan, and a Lawn Sprinkler can be made from pipe.",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Plumbing keeps taint",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "On: a sink, bath or toilet plumbed under a rooftop barrel gets the barrel's water as it is, tainted if the barrel's is, and fixtures already plumbed that way change over when their area loads.<br>Off: vanilla's plumbing, which serves a rooftop barrel's water clean."
 }

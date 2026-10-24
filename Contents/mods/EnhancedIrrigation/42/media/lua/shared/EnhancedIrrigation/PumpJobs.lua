@@ -7,13 +7,14 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/Pumps"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpJobs = {}
 EnhancedIrrigation.PumpJobs = PumpJobs
 
-local Pumps, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.Tanks
+local Pumps, Tanks, Lines = EnhancedIrrigation.Pumps, EnhancedIrrigation.Tanks, EnhancedIrrigation.Lines
 
 PumpJobs.PUMP = "Pump"
 PumpJobs.REPLACE_SEAL = "ReplaceSeal"
@@ -43,36 +44,49 @@ function PumpJobs.exhausted(character)
     return character:getStats():get(CharacterStat.ENDURANCE) <= Pumps.EXHAUSTED
 end
 
+--- The level a pump lifts to for `into`, its outlet's tank or line tile: the tank's, or the floor
+--- the line lies on.
+function PumpJobs.levelOf(into)
+    return Tanks.isTank(into) and Tanks.levelOf(into) or into:getZ()
+end
+
 --- What a pump lifting by `spec` (a row of Pumps.UNITS or Pumps.PARTS) would lift into, as this
---- side sees it: its outlet's tank, while that stands within its lift and has room, and the source
---- it draws from (Pumps.sourceOf, with the hose's `intake`). Returns the tank and the source, or nil
---- and the Tooltip key of why it lifts nothing.
+--- side sees it: its outlet's tank, while that stands within its lift and has room, or its outlet's
+--- line tile, while its line has no tap; and the source it draws from (Pumps.sourceOf, with the
+--- hose's `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of
+--- why it lifts nothing.
 function PumpJobs.deliveryOf(pump, spec, intake)
     local outlet = Pumps.outletOf(EnhancedIrrigation.squareOf(pump))
     if not outlet then
         return nil, "Tooltip_EnhancedIrrigation_NoOutlet"
     end
-    local tank = Tanks.tankAt(outlet.b.x, outlet.b.y, outlet.b.z)
-    if not tank then
-        return nil, "Tooltip_EnhancedIrrigation_TankGone"
+    local b = outlet.b
+    local into = Tanks.tankAt(b.x, b.y, b.z) or Lines.lineAt(b.x, b.y, b.z)
+    if not into then
+        return nil, "Tooltip_EnhancedIrrigation_OutletGone"
     end
     -- A barrel set on a stand at the far end since it was plumbed may stand out of its reach.
-    if not Pumps.lifts(spec, Tanks.levelOf(tank), pump:getZ()) then
+    if not Pumps.lifts(spec, PumpJobs.levelOf(into), pump:getZ()) then
         return nil, PumpJobs.LIFT_KEYS[spec.lift]
     end
-    if tank:getFluidContainer():getFreeCapacity() < Pumps.LEAST_LITRES then
+    if Lines.isLine(into) then
+        -- A wall knocked down since may have joined it to a tapped line.
+        if Lines.tapIn(Lines.component(b.x, b.y, b.z)) then
+            return nil, "Tooltip_EnhancedIrrigation_LineHasTap"
+        end
+    elseif into:getFluidContainer():getFreeCapacity() < Pumps.LEAST_LITRES then
         return nil, "Tooltip_EnhancedIrrigation_OutletFull"
     end
-    local source = Pumps.sourceOf(pump, intake, outlet.b)
+    local source = Pumps.sourceOf(pump, intake, b)
     if not source or source.dry then
         return nil, "Tooltip_EnhancedIrrigation_NoWaterToDraw"
     end
-    return tank, source
+    return into, source
 end
 
 --- What the hand pump `pump` would lift into, as this side sees it (PumpJobs.deliveryOf), unless
---- its body or seal is worn out. Returns the tank and the source, or nil and the Tooltip key of why
---- it lifts nothing.
+--- its body or seal is worn out. Returns the tank or line tile and the source, or nil and the
+--- Tooltip key of why it lifts nothing.
 function PumpJobs.flowOf(pump)
     local spec, summary = Pumps.specOf(pump), Pumps.currentSummary(pump)
     if not (spec and spec.kind == "hand" and summary) then
@@ -129,8 +143,8 @@ PumpJobs.JOBS = {
             if summary and summary.heldBy and summary.heldBy ~= character:getUsername() then
                 return "Tooltip_EnhancedIrrigation_PumpInUse"
             end
-            local tank, refusal = PumpJobs.flowOf(pump)
-            if not tank then
+            local into, refusal = PumpJobs.flowOf(pump)
+            if not into then
                 return refusal
             end
             return PumpJobs.exhausted(character) and "Tooltip_EnhancedIrrigation_Exhausted" or nil

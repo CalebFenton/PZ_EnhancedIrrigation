@@ -12,9 +12,10 @@ option EnhancedIrrigation.PamphletLoot
     translation = EnhancedIrrigation_PamphletLoot,
 }
 
-/* Times every loot weight of the Utility Pump (server/EnhancedIrrigation/Items/Distributions.lua);
-   0 keeps it out of loot, and Make Utility Pump and salvaged Appliance Pumps still run a Pump
-   House. */
+/* Times every loot weight of the Utility Pump and the Lawn Sprinkler
+   (server/EnhancedIrrigation/Items/Distributions.lua); 0 keeps them out of loot, and Make Utility
+   Pump and salvaged Appliance Pumps still run a Pump House, and Make Pipe Sprinkler makes a
+   sprinkler. */
 option EnhancedIrrigation.PartsLoot
 {
     type = double,

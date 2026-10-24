@@ -2,7 +2,7 @@
 -- how far it has worn, and its body's condition, which lifting water wears (PumpObject.lift); a
 -- Pump House's part, its condition, its switch and who pays for its power (Pumps/PumpHouse.lua);
 -- and where its hose drinks. Like a treatment unit's, a pump's record waits while its square, the
--- squares it draws from or its outlet's tank aren't loaded, keeping its clock, and catches the
+-- squares it draws from or its outlet's far end aren't loaded, keeping its clock, and catches the
 -- whole gap up once they are; time alone moves no water through a hand pump, which runs only while
 -- worked, but runs a Pump House that is switched on.
 
@@ -11,6 +11,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/ObjectSystem"
+require "EnhancedIrrigation/Lines/LineSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
@@ -110,12 +111,24 @@ function PumpObject:repairPart()
     self.partCondition = self.partCeiling
 end
 
---- Moves `litres` from `source` (Pumps.sourceOf) into `fluid` (a FluidContainer) and returns the
---- litres moved. A well's or river's water comes from its tile, which is endless (vanilla's own
---- draw, IsoObject.transferFluidTo), never from a well's own container, which vanilla never draws
---- either; a tank or trough gives its mixture, taint and all, and is sent to the clients. A river
---- whose square isn't loaded is still water, always tainted.
+--- Moves `litres` from `source` (Pumps.sourceOf) into `fluid` (a FluidContainer), or into a garden
+--- line when `fluid` is nil, and returns the litres moved. A well's or river's water comes from its
+--- tile, which is endless (vanilla's own draw, IsoObject.transferFluidTo), never from a well's own
+--- container, which vanilla never draws either; a tank or trough gives its mixture, taint and all,
+--- and is sent to the clients. A river whose square isn't loaded is still water, always tainted. A
+--- line's plants take no notice of taint (server/Farming), so a line's water is only counted from
+--- an endless source, and taken out of a tank or trough.
 function PumpObject.draw(source, fluid, litres)
+    if not fluid then
+        if source.infinite then
+            return litres
+        end
+        local container = source.object:getFluidContainer()
+        local moved = math.min(litres, container:getAmount())
+        container:removeFluid(moved, false)
+        source.object:sync()
+        return moved
+    end
     if not source.object then
         fluid:addFluid(FluidType.TaintedWater, litres)
         return litres
@@ -231,8 +244,23 @@ function PumpObject:update()
     self:afterChange()
 end
 
+--- Whether the pump runs now: a hand pump while worked (PumpSystem.hold), a Pump House while
+--- running at its last pass.
+function PumpObject:isRunning()
+    if self:isHouse() then
+        return self.running == true
+    end
+    return self.holder ~= nil
+end
+
+-- Tells the clients, and the tiles of the line its outlet feeds whether it runs them.
 function PumpObject:afterChange()
     self:sendSummary()
+    local outlet = Pumps.outletOf(self)
+    local b = outlet and outlet.b
+    if b and EnhancedIrrigation.Lines.recordAt(b.x, b.y, b.z) then
+        EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, self:isRunning())
+    end
 end
 
 -- What every client keeps, as the menu words it, rounded, so wear that changes nothing a player

@@ -163,10 +163,10 @@ local function buildStage(lot)
         for x = line.x, line.x + 2 do
             LineSystem.place(lotSquare(lot, x, SPRINKLER_ROW), line.material)
         end
-        -- As the tap is drawn: an overlay on the line tile, once its neighbours have shaped it.
-        local tile = EnhancedIrrigation.Lines.recordAt(lot.x + line.x + 1, lot.y + SPRINKLER_ROW, lot.z):getIsoObject()
-        tile:addAttachedAnimSpriteByName(Sprites.SPRINKLER)
-        tile:transmitUpdatedSpriteToClients()
+        -- Through the record, as Set Sprinkler sets it, which draws it as the tap is drawn.
+        local record = EnhancedIrrigation.Lines.recordAt(lot.x + line.x + 1, lot.y + SPRINKLER_ROW, lot.z)
+        record.sprinkler = { condition = 100, ceiling = 100 }
+        record:afterChange()
     end
     for _, crop in ipairs(CROPS) do
         local missing = Stage.plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage, CROP_WATER)

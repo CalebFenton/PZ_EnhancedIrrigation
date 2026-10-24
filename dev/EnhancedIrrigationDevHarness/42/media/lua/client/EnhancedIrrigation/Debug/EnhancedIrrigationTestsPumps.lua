@@ -3,10 +3,13 @@ require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/LinkJobs"
+require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/LineJobs"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/UI/TankMenu"
 require "EnhancedIrrigation/UI/PumpMenu"
+require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
 -- The hand pumps (Pumps.lua, PumpJobs.lua, PumpObject.lua, PumpSystem.lua, PumpMenu.lua,
@@ -14,13 +17,15 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 -- Entities.txt): building them from the build menu, plumbing the outlet within the pump's lift,
 -- working the handle until the tank is full or the character is exhausted, the water each source
 -- gives (a well's clean and endless, a barrel's with its taint, a river's tainted), the seal
--- wearing through and replaced, and a worn-out pump smashed. Pumps are placed, read and worked for
--- set hours by EnhancedIrrigationTestServerPumps.lua, so the clock doesn't decide the sums; the
--- Pump action itself runs at a raised clock speed.
+-- wearing through and replaced, a worn-out pump smashed, and a pump's outlet plumbed to a garden
+-- line, which it drives while worked. Pumps are placed, read and worked for set hours by
+-- EnhancedIrrigationTestServerPumps.lua and EnhancedIrrigationTestServerSprinklers.lua, so the
+-- clock doesn't decide the sums; the Pump action itself runs at a raised clock speed.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Links, LinkJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
+local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, PumpJobs, TankMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.TankMenu
 
 local LITRES = 0.05
@@ -485,6 +490,142 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         expect(forced.done == false and forced.links == 0, "the server plumbed the wooden pump two storeys up")
         T.expectOffered(self, "iron")
         expect(self.reads.plumbed.outlet, "the iron pump's outlet isn't plumbed")
+    end,
+})
+
+-- Lines ------------------------------------------------------------------------------------------------
+
+-- The option of `context` that plumbs the pump's outlet to a tile of `tiles` with iron pipe, or nil.
+local function plumbToLine(context, tiles)
+    return T.findOption(context, context, function(option)
+        local at, kind = Links.decode(option.param4)
+        if not (option.onSelect == EnhancedIrrigationAction.queue and option.param2 == LinkJobs.PLUMB_PUMP and kind == "iron") then
+            return false
+        end
+        for _, tile in ipairs(tiles) do
+            if EnhancedIrrigation.sameSquare(at, tile) then
+                return true
+            end
+        end
+        return false
+    end)
+end
+
+-- Plumb Outlet from the wooden pump's menu lists the garden lines in its reach beside its tanks: a
+-- tapped line greyed out saying it has a tap, which the server refuses too, and an untapped one,
+-- which it plumbs with iron pipe. The pump's menu then says it feeds a line, Unplumb names the line,
+-- and the line's Fit Tap is greyed out saying a pump feeds it. Catches a line no pump can feed, or
+-- one fed by a tap and a pump both.
+T.test("irrigation_pumps_plumb_outlet_to_a_line", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
+        if not spots then return end
+        -- Two lines a square apart: an untapped one of two tiles, and a tapped one.
+        local rows = T.row(self, 4)
+        if not rows then return end
+        local untapped, tapped = { rows[1][1], rows[1][2] }, rows[1][4]
+        self.untapped = untapped
+        tapped.fields = T.tapped()
+        T.placeLine(self, { untapped[1], untapped[2], tapped }, "iron")
+        self.pump = placePump(self, spots[1], WOODEN, { seal = LEATHER })
+        T.placeTank(self, spots[2], "well")
+        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
+        useMenu(self, self.pump, "tapped", function(context)
+            return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
+                TankMenu.lineLabel(T.at(self.pump), T.at(tapped)))
+        end, false)
+        T.read(self, "tanks.perform", T.at(self.pump, { feature = "link", job = LinkJobs.PLUMB_PUMP,
+            with = Links.encode(T.at(tapped), "iron") }), "forced")
+        useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
+        readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
+        T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
+        readMenu(self, self.pump, "plumbed")
+        T.step(function()
+            local b = Pumps.outletOf(T.at(self.pump)).b
+            self.unplumbLabel = TankMenu.linkLabel(T.at(self.pump), b)
+        end)
+        T.useOption(self, function() return copyOf(self.pump) end, "unplumb", function(context)
+            return T.findNamed(context, context, self.unplumbLabel)
+        end, false)
+        T.goNextTo(self, untapped[2].square)
+        T.useOption(self, function() return T.lineObject(untapped[2]) end, "fit tap", function(context)
+            return T.jobOption(context, "line", LineJobs.TAP)
+        end, false)
+    end,
+    validate = function(self)
+        T.expectRefused(self, "tapped", "Tooltip_EnhancedIrrigation_LineHasTap")
+        local forced = self.reads.forced
+        expect(forced.done == false and forced.links == 0, "the server plumbed the pump to a tapped line")
+        T.expectOffered(self, "untapped")
+        expectWord(self, "plumbed", getText("IGUI_EnhancedIrrigation_OutletToLine"))
+        T.expectOffered(self, "unplumb")
+        T.expectRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_LinePumped")
+    end,
+})
+
+-- Half an hour's work, the time the pumped-line tests run their pumps for.
+local HALF_HOUR = 0.5
+
+-- Queues the wooden pump at `spots[1]` over a well at `spots[2]`, its outlet plumbed to the first of
+-- two holed line tiles in a row with dry crops on them. Returns the pump and the tiles.
+local function pumpedLine(self, spots, fields)
+    local rows = T.row(self, 2)
+    if not rows then return nil end
+    local tiles = rows[1]
+    for _, tile in ipairs(tiles) do
+        tile.fields = { holed = true }
+    end
+    T.placeLine(self, tiles, "iron")
+    T.plant(self, tiles[1], 0)
+    T.plant(self, tiles[2], 0)
+    local pump = placePump(self, spots[1], WOODEN)
+    T.placeTank(self, spots[2], "well")
+    link(self, pump, tiles[1], fields)
+    return pump, tiles
+end
+
+-- Half an hour's work at a wooden pump feeding a line of two holed tiles pushes each hole's water
+-- out at the pump's push, filling each crop by that, and wears the seal and the body by only what
+-- the holes took. Worked from its menu, the line shows as running on this client while the
+-- character works and stops once they are exhausted. Catches a pumped line run at a tank's head, a
+-- pump worn by its whole rate, or a line that runs on unworked.
+T.test("irrigation_pumps_hand_pump_drives_its_line", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
+        if not spots then return end
+        self.pump, self.tiles = pumpedLine(self, spots, { seal = LEATHER })
+        if not self.pump then return end
+        T.read(self, "sprinklers.pump", T.at(self.pump, { hours = { HALF_HOUR }, squares = T.tiles(self.tiles) }), "half")
+        setEndurance(self, Pumps.EXHAUSTED + LAST_ENDURANCE)
+        quickRuns(self)
+        T.step(function()
+            T.onTick(self, function()
+                local summary = T.lineSummary(self.tiles[2])
+                self.sawRunning = self.sawRunning or (summary and summary.running)
+            end)
+        end)
+        -- The worked pump holds the queue until the character is exhausted.
+        useMenu(self, self.pump, "pump", pumpOption, true)
+        T.waitForLines(self, self.tiles, "this client's copy of the line, stopped", function(summary)
+            return not summary.running
+        end)
+    end,
+    validate = function(self)
+        local half = self.reads.half
+        local push = Pumps.UNITS[WOODEN].push
+        local each = Lines.HOLE_RATE * push * HALF_HOUR
+        for i = 1, 2 do
+            expectNear("crop " .. i .. "'s water", half.after.squares[i].water - half.before.squares[i].water,
+                each * Lines.POINTS_PER_LITRE, 0.05)
+        end
+        local before, after = half.before.pump, half.after.pump
+        expectNear("the seal's wear", after.sealWear - before.sealWear, 2 * each, LITRES)
+        expectNear("the pump's wear", before.condition - after.condition, 2 * each / Pumps.UNITS[WOODEN].wearLitres, 0.0001)
+        T.expectOffered(self, "pump")
+        expect(self.sawRunning, "this client never saw the line run while the pump was worked")
     end,
 })
 

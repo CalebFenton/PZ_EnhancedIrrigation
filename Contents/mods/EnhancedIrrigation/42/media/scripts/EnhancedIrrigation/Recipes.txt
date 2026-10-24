@@ -72,6 +72,38 @@ module Base
     }
 
     /*
+        A Lawn Sprinkler made from pipe: a length of iron pipe drilled for a riser, an empty
+        gardening spray's nozzle screwed on as its head. Made in hand. It comes out at a lower
+        ceiling than a found one (Sprinklers.onMade). Learned at Welding 4 or by researching a Lawn
+        Sprinkler, from Welding 1, two-thirds of its skill as vanilla's research asks.
+    */
+    craftRecipe EnhancedIrrigation_MakePipeSprinkler
+    {
+        timedAction = Making,
+        time = 150,
+        Tags = InHandCraft,
+        category = Farming,
+        NeedToBeLearn = true,
+        AutoLearnAny = MetalWelding:4,
+        SkillRequired = MetalWelding:2,
+        xpAward = MetalWelding:15,
+        Tooltip = Tooltip_EnhancedIrrigation_MakePipeSprinkler,
+        OnCreate = EnhancedIrrigation.Sprinklers.onMade,
+        inputs
+        {
+            item 1 [Base.HandDrill] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:pliers] mode:keep flags[MayDegradeLight],
+            item 1 [Base.MetalPipe],
+            item 1 [Base.GardeningSprayEmpty],
+            item 2 [Base.Screws],
+        }
+        outputs
+        {
+            item 1 EnhancedIrrigation.LawnSprinkler,
+        }
+    }
+
+    /*
         The Filter Crock, made as vanilla's clay jar is: shaped at a pottery wheel, with the water
         from any container kept, then fired in a kiln. The charcoal crushed into the clay burns
         out in the firing and leaves the pores the water seeps through. Both are learned together

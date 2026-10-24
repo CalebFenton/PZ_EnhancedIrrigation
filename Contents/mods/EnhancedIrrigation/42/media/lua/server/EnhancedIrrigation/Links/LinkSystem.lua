@@ -23,6 +23,7 @@ require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Fixtures/FixtureSystem"
 require "EnhancedIrrigation/Treatment/TreatmentSystem"
+require "EnhancedIrrigation/Lines/LineSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkSystem = SGlobalObjectSystem:derive("EnhancedIrrigation_LinkSystem")
@@ -92,11 +93,15 @@ function LinkSystem:addLink(a, b, kind, lengths, conditions, role)
     return link
 end
 
+-- A pump's line no longer runs once its outlet is gone.
 function LinkSystem:removeLink(link)
     for i, entry in ipairs(self.links) do
         if entry == link then
             table.remove(self.links, i)
             self:sendLinks()
+            if link.pump and EnhancedIrrigation.Lines.recordAt(link.b.x, link.b.y, link.b.z) then
+                EnhancedIrrigation.LineSystem.showRunning(link.b.x, link.b.y, link.b.z, false)
+            end
             return
         end
     end

@@ -468,10 +468,12 @@ local function expectNoFailures(answer)
 end
 
 -- Each found item, with its test name and the loot rarity option of its kind
--- (ItemPickerJava.getLootType): the pamphlet is a recipe resource, the pump an electronic part.
+-- (ItemPickerJava.getLootType): the pamphlet is a recipe resource, the pump an electronic part, the
+-- sprinkler gardening kit.
 local LOOT = {
     { item = "EnhancedIrrigation.CisternsForKentucky", name = "pamphlet", rarity = "RecipeResourceLoot" },
     { item = "EnhancedIrrigation.UtilityPump", name = "utility_pump", rarity = "OtherLootNew" },
+    { item = "EnhancedIrrigation.LawnSprinkler", name = "lawn_sprinkler", rarity = "FarmingLootNew" },
 }
 
 for _, loot in ipairs(LOOT) do

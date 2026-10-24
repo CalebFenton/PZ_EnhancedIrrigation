@@ -160,8 +160,9 @@ end)
 handler("lines.flow", function(player, args)
     local record, missing = recordOrMissing(args)
     if not record then return nil, missing end
+    local Flow = EnhancedIrrigation.Flow
     local tank, stopped = EnhancedIrrigation.Taps.tankFor(EnhancedIrrigation.Lines.lineAt(args.x, args.y, args.z))
-    local drawn = tank and EnhancedIrrigation.Flow.run(record, tank, args.hours) or nil
+    local drawn = tank and Flow.run(record, Flow.fromTank(tank, args.z), args.hours) or nil
     local reply = readTiles(args.tiles or {})
     reply.drawn, reply.stopped = drawn, stopped
     return reply
@@ -248,17 +249,17 @@ end)
 
 -- Crops ---------------------------------------------------------------------------------------------
 
--- A sown crop on x, y, z, plowed and seeded as the farming system does them, at `args.water` water
--- points.
-handler("lines.plant", function(player, args, defer)
-    local square = squareAt(args)
+-- Sows a crop on `at`, plowed and seeded as the farming system does them, at `water` water points,
+-- taken away when the test ends. Returns it as plantAt reads it, or nil and what is missing.
+local function sow(at, water, seed, defer)
+    local square = squareAt(at)
     if not square then
-        return nil, "a loaded square for a crop at " .. args.x .. "," .. args.y
+        return nil, "a loaded square for a crop at " .. at.x .. "," .. at.y
     end
     local farming = SFarmingSystem.instance
     farming:plow(square)
     defer(function()
-        local plant = farming:getLuaObjectAt(args.x, args.y, args.z)
+        local plant = farming:getLuaObjectAt(at.x, at.y, at.z)
         -- Removing the crop's tile takes its record with it (SGlobalObjectSystem); a record whose
         -- tile is gone goes by itself.
         if plant and plant:getIsoObject() then
@@ -272,8 +273,23 @@ handler("lines.plant", function(player, args, defer)
     if not plant then
         return nil, "the plowed furrow's record"
     end
-    plant:seed(args.seed or "Carrots")
-    plant.waterLvl = args.water
+    plant:seed(seed or "Carrots")
+    plant.waterLvl = water
     plant:saveData()
-    return plantAt(args)
+    return plantAt(at)
+end
+
+-- A sown crop on x, y, z at `args.water` water points, or with `args.tiles` one on each of them,
+-- answered in `plants`.
+handler("lines.plant", function(player, args, defer)
+    if not args.tiles then
+        return sow(args, args.water, args.seed, defer)
+    end
+    local plants = {}
+    for i, at in ipairs(args.tiles) do
+        local plant, missing = sow(at, args.water, args.seed, defer)
+        if not plant then return nil, missing end
+        plants[i] = plant
+    end
+    return { plants = plants }
 end)

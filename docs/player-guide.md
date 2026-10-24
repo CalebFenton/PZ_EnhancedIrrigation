@@ -2,7 +2,7 @@
 
 How the mod's systems work, for players who want more than the Workshop page tells them, and where to start looking for the gear. Figures assume the default sandbox settings and vanilla's own plant figures: 1 L of water is 50 water points, a plant holds 100, and a plant uses about 5 a day.
 
-This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, sand filters, a filter crock and boilers that make rain water safe to drink, hand pumps that lift water from a well, a barrel or a river into a tank, and Pump Houses that do it on electric power. Pumped lines, sprinklers and timers are planned, but they aren't in the game yet.
+This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, sand filters, a filter crock and boilers that make rain water safe to drink, hand pumps that lift water from a well, a barrel or a river into a tank or a garden line, Pump Houses that do it on electric power, and lawn sprinklers that a pumped line drives. Timers are planned, but they aren't in the game yet.
 
 ## Mechanics
 
@@ -59,14 +59,27 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Mechanic | How it works |
 |---|---|
 | Lay Line | Right-click the ground while carrying pipe, then pick the kind under **Lay Line**. The cursor stays up, so you can click out a run tile by tile. Each tile takes 3 minutes and no skill. Per tile: 1 plastic pipe and one use of glue, epoxy or duct tape; 1 iron or lead pipe, joined with a Pipe Wrench, which you keep; or 2 clay pipe segments and one use of cement or concrete. Wood glue and adhesive tape don't hold water. Lay the line on the plants' own squares: a hole waters only the plant on its tile. |
-| Where it goes | Open ground or floor, not water and not a square furniture blocks. The first tile goes on or beside a tank: in the 3×3 around it, with the tank on the same floor or one floor up. After that, each tile goes next to the line. A line stays on one floor. Walls and windows split it; doorways, fences and low walls don't. |
-| One tap a line | You can't lay a tile that would join two lines that each have a tap. |
+| Where it goes | Open ground or floor, not water and not a square furniture blocks. The first tile goes on or beside a tank: in the 3×3 around it, with the tank on the same floor or one floor up; or in the 3×3 around a pump, on its floor, for the pump to feed. After that, each tile goes next to the line. A line stays on one floor. Walls and windows split it; doorways, fences and low walls don't. |
+| A tap or a pump | A line takes one tap or one pump's outlet, not both: Fit Tap is greyed out on a line a pump feeds, a pump's Plumb Outlet on a tapped line or one another pump feeds, and you can't lay a tile that would join two lines that each have a tap or a pump. |
 | Drill Holes | 2 minutes a tile; a tile is either holed or not. It uses the first suitable tool you carry, in this order: Hand Drill (any pipe); Auger Drill (anything but iron); an awl, Ice Pick, Handiknife, Multitool or small punch set (plastic and lead only); Stone Drill (anything but iron); a hammer and a nail, which uses up the nail (anything but iron). The Stone Drill and the hammer punch rather than cut, so 1 hole in 5 cracks plastic or clay pipe, and the menu warns you. |
 | Fit Tap | 10 minutes, with a Pipe Wrench, one more length of the line's own pipe and its joint. The tap goes on a line tile that has a tank at least a level above it, on or beside the tile or on the floor above. |
 | Water from Tank | Stand at the tap. Every hole on the line runs, the soil darkens and you hear water, until you stop, walk off, or the tank runs dry or loses its height. Holding the tap open costs no endurance. Only one person can hold a tap at a time. |
 | Which tank | Each time water runs, the tap draws from the highest tank in its reach that holds water, and the fullest of those if two are equally high. Tanks plumbed to that one refill it every ten minutes. |
 | Rate | Each holed tile gives 1 L an hour from a tank one level up, more from higher ones. That fills a dry plant in about 2 game hours. Keeping a plant level takes about 6 minutes at the tap a day. Every hole runs at once, so 24 holes draw 24 L an hour from the tank. A tank that can't keep up gives every hole the same share. |
 | Wet soil | The ground under a working hole, a crack, or a spot where a line was drained shows wet for 4 hours, and longer while the soil is soaked. |
+| Pumped lines | Plumb a pump's outlet to any tile of a line (Hand pumps, Pump Houses, below). The line runs while its pump does, as if its tap were held: a hand pump while you work it, a Pump House while it runs. A pump pushes harder than a tank: each hole gives 2 L an hour from a hand pump or an Appliance Pump and 3 from a Utility Pump. The line takes no more than the pump lifts, every hole and sprinkler getting the same share of it, and the pump draws (and a hand pump wears) only what the line takes. While the pump runs, the line's menu says **water running**. |
+
+### Sprinklers
+
+| Mechanic | How it works |
+|---|---|
+| Set Sprinkler | From a line tile's menu, carrying a Lawn Sprinkler and a Pipe Wrench, which you keep: 5 minutes. It sets the sprinkler you carry in the best condition, as worn as it is. Not on the tap's tile, and one to a tile; a tile with a sprinkler takes no tap. **Take Sprinkler** (3 minutes, with the wrench) gives it back as it went on; so does Take Up Pipe on its tile. |
+| Only on a pump | A sprinkler runs only on a line a pump drives, while the pump runs: a storey of tank head can't turn it, so on a tapped line it does nothing. |
+| Rate | It asks the line for about 10 L a minute, more than a hand pump or an Appliance Pump lifts, so on one of those it and the line's holes get the same share of what the pump lifts. Half of it is lost to the air and the paths. |
+| Where it waters | A patch 5 squares long and 3 wide, centred on it, the long side along the line at its tile: north to south where the line runs or ends that way, east to west anywhere else. Every square gets the same share: its plant fills up to full and the rest soaks the soil. From a Utility Pump that's about 20 L an hour a square, so a dry bed is full in about 6 minutes and waterlogged soon after. |
+| Its soil | Soil a sprinkler soaks off the line dries and rots roots exactly as a line tile's does (Too much water, below). The plant info's **Soil** line shows the wettest of the soil under the plant's own tile and of every sprinkler watering it. |
+| Wear | Sprinklers don't wear. |
+| Make Pipe Sprinkler | Welding 2, in hand: an iron pipe, an empty gardening spray can and 2 screws; a hand drill and pliers, which you keep. It gives Welding XP, and the sprinkler comes out at 80%, its ceiling, which travels with it. Learned at Welding 4 or by researching a Lawn Sprinkler from Welding 1. |
 
 ### Too much water
 
@@ -84,9 +97,9 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 |---|---|
 | Full lines | Once a tap has run, its line stays full of water until you drain it. |
 | Freezing | At -7 °C or colder, a full tile may split. A heated room keeps its tiles safe. Left full outdoors all winter, a 24-tile line can expect about 3 cracks in clay, 1 or 2 in iron, and seldom one in lead or plastic. |
-| Drain Line | From any tile of the line. It takes 2 minutes plus 1 for every 5 tiles, empties the whole line and wets the spot where you opened it. |
+| Drain Line | From any tile of the line. It takes 2 minutes plus 1 for every 5 tiles, empties the whole line and wets the spot where you opened it. It's greyed out while a pump runs the line. |
 | Cracks | A cracked tile leaks about 3 L an hour while the tap runs, more from a higher tank. The water wets the ground but no plant gets it. **Patch Crack** takes 3 minutes and one use of glue, epoxy or duct tape on any pipe. |
-| Take Up Pipe | 3 minutes. Each length comes back in the condition it went in; laid pipe doesn't wear. A cracked length is lost, and a tap's length comes back with its tile. The joints are used up. A sledgehammer also removes a tile, but you lose the pipe. |
+| Take Up Pipe | 3 minutes. Each length comes back in the condition it went in; laid pipe doesn't wear. A cracked length is lost, and a tap's length and a sprinkler come back with their tile. The joints are used up. A sledgehammer also removes a tile, but you lose the pipe and its sprinkler. |
 
 ### Making water safe
 
@@ -119,9 +132,9 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Mechanic | How it works |
 |---|---|
 | Building a hand pump | In the build menu, beside the rain collectors. **Wooden Hand Pump**: Carpentry 2; 4 planks, 4 nails, 2 plastic pipes, a rubber hose and a seal (Leather Strips, a Tire Piece or a Tarp Piece); a hammer, a saw and any drill, which you keep. **Iron Hand Pump**: Welding 3; 2 iron pipes, 2 small steel sheets, 4 screws, a rubber hose and a seal, with 2 uses of a welding torch and of welding rods; a welder mask and a hand drill, which you keep. The seal goes in whole: Leather Strips leave no dirty strips. Both give XP. You learn them from *Cisterns for Kentucky*, or at Carpentry 4 and Welding 5. Build it anywhere; it says **No water to draw** until it has a source. |
-| Where it draws | From the first of: a well beside it (the stone well, or the forest's old hand pump), clean and endless; the fullest rain barrel, rain collector, amphora or water trough beside it, its water as it is, taint and all; or, for a pump on the ground, the nearest river or pond water within 3 tiles, which its hose reaches, endless and always tainted. Beside means the 8 squares around it. The menu's first line names the source, then the seal, the pump's condition and the tank it fills. |
-| Plumb Outlet | From the pump's menu, to one tank in reach, with the same reach, pipe, joints, time and learning as Plumb to Tank. A Wooden Hand Pump fills a tank up to a level above its floor: a barrel on a Tank Stand beside it, or on the floor above. An Iron Hand Pump fills one up to two levels above: a barrel on a stand one storey up. A tank too high is greyed out saying how high the pump lifts. The tank it fills is never its source. Unplumb from the pump, the tank or the floor where either stood. |
-| Pump | Stand at the pump and work the handle: about 6 L a minute from a wooden pump and 8 from an iron one, so a 600 L barrel takes about 100 or 75 minutes. It's hard work, about 60% of your endurance an hour, less what standing still gives back. It stops by itself when the tank is full, the source runs dry, the seal or the pump wears out, or you're exhausted. You hear the water, and a wooden pump squeals. Zombies hear it too: about 15 tiles off for a wooden pump, 8 for an iron one. Only one person can work a pump at a time. |
+| Where it draws | From the first of: a well beside it (the stone well, or the forest's old hand pump), clean and endless; the fullest rain barrel, rain collector, amphora or water trough beside it, its water as it is, taint and all; or, for a pump on the ground, the nearest river or pond water within 3 tiles, which its hose reaches, endless and always tainted. Beside means the 8 squares around it. The menu's first line names the source, then the seal, the pump's condition and the tank it fills or the line it feeds. |
+| Plumb Outlet | From the pump's menu, to one tank or garden line in reach, with the same reach, pipe, joints, time and learning as Plumb to Tank; a line is listed by its nearest tile. A Wooden Hand Pump fills a tank up to a level above its floor: a barrel on a Tank Stand beside it, or on the floor above. An Iron Hand Pump fills one up to two levels above: a barrel on a stand one storey up. A tank too high is greyed out saying how high the pump lifts. The tank it fills is never its source. A line it feeds runs while you work the handle (Garden lines, above). Unplumb from the pump, the tank, the line's tile or the floor where either stood. |
+| Pump | Stand at the pump and work the handle: about 6 L a minute from a wooden pump and 8 from an iron one, so a 600 L barrel takes about 100 or 75 minutes. It's hard work, about 60% of your endurance an hour, less what standing still gives back. It stops by itself when the tank is full, the source runs dry, the seal or the pump wears out, or you're exhausted; feeding a line, it runs until you stop or one of the others. You hear the water, and a wooden pump squeals. Zombies hear it too: about 15 tiles off for a wooden pump, 8 for an iron one. Only one person can work a pump at a time. |
 | Seals | Each seal lifts so many litres before it's worn through: Leather Strips 3000, a Tire Piece 2000, a Tarp Piece 1200 and a Plunger's cup 600. The menu shows what's left of it. A worn-out seal lifts nothing, and Pump is greyed out until you replace it. |
 | Replace Seal | From the pump's menu, then the seal, from the Leather Strips, Tire Pieces, Tarp Pieces and Plungers you carry: 10 minutes with a screwdriver, which you keep. The old seal is thrown away. Anyone can do it, whenever they like. |
 | Wear | Every 300 L lifted takes 1% off a wooden pump, every 1500 L off an iron one: about 30,000 L in all from a wooden pump and 150,000 from an iron one. At 0% it's worn out and lifts nothing; knock it down with a sledgehammer and build a new one. |
@@ -132,7 +145,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 |---|---|
 | Building a Pump House | In the build menu, beside the rain collectors. **Pump House (Wood)**: Carpentry 2 and Electricity 1; 4 planks, 4 nails, 2 electrical wires, 2 rubber hoses; a hammer and a screwdriver, which you keep. **Pump House (Sheet Metal)**: Welding 1 and Electricity 1; 2 small steel sheets, 4 screws, 2 electrical wires, 2 rubber hoses; a screwdriver. It is built empty, and draws from the same sources as a hand pump. You learn both from *Cisterns for Kentucky*, or by researching an Appliance Pump or a Utility Pump. |
 | Pump parts | **Appliance Pump** (weight 1): about 6 L a minute, fills a tank up to a level above, 1% wear an hour running. **Utility Pump** (weight 6): about 20 L a minute, up to two levels above, 0.5% an hour. |
-| Fit Pump, Take Out Pump | From the house's menu, with a screwdriver: Fit Pump takes a part from your inventory as worn as it is (15 minutes), Take Out Pump gives it back as it was (10 minutes) and switches the house off. Plumb Outlet works once a part is in, with Plumb to Tank's reach, pipe and learning; the part's lift decides how high the tank may stand. |
+| Fit Pump, Take Out Pump | From the house's menu, with a screwdriver: Fit Pump takes a part from your inventory as worn as it is (15 minutes), Take Out Pump gives it back as it was (10 minutes) and switches the house off. Plumb Outlet works once a part is in, to a tank or a garden line, with Plumb to Tank's reach, pipe and learning; the part's lift decides how high the tank may stand. A line it feeds runs while the house runs (Garden lines, above). |
 | Turn On, Turn Off | From the house's menu, 1 minute. Turn On is greyed out without power. Switched on, it runs every ten minutes while it has power: the water stops when the tank is full, the pump doesn't. The menu says whether it is running, off, or on with no power. You hear its motor; zombies hear it about 10 tiles off for an Appliance Pump and 20 for a Utility Pump. |
 | Power | The grid, free, until the shutoff, but only in a room or right beside one, as for a washer: never out in the open. Otherwise a running generator in reach, which burns fuel for the pump at vanilla's rate (as much as a washer for an Appliance Pump, about twice for a Utility Pump) and switches off when it runs dry. A Renewable Energy battery bank powers it without being billed yet. |
 | Wear | Running with nothing to draw wears the part ten times as fast. At 0% it burns out, stops and switches off. |
@@ -146,11 +159,11 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Mechanic | How it works |
 |---|---|
 | *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures, filters, boilers and pumps), the Wooden and Iron Hand Pumps, both Pump Houses and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
-| Skills | Carpentry 4 teaches the Wooden Hand Pump, Carpentry 5 the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 5 the welded-firebox Boiler and the Iron Hand Pump, Pottery 5 the Filter Crock (shaping, firing and setting it up), Electricity 2 Salvage Pump, Electricity 6 Make Utility Pump; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
-| Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. Researching a Metal Drum teaches the stone-firebox Boiler from Masonry 1 and the welded-firebox Boiler from Welding 2. Researching an Appliance Pump or a Utility Pump teaches the Pump Houses; a Utility Pump also Make Utility Pump. |
-| Utility Pump loot | A sandbox option multiplies how often Utility Pumps turn up (0 leaves them out). |
-| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Pour In, Clean Filter, Scrub Crock, Take Down, Patch Drum, Pump, Replace Seal, Fit Pump, Take Out Pump, Turn On and Off, and Repair Pump (Electricity 2). |
-| XP | Building the Tank Stand, the Barrel Filter and the Wooden Hand Pump give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler and the Iron Hand Pump give Welding XP; shaping a Filter Crock gives Pottery XP. |
+| Skills | Carpentry 4 teaches the Wooden Hand Pump, Carpentry 5 the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter, Masonry 4 the stone-firebox Boiler, Welding 4 Make Pipe Sprinkler, Welding 5 the welded-firebox Boiler and the Iron Hand Pump, Pottery 5 the Filter Crock (shaping, firing and setting it up), Electricity 2 Salvage Pump, Electricity 6 Make Utility Pump; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
+| Research | Researching a Clay Jar, from Pottery 3, teaches the Filter Crock's recipes; so does researching a Filter Crock. Researching a Metal Drum teaches the stone-firebox Boiler from Masonry 1 and the welded-firebox Boiler from Welding 2. Researching an Appliance Pump or a Utility Pump teaches the Pump Houses; a Utility Pump also Make Utility Pump. Researching a Lawn Sprinkler, from Welding 1, teaches Make Pipe Sprinkler. |
+| Parts loot | A sandbox option multiplies how often Utility Pumps and Lawn Sprinklers turn up (0 leaves them out). |
+| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Set and Take Sprinkler, Pour In, Clean Filter, Scrub Crock, Take Down, Patch Drum, Pump, Replace Seal, Fit Pump, Take Out Pump, Turn On and Off, and Repair Pump (Electricity 2). |
+| XP | Building the Tank Stand, the Barrel Filter and the Wooden Hand Pump give Carpentry XP; the Brick Filter and the stone-firebox Boiler give Masonry XP; the welded-firebox Boiler, the Iron Hand Pump and Make Pipe Sprinkler give Welding XP; shaping a Filter Crock gives Pottery XP. |
 | Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. **Plumbing keeps taint** (on by default): vanilla's Plumb makes the mod's connection and old plumbed fixtures change over; off, vanilla's plumbing is untouched and a rooftop barrel's water comes out clean. |
 | Adding to a save | The pamphlet turns up only in containers nobody has opened yet. Barrels already in your world count as tanks straight away. |
 
@@ -161,6 +174,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | *Cisterns for Kentucky* | Pamphlet, weight 0.1 | Found only | Teaches the Tank Stand, the hand pumps, the Pump Houses, the filters and Plumb to Tank |
 | Appliance Pump | Part, weight 1 | Salvage Pump on a washer or dishwasher | A Pump House's weak pump |
 | Utility Pump | Part, weight 6 | Found in hardware stores, the Gigamart, garages and basements; or Make Utility Pump | A Pump House's strong pump |
+| Lawn Sprinkler | Part, weight 1 | Found in garden stores, garages, sheds and farm crates; or Make Pipe Sprinkler (Welding 2: an iron pipe, an empty gardening spray can, 2 screws; hand drill, pliers) | Set on a line tile, waters a 5 × 3 patch while a pump drives the line |
 | Tank Stand | Built | Carpentry 3: 4 logs, 6 planks, 8 nails; hammer, saw | Holds one rain barrel a level up |
 | Raised Rain Barrel | A barrel on a stand | Set Barrel on Stand | A 600 L tank a level up |
 | Barrel Filter | Built | Carpentry 2: 6 planks, 5 nails, gravel bag, 2 sand bags, 5 charcoal, a pipe and a joint; hammer, shovel | About 100 L of clean water a day, once ripe |
@@ -175,18 +189,18 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Pump House (Wood, Sheet Metal) | Built | Carpentry 2 or Welding 1, and Electricity 1: planks and nails or steel sheets and screws, 2 electrical wires, 2 rubber hoses; screwdriver (and hammer) | Takes a pump part and runs it on power |
 | Garden line tile | Laid | One tile of pipe and its joint | Carries water; holed, it waters the plant on its square |
 | Tap | Fitted to a line tile | A Pipe Wrench, one length of pipe and its joint | Where you run the line |
-| Buried pipe | Plumbed between tanks, from a tank to a fixture, into and out of a filter or boiler, or out of a pump | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, through a filter or boiler, or from a pump |
+| Buried pipe | Plumbed between tanks, from a tank to a fixture, into and out of a filter or boiler, or out of a pump into a tank or a line | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, through a filter or boiler, or from a pump |
 | Plumbed fixture | A vanilla sink, bath, shower, toilet or washer | Plumb to Tank, or vanilla's Plumb | Holds its tank's water for vanilla's drink, fill, wash and washer |
 
 Everything else is vanilla:
 
 | Vanilla item | Used for |
 |---|---|
-| Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet; plastic and iron pipe build the hand pumps |
+| Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet; plastic and iron pipe build the hand pumps; an iron pipe makes a sprinkler |
 | Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack; the Barrel Filter's outlet |
 | Bucket of Clay Cement or Concrete | Joints in clay pipe; the Brick Filter; the stone-firebox Boiler |
-| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Plumb Inlet and Outlet, a pump's Plumb Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler |
-| Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes; a drill builds the Wooden Hand Pump, a Hand Drill the Iron one |
+| Pipe Wrench | Laying iron or lead line, Fit Tap, Set and Take Sprinkler, Plumb to Tank, Plumb Inlet and Outlet, a pump's Plumb Outlet, vanilla's Plumb, Unplumb; the stone-firebox Boiler |
+| Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes; a drill builds the Wooden Hand Pump, a Hand Drill the Iron one and makes a sprinkler |
 | Rain barrel | Set on a Tank Stand |
 | Sand Bag, Gravel Bag, Charcoal, Clay Bricks | The filters |
 | Clay, Charcoal; a pottery wheel and a kiln | Making the Filter Crock |
@@ -194,11 +208,12 @@ Everything else is vanilla:
 | Clay Jar | Research it to learn the Filter Crock |
 | Metal Drum | The boiler's drum; research it to learn the boilers |
 | Clay Bricks or Stone Blocks, Iron Pipe | The stone-firebox Boiler |
-| Small Steel Sheet, Screws, Welding Torch, Welding Rods, Welder Mask | The welded-firebox Boiler; Patch Drum; the Iron Hand Pump |
+| Small Steel Sheet, Screws, Welding Torch, Welding Rods, Welder Mask | The welded-firebox Boiler; Patch Drum; the Iron Hand Pump; screws for Make Pipe Sprinkler |
+| Empty Gardening Spray Can | A made sprinkler's head |
 | Rubber Hose | A hand pump's intake |
 | Leather Strips, Tire Piece, Tarp Piece, Plunger | A hand pump's seal; the Plunger only through Replace Seal |
 | Screwdriver | Replace Seal; Pump Houses, Fit and Take Out Pump, Repair Pump, Salvage Pump |
-| Pliers | Salvage Pump |
+| Pliers | Salvage Pump; Make Pipe Sprinkler |
 | Electrical Wire, Scrap Electronics, Blower Fan | Pump Houses; Repair Pump; Make Utility Pump |
 | Well, forest hand pump, river or pond, water trough | Water for a hand pump |
 | Logs, planks and anything else vanilla burns; a lighter or matches and tinder | Fuelling and lighting a boiler, as any vanilla fire |
@@ -212,6 +227,7 @@ Everything else is vanilla:
 |---|---|---|
 | *Cisterns for Kentucky* | Garden centres' shelves most of all; farm crates, homesteaders' boxes, hardware stores' farm aisles, libraries' gardening shelves and magazine racks, post offices; less often farm tool cabinets, barn tool crates, garden-centre tools, the Gigamart's farm aisle and libraries' reference shelves | Uncommon: about as often as one of vanilla's farming magazines |
 | Utility Pump | Hardware stores' and the Gigamart's tools; less often garage tools and the tool crates of garages and basements; worn, in old tool crates | Rare: about as often as a Blower Fan |
+| Lawn Sprinkler | Garden stores' tools and shelves; less often garage tools and the farm and garden crates of sheds, barns and garages; worn, in old tool crates | Rare: a fifth to a tenth as often as an empty gardening spray can |
 | Plastic pipe | Hardware stores' plumbing aisle, craft supplies, junk bins | Uncommon |
 | Iron pipe | Crates of pipe in warehouses and on building sites, plumbing aisles, plumbers' vans | Common |
 | Lead pipe | Plumbing aisles, construction trucks, wherever vanilla keeps melee weapons | Uncommon |

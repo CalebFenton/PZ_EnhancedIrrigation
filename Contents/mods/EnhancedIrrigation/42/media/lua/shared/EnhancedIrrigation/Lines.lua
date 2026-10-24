@@ -1,8 +1,8 @@
 -- Garden lines: pipe laid on the ground, one tile a square, joined to its same-floor neighbours
--- where no wall stands between, holed over the beds and tapped at a tank. The authority keeps a
--- record of every tile in a Global Object System, saved with the world and run loaded or not;
--- every client gets each tile's summary, whose fields carry the record's names, so the menu and
--- the authority read a line the same way (Lines.stateAt).
+-- where no wall stands between, holed over the beds and tapped at a tank or fed by a pump's outlet
+-- (Pumps.lua). The authority keeps a record of every tile in a Global Object System, saved with the
+-- world and run loaded or not; every client gets each tile's summary, whose fields carry the
+-- record's names, so the menu and the authority read a line the same way (Lines.stateAt).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -140,6 +140,17 @@ function Lines.stateOf(isoObject)
     return Lines.stateAt(isoObject:getX(), isoObject:getY(), isoObject:getZ())
 end
 
+--- The summary of the tile at x, y, z as this side knows it: built from its record on the
+--- authority, as currentSummary builds it, else the one this client has; nil where there is no
+--- line tile. Read only.
+function Lines.summaryAt(x, y, z)
+    local record = Lines.recordAt(x, y, z)
+    if record then
+        return record:buildSummary()
+    end
+    return receivedAt(x, y, z)
+end
+
 --- The tiles of the line through x, y, z, the start first and the rest in the order water reaches
 --- them from it: a list of { x, y, z, state }. Empty when x, y, z holds no line tile.
 function Lines.component(x, y, z)
@@ -204,6 +215,19 @@ function Lines.soilKey(soak)
         return "IGUI_EnhancedIrrigation_Soaked"
     end
     return "IGUI_EnhancedIrrigation_Damp"
+end
+
+-- The soil words, driest first.
+local SOIL_RANK = {
+    IGUI_EnhancedIrrigation_Damp = 1, IGUI_EnhancedIrrigation_Soaked = 2, IGUI_EnhancedIrrigation_Waterlogged = 3,
+}
+
+--- The wetter of two soil words (Lines.soilKey), either of which may be nil for dry soil.
+function Lines.wetterKey(a, b)
+    if not a or (b and SOIL_RANK[b] > SOIL_RANK[a]) then
+        return b
+    end
+    return a
 end
 
 -- A line tile has no containers, so a summary needs nothing added on read.

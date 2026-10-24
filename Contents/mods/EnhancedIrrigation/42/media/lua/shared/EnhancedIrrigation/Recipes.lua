@@ -9,15 +9,15 @@ EnhancedIrrigation.Recipes = Recipes
 -- The mod's recipes with AutoLearnAny or AutoLearnAll. Vanilla's AutoLearn check
 -- (ScriptManager.checkAutoLearn) walks only the craftRecipe scripts, which hold no entity's recipe,
 -- so the build recipes' AutoLearn never teaches anything unless the mod asks for it. Plumb to Tank,
--- Salvage Pump, Make Utility Pump and the crock's wheel and kiln recipes are craftRecipes vanilla
--- checks too; they are here so that a level up that teaches them reaches the client whichever
--- LevelPerk hook runs first.
+-- Salvage Pump, Make Utility Pump, Make Pipe Sprinkler and the crock's wheel and kiln recipes are
+-- craftRecipes vanilla checks too; they are here so that a level up that teaches them reaches the
+-- client whichever LevelPerk hook runs first.
 Recipes.AUTO_LEARN = {
     "EnhancedIrrigation_TankStand", "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter",
     "EnhancedIrrigation_PlumbToTank", "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
     "EnhancedIrrigation_FilterCrock", "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded",
     "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump", "EnhancedIrrigation_SalvagePump",
-    "EnhancedIrrigation_MakeUtilityPump",
+    "EnhancedIrrigation_MakeUtilityPump", "EnhancedIrrigation_MakePipeSprinkler",
 }
 
 -- Vanilla items that teach the mod's recipes when researched, by full type: what a player who

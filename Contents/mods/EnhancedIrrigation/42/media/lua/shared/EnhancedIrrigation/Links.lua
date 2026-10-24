@@ -11,17 +11,14 @@
 -- back, and the condition of each item of that pipe as it went in (Materials.conditions). One of
 -- `fixture` (b is a plumbed fixture, Fixtures.lua), `inlet` (b is a treatment unit fed from the
 -- tank at a), `outlet` (a is a unit whose basin empties into the tank at b, Treatment.lua) or
--- `pump` (a is a pump that lifts water into the tank at b, Pumps.lua) is true when the link isn't
--- between two tanks.
+-- `pump` (a is a pump that lifts water into the tank at b, or into the garden line b is a tile of,
+-- Pumps.lua) is true when the link isn't between two tanks.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Tanks"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Links = {}
 EnhancedIrrigation.Links = Links
-
-local Tanks = EnhancedIrrigation.Tanks
 
 Links.SYSTEM_NAME = "enhanced_irrigation_link"
 
@@ -112,10 +109,11 @@ function Links.find(p, q)
     return nil
 end
 
---- The other tanks `tank` can be plumbed to: within reach and loaded on this side, nearest first,
---- each { tank, at, distance }. Linked ones are listed too; the menu says so.
-function Links.tanksInReach(tank)
-    local here = EnhancedIrrigation.squareOf(tank)
+--- What `find(x, y, z)` finds within plumbing reach of `object`, loaded on this side, nearest
+--- first, each { found, at, distance }: with Tanks.tankAt, the tanks it can be plumbed to, linked
+--- ones too (the menu says so).
+function Links.inReach(object, find)
+    local here = EnhancedIrrigation.squareOf(object)
     local found = {}
     local storeys = math.floor(Links.MAX_TILES / Links.TILES_PER_STOREY)
     for dz = -storeys, storeys do
@@ -124,9 +122,9 @@ function Links.tanksInReach(tank)
             for dy = -across, across do
                 local at = { x = here.x + dx, y = here.y + dy, z = here.z + dz }
                 if not EnhancedIrrigation.sameSquare(at, here) and Links.distance(here, at) <= Links.MAX_TILES then
-                    local other = Tanks.tankAt(at.x, at.y, at.z)
+                    local other = find(at.x, at.y, at.z)
                     if other then
-                        table.insert(found, { tank = other, at = at, distance = Links.distance(here, at) })
+                        table.insert(found, { found = other, at = at, distance = Links.distance(here, at) })
                     end
                 end
             end

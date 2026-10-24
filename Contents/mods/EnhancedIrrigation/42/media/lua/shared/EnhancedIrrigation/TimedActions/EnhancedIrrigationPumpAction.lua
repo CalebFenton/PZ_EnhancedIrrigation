@@ -3,12 +3,12 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 
--- Pump: the character works a hand pump's handle, and it lifts water into its outlet's tank for
--- as long as they keep at it, until they stop, the tank is full, the source runs dry, the seal or
--- the pump wears out, or they are exhausted. Open-ended as Water from Tank
--- (EnhancedIrrigationWaterAction.lua) is: the authority runs the pump for the world time gone by,
--- on a timed event the multiplayer server raises itself (emulateAnimEvent), or from update() in
--- single player, and once more when it stops. The action holds the pump while it works
+-- Pump: the character works a hand pump's handle, and it lifts water into its outlet's tank, or
+-- drives the line its outlet feeds, for as long as they keep at it, until they stop, the tank is
+-- full, the source runs dry, the seal or the pump wears out, or they are exhausted. Open-ended as
+-- Water from Tank (EnhancedIrrigationWaterAction.lua) is: the authority runs the pump for the world
+-- time gone by, on a timed event the multiplayer server raises itself (emulateAnimEvent), or from
+-- update() in single player, and once more when it stops. The action holds the pump while it works
 -- (PumpSystem.hold): it frees itself however the action ends. A global, as the server finds the
 -- class by its Type (NetTimedAction.parse).
 EnhancedIrrigationPumpAction = EnhancedIrrigationPumpAction or ISBaseTimedAction:derive("EnhancedIrrigationPumpAction")

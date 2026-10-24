@@ -4,14 +4,15 @@
 -- other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb works at a tank;
 -- Plumb Fixture and vanilla's Plumb (Plumb Above) at a fixture, toward its tank; Plumb Inlet and
 -- Plumb Outlet at a unit, toward the tank it draws from or fills; Plumb Pump at a pump, toward the
--- tank it fills; Unplumb at either end, or at the floor of an end whose tank, fixture, unit or pump
--- is gone, as the buried pipe stays (Links.lua).
+-- tank it fills or a tile of the garden line it feeds; Unplumb at either end, or at the floor of an
+-- end whose tank, fixture, unit or pump is gone, as the buried pipe stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
+require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Treatment"
 require "EnhancedIrrigation/Pumps"
@@ -22,6 +23,7 @@ local LinkJobs = {}
 EnhancedIrrigation.LinkJobs = LinkJobs
 
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
+local Lines = EnhancedIrrigation.Lines
 local Fixtures, Treatment = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Treatment
 local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 
@@ -146,9 +148,10 @@ function LinkJobs.unitBlocker(unit, with, role)
     return nil, here, other
 end
 
---- Why the pump `pump`'s outlet can't be plumbed to the tank on the square `with` names, as far as
---- both ends go, a Tooltip key, or nil; and the two squares. A pump fills a tank up to its lift
---- above its floor, whatever the filling rule says (Pumps.lifts); a Pump House's lift is its part's,
+--- Why the pump `pump`'s outlet can't be plumbed to the tank or line tile on the square `with`
+--- names, as far as both ends go, a Tooltip key, or nil; and the two squares. A pump fills a tank up
+--- to its lift above its floor, whatever the filling rule says (Pumps.lifts), and feeds a line no
+--- higher; a line takes a tap or a pump, not both, and one pump. A Pump House's lift is its part's,
 --- so it is plumbed once one is fitted.
 function LinkJobs.pumpBlocker(pump, with)
     local here, other = endsOf(pump, with)
@@ -159,8 +162,8 @@ function LinkJobs.pumpBlocker(pump, with)
     if not spec then
         return "Tooltip_EnhancedIrrigation_NoPumpFitted"
     end
-    local tank = Tanks.tankAt(other.x, other.y, other.z)
-    if not tank then
+    local into = Tanks.tankAt(other.x, other.y, other.z) or Lines.lineAt(other.x, other.y, other.z)
+    if not into then
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
     if Pumps.outletOf(here) then
@@ -169,7 +172,16 @@ function LinkJobs.pumpBlocker(pump, with)
     if Links.find(here, other) then
         return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
     end
-    if not Pumps.lifts(spec, Tanks.levelOf(tank), here.z) then
+    if Lines.isLine(into) then
+        local tiles = Lines.component(other.x, other.y, other.z)
+        if Lines.tapIn(tiles) then
+            return "Tooltip_EnhancedIrrigation_LineHasTap"
+        end
+        if Pumps.pumpFeeding(tiles) then
+            return "Tooltip_EnhancedIrrigation_LinePumped"
+        end
+    end
+    if not Pumps.lifts(spec, PumpJobs.levelOf(into), here.z) then
         return PumpJobs.LIFT_KEYS[spec.lift]
     end
     return nil, here, other

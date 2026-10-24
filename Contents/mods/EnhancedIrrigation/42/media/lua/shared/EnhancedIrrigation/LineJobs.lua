@@ -1,6 +1,7 @@
 -- The hands-on jobs at a garden line: laying a tile, drilling holes, fitting the tap, patching a
--- crack, draining and taking the pipe up, done on the authority by
--- server/EnhancedIrrigation/Lines/LineSystem.lua. Running water from the tap is Taps.lua's.
+-- crack, draining, setting and taking a sprinkler and taking the pipe up, done on the authority by
+-- server/EnhancedIrrigation/Lines/LineSystem.lua. Running water from the tap is Taps.lua's, and from
+-- a pump Pumps.lua's.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -8,6 +9,8 @@ require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Sprinklers"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LineJobs = {}
@@ -17,6 +20,7 @@ local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 local Pipes = EnhancedIrrigation.Pipes
 local Materials = EnhancedIrrigation.Materials
+local Pumps, Sprinklers = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers
 
 LineJobs.LAY = "LayLine"
 LineJobs.DRILL = "DrillHoles"
@@ -24,6 +28,8 @@ LineJobs.TAP = "FitTap"
 LineJobs.PATCH = "PatchCrack"
 LineJobs.DRAIN = "DrainLine"
 LineJobs.TAKE_UP = "TakeUpPipe"
+LineJobs.SET_SPRINKLER = "SetSprinkler"
+LineJobs.TAKE_SPRINKLER = "TakeSprinkler"
 
 local function firstTagged(tag)
     return function(character)
@@ -84,6 +90,18 @@ local function drainMinutes(object)
     return DRAIN_MINUTES + #Lines.component(object:getX(), object:getY(), object:getZ()) / DRAIN_TILES_A_MINUTE
 end
 
+-- Whether a pump stands in the 3x3 around x, y, z, on its floor: where its outlet can start a line.
+local function pumpBeside(x, y, z)
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            if Pumps.pumpAt(x + dx, y + dy, z) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 --- Why a line tile can't go on `square`, a Tooltip key, or nil. `pending(x, y, z)`, if given, says
 --- which squares already have a tile queued to be laid, which count as line for adjacency. Line
 --- behind a wall (Lines.joins) neither touches nor joins it.
@@ -92,7 +110,7 @@ function LineJobs.layBlocker(square, pending)
         return "Tooltip_EnhancedIrrigation_CantLayHere"
     end
     local x, y, z = square:getX(), square:getY(), square:getZ()
-    local touches, tapped, seen = false, 0, {}
+    local touches, fed, seen = false, 0, {}
     for _, step in ipairs(Lines.STEPS) do
         local nx, ny = x + step.dx, y + step.dy
         local joins = Lines.joins(x, y, z, step)
@@ -103,20 +121,20 @@ function LineJobs.layBlocker(square, pending)
                 for _, tile in ipairs(tiles) do
                     seen[EnhancedIrrigation.squareKey(tile.x, tile.y, z)] = true
                 end
-                if Lines.tapIn(tiles) then
-                    tapped = tapped + 1
+                if Lines.tapIn(tiles) or Pumps.pumpFeeding(tiles) then
+                    fed = fed + 1
                 end
             end
         elseif joins and pending and pending(nx, ny, z) then
             touches = true
         end
     end
-    if not touches and #Tanks.tanksReaching(x, y, z) == 0 then
+    if not touches and #Tanks.tanksReaching(x, y, z) == 0 and not pumpBeside(x, y, z) then
         return "Tooltip_EnhancedIrrigation_NoTankReach"
     end
-    -- One line takes one tap: two would each run every hole on it.
-    if tapped >= 2 then
-        return "Tooltip_EnhancedIrrigation_JoinsTwoTaps"
+    -- One line takes one tap or one pump: two would each run every outlet on it.
+    if fed >= 2 then
+        return "Tooltip_EnhancedIrrigation_JoinsTwoFeeds"
     end
     return nil
 end
@@ -133,7 +151,13 @@ local function atLine(check)
     end
 end
 
--- Lay's `with` is the pipe kind; the others' is nil.
+-- Whether `item` is a Lawn Sprinkler `character` carries.
+local function carriesSprinkler(character, item)
+    return instanceof(item, "InventoryItem") and item:getFullType() == Sprinklers.ITEM
+        and character:getInventory():containsRecursive(item)
+end
+
+-- Lay's `with` is the pipe kind, Set Sprinkler's the sprinkler carried; the others' is nil.
 LineJobs.JOBS = {
     [LineJobs.LAY] = {
         minutes = 3,
@@ -169,10 +193,18 @@ LineJobs.JOBS = {
     },
     [LineJobs.TAP] = {
         minutes = 10, sound = "RepairWithWrench", equip = holdWrench,
-        blocker = atLine(function(character, object)
+        blocker = atLine(function(character, object, state)
             local x, y, z = object:getX(), object:getY(), object:getZ()
-            if Lines.tapIn(Lines.component(x, y, z)) then
+            if state.sprinkler then
+                return "Tooltip_EnhancedIrrigation_TapAndSprinkler"
+            end
+            local tiles = Lines.component(x, y, z)
+            if Lines.tapIn(tiles) then
                 return "Tooltip_EnhancedIrrigation_LineHasTap"
+            end
+            -- One line takes a tap or a pump, not both, so a pump never pushes against a tank.
+            if Pumps.pumpFeeding(tiles) then
+                return "Tooltip_EnhancedIrrigation_LinePumped"
             end
             return #Tanks.pushingAt(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
         end),
@@ -195,17 +227,46 @@ LineJobs.JOBS = {
     [LineJobs.DRAIN] = {
         minutes = drainMinutes, sound = "WaterCrops",
         blocker = atLine(function(character, object)
+            local full = false
             for _, tile in ipairs(Lines.component(object:getX(), object:getY(), object:getZ())) do
-                if tile.state.full then
-                    return nil
+                -- Its pump holds it, as a character holds a tap (LineSystem.showRunning).
+                if tile.state.running then
+                    return "Tooltip_EnhancedIrrigation_LineRunning"
                 end
+                full = full or tile.state.full
             end
-            return "Tooltip_EnhancedIrrigation_LineEmpty"
+            return not full and "Tooltip_EnhancedIrrigation_LineEmpty" or nil
         end),
     },
     [LineJobs.TAKE_UP] = {
         minutes = 3,
         blocker = atLine(function() return nil end),
+    },
+    -- The sprinkler goes on as it is, its item taken by the job itself, being that one item rather
+    -- than any of its type. A tap's riser takes the tile's fitting.
+    [LineJobs.SET_SPRINKLER] = {
+        minutes = 5, sound = "RepairWithWrench", equip = holdWrench,
+        blocker = function(character, object, item)
+            local state = Lines.stateOf(object)
+            if not state then
+                return "Tooltip_EnhancedIrrigation_NoLine"
+            end
+            if state.tap then
+                return "Tooltip_EnhancedIrrigation_TapAndSprinkler"
+            end
+            if state.sprinkler then
+                return "Tooltip_EnhancedIrrigation_HasSprinkler"
+            end
+            return not carriesSprinkler(character, item) and "Tooltip_EnhancedIrrigation_NoSprinkler" or nil
+        end,
+        materials = { Pipes.WRENCH },
+    },
+    [LineJobs.TAKE_SPRINKLER] = {
+        minutes = 3, sound = "RepairWithWrench", equip = holdWrench,
+        blocker = atLine(function(character, object, state)
+            return not state.sprinkler and "Tooltip_EnhancedIrrigation_NoSprinklerHere" or nil
+        end),
+        materials = { Pipes.WRENCH },
     },
 }
 

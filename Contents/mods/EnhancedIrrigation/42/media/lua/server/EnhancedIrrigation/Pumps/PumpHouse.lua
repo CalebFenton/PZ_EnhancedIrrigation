@@ -1,8 +1,8 @@
 -- What time does to a Pump House (PumpObject.KINDS.house): while it is switched on, has a pump part
 -- fitted that isn't burnt out, and has power, it runs every pass, lifting its part's rate from its
 -- source into its outlet's tank as far as its lift, the tank's room and a finite source's water go,
--- and wearing its part by the hour it runs, faster run dry. A full tank stops the water, not the
--- pump.
+-- or driving the line its outlet feeds with what that takes up to its rate (Lines/Flow.lua), and
+-- wearing its part by the hour it runs, faster run dry. A full tank stops the water, not the pump.
 --
 -- Power, as a washer has it: the grid in a room or beside one, which costs nothing; else a running
 -- vanilla generator in reach, the nearest, which burns fuel for the part's draw at vanilla's rate
@@ -20,16 +20,18 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/Pumps/PumpObject"
+require "EnhancedIrrigation/Lines/Flow"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
-local PumpObject = EnhancedIrrigation.PumpObject
+local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
 
 -- Power ----------------------------------------------------------------------------------------------
 
@@ -194,20 +196,40 @@ local function wearOf(part, hours, dryHours)
     return part.wearPerHour * (hours - dryHours + Pumps.DRY_WEAR * dryHours)
 end
 
+-- The source of a line a Pump House with `part` feeds from `source` (Pumps.sourceOf), as Flow reads
+-- one, giving at most `litres`: what the time it ran wet lifts.
+local function lineSource(part, source, litres)
+    return {
+        push = part.push,
+        perHour = part.rate * 60,
+        pumped = true,
+        holds = true,
+        draw = function(asked) return PumpObject.draw(source, nil, math.min(asked, litres)) end,
+    }
+end
+
 --- Runs the record's Pump House `pump` with `part` for up to `hours`: lifts the part's rate from
 --- its source into its outlet's tank, as far as the lift, the tank's room and a finite source's
---- water go, and wears the part, ten times as fast for the time its source is dry. Stops where the
---- part burns out. Returns the hours it ran.
+--- water go, or what the line its outlet feeds takes of it, and wears the part, ten times as fast
+--- for the time its source is dry. Stops where the part burns out. Returns the hours it ran.
 function PumpHouse.run(record, pump, part, hours)
     local source = Pumps.sourceOf(pump, record.intake, (Pumps.outletOf(record) or {}).b)
-    local tank = PumpJobs.deliveryOf(pump, part, record.intake)
-    local perHour = part.rate * 60
+    local into = PumpJobs.deliveryOf(pump, part, record.intake)
+    local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
+    -- The litres an hour it lifts while it has water, and how many its outlet takes at most.
+    local perHour, room = part.rate * 60, math.huge
+    if line then
+        perHour = Flow.takesPerHour(line, lineSource(part, source, 0))
+    elseif into then
+        room = into:getFluidContainer():getFreeCapacity()
+    end
     local litres, dryHours = 0, hours
     if source and not source.dry then
         dryHours = 0
-        if tank then
-            litres = math.min(perHour * hours, tank:getFluidContainer():getFreeCapacity())
-            -- A finite source that runs out before the tank fills leaves the rest of the time dry.
+        if into then
+            litres = math.min(perHour * hours, room)
+            -- A finite source that runs out before the outlet is served leaves the rest of the
+            -- time dry.
             if not source.infinite and source.litres < litres then
                 litres = source.litres
                 dryHours = hours - litres / perHour
@@ -228,9 +250,15 @@ function PumpHouse.run(record, pump, part, hours)
     if record.partCondition < Pumps.LEAST_LITRES then
         record.partCondition = 0
     end
-    if tank and litres >= Pumps.LEAST_LITRES then
-        PumpObject.draw(source, tank:getFluidContainer(), litres)
-        Tanks.sync(tank)
+    if line then
+        -- A line that takes nothing is still filled for as long as the pump runs wet.
+        local wet = perHour > 0 and litres / perHour or math.min(ran, hours - dryHours)
+        if wet > 0 then
+            Flow.run(line, lineSource(part, source, litres), wet)
+        end
+    elseif into and litres >= Pumps.LEAST_LITRES then
+        PumpObject.draw(source, into:getFluidContainer(), litres)
+        Tanks.sync(into)
     end
     return ran
 end

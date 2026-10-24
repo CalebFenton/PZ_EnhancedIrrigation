@@ -90,7 +90,7 @@ function TapSystem.run(tap, hours)
     if not tank then
         return refusal
     end
-    Flow.run(Lines.recordOf(tap), tank, hours)
+    Flow.run(Lines.recordOf(tap), Flow.fromTank(tank, tap:getZ()), hours)
     local _, stopped = Taps.tankFor(tap)
     return stopped
 end

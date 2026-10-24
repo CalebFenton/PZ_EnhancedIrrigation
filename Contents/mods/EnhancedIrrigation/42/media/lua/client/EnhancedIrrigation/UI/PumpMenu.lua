@@ -2,8 +2,8 @@
 -- where it draws, how it stands and what it fills; then at a hand pump Pump and Replace Seal, with a
 -- submenu of the seals carried; at a Pump House Fit Pump, with a submenu of the pump parts carried,
 -- or Take Out Pump, Turn On or Turn Off, and Repair Pump; then Plumb Outlet, with a submenu of the
--- tanks in reach, and Unplumb. Each is greyed out saying why when its job would be refused
--- (PumpJobs, LinkJobs).
+-- tanks and garden lines in reach, and Unplumb. Each is greyed out saying why when its job would be
+-- refused (PumpJobs, LinkJobs).
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -136,7 +136,8 @@ function PumpMenu.onFill(playerNum, context, worldobjects, test)
         job = LinkJobs.PLUMB_PUMP,
         skip = function() return false end,
         refusal = function(at) return (LinkJobs.pumpBlocker(pump, Links.encode(at))) end,
-        noneKey = "ContextMenu_EnhancedIrrigation_NoTankForFixture",
+        noneKey = "ContextMenu_EnhancedIrrigation_NoOutletInReach",
+        lines = true,
     })
     TankMenu.addUnplumbOptions(menu, playerNum, character, pump)
 end

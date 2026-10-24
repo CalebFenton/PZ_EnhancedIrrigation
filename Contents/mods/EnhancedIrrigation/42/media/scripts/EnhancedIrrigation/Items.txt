@@ -96,4 +96,26 @@ module EnhancedIrrigation
         Tags = base:showcondition;base:ignorezombiedensity,
         ResearchableRecipes = EnhancedIrrigation_PumpHouseWood;EnhancedIrrigation_PumpHouseMetal;EnhancedIrrigation_MakeUtilityPump,
     }
+
+    /*
+        The Lawn Sprinkler, set on a garden line tile, which it waters around only while a pump
+        drives the line (shared/EnhancedIrrigation/Sprinklers.lua): found in garden stores, garages
+        and sheds, worn in old tool crates, or made from pipe (Recipes.txt). Its condition shows, so
+        loot can wear it, and goes onto the line with it; a made one carries its lower ceiling in its
+        modData. Researching it teaches Make Pipe Sprinkler. Drawn with vanilla's garden sprayer, the
+        nearest model.
+    */
+    item LawnSprinkler
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = EnhancedIrrigation_LawnSprinkler,
+        ConditionMax = 100,
+        StaticModel = GardenSpray,
+        WorldStaticModel = GardenSprayGround,
+        Tooltip = Tooltip_EnhancedIrrigation_LawnSprinkler,
+        Tags = base:showcondition;base:ignorezombiedensity,
+        ResearchableRecipes = EnhancedIrrigation_MakePipeSprinkler,
+    }
 }

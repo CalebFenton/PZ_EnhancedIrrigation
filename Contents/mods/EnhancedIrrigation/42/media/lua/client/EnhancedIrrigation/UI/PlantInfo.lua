@@ -1,15 +1,15 @@
 -- Vanilla's plant info window (ISFarmingInfo) gains a "Soil" line below its own when a garden line
--- has wetted the soil under the plant, read from the line tile's summary. Wrapped, not replaced:
--- vanilla's render runs first and sizes the window for its lines, then this adds one.
+-- or a sprinkler has wetted the soil under the plant, read from the line tiles' summaries. Wrapped,
+-- not replaced: vanilla's render runs first and sizes the window for its lines, then this adds one.
 
 require "Farming/ISUI/ISFarmingInfo"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Sprinklers"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PlantInfo = {}
 EnhancedIrrigation.PlantInfo = PlantInfo
 
-local Lines = EnhancedIrrigation.Lines
+local Sprinklers = EnhancedIrrigation.Sprinklers
 
 -- Reading wet soil takes the eye vanilla asks before it colours the water level (ISFarmingInfo).
 PlantInfo.FARMING_LEVEL = 2
@@ -19,13 +19,12 @@ local LEFT = 13
 local RIGHT = 17
 local BOTTOM = 8
 
---- The IG_UI key of the soil word for the plant `plant` (a CPlantGlobalObject), or nil when there
---- is no wet line tile under it: the word the line tile's summary carries.
+--- The IG_UI key of the soil word for the plant `plant` (a CPlantGlobalObject), or nil when nothing
+--- wetted the soil under it: the wettest of the word its own line tile carries and the words of the
+--- sprinklers that water it (Sprinklers.soilKeyAt).
 function PlantInfo.soilKeyOf(plant)
     local square = plant:getSquare()
-    local line = square and Lines.lineOn(square)
-    local summary = line and Lines.currentSummary(line)
-    return summary and summary.soil or nil
+    return square and Sprinklers.soilKeyAt(square:getX(), square:getY(), square:getZ()) or nil
 end
 
 local vanillaRender = ISFarmingInfo.render
