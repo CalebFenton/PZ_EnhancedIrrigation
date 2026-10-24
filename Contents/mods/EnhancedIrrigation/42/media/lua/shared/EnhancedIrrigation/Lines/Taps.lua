@@ -14,6 +14,9 @@ EnhancedIrrigation.Taps = Taps
 local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 
+-- The sound of water running out of a line: from a tap held open, or a line drained.
+Taps.SOUND = "WaterCrops"
+
 --- The tank the water runs from at the tap tile `tap`, asked each time it runs: of the tanks high
 --- enough to push water out of it (Tanks.pushingAt), the highest holding water, then the fullest.
 --- Or nil and why none, a Tooltip key.

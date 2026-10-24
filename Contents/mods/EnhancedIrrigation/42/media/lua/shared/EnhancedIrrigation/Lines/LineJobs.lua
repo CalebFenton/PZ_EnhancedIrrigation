@@ -252,7 +252,7 @@ LineJobs.JOBS = {
         materials = { Pipes.GLUE },
     },
     [LineJobs.DRAIN] = {
-        minutes = drainMinutes, sound = "WaterCrops",
+        minutes = drainMinutes, sound = Taps.SOUND,
         blocker = atLine(function(character, object)
             local full = false
             for _, tile in ipairs(Lines.component(object:getX(), object:getY(), object:getZ())) do
