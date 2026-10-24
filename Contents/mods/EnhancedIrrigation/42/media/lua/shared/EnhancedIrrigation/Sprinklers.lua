@@ -3,7 +3,7 @@
 -- too weak to work one (docs/design.md, Garden lines). Its tile's record keeps it and the soak of
 -- the squares it waters off the line (server/EnhancedIrrigation/Lines/LineObject.lua); the flow
 -- sprays it (Flow.lua). What both sides read: which squares a sprinkler waters, and the soil word
--- at a square, from its own line tile and every sprinkler watering it.
+-- at a square, from its own line tile and the soak any sprinkler left on it.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -58,30 +58,17 @@ function Sprinklers.squaresOf(x, y, z, isLineAt)
     return squares
 end
 
--- Whether the sprinkler on the line tile at x, y, z waters the square `dx`, `dy` from it.
-local function waters(x, y, z, dx, dy)
-    for _, square in ipairs(Sprinklers.squaresOf(x, y, z, Lines.stateAt)) do
-        if square.dx == dx and square.dy == dy then
-            return true
-        end
-    end
-    return false
-end
-
 --- The IG_UI key of the soil word at x, y, z as this side knows it, or nil when the soil is dry:
---- the wettest of the line tile's on that square and of every sprinkler's that waters it.
+--- the wettest of the line tile's on that square and of the soak a sprinkler left on it, which
+--- rots the roots for as long as it lasts, whether or not a sprinkler waters the square now.
 function Sprinklers.soilKeyAt(x, y, z)
     local own = Lines.summaryAt(x, y, z)
     local key = own and own.soil
     for dx = -Sprinklers.ALONG, Sprinklers.ALONG do
         for dy = -Sprinklers.ALONG, Sprinklers.ALONG do
-            local sx, sy = x - dx, y - dy
-            local state = (dx ~= 0 or dy ~= 0) and Lines.stateAt(sx, sy, z)
-            if state and state.sprinkler and waters(sx, sy, z, dx, dy) then
-                local summary = Lines.summaryAt(sx, sy, z)
-                local soil = summary and summary.sprinklerSoil
-                key = Lines.wetterKey(key, soil and soil[Sprinklers.offsetKey(dx, dy)])
-            end
+            local summary = (dx ~= 0 or dy ~= 0) and Lines.summaryAt(x - dx, y - dy, z)
+            local soil = summary and summary.sprinklerSoil
+            key = Lines.wetterKey(key, soil and soil[Sprinklers.offsetKey(dx, dy)])
         end
     end
     return key

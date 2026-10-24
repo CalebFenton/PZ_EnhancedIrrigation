@@ -30,6 +30,8 @@ local MINUTE = 1 / 60
 local NEW = { condition = 100, ceiling = 100 }
 -- The squares a sprinkler waters.
 local SQUARES = (2 * Sprinklers.ALONG + 1) * (2 * Sprinklers.ACROSS + 1)
+-- The plant info's soil word for waterlogged soil.
+local WATERLOGGED = "IGUI_EnhancedIrrigation_Waterlogged"
 
 -- Helpers -------------------------------------------------------------------------------------------
 
@@ -280,6 +282,52 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         expect(#items == 1 and items[1].condition == WORN.condition and items[1].ceiling == WORN.ceiling,
             "Take Sprinkler gave " .. #items .. " sprinklers" .. (items[1] and " at " .. items[1].condition .. " of "
             .. items[1].ceiling or ""))
+    end,
+})
+
+-- The plant info's soil word at `handle`'s crop as this client knows it, or nil.
+local function soilKey(handle)
+    local plant = CFarmingSystem.instance:getLuaObjectOnSquare(handle.square)
+    return plant and PlantInfo.soilKeyOf(plant)
+end
+
+-- Soil a sprinkler waterlogged off the line rots the roots for as long as it stays so, so the plant
+-- info keeps naming it waterlogged once a tile laid beside the sprinkler turns its rectangle away
+-- from the crop, and once the sprinkler is taken. Catches a soil word read only from a sprinkler
+-- watering the square now.
+T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
+    instant = true,
+    run = function(self)
+        -- A line north to south, the sprinkler in the middle; the crop past the north tile, which
+        -- only a rectangle along the line reaches; and the square west of the middle, whose tile
+        -- makes the middle a branch, whose rectangle runs east to west.
+        local squares = T.layout(self, { { 0, -1 }, { 0, 0 }, { 0, 1 }, { 0, -Sprinklers.ALONG }, { -1, 0 } },
+            { joined = true })
+        if not squares then return end
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
+        if not spots then return end
+        local north, middle, south, crop, west = squares[1], squares[2], squares[3], squares[4], squares[5]
+        middle.fields = { sprinkler = NEW }
+        T.placeLine(self, { north, middle, south }, "iron")
+        self.pump = pumpInto(self, spots[1], spots[2], north)
+        plantAll(self, { crop })
+        T.server(self, "sprinklers.pump", T.at(self.pump, { squares = { T.at(crop) }, hours = { SOAK_HOURS } }))
+        T.waitFor(self, function() return soilKey(crop) == WATERLOGGED end,
+            "this client's plant info naming the crop waterlogged")
+        T.placeLine(self, { west }, "iron")
+        T.step(function() self.turned = soilKey(crop) end)
+        T.give(self, "wrench", { { type = "Base.PipeWrench" } })
+        T.goNextTo(self, middle.square)
+        useJob(self, middle, LineJobs.TAKE_SPRINKLER, "take", true)
+        T.waitForLines(self, { middle }, "this client's copy of the tile without its sprinkler", function(summary)
+            return not summary.sprinkler
+        end)
+        T.step(function() self.taken = soilKey(crop) end)
+    end,
+    validate = function(self)
+        expect(self.turned == WATERLOGGED, "the soil word once the rectangle turned away: " .. tostring(self.turned))
+        T.expectOffered(self, "take")
+        expect(self.taken == WATERLOGGED, "the soil word once the sprinkler was taken: " .. tostring(self.taken))
     end,
 })
 
