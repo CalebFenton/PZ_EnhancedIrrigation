@@ -125,6 +125,22 @@ test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
     end,
 })
 
+-- Queues giving the character a `fullType`, as self.items[label], and choosing Research from its
+-- right-click menu, noting in self.offered whether the menu offered it; `name` names the item.
+local function research(self, label, fullType, name)
+    T.give(self, label, { { type = fullType } })
+    T.step(function()
+        local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items[label][1] }, 0, 0)
+        if not T.need(self, type(context) == "table" and context, "the " .. name .. "'s right-click menu") then return end
+        local option = T.findNamed(context, context, getText("ContextMenu_ResearchCraft"))
+        self.offered = T.offered(option)
+        if self.offered then
+            T.choose(option)
+        end
+        context:hideAndChildren()
+    end)
+end
+
 -- A potter at the research level of Shape Filter Crock (two-thirds of its Pottery 4) right-clicks a
 -- Clay Jar, which vanilla's script doesn't make researchable, and Research teaches the crock's
 -- three recipes, on both sides, and nothing else. Catches the jar's research added on one side
@@ -135,17 +151,7 @@ test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
     run = function(self)
         T.knowRecipes(self, RECIPES, false)
         T.setPerk(self, Perks.Pottery, 3)
-        T.give(self, "jar", { { type = "Base.ClayJar" } })
-        T.step(function()
-            local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items.jar[1] }, 0, 0)
-            if not T.need(self, type(context) == "table" and context, "the Clay Jar's right-click menu") then return end
-            local research = T.findNamed(context, context, getText("ContextMenu_ResearchCraft"))
-            self.offered = T.offered(research)
-            if self.offered then
-                T.choose(research)
-            end
-            context:hideAndChildren()
-        end)
+        research(self, "jar", "Base.ClayJar", "Clay Jar")
         awaitKnown(self, marked(CROCK))
     end,
     validate = function(self)
@@ -165,17 +171,7 @@ test("irrigation_learning_researching_a_metal_drum_teaches_the_boilers", {
         T.knowRecipes(self, RECIPES, false)
         T.setPerk(self, Perks.Masonry, 1)
         T.setPerk(self, Perks.MetalWelding, 2)
-        T.give(self, "drum", { { type = "Base.MetalDrum" } })
-        T.step(function()
-            local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items.drum[1] }, 0, 0)
-            if not T.need(self, type(context) == "table" and context, "the Metal Drum's right-click menu") then return end
-            local research = T.findNamed(context, context, getText("ContextMenu_ResearchCraft"))
-            self.offered = T.offered(research)
-            if self.offered then
-                T.choose(research)
-            end
-            context:hideAndChildren()
-        end)
+        research(self, "drum", "Base.MetalDrum", "Metal Drum")
         awaitKnown(self, marked(BOILERS))
     end,
     validate = function(self)
