@@ -1,6 +1,5 @@
 -- The jobs at a Tank Stand: setting a barrel on it and taking it down again, done on the authority
--- by server/EnhancedIrrigation/Stands/StandSystem.lua. Set Barrel's `with` is the barrel moveable
--- set on it.
+-- by StandSystem. Set Barrel's `with` is the barrel moveable set on it.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"

@@ -1,10 +1,6 @@
--- The hands-on jobs at a pump (Pumps.lua), done on the authority by
--- server/EnhancedIrrigation/Pumps/PumpSystem.lua: at a hand pump, Pump, which runs for as long as
--- the character works the handle (TimedActions/EnhancedIrrigationPumpAction.lua), and Replace Seal,
--- whose `with` is the seal carried; at a Pump House, Fit Pump, whose `with` is the pump part carried,
--- Take Out Pump, Turn On, Turn Off, Repair Pump, and Fit Timer, Take Off Timer and Set Timer, whose
--- `with`s are the timer carried and its setting (Valves.decodeTimer). A pump's outlet is LinkJobs'
--- Plumb Pump.
+-- The hands-on jobs at a hand pump or a Pump House, done on the authority by PumpSystem. A job's
+-- `with` is the seal, pump part or timer carried, or a timer's setting (Valves.decodeTimer). A
+-- pump's outlet is plumbed by LinkJobs.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"

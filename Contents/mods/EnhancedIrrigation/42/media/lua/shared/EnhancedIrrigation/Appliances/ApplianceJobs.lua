@@ -1,6 +1,6 @@
--- The hands-on job at a washer, washer-dryer or dishwasher (Appliances.lua), done on the authority
--- by server/EnhancedIrrigation/Appliances/ApplianceSystem.lua: Salvage Pump, which takes the
--- appliance's drain pump out as an Appliance Pump and leaves the appliance where it stands, stripped.
+-- The hands-on job at a washer, washer-dryer or dishwasher, done on the authority by
+-- ApplianceSystem: Salvage Pump, which takes out the appliance's drain pump as an Appliance Pump and
+-- the water inlet valve beside it, and leaves the appliance where it stands, stripped.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"

@@ -1,7 +1,5 @@
--- The hands-on jobs at a garden line: laying a tile, drilling holes, fitting the tap, patching a
--- crack, draining, setting and taking a sprinkler, fitting, setting and taking off a tap's valve,
--- and taking the pipe up, done on the authority by server/EnhancedIrrigation/Lines/LineSystem.lua.
--- Running water from the tap is Taps.lua's, from a valve Valves.lua's, and from a pump Pumps.lua's.
+-- The hands-on jobs at a garden line, done on the authority by LineSystem. Running water from a
+-- tap, a valve or a pump isn't a job of fixed length, so it is Taps', Valves' and Pumps'.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -39,7 +37,7 @@ LineJobs.TAKE_VALVE = "TakeValve"
 LineJobs.WIND_VALVE = "WindValve"
 LineJobs.SET_VALVE_TIMER = "SetValveTimer"
 
--- How long winding or setting a valve takes: a turn of a knob, as long as a Pump House's switch.
+-- How long winding or setting a valve takes: a turn of a knob.
 local VALVE_MINUTES = 1
 
 -- What makes a hole, in the order Drill Holes picks among those carried: the tools that cut before
@@ -252,8 +250,7 @@ LineJobs.JOBS = {
         blocker = atLine(function(character, object)
             local full = false
             for _, tile in ipairs(Lines.component(object:getX(), object:getY(), object:getZ())) do
-                -- Its pump or its tap's valve holds it, as a character holds a tap
-                -- (LineSystem.showRunning, ValveSystem.lua).
+                -- Its pump or its tap's valve holds it, as a character holds a tap.
                 if tile.state.running or tile.state.valveOpen then
                     return "Tooltip_EnhancedIrrigation_LineRunning"
                 end

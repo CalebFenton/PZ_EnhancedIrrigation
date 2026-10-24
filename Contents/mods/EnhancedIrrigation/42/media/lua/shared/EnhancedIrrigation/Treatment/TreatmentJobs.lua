@@ -1,9 +1,6 @@
--- The hands-on jobs at a treatment unit (Treatment.lua), done on the authority by
--- server/EnhancedIrrigation/Treatment/TreatmentSystem.lua: Pour In, from a carried container of
--- water into the unit's head; Clean Filter, on a clogged sand filter; Scrub Crock, on a clogged
--- Filter Crock; Take Down, lifting a crock out of its bucket; and Patch Drum, welding a patch on a
--- boiler's worn drum. Pour In's `with` is the container. A unit's inlet and outlet links are
--- LinkJobs'. A boiler's fire is vanilla's (ISBBQMenu).
+-- The hands-on jobs at a treatment unit, done on the authority by TreatmentSystem. Pour In's `with`
+-- is the container carried. A unit's inlet and outlet are plumbed by LinkJobs, and a boiler's fire
+-- is vanilla's (ISBBQMenu).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"

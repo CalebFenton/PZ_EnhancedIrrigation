@@ -1,11 +1,8 @@
--- The jobs that plumb a tank to another tank, to a fixture, to a treatment unit's inlet or outlet
--- or to a pump's outlet, and take the pipe out again, done on the authority by
--- server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square of the link's
--- other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb works at a tank;
--- Plumb Fixture and vanilla's Plumb (Plumb Above) at a fixture, toward its tank; Plumb Inlet and
--- Plumb Outlet at a unit, toward the tank it draws from or fills; Plumb Pump at a pump, toward the
--- tank it fills or a tile of the garden line it feeds; Unplumb at either end, or at the floor of an
--- end whose tank, fixture, unit or pump is gone, as the buried pipe stays (Links.lua).
+-- The jobs that lay buried pipe between a tank and another tank, a fixture, a treatment unit's end
+-- or a pump's outlet, and take it out again, done on the authority by LinkSystem. A job's `with`
+-- names the square of the link's other end and, for a job that lays pipe, the pipe the player
+-- chose (Links.encode). Unplumb also works at the floor of an end whose object is gone, as the
+-- buried pipe stays.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -108,7 +105,7 @@ function LinkJobs.fixtureBlocker(fixture, with)
 end
 
 -- Each end a unit's pipe can be: the Tooltip key saying the unit has that end plumbed already, and
--- the one saying the tank stands where water can't run that way (design, Tanks and height).
+-- the one saying the tank stands where water can't run that way.
 local UNIT_ENDS = {
     inlet = { plumbed = "Tooltip_EnhancedIrrigation_InletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_InletTankTooLow" },
     outlet = { plumbed = "Tooltip_EnhancedIrrigation_OutletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_OutletTankTooHigh" },
