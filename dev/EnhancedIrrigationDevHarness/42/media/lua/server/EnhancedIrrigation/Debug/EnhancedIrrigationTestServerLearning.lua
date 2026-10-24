@@ -39,8 +39,7 @@ end)
 -- Forgets `args.forget`, if given, sets the levels `args.levels` (perk id -> level), each at the XP
 -- that starts it, then awards the XP that takes `args.perk` one level up, as the authority awards a
 -- timed action's XP: the game levels the perk up and fires LevelPerk. The perks setting puts the
--- levels back when the test ends, recipes.know the recipes. Answers the level before and after, and
--- whether the character then knows `args.names`.
+-- levels back when the test ends, recipes.know the recipes. Answers the level before and after.
 handler("learning.levelUp", function(player, args)
     if args.forget then
         Fixtures.forgetRecipes(player, args.forget)
@@ -50,7 +49,7 @@ handler("learning.levelUp", function(player, args)
     local before = player:getPerkLevel(perk)
     local next = PerkFactory.getPerk(perk):getTotalXpForLevel(before + 1)
     addXpNoMultiplier(player, perk, next - player:getXp():getXP(perk) + 1)
-    return { before = before, after = player:getPerkLevel(perk), known = knownOf(player, args.names) }
+    return { before = before, after = player:getPerkLevel(perk) }
 end)
 
 -- Sets the levels `args.levels` (perk id -> level) with no level up, so no LevelPerk teaches

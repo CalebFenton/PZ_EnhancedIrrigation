@@ -266,7 +266,7 @@ test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
             -- Each row starts knowing none; knowRecipes puts back what was known before the test.
             T.step(function() PZHarness.Fixtures.forgetRecipes(T.player(), RECIPES) end)
             T.server(self, "learning.levelUp", { perk = row.perk, levels = levelsWith(rows, row.perk, row.level - 1),
-                names = RECIPES, forget = RECIPES })
+                forget = RECIPES })
             awaitKnown(self, earnedAt(row.perk, row.level))
             T.step(function()
                 self.results[i] = { up = self.server["learning.levelUp"] or {}, known = self.known }

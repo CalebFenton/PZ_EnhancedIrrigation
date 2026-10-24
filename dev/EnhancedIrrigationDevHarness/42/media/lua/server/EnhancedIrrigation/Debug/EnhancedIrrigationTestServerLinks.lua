@@ -21,11 +21,11 @@ handler("links.make", function(_, args, defer)
     return Server.stateAt(args)
 end)
 
--- The links with an end on x, y, z, as the server keeps them.
+-- The kind and lengths of each link with an end on x, y, z, as the server keeps them.
 handler("links.read", function(_, args)
     local links = {}
     for _, link in ipairs(mod().Links.linksAt({ x = args.x, y = args.y, z = args.z })) do
-        table.insert(links, { a = link.a, b = link.b, kind = link.kind, lengths = link.lengths })
+        table.insert(links, { kind = link.kind, lengths = link.lengths })
     end
     return { links = links }
 end)
@@ -39,14 +39,14 @@ handler("links.stale", function()
     return { version = stale }
 end)
 
--- Plumbs x, y, z to `args.to` as links.make does and runs `args.passes` link passes
--- (LinkSystem:pass), each as long as the link takes to carry `args.litres` at its full rate,
--- answering both tanks' states after each in `passes`. All in one call, so the ten-minute event
--- can't run a pass of its own in between.
+-- Plumbs x, y, z to `args.to` with a length of iron pipe, as links.make does, and runs
+-- `args.passes` link passes (LinkSystem:pass), each as long as the link takes to carry
+-- `args.litres` at its full rate, answering both tanks' states after each in `passes`. All in one
+-- call, so the ten-minute event can't run a pass of its own in between.
 handler("links.flow", function(_, args, defer)
     local system = mod().LinkSystem.instance
     local a, b = { x = args.x, y = args.y, z = args.z }, args.to
-    system:addLink(a, b, args.kind or "iron", args.lengths or 1)
+    system:addLink(a, b, "iron", 1)
     defer(function() Server.unlinkAt(a.x, a.y, a.z) end)
     local passes = {}
     for _ = 1, args.passes or 1 do

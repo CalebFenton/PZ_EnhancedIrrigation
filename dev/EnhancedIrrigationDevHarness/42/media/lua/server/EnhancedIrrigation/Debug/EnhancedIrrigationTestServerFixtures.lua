@@ -28,7 +28,6 @@ local function describe(fixture)
         buffer = fluid ~= nil,
         inBuffer = fluid and fluid:getAmount() or 0,
         amount = fixture:getFluidAmount(),
-        capacity = fixture:getFluidCapacity(),
         tainted = fixture:isTaintedWater(),
         hasWater = fixture:hasWater(),
         external = fixture:getUsesExternalWaterSource(),
@@ -36,13 +35,12 @@ local function describe(fixture)
     }
 end
 
---- The fixture at args' x, y, z (describe), whether the square is `loaded`, and the tank at
---- `args.tank` ({ x, y, z }) if given, as Server.stateAt sees it.
+--- The fixture at args' x, y, z (describe), and the tank at `args.tank` ({ x, y, z }) if given,
+--- as Server.stateAt sees it.
 local function stateAt(args)
     local square = Server.squareAt(args)
     local fixture = square and fixtureAt(args)
     local state = fixture and describe(fixture) or { found = false }
-    state.loaded = square ~= nil
     state.tank = args.tank and Server.stateAt(args.tank) or nil
     return state
 end
@@ -149,13 +147,11 @@ handler("fixtures.refill", function(_, args)
 end)
 
 -- What the load hook does to a fixture vanilla plumbed (FixtureSystem.convert), at once. Answers
--- whether there was nothing more to do, and the state after.
+-- whether there was nothing more to do.
 handler("fixtures.convert", function(_, args)
     local fixture = fixtureAt(args)
     if not fixture then
         return nil, "the fixture on the server"
     end
-    local state = { finished = mod().FixtureSystem.convert(fixture) }
-    state.after = stateAt(args)
-    return state
+    return { finished = mod().FixtureSystem.convert(fixture) }
 end)

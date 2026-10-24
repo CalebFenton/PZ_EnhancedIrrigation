@@ -225,9 +225,9 @@ end)
 
 -- Crops ---------------------------------------------------------------------------------------------
 
--- Sows a crop on `at`, plowed and seeded as the farming system does them, at `water` water points,
+-- Sows carrots on `at`, plowed and seeded as the farming system does them, at `water` water points,
 -- taken away when the test ends. Returns it as plantAt reads it, or nil and what is missing.
-local function sow(at, water, seed, defer)
+local function sow(at, water, defer)
     local square = Server.squareAt(at)
     if not square then
         return nil, "a loaded square for a crop at " .. at.x .. "," .. at.y
@@ -249,7 +249,7 @@ local function sow(at, water, seed, defer)
     if not plant then
         return nil, "the plowed furrow's record"
     end
-    plant:seed(seed or "Carrots")
+    plant:seed("Carrots")
     plant.waterLvl = water
     plant:saveData()
     return plantAt(at)
@@ -259,11 +259,11 @@ end
 -- answered in `plants`.
 handler("lines.plant", function(player, args, defer)
     if not args.tiles then
-        return sow(args, args.water, args.seed, defer)
+        return sow(args, args.water, defer)
     end
     local plants = {}
     for i, at in ipairs(args.tiles) do
-        local plant, missing = sow(at, args.water, args.seed, defer)
+        local plant, missing = sow(at, args.water, defer)
         if not plant then return nil, missing end
         plants[i] = plant
     end

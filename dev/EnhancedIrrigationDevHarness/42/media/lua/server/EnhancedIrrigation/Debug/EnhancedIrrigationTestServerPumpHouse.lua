@@ -123,26 +123,24 @@ handler("pumpHouse.shutoff", function(_, args, defer)
     return { shutoff = now - (days - shutDay) * 24, now = now, grid = getSandboxOptions():doesPowerGridExist() }
 end)
 
--- The appliance drawn as `args.sprite` at x, y, z: whether it runs, whether a washer-dryer is set to
--- dry, and whether its pump is gone.
+-- The appliance drawn as `args.sprite` at x, y, z: whether it runs and whether its pump is gone;
+-- nothing without one.
 handler("appliances.state", function(_, args)
     local square = Server.squareAt(args)
     local appliance = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
     if not appliance then
-        return { found = false }
+        return {}
     end
-    local combo = instanceof(appliance, "IsoCombinationWasherDryer")
-    local switched = combo or instanceof(appliance, "IsoClothingWasher")
-    return { found = true, activated = switched and appliance:isActivated() or false,
-        dryer = combo and appliance:isModeDryer(), stripped = mod().Appliances.isStripped(appliance) }
+    local switched = instanceof(appliance, "IsoCombinationWasherDryer") or instanceof(appliance, "IsoClothingWasher")
+    return { activated = switched and appliance:isActivated() or false, stripped = mod().Appliances.isStripped(appliance) }
 end)
 
 -- Runs vanilla's switch of the washer or washer-dryer drawn as `args.sprite` at x, y, z on the
 -- authority, as its action's complete() does once a client asks (ISToggleClothingWasher,
 -- ISToggleComboWasherDryer), whatever the client checked; a washer-dryer set to `args.mode`
--- ("washer" or "dryer") first, as ISSetComboWasherDryerMode does. Answers whether it ran and the
--- appliance's state after. A refused action on a multiplayer client would clear the test's queue,
--- so the switch is run here rather than queued.
+-- ("washer" or "dryer") first, as ISSetComboWasherDryerMode does. Answers whether it runs after and
+-- whether a washer-dryer is set to dry. A refused action on a multiplayer client would clear the
+-- test's queue, so the switch is run here rather than queued.
 handler("appliances.toggle", function(player, args)
     local square = Server.squareAt(args)
     local washer = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
@@ -150,15 +148,13 @@ handler("appliances.toggle", function(player, args)
         return nil, "the washer at " .. args.x .. "," .. args.y
     end
     local combo = instanceof(washer, "IsoCombinationWasherDryer")
-    local done
     if combo then
         if args.mode then
             ISSetComboWasherDryerMode:new(player, washer, args.mode):complete()
         end
-        done = ISToggleComboWasherDryer:new(player, washer):complete()
+        ISToggleComboWasherDryer:new(player, washer):complete()
     else
-        done = ISToggleClothingWasher:new(player, washer):complete()
+        ISToggleClothingWasher:new(player, washer):complete()
     end
-    return { done = done == true, activated = washer:isActivated(), dryer = combo and washer:isModeDryer(),
-        stripped = mod().Appliances.isStripped(washer) }
+    return { activated = washer:isActivated(), dryer = combo and washer:isModeDryer() }
 end)

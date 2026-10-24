@@ -3,8 +3,8 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestsValves.lua: a valve
 -- put on a tap as Fit Valve leaves it, and a valve's clock wound back as though the hours had gone
--- by, then run by its own pass (ValveSystem.update), the crops and tank read before and after in
--- the same call so no vanilla pass lands between. Lines, tanks and crops are placed by the other
+-- by, then run by its own pass (ValveSystem.update), the crops and tank read after in the same call
+-- so no vanilla pass lands between. Lines, tanks and crops are placed by the other
 -- handler files. Only registers handlers, so a --stay rerun loads it again.
 --
 -- A tile is { x, y, z }; `args.tiles` lists the crops to read.
@@ -18,7 +18,7 @@ local function valveOf(record)
         return { open = record.valveOpen == true }
     end
     return { item = valve.item, start = valve.start, minutes = valve.minutes, untilHour = valve.untilHour,
-        lastHour = valve.lastHour, open = record.valveOpen == true, now = EnhancedIrrigation.now() }
+        open = record.valveOpen == true, now = EnhancedIrrigation.now() }
 end
 
 -- The water of the crop on each of `tiles`, nil where there is none, and the litres of the tank on
@@ -48,14 +48,11 @@ end)
 handler("valves.read", function(_, args)
     local record, missing = Server.lineRecordAt(args)
     if not record then return nil, missing end
-    local reply = readWater(args)
-    reply.valve = valveOf(record)
-    return reply
+    return { valve = valveOf(record) }
 end)
 
 -- Winds the clock of the valve on the tap at x, y, z back `args.hours`, a wind-up's end with it, as
--- though they had gone by since it last ran, and runs it. Answers the crops and tank after, and in
--- `before` as they were.
+-- though they had gone by since it last ran, and runs it. Answers the crops and tank after.
 handler("valves.age", function(_, args)
     local record, missing = Server.lineRecordAt(args)
     if not record then return nil, missing end
@@ -63,14 +60,12 @@ handler("valves.age", function(_, args)
     if not valve then
         return nil, "a valve on the tap at " .. args.x .. "," .. args.y
     end
-    local before = readWater(args)
     valve.lastHour = (valve.lastHour or EnhancedIrrigation.now()) - args.hours
     if valve.untilHour then
         valve.untilHour = valve.untilHour - args.hours
     end
     EnhancedIrrigation.ValveSystem.update(record)
     local reply = readWater(args)
-    reply.before = before
     reply.valve = valveOf(record)
     return reply
 end)
