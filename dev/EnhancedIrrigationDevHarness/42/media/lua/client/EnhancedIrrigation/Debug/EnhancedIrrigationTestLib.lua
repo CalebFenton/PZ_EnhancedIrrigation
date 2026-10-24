@@ -142,6 +142,24 @@ function T.useOption(self, getObject, label, find, choose)
     end)
 end
 
+--- Queues walking next to `handle`'s square and T.useOption on this client's copy of it
+--- (T.copyOf).
+function T.useMenu(self, handle, label, find, choose)
+    T.goNextTo(self, handle.square)
+    T.useOption(self, function() return T.copyOf(handle) end, label, find, choose)
+end
+
+--- A `find` for T.useOption: the option queuing `job` of the action feature `feature`, with `with`
+--- if given (T.jobOption).
+function T.job(feature, job, with)
+    return function(context) return T.jobOption(context, feature, job, with) end
+end
+
+--- Queues T.useOption on this client's copy of the line tile at `handle` for the line job `job`.
+function T.useLineJob(self, handle, job, label, choose)
+    T.useOption(self, function() return T.lineObject(handle) end, label, T.job("line", job), choose)
+end
+
 --- Expects the option T.useOption noted as `label` offered.
 function T.expectOffered(self, label)
     local seen = self.menu and self.menu[label]

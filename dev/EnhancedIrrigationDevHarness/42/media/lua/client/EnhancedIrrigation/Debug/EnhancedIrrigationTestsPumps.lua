@@ -93,23 +93,10 @@ local function waitForSummary(self, pump, holds, what)
     end, what)
 end
 
-local function useMenu(self, pump, label, find, choose)
-    T.goNextTo(self, pump.square)
-    T.useOption(self, function() return T.copyOf(pump) end, label, find, choose)
-end
-
 local function pumpOption(context)
     return T.findOption(context, context, function(option)
         return option.onSelect == EnhancedIrrigationPumpAction.queue
     end)
-end
-
-local function job(id, with)
-    return function(context) return T.jobOption(context, "pump", id, with) end
-end
-
-local function linkJob(id, with)
-    return function(context) return T.jobOption(context, "link", id, with) end
 end
 
 -- The option of the submenu named by `nameKey` in `context` naming `label`, or nil.
@@ -236,7 +223,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
-        useMenu(self, self.pump, "outlet", linkJob(LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
+        T.useMenu(self, self.pump, "outlet", T.job("link", LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
         -- Full, as rest can't add to it before the work starts.
@@ -254,7 +241,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         end)
         -- The worked pump holds the queue until it stops itself; one that never stops would run the
         -- test out of time.
-        useMenu(self, self.pump, "pump", pumpOption, true)
+        T.useMenu(self, self.pump, "pump", pumpOption, true)
         read(self, self.pump, "after", { tank = T.at(self.tank), well = T.at(self.well) })
         T.waitFor(self, function()
             local copy = T.copyOf(self.tank)
@@ -297,7 +284,7 @@ T.test("irrigation_pumps_stop_when_the_character_is_exhausted", {
         link(self, self.pump, self.tank)
         setEndurance(self, Pumps.EXHAUSTED + LAST_ENDURANCE)
         quickRuns(self)
-        useMenu(self, self.pump, "pump", pumpOption, true)
+        T.useMenu(self, self.pump, "pump", pumpOption, true)
         read(self, self.pump, "after", { tank = T.at(self.tank) })
         setEndurance(self, Pumps.EXHAUSTED / 2)
         T.useOption(self, function() return T.copyOf(self.pump) end, "tired", pumpOption, false)
@@ -363,7 +350,7 @@ T.test("irrigation_pumps_one_worker_per_pump", {
             end)
         end)
         -- The worked pump holds the queue until it stops itself at the full tank.
-        useMenu(self, self.pump, "freed", pumpOption, true)
+        T.useMenu(self, self.pump, "freed", pumpOption, true)
         read(self, self.pump, "let go", { tank = T.at(self.tank) })
     end,
     validate = function(self)
@@ -468,13 +455,13 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         self.tank = T.placeTank(self, spots[3], "raisedAbove")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
-        useMenu(self, self.wooden, "wooden", function(context)
+        T.useMenu(self, self.wooden, "wooden", function(context)
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
                 LinkMenu.tankLabel(T.at(self.wooden), T.at(self.tank)))
         end, false)
         T.read(self, "tanks.perform", T.at(self.wooden, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
-        useMenu(self, self.iron, "iron", linkJob(LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
+        T.useMenu(self, self.iron, "iron", T.job("link", LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.iron, "plumbed", function(state) return state.outlet end)
     end,
     validate = function(self)
@@ -525,13 +512,13 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         T.placeTank(self, spots[2], "well")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
-        useMenu(self, self.pump, "tapped", function(context)
+        T.useMenu(self, self.pump, "tapped", function(context)
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet",
                 LinkMenu.lineLabel(T.at(self.pump), T.at(tapped)))
         end, false)
         T.read(self, "tanks.perform", T.at(self.pump, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(tapped), "iron") }), "forced")
-        useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
+        T.useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
         readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
         readMenu(self, self.pump, "plumbed")
@@ -601,7 +588,7 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
             end)
         end)
         -- The worked pump holds the queue until the character is exhausted.
-        useMenu(self, self.pump, "pump", pumpOption, true)
+        T.useMenu(self, self.pump, "pump", pumpOption, true)
         T.waitForLines(self, self.tiles, "this client's copy of the line, stopped", function(summary)
             return not summary.running
         end)
@@ -650,11 +637,11 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
         T.give(self, "seals", { { type = "Base.Screwdriver" }, { type = LEATHER }, { type = PLUNGER } })
         T.step(function() self.leather, self.plunger = self.items.seals[2], self.items.seals[3] end)
-        useMenu(self, self.pump, "leather", function(context)
+        T.useMenu(self, self.pump, "leather", function(context)
             return T.jobOption(context, "pump", PumpJobs.REPLACE_SEAL, self.leather)
         end, true)
         readUntil(self, self.pump, "leathered", function(state) return state.record.seal == LEATHER end)
-        useMenu(self, self.pump, "plunger", function(context)
+        T.useMenu(self, self.pump, "plunger", function(context)
             return T.jobOption(context, "pump", PumpJobs.REPLACE_SEAL, self.plunger)
         end, true)
         readUntil(self, self.pump, "replaced", function(state) return state.record.seal == PLUNGER end)

@@ -246,12 +246,6 @@ T.test("irrigation_sprinklers_do_nothing_on_a_tapped_line", {
 
 -- Setting and taking --------------------------------------------------------------------------------
 
-local function useJob(self, handle, job, label, choose)
-    T.useOption(self, function() return T.lineObject(handle) end, label, function(context)
-        return T.jobOption(context, "line", job)
-    end, choose)
-end
-
 local function hasSprinkler(line)
     local attached = line and line:getAttachedAnimSprite()
     for i = 0, (attached and attached:size() or 0) - 1 do
@@ -280,17 +274,17 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         T.placeLine(self, { tap, tile }, "iron")
         T.give(self, "wrench", { { type = "Base.PipeWrench" } })
         T.goNextTo(self, tile.square)
-        useJob(self, tap, LineJobs.SET_SPRINKLER, "on the tap", false)
-        useJob(self, tile, LineJobs.SET_SPRINKLER, "carrying none", false)
+        T.useLineJob(self, tap, LineJobs.SET_SPRINKLER, "on the tap", false)
+        T.useLineJob(self, tile, LineJobs.SET_SPRINKLER, "carrying none", false)
         T.give(self, "sprinkler", { { type = Sprinklers.ITEM, condition = WORN.condition,
             modData = { [Parts.CEILING_KEY] = WORN.ceiling } } })
-        useJob(self, tile, LineJobs.SET_SPRINKLER, "set", true)
+        T.useLineJob(self, tile, LineJobs.SET_SPRINKLER, "set", true)
         T.readUntil(self, "lines.read", { tiles = { T.at(tile) } }, "set", function(reply)
             return reply.tiles[1].record.sprinkler ~= nil
         end)
         T.waitFor(self, function() return hasSprinkler(T.lineObject(tile)) end, "this client's copy of the sprinkler")
-        useJob(self, tile, LineJobs.TAP, "tap on it", false)
-        useJob(self, tile, LineJobs.TAKE_SPRINKLER, "take", true)
+        T.useLineJob(self, tile, LineJobs.TAP, "tap on it", false)
+        T.useLineJob(self, tile, LineJobs.TAKE_SPRINKLER, "take", true)
         T.readUntil(self, "lines.read", { tiles = { T.at(tile) } }, "taken", function(reply)
             return reply.tiles[1].record.sprinkler == nil
         end)
@@ -364,7 +358,7 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
         T.step(function() self.turned = soilKey(crop) end)
         T.give(self, "wrench", { { type = "Base.PipeWrench" } })
         T.goNextTo(self, middle.square)
-        useJob(self, middle, LineJobs.TAKE_SPRINKLER, "take", true)
+        T.useLineJob(self, middle, LineJobs.TAKE_SPRINKLER, "take", true)
         T.waitForLines(self, { middle }, "this client's copy of the tile without its sprinkler", function(summary)
             return not summary.sprinkler
         end)

@@ -117,19 +117,6 @@ local function fillBasin(self, unit, litres, tainted)
     waitForCopy(self, unit, litres, nil, "this client's copy of the filled basin")
 end
 
-local function useMenu(self, unit, label, find, choose)
-    T.goNextTo(self, unit.square)
-    T.useOption(self, function() return T.copyOf(unit) end, label, find, choose)
-end
-
-local function job(id, with)
-    return function(context) return T.jobOption(context, "treatment", id, with) end
-end
-
-local function linkJob(id, with)
-    return function(context) return T.jobOption(context, "link", id, with) end
-end
-
 -- Queues the names of every option in the unit's menu into self.names[label].
 local function readMenu(self, unit, label)
     self.names = self.names or {}
@@ -242,10 +229,10 @@ T.test("irrigation_treatment_pour_in_fills_the_head", {
             return bucket:getFluidContainer():getAmount() > 10 - LITRES and can:getFluidContainer():getAmount() > 5 - LITRES
         end, "this client's copies of the filled bucket and can")
         T.step(function() self.bucket, self.can = self.items.carried[1], self.items.carried[2] end)
-        useMenu(self, self.unit, "petrol", function(context)
+        T.useMenu(self, self.unit, "petrol", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.can)
         end, false)
-        useMenu(self, self.unit, "pour", function(context)
+        T.useMenu(self, self.unit, "pour", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.bucket)
         end, true)
         readUntil(self, self.unit, "poured", function(state)
@@ -256,7 +243,7 @@ T.test("irrigation_treatment_pour_in_fills_the_head", {
             local summary = Treatment.summaryOf(T.copyOf(self.unit))
             return summary ~= nil and summary.head > head - 1
         end, "this client's summary of the full head")
-        useMenu(self, self.unit, "full", function(context)
+        T.useMenu(self, self.unit, "full", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.bucket)
         end, false)
         run(self, self.unit, "hour", { 1 })
@@ -314,7 +301,7 @@ T.test("irrigation_treatment_ripe_filter_passes_clean_water", {
         local litres = self.unit.spec.rate * self.hours
         waitForCopy(self, self.unit, litres, nil, "this client's copy of the filled basin")
         readMenu(self, self.unit, "ripe")
-        useMenu(self, self.unit, "clean", job(TreatmentJobs.CLEAN_FILTER), false)
+        T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), false)
     end,
     validate = function(self)
         local litres = self.unit.spec.rate * self.hours
@@ -403,7 +390,7 @@ T.test("irrigation_treatment_clogged_filter_trickles_until_cleaned", {
             "this client's summary of the clogged filter")
         readMenu(self, self.unit, "clogged")
         T.give(self, "tools", { { type = "Base.Shovel" } })
-        useMenu(self, self.unit, "clean", job(TreatmentJobs.CLEAN_FILTER), true)
+        T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), true)
         readUntil(self, self.unit, "cleaned", function(state) return not state.summary.clogged end)
         waitForServer(self, self.unit, "cleaned", "clogged")
         readMenu(self, self.unit, "cleaned")
@@ -440,7 +427,7 @@ T.test("irrigation_treatment_inlet_fills_the_head_from_a_tank", {
         self.tank = T.placeTank(self, spots[2], "lidded", 100, true)
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
-        useMenu(self, self.unit, "inlet", linkJob(LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
+        T.useMenu(self, self.unit, "inlet", T.job("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.inlet end)
         run(self, self.unit, "hour", { 1 }, nil, self.tank)
         T.count(self, "left", { "Base.MetalPipe" })
@@ -499,14 +486,14 @@ T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
         self.high = T.placeTank(self, spots[3], "raised")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
-        useMenu(self, self.unit, "higher tank", function(context)
+        T.useMenu(self, self.unit, "higher tank", function(context)
             local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.high))
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option)
                 return option.name == label
             end)
         end, false)
         T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
-            linkJob(LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.tank), "iron")), true)
+            T.job("link", LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
         run(self, self.unit, "passed", { 1 }, nil, self.tank)
     end,
@@ -834,7 +821,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         readMenu(self, self.unit, "built")
         self.litres = 6
         fillBasin(self, self.unit, self.litres)
-        useMenu(self, self.unit, "take down", job(TreatmentJobs.TAKE_DOWN_CROCK), true)
+        T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "taken", { Treatment.CROCK_ITEM, FORGED_BUCKET })
         T.read(self, "treatment.carried", { type = FORGED_BUCKET }, "bucket")
@@ -872,8 +859,8 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 10 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 10 - LITRES end,
             "this client's copy of the filled bucket")
-        useMenu(self, self.unit, "scrub", job(TreatmentJobs.SCRUB_CROCK), false)
-        useMenu(self, self.unit, "pour", function(context)
+        T.useMenu(self, self.unit, "scrub", T.job("treatment", TreatmentJobs.SCRUB_CROCK), false)
+        T.useMenu(self, self.unit, "pour", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
         end, true)
         readUntil(self, self.unit, "poured", function(state)
@@ -923,7 +910,7 @@ T.test("irrigation_treatment_crock_clogged_until_scrubbed", {
         waitForCopy(self, self.unit, nil, function(summary) return summary.clogged end,
             "this client's summary of the clogged crock")
         readMenu(self, self.unit, "clogged")
-        useMenu(self, self.unit, "scrub", job(TreatmentJobs.SCRUB_CROCK), true)
+        T.useMenu(self, self.unit, "scrub", T.job("treatment", TreatmentJobs.SCRUB_CROCK), true)
         readUntil(self, self.unit, "scrubbed", function(state) return not state.summary.clogged end)
         run(self, self.unit, "after", { self.hours })
     end,
@@ -964,7 +951,7 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 5 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
             "this client's copy of the filled bucket")
-        useMenu(self, self.wet, "pour", function(context)
+        T.useMenu(self, self.wet, "pour", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
         end, false)
     end,
@@ -992,7 +979,7 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
         fillBasin(self, self.unit, self.litres)
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.unit, "frozen", { 1 }, { head = self.unit.spec.head })
-        useMenu(self, self.unit, "take down", job(TreatmentJobs.TAKE_DOWN_CROCK), true)
+        T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "back", { Treatment.CROCK_ITEM, Treatment.CROCK_BUCKET })
         T.read(self, "treatment.carried", { type = Treatment.CROCK_BUCKET }, "bucket")
@@ -1134,7 +1121,7 @@ local function fuelled(self)
     if not spots then return false end
     self.unit = placeUnit(self, spots[1], STONE)
     T.give(self, "fire", { { type = "Base.TissueBox" }, { type = "Base.Splinters" }, { type = "Base.Lighter" } })
-    useMenu(self, self.unit, "add fuel", running(ISCampingMenu.onAddFuel), true)
+    T.useMenu(self, self.unit, "add fuel", running(ISCampingMenu.onAddFuel), true)
     readUntil(self, self.unit, "fuelled", function(state) return (state.fuel or 0) > 0 end)
     return true
 end
@@ -1159,10 +1146,10 @@ T.test("irrigation_treatment_boiler_vanilla_fuels_it_and_draws_its_flames", {
     instant = true,
     run = function(self)
         if not fuelled(self) then return end
-        useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), false)
+        T.useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), false)
         setFire(self, self.unit, "lit", true, FUEL)
         burning(self)
-        useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), false)
+        T.useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), false)
     end,
     validate = function(self)
         T.expectOffered(self, "add fuel")
@@ -1183,10 +1170,10 @@ T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
     instant = true,
     run = function(self)
         if not fuelled(self) then return end
-        useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), true)
+        T.useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), true)
         readUntil(self, self.unit, "lit", function(state) return state.lit end)
         burning(self)
-        useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), true)
+        T.useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), true)
         readUntil(self, self.unit, "out", function(state) return not state.lit end)
     end,
     validate = function(self)
@@ -1278,7 +1265,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
             "this client's copy of the filled bucket")
-        useMenu(self, self.unit, "pour", function(context)
+        T.useMenu(self, self.unit, "pour", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
         end, true)
         readUntil(self, self.unit, "poured", function(state) return state.record and state.record.head > 0 end)
@@ -1289,7 +1276,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
         T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - LITRES end,
             "this client's copy of the refilled bucket")
-        useMenu(self, self.unit, "holed pour", function(context)
+        T.useMenu(self, self.unit, "holed pour", function(context)
             return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
         end, false)
         setFire(self, self.unit, "out", false)
@@ -1297,12 +1284,12 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.setPerk(self, Perks.MetalWelding, 2)
         T.give(self, "kit", { { type = "Base.WeldingMask" }, { type = "Base.SmallSheetMetal" }, { type = "Base.BlowTorch" },
             { type = "Base.WeldingRods" } })
-        useMenu(self, self.unit, "patch", job(TreatmentJobs.PATCH_DRUM), true)
+        T.useMenu(self, self.unit, "patch", T.job("treatment", TreatmentJobs.PATCH_DRUM), true)
         readUntil(self, self.unit, "patched", function(state) return not state.summary.burntThrough end)
         waitForServer(self, self.unit, "patched", "condition")
         readMenu(self, self.unit, "patched")
         run(self, self.unit, "after patch", { 1 }, { head = 20, headTainted = true })
-        useMenu(self, self.unit, "again", job(TreatmentJobs.PATCH_DRUM), false)
+        T.useMenu(self, self.unit, "again", T.job("treatment", TreatmentJobs.PATCH_DRUM), false)
         T.count(self, "used", { "Base.SmallSheetMetal" })
     end,
     validate = function(self)
@@ -1342,10 +1329,10 @@ T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
         self.clean = T.placeTank(self, spots[3], "lidded")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
-        useMenu(self, self.unit, "inlet", linkJob(LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
+        T.useMenu(self, self.unit, "inlet", T.job("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "inlet plumbed", function(state) return state.inlet end)
         T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
-            linkJob(LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.clean), "iron")), true)
+            T.job("link", LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.clean), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
         setFire(self, self.unit, "lit", true, FUEL)
         -- From a cold drum, which a ten-minute pass since the fire was lit would have warmed a little.

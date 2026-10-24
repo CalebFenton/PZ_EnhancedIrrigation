@@ -40,13 +40,6 @@ local function recordOf(self, label, i)
     return tiles and tiles[i] and tiles[i].record
 end
 
--- Queues T.useOption on this client's copy of the line tile at `handle` for the line job `job`.
-local function useJob(self, handle, job, label, choose)
-    T.useOption(self, function() return T.lineObject(handle) end, label, function(context)
-        return T.jobOption(context, "line", job)
-    end, choose)
-end
-
 local function hasOverlay(names, name)
     for _, overlay in ipairs(names or {}) do
         if overlay == name then
@@ -240,7 +233,7 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         end)
         local lay = T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) })
         T.read(self, "lines.perform", lay, "two taps")
-        useJob(self, tiles[3], LineJobs.TAKE_UP, "take up the tap", true)
+        T.useLineJob(self, tiles[3], LineJobs.TAKE_UP, "take up the tap", true)
         T.waitFor(self, function() return T.lineObject(tiles[3]) == nil end, "this client to lose the taken-up tap")
         tiles[3].fields = nil
         T.placeLine(self, { tiles[3] }, "iron")
@@ -349,7 +342,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         T.waitFor(self, function() return EnhancedIrrigation.Pumps.outletOf(T.at(spots[1])) ~= nil end,
             "this client's copy of the pump's outlet")
         T.goNextTo(self, tiles[2].square)
-        useJob(self, tiles[2], LineJobs.TAKE_UP, "take up", true)
+        T.useLineJob(self, tiles[2], LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function() return T.lineObject(tiles[2]) == nil end, "this client to lose the taken-up tile")
         tiles[1].fields = T.tapped()
         T.placeLine(self, { tiles[1] }, "iron")
@@ -555,11 +548,11 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = Pipes.KINDS.iron.item },
             { type = Pipes.KINDS.lead.item } })
         T.goNextTo(self, tile.square)
-        useJob(self, tile, LineJobs.TAP, "under a well", false)
+        T.useLineJob(self, tile, LineJobs.TAP, "under a well", false)
         T.placeTank(self, west, "ground", TANK_LITRES)
-        useJob(self, tile, LineJobs.TAP, "beside a ground barrel", false)
+        T.useLineJob(self, tile, LineJobs.TAP, "beside a ground barrel", false)
         T.placeTank(self, east, "raised", 0)
-        useJob(self, tile, LineJobs.TAP, "beside a raised barrel", true)
+        T.useLineJob(self, tile, LineJobs.TAP, "beside a raised barrel", true)
         readUntil(self, { tile }, "tapped", function(tiles) return tiles[1].record.tap == true end)
         T.waitFor(self, function() return hasTapRiser(T.lineObject(tile)) end, "this client's copy of the tap's riser")
         T.count(self, "left", { Pipes.KINDS.iron.item, Pipes.KINDS.lead.item, "Base.PipeWrench" })
@@ -594,12 +587,12 @@ T.test("irrigation_lines_patch_crack", {
         T.give(self, "tape", { { type = "Base.DuctTape" } })
         T.goNextTo(self, tile.square)
         T.step(function() self.usesBefore = self.items.tape[1]:getCurrentUses() end)
-        useJob(self, tile, LineJobs.PATCH, "patch", true)
+        T.useLineJob(self, tile, LineJobs.PATCH, "patch", true)
         readUntil(self, { tile }, "patched", function(tiles) return not tiles[1].record.cracked end)
         T.waitFor(self, function() return self.items.tape[1]:getCurrentUses() < self.usesBefore end, "this client's tape, used")
         T.waitForLines(self, { tile }, "this client's summary of the patch", function(summary) return not summary.cracked end)
         T.step(function() self.described = LineMenu.describe(T.lineSummary(tile)) end)
-        useJob(self, tile, LineJobs.TAKE_UP, "take up", true)
+        T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose the taken-up tile")
         T.count(self, "back", { Pipes.KINDS.plastic.item })
     end,
@@ -631,7 +624,7 @@ T.test("irrigation_lines_drain_from_the_middle", {
         end
         T.placeLine(self, self.tiles, "lead")
         T.goNextTo(self, self.tiles[2].square)
-        useJob(self, self.tiles[2], LineJobs.DRAIN, "drain the middle", true)
+        T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain the middle", true)
         readUntil(self, self.tiles, "drained", function(tiles)
             for _, tile in ipairs(tiles) do
                 if tile.record.full then
@@ -673,13 +666,13 @@ T.test("irrigation_lines_take_up_returns_items", {
         tapTile.material, cracked.material, clay.material, whole.material = "iron", "iron", "clay", "iron"
         T.placeLine(self, self.tiles)
         T.goNextTo(self, tapTile.square)
-        useJob(self, tapTile, LineJobs.TAKE_UP, "take up the tap", true)
+        T.useLineJob(self, tapTile, LineJobs.TAKE_UP, "take up the tap", true)
         T.waitFor(self, function() return T.lineObject(tapTile) == nil end, "this client to lose the tap tile")
         T.waitFor(self, function() return T.lineSprite(cracked) == Sprites.pipe("iron", false, Sprites.EAST) end,
             "this client's copy of the cracked tile, reshaped")
         for _, tile in ipairs({ cracked, clay, whole }) do
             T.goNextTo(self, tile.square)
-            useJob(self, tile, LineJobs.TAKE_UP, "take up the " .. tile.material, true)
+            T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up the " .. tile.material, true)
             T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose a taken-up tile")
         end
         T.readLines(self, self.tiles, "gone")
@@ -719,7 +712,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
             cursor:tryBuild(tile.x, tile.y, tile.z)
         end)
         T.waitForLines(self, { tile }, "this client's copy of the laid tile")
-        useJob(self, tile, LineJobs.TAKE_UP, "take up", true)
+        T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function()
             self.back = T.player():getInventory():getFirstTypeRecurse(Pipes.KINDS.iron.item)
             return self.back ~= nil

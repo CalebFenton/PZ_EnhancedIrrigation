@@ -19,15 +19,6 @@ local BARREL_ITEM = "Moveables." .. BARREL
 local BARREL_HELD = "Base." .. BARREL
 local LITRES = 0.05
 
-local function useMenu(self, handle, label, find, choose)
-    T.goNextTo(self, handle.square)
-    T.useOption(self, function() return T.copyOf(handle) end, label, find, choose)
-end
-
-local function job(id)
-    return function(context) return T.jobOption(context, "stand", id) end
-end
-
 -- Queues a vanilla barrel moveable at `handle` put down and picked up again as a player does, so
 -- the character carries the item vanilla's pickup gives.
 local function pickUpVanillaBarrel(self, handle)
@@ -68,7 +59,7 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         if not spots then return end
         self.stand = T.placeTank(self, spots[1], "stand")
         pickUpVanillaBarrel(self, spots[2])
-        useMenu(self, self.stand, "set barrel", job(StandJobs.SET_BARREL), true)
+        T.useMenu(self, self.stand, "set barrel", T.job("stand", StandJobs.SET_BARREL), true)
         T.waitFor(self, function() return T.copyOf(self.stand, Sprites.RAISED_BARREL_CLOSED) ~= nil end,
             "this client's copy of the barrel on the stand")
         T.batch(function()
@@ -97,10 +88,10 @@ T.test("irrigation_stands_set_barrel_refused_without_an_empty_barrel", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         self.stand = T.placeTank(self, spots[1], "stand")
-        useMenu(self, self.stand, "no barrel", job(StandJobs.SET_BARREL), false)
+        T.useMenu(self, self.stand, "no barrel", T.job("stand", StandJobs.SET_BARREL), false)
         -- A barrel vanilla would never let the character pick up: one holding water.
         T.server(self, "stands.giveBarrel", { barrel = BARREL, litres = 20 })
-        T.useOption(self, function() return T.copyOf(self.stand) end, "full barrel", job(StandJobs.SET_BARREL), false)
+        T.useOption(self, function() return T.copyOf(self.stand) end, "full barrel", T.job("stand", StandJobs.SET_BARREL), false)
         T.read(self, "tanks.perform", T.at(self.stand, { feature = "stand", job = StandJobs.SET_BARREL, barrel = true }),
             "forced")
     end,
@@ -123,7 +114,7 @@ T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
         self.litres = 30
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
         T.step(function() self.levelBefore = T.clientLevel(self.tank) end)
-        useMenu(self, self.tank, "open lid", function(context)
+        T.useMenu(self, self.tank, "open lid", function(context)
             return T.findNamed(context, context, getText("ContextMenu_OpenLid"))
         end, true)
         T.waitFor(self, function() return T.copyOf(self.tank, Sprites.RAISED_BARREL) ~= nil end,
@@ -154,7 +145,7 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         if not spots then return end
         self.litres = 5
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
-        useMenu(self, self.tank, "take down", job(StandJobs.TAKE_DOWN), false)
+        T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), false)
         T.batch(function()
             T.read(self, "tanks.perform", T.at(self.tank, { feature = "stand", job = StandJobs.TAKE_DOWN }), "forced")
             T.count(self, "left", { BARREL_HELD })
@@ -187,7 +178,7 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
         end)
         T.waitFor(self, function() return T.player():getInventory():getFirstTypeRecurse(BARREL_HELD) == nil end,
             "this client to let go of vanilla's barrel")
-        useMenu(self, self.tank, "take down", job(StandJobs.TAKE_DOWN), true)
+        T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), true)
         T.waitFor(self, function() return T.copyOf(self.tank, Sprites.STAND) ~= nil end, "this client's copy of the stand")
         T.batch(function()
             T.read(self, "tanks.read", T.at(self.tank), "stand")

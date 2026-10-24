@@ -84,10 +84,6 @@ local function placeFixture(self, handle, sprite, extra)
     return fixture
 end
 
-local function job(id, with)
-    return function(context) return T.jobOption(context, "link", id, with) end
-end
-
 -- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
 -- its handler as its first parameter.
 local function optionRunning(context, handler)
@@ -98,11 +94,6 @@ end
 
 local function vanillaPlumb(context)
     return optionRunning(context, ISWorldObjectContextMenu.onPlumbItem)
-end
-
-local function useFixtureMenu(self, handle, label, find, choose)
-    T.goNextTo(self, handle.square)
-    T.useOption(self, function() return T.copyOf(handle) end, label, find, choose)
 end
 
 -- Queues the server's view of the fixture, with the tank's, into self.reads[label] once
@@ -145,7 +136,7 @@ T.test("irrigation_fixtures_plumb_to_tank_fills_and_keeps_taint", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         local with = Links.encode(T.at(self.tank), "iron")
-        useFixtureMenu(self, self.sink, "plumb", job(LinkJobs.PLUMB_FIXTURE, with), true)
+        T.useMenu(self, self.sink, "plumb", T.job("link", LinkJobs.PLUMB_FIXTURE, with), true)
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
         waitForCopy(self, self.sink, function(state) return state.buffer and state.amount > sinkLitres() - LITRES end,
             "this client's copy of the filled sink")
@@ -174,7 +165,7 @@ T.test("irrigation_fixtures_need_a_tank_a_storey_up", {
         self.tank = T.placeTank(self, spots[2], "ground", TANK_LITRES)
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
-        useFixtureMenu(self, self.sink, "ground barrel", function(context)
+        T.useMenu(self, self.sink, "ground barrel", function(context)
             return T.findNamed(context, context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
         end, false)
         T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_FIXTURE,
@@ -240,7 +231,7 @@ T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
         T.waitFor(self, function() return viewedFixtureLink(self.sink) end, "this client's copy of the link")
         T.step(function() self.viewed = viewedFixtureLink(self.sink) end)
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
-        useFixtureMenu(self, self.sink, "unplumb", job(LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
+        T.useMenu(self, self.sink, "unplumb", T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
         readUntil(self, self.sink, nil, "unplumbed", function(state) return not state.linked end)
         T.count(self, "left", { "Base.MetalPipe" })
         T.read(self, "fixtures.refill", T.at(self.sink, { litres = sinkLitres(), passes = { 1 } }), "refill")
@@ -277,7 +268,7 @@ local function plumbUnderTank(self)
     self.sink = placeFixture(self, spots[1], SINK)
     self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
     T.give(self, "tools", { { type = "Base.PipeWrench" } })
-    useFixtureMenu(self, self.sink, "plumb", vanillaPlumb, true)
+    T.useMenu(self, self.sink, "plumb", vanillaPlumb, true)
     return true
 end
 
@@ -294,7 +285,7 @@ T.test("irrigation_fixtures_vanilla_plumb_keeps_taint", {
             "this client's copy of the plumbed sink")
         T.useOption(self, function() return T.copyOf(self.sink) end, "plumb again", vanillaPlumb, false)
         T.useOption(self, function() return T.copyOf(self.sink) end, "unplumb",
-            job(LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), false)
+            T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), false)
         T.count(self, "left", { "Base.PipeWrench" })
     end,
     validate = function(self)
@@ -344,7 +335,7 @@ T.test("irrigation_fixtures_vanilla_plumb_reaches_over_a_whole_bath", {
         placeFixture(self, spots[2], BATH[2])
         self.tank = T.placeTank(self, spots[3], "above", 2 * bathLitres(), true)
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
-        useFixtureMenu(self, self.bath, "plumb", vanillaPlumb, true)
+        T.useMenu(self, self.bath, "plumb", vanillaPlumb, true)
         readUntil(self, self.bath, self.tank, "plumbed", function(state) return state.linked end)
     end,
     validate = function(self)
