@@ -12,6 +12,7 @@ require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/UI/Needs"
+require "EnhancedIrrigation/UI/JobOptions"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
@@ -43,10 +44,9 @@ end
 ISWorldObjectContextMenu.onPlumbItem = FixtureMenu.onPlumbItem
 
 -- Takes vanilla's Plumb out of `context`: on a plumbed fixture under a barrel it would plumb again.
--- A get-up option carries the handler as its first parameter.
 local function removeVanillaPlumb(context)
     for _, option in ipairs(context.options) do
-        if option.onSelect == ISWorldObjectContextMenu.onPlumbItem or option.param1 == ISWorldObjectContextMenu.onPlumbItem then
+        if EnhancedIrrigation.JobOptions.handlerOf(option) == ISWorldObjectContextMenu.onPlumbItem then
             context:removeOptionByName(option.name)
             return
         end
@@ -66,6 +66,8 @@ local function addWasherSwitch(context, playerNum, worldobjects, washer)
     local key = washer:isActivated() and "ContextMenu_Turn_Off" or "ContextMenu_Turn_On"
     local option = context:addGetUpOption(getText(key), worldobjects, ISWorldObjectContextMenu.onToggleClothingWasher,
         washer, playerNum)
+    -- ApplianceMenu greys a stripped appliance's switches, but its handler, loaded first by name,
+    -- runs before this one adds this switch.
     if EnhancedIrrigation.Appliances.refusesSwitchOn(washer) then
         Needs.refuse(option, "Tooltip_EnhancedIrrigation_PumpSalvaged")
     elseif not washer:getContainer():isPowered() then

@@ -1,5 +1,6 @@
 -- The right-click option of a job (EnhancedIrrigationAction), greyed out as its job module would
--- refuse it, so the menu, the action's start() and the authority can't disagree.
+-- refuse it, so the menu, the action's start() and the authority can't disagree; and how the menus
+-- read an option of vanilla's.
 
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
@@ -46,6 +47,12 @@ function JobOptions.firstOfEach(character, fullTypes, keep)
         end
     end
     return found
+end
+
+--- The function choosing `option` calls, as the menus find vanilla's own options: a get-up option
+--- (ISContextMenu.addGetUpOption) selects onGetUpAndThen with the handler as its first parameter.
+function JobOptions.handlerOf(option)
+    return option.onSelect == ISContextMenu.onGetUpAndThen and option.param1 or option.onSelect
 end
 
 return JobOptions

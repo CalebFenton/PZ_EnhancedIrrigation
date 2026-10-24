@@ -15,10 +15,9 @@ EnhancedIrrigation.ApplianceMenu = ApplianceMenu
 
 local Needs, Appliances, ApplianceJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Appliances, EnhancedIrrigation.ApplianceJobs
 
--- Whether `option` is one of vanilla's washer switches. A get-up option carries its handler as its
--- first parameter.
+-- Whether `option` is one of vanilla's washer switches.
 local function isSwitch(option)
-    local handler = option.onSelect == ISContextMenu.onGetUpAndThen and option.param1 or option.onSelect
+    local handler = EnhancedIrrigation.JobOptions.handlerOf(option)
     return handler == ISWorldObjectContextMenu.onToggleClothingWasher
         or handler == ISWorldObjectContextMenu.onToggleComboWasherDryer
 end
