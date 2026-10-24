@@ -214,12 +214,13 @@ function PumpHouse.run(record, pump, part, hours)
             end
         end
     end
-    -- The wet time comes first; the part may burn out in it, or in the dry time after.
+    -- The wet time comes first; the part may burn out in it, or in the dry time after. Burnt out in
+    -- the wet time, the water is what that time lifts, which a tank that fills first still caps.
     local ran = hours
     local wetWear = wearOf(part, hours - dryHours, 0)
     if wetWear >= record.partCondition then
-        local share = record.partCondition / wetWear
-        ran, litres = (hours - dryHours) * share, litres * share
+        ran = (hours - dryHours) * record.partCondition / wetWear
+        litres = math.min(litres, perHour * ran)
     elseif wearOf(part, hours, dryHours) >= record.partCondition then
         ran = hours - dryHours + (record.partCondition - wetWear) / (part.wearPerHour * Pumps.DRY_WEAR)
     end

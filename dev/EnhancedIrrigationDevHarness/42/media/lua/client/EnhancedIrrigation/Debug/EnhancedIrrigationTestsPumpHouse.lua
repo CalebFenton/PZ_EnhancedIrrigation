@@ -527,6 +527,32 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
     end,
 })
 
+-- Room the nearly full barrel has left: a couple of minutes of an Appliance Pump's water.
+local ROOM = 10
+
+-- A part with a quarter-hour's wear left, run an hour on the grid into a barrel with a couple of
+-- minutes' room, fills the barrel before it burns out. Catches burn-out that cuts the water by the
+-- share of the hour the part lasted, though the barrel filled long before.
+T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, true)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
+        if not spots then return end
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE))
+        T.placeTank(self, spots[2], "well")
+        self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
+        link(self, self.house, self.tank)
+        update(self, self.house, "burnt", { hoursAgo = 1, tank = self.tank,
+            fields = { on = true, partCondition = Pumps.PARTS[APPLIANCE].wearPerHour / 4 } })
+    end,
+    validate = function(self)
+        local after = self.reads.burnt.after
+        expectNear("the barrel when the part burnt out", after.tank.litres, BARREL_LITRES, LITRES)
+        expect(after.record.partCondition == 0, "the part is left at " .. after.record.partCondition)
+    end,
+})
+
 -- Time away -----------------------------------------------------------------------------------------------
 
 -- Hours before the shutoff the gap runs the house: less than the barrel holds.
