@@ -5,7 +5,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Taps = {}

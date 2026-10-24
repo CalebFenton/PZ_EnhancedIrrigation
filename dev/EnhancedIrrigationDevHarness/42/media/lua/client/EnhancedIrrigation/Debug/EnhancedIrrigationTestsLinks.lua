@@ -1,7 +1,7 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
-require "EnhancedIrrigation/LinkJobs"
+require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Pipes"
-require "EnhancedIrrigation/Links"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkView"
 require "EnhancedIrrigation/UI/TankMenu"
 

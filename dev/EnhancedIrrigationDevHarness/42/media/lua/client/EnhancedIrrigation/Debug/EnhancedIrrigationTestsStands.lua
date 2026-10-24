@@ -1,5 +1,5 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
-require "EnhancedIrrigation/StandJobs"
+require "EnhancedIrrigation/Stands/StandJobs"
 require "EnhancedIrrigation/UI/TankMenu"
 
 -- The Tank Stand (Stands.lua, StandJobs.lua, StandSystem.lua, its entity in Entities.txt and its

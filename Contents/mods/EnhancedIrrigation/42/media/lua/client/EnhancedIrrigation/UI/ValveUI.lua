@@ -12,7 +12,7 @@ require "TimedActions/ISBaseTimedAction"
 require "TimedActions/ISTimedActionQueue"
 require "luautils"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}

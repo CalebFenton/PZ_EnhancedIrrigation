@@ -3,7 +3,7 @@
 -- nothing unsaved to set up on the copies.
 
 require "EnhancedIrrigation/ClientObjects"
-require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/Treatment/Treatment"
 
 local Treatment = EnhancedIrrigation.Treatment
 

@@ -1,9 +1,9 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pipes"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/LineJobs"
-require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/LineJobs"
+require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/UI/LineMenu"
 
 -- The jobs at a garden line (LineJobs.lua, LineSystem.lua's jobs, LineCursor.lua, LineMenu.lua and

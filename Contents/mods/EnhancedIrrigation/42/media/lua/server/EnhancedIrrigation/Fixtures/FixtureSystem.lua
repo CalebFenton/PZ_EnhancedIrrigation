@@ -1,4 +1,4 @@
--- The authority's side of plumbed fixtures (shared/EnhancedIrrigation/Fixtures.lua): giving a
+-- The authority's side of plumbed fixtures (shared/EnhancedIrrigation/Fixtures/Fixtures.lua): giving a
 -- fixture its buffer, filling it from its tank, holding back its vanilla reserve while it's plumbed,
 -- and taking fixtures that vanilla plumbed off the rooftop route, whose water always comes out
 -- clean, onto the mod's (docs/design.md, Fixtures). The links themselves are the LinkSystem's, which
@@ -9,7 +9,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Fixtures"
+require "EnhancedIrrigation/Fixtures/Fixtures"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local FixtureSystem = {}

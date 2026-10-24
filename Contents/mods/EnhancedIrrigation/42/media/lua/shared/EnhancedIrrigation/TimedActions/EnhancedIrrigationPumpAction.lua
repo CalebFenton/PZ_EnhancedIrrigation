@@ -1,7 +1,8 @@
 require "TimedActions/ISBaseTimedAction"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/PumpJobs"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpJobs"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 -- Pump: the character works a hand pump's handle, and it lifts water into its outlet's tank, or
 -- drives the line its outlet feeds, for as long as they keep at it, until they stop, the tank is

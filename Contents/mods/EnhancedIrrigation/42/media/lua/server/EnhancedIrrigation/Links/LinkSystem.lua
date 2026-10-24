@@ -1,4 +1,4 @@
--- The authority's side of the links (shared/EnhancedIrrigation/Links.lua): a Global Object System
+-- The authority's side of the links (shared/EnhancedIrrigation/Links/Links.lua): a Global Object System
 -- with no objects, used for what it saves with the world (its own modData keys) and sends the
 -- clients (its initial state on connect, then a command on each change). Every ten minutes water
 -- finds its level through each link between two tanks loaded at both ends, each plumbed fixture's
@@ -18,9 +18,9 @@ require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Links"
-require "EnhancedIrrigation/LinkJobs"
-require "EnhancedIrrigation/Fixtures"
+require "EnhancedIrrigation/Links/Links"
+require "EnhancedIrrigation/Links/LinkJobs"
+require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Fixtures/FixtureSystem"
 require "EnhancedIrrigation/Treatment/TreatmentSystem"
 require "EnhancedIrrigation/Lines/LineSystem"

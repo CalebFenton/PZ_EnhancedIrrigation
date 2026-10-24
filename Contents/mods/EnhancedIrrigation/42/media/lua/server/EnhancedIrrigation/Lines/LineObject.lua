@@ -8,8 +8,8 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pipes"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Sprinklers"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/ObjectSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}

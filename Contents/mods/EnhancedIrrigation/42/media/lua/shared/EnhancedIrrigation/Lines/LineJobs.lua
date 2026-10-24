@@ -8,11 +8,11 @@ require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/Sprinklers"
-require "EnhancedIrrigation/Valves"
-require "EnhancedIrrigation/Taps"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Lines/Sprinklers"
+require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Lines/Taps"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LineJobs = {}

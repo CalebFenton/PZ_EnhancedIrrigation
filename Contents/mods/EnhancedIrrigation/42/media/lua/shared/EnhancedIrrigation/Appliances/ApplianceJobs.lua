@@ -4,7 +4,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
-require "EnhancedIrrigation/Appliances"
+require "EnhancedIrrigation/Appliances/Appliances"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceJobs = {}

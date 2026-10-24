@@ -12,7 +12,7 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Treatment = {}

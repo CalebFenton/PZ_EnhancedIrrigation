@@ -22,12 +22,12 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/PumpJobs"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Lines/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}

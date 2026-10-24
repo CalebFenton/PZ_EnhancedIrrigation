@@ -14,9 +14,9 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Links"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Links/Links"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Pumps = {}

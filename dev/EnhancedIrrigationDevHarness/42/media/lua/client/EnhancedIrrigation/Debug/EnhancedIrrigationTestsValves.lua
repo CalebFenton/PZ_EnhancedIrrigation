@@ -1,9 +1,9 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "ISUI/ISInventoryPaneContextMenu"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/LineJobs"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/LineJobs"
+require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 

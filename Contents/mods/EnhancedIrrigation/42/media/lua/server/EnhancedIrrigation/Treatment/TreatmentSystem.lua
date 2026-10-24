@@ -1,4 +1,4 @@
--- The authority's side of treatment units (shared/EnhancedIrrigation/Treatment.lua): their Global
+-- The authority's side of treatment units (shared/EnhancedIrrigation/Treatment/Treatment.lua): their Global
 -- Object System, a record for each unit built, the jobs of TreatmentJobs done for real, and what
 -- an outlet link (LinkSystem.lua) moves out of a unit's basin. What an inlet link moves into its
 -- head is the record's time (TreatmentObject.advance).
@@ -8,9 +8,9 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Treatment"
-require "EnhancedIrrigation/TreatmentJobs"
-require "EnhancedIrrigation/LinkJobs"
+require "EnhancedIrrigation/Treatment/Treatment"
+require "EnhancedIrrigation/Treatment/TreatmentJobs"
+require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Treatment/TreatmentObject"
 

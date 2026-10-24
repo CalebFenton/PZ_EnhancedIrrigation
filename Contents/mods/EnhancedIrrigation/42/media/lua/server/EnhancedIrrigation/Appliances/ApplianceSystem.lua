@@ -1,14 +1,14 @@
--- The authority's side of the job at an appliance (shared/EnhancedIrrigation/ApplianceJobs.lua):
+-- The authority's side of the job at an appliance (shared/EnhancedIrrigation/Appliances/ApplianceJobs.lua):
 -- Salvage Pump done for real, which takes out the drain pump and the water inlet valve beside it.
 
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/Appliances"
-require "EnhancedIrrigation/ApplianceJobs"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Appliances/Appliances"
+require "EnhancedIrrigation/Appliances/ApplianceJobs"
+require "EnhancedIrrigation/Lines/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceSystem = {}

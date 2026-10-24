@@ -4,8 +4,8 @@
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Appliances"
-require "EnhancedIrrigation/ApplianceJobs"
+require "EnhancedIrrigation/Appliances/Appliances"
+require "EnhancedIrrigation/Appliances/ApplianceJobs"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 

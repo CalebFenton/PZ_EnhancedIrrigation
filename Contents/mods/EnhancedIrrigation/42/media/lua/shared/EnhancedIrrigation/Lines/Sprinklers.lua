@@ -7,8 +7,8 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Pumps/Pumps"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Sprinklers = {}

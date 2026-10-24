@@ -8,7 +8,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Links"
+require "EnhancedIrrigation/Links/Links"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Fixtures = {}

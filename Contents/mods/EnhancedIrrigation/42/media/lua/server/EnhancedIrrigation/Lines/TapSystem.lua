@@ -1,4 +1,4 @@
--- The authority's side of Water from Tank (shared/EnhancedIrrigation/Taps.lua): who holds each tap,
+-- The authority's side of Water from Tank (shared/EnhancedIrrigation/Lines/Taps.lua): who holds each tap,
 -- and running the line from the tank that feeds it.
 --
 -- One Water from Tank runs a tap at a time: the action holding it is the record's `holder`, its
@@ -8,8 +8,8 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Taps"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/Taps"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationWaterAction"
 require "EnhancedIrrigation/Lines/Flow"
 

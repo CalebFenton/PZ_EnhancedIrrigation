@@ -1,6 +1,6 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Tanks"
 
 -- Water from Tank (Taps.lua, Lines/TapSystem.lua, Lines/Flow.lua and

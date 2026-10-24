@@ -6,7 +6,7 @@
 
 require "EnhancedIrrigation/ClientObjects"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 
 local Lines = EnhancedIrrigation.Lines
 

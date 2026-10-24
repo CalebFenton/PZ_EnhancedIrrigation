@@ -1,7 +1,7 @@
 require "PZHarness/TestLib"
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Tanks"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,

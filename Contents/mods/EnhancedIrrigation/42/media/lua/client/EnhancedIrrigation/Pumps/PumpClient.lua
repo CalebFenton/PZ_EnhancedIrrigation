@@ -4,7 +4,7 @@
 -- container and nothing unsaved, so its copies need nothing set up.
 
 require "EnhancedIrrigation/ClientObjects"
-require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Pumps/Pumps"
 
 local Pumps = EnhancedIrrigation.Pumps
 

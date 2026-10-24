@@ -11,12 +11,12 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Links"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Fixtures"
-require "EnhancedIrrigation/Treatment"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/PumpJobs"
+require "EnhancedIrrigation/Links/Links"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Fixtures/Fixtures"
+require "EnhancedIrrigation/Treatment/Treatment"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpJobs"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}

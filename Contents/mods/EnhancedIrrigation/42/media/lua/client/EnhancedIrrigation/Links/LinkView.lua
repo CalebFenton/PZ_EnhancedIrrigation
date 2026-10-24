@@ -1,10 +1,10 @@
--- This client's copy of the tank links (shared/EnhancedIrrigation/Links.lua), which the menu
+-- This client's copy of the tank links (shared/EnhancedIrrigation/Links/Links.lua), which the menu
 -- lists: the system of the same name as the authority's (server/EnhancedIrrigation/Links/
 -- LinkSystem.lua) gets the list with its initial state and again with each "links" command. Also
 -- in single player, where the server's commands loop back.
 
 require "Map/CGlobalObjectSystem"
-require "EnhancedIrrigation/Links"
+require "EnhancedIrrigation/Links/Links"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkView = CGlobalObjectSystem:derive("EnhancedIrrigation_ClientLinkSystem")

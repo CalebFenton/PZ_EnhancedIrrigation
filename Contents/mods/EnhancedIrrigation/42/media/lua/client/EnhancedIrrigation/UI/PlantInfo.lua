@@ -3,7 +3,7 @@
 -- not replaced: vanilla's render runs first and sizes the window for its lines, then this adds one.
 
 require "Farming/ISUI/ISFarmingInfo"
-require "EnhancedIrrigation/Sprinklers"
+require "EnhancedIrrigation/Lines/Sprinklers"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PlantInfo = {}

@@ -7,7 +7,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
-require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/Treatment/Treatment"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentJobs = {}

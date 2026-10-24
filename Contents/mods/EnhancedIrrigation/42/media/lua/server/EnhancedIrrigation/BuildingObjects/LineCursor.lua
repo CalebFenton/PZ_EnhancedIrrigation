@@ -9,8 +9,8 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Pipes"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/LineJobs"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}

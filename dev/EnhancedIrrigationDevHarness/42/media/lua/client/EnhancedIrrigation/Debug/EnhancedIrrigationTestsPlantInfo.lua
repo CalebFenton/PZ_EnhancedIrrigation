@@ -1,6 +1,6 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/UI/PlantInfo"
 
 -- The plant info's soil line (UI/PlantInfo.lua) and the soil word in a line tile's summary that it

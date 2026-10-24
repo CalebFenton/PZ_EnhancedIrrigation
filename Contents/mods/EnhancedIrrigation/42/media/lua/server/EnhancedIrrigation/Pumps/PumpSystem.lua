@@ -1,4 +1,4 @@
--- The authority's side of pumps (shared/EnhancedIrrigation/Pumps.lua): their Global Object System,
+-- The authority's side of pumps (shared/EnhancedIrrigation/Pumps/Pumps.lua): their Global Object System,
 -- a record for each pump built, the jobs of PumpJobs done for real, who holds each hand pump, and
 -- the water a hand pump lifts from its source into its outlet's tank or line. A Pump House runs in
 -- its record's own time (Pumps/PumpHouse.lua).
@@ -8,9 +8,9 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/PumpJobs"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"

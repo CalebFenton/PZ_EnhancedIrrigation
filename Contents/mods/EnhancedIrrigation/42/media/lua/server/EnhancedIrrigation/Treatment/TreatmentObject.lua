@@ -1,4 +1,4 @@
--- The authority's record of one treatment unit (shared/EnhancedIrrigation/Treatment.lua): the raw
+-- The authority's record of one treatment unit (shared/EnhancedIrrigation/Treatment/Treatment.lua): the raw
 -- water in its head and what time and use have done to it. Time tops the head up from an inlet's
 -- tank and treats it into the basin as its kind says (KINDS); Pour In and the jobs
 -- (TreatmentSystem.lua) change the rest. Unlike a line tile's, a unit's record waits while its chunk
@@ -9,10 +9,10 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/LinkJobs"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Links/LinkJobs"
+require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
 

@@ -1,4 +1,4 @@
--- The authority's record of one pump (shared/EnhancedIrrigation/Pumps.lua): a hand pump's seal and
+-- The authority's record of one pump (shared/EnhancedIrrigation/Pumps/Pumps.lua): a hand pump's seal and
 -- how far it has worn, and its body's condition, which lifting water wears (PumpObject.lift); a
 -- Pump House's part, its condition, its switch, its timer and who pays for its power
 -- (Pumps/PumpHouse.lua); and where its hose drinks. Like a treatment unit's, a pump's record waits
@@ -11,7 +11,7 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
 

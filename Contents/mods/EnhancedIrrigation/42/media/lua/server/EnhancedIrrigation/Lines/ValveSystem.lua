@@ -1,4 +1,4 @@
--- The authority's side of the valves on taps (shared/EnhancedIrrigation/Valves.lua): each game
+-- The authority's side of the valves on taps (shared/EnhancedIrrigation/Lines/Valves.lua): each game
 -- minute, every tap with a valve runs its line for the stretch its valve held it open since the last
 -- time, as a held tap runs it (Flow.run from Taps.tankFor), and says whether it runs now.
 --
@@ -17,10 +17,10 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Taps"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/Taps"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/Lines/Flow"
 
 EnhancedIrrigation = EnhancedIrrigation or {}

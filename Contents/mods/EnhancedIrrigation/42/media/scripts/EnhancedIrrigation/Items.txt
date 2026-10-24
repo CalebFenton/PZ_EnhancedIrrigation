@@ -62,7 +62,7 @@ module EnhancedIrrigation
     }
 
     /*
-        The pump parts a Pump House takes (shared/EnhancedIrrigation/Pumps.lua, PARTS): the drain
+        The pump parts a Pump House takes (shared/EnhancedIrrigation/Pumps/Pumps.lua, PARTS): the drain
         pump salvaged from a washer or dishwasher, and a utility pump found in tool stores and
         garages or made from a Blower Fan (Recipes.txt). Their condition shows, so loot can wear
         them (ItemPickerJava), and goes into the Pump House with them; a made or repaired one
@@ -99,7 +99,7 @@ module EnhancedIrrigation
 
     /*
         The Lawn Sprinkler, set on a garden line tile, which it waters around only while a pump
-        drives the line (shared/EnhancedIrrigation/Sprinklers.lua): found in garden stores, garages
+        drives the line (shared/EnhancedIrrigation/Lines/Sprinklers.lua): found in garden stores, garages
         and sheds, worn in old tool crates, or made from pipe (Recipes.txt). Its condition shows, so
         loot can wear it, and goes onto the line with it; a made one carries its lower ceiling in its
         modData. Researching it teaches Make Pipe Sprinkler. Drawn with vanilla's garden sprayer, the
@@ -121,7 +121,7 @@ module EnhancedIrrigation
 
     /*
         The valves that run a garden line's tap with nobody holding it, fitted to the tap
-        (shared/EnhancedIrrigation/Valves.lua): a kitchen timer driving a hose diaphragm, wound by
+        (shared/EnhancedIrrigation/Lines/Valves.lua): a kitchen timer driving a hose diaphragm, wound by
         hand, made by anyone (Recipes.txt); a Timer Valve, an alarm clock wired to a salvaged Water
         Valve, which also switches a Pump House; and a Sprinkler Timer, the plug-in kind garden
         stores sold, which does what a Timer Valve does. Researching a Water Valve or a Sprinkler

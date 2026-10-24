@@ -1,8 +1,8 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "ISUI/ISWorldObjectContextMenu"
-require "EnhancedIrrigation/Links"
-require "EnhancedIrrigation/LinkJobs"
-require "EnhancedIrrigation/Fixtures"
+require "EnhancedIrrigation/Links/Links"
+require "EnhancedIrrigation/Links/LinkJobs"
+require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/UI/TankMenu"
 require "EnhancedIrrigation/UI/FixtureMenu"
 

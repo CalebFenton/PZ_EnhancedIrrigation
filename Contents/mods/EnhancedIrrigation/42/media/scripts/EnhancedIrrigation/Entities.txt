@@ -1,7 +1,7 @@
 /*
     The Tank Stand, the treatment units the build menu builds (the sand filters, the Filter Crock
     and the Boilers), the hand pumps, the Pump Houses, and the raised rain barrels a stand becomes
-    when a barrel is set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with the
+    when a barrel is set on it (shared/EnhancedIrrigation/Stands/Stands.lua). In module Base with the
     mod's prefix, as craftRecipes are, since magazines and research look recipes up by bare name. A
     DisplayName is looked up, without its spaces, in Recipes.json.
 
@@ -129,7 +129,7 @@ module Base
     }
 
     /*
-        The sand filters (shared/EnhancedIrrigation/Treatment.lua): raw water poured or piped onto
+        The sand filters (shared/EnhancedIrrigation/Treatment/Treatment.lua): raw water poured or piped onto
         the sand seeps through into the basin below, this FluidContainer, which vanilla's menus
         drink, fill and empty from. InputLocked keeps vanilla from pouring into it, so water
         reaches it only through the sand; no rain falls in. The OnCreate gives the built filter its
@@ -411,7 +411,7 @@ module Base
     }
 
     /*
-        The hand pumps (shared/EnhancedIrrigation/Pumps.lua): built beside a well, a tank or a
+        The hand pumps (shared/EnhancedIrrigation/Pumps/Pumps.lua): built beside a well, a tank or a
         trough, or near a river for the hose, or anywhere until one is there. Worked by hand, a
         pump lifts its source's water into the tank its outlet is plumbed to. The OnCreate gives
         the pump its record at once and fits the seal the build took. No container: the water goes
@@ -512,7 +512,7 @@ module Base
     }
 
     /*
-        The Pump Houses (shared/EnhancedIrrigation/Pumps.lua): a box, of planks or of screwed sheet
+        The Pump Houses (shared/EnhancedIrrigation/Pumps/Pumps.lua): a box, of planks or of screwed sheet
         steel, wired for one pump part, built empty. Fit Pump puts an Appliance or Utility Pump in;
         switched on with power it lifts water from a source beside it into the tank its outlet is
         plumbed to. The OnCreate gives it its record at once. No container: the water goes straight

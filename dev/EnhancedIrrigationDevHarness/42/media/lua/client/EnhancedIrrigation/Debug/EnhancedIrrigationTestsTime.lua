@@ -1,6 +1,6 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Lines/Lines"
 
 -- What the hours do to a line record (LineObject:advance): the soil's soak drying, waterlogged roots
 -- rotting and frost splitting full pipe, loaded or not. The hours are run on the server

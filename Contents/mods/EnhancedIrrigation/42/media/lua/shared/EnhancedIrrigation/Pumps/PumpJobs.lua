@@ -9,9 +9,9 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Pumps"
-require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Lines/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpJobs = {}

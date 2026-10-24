@@ -12,8 +12,8 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Sprinklers"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Lines/LineObject"
 
 EnhancedIrrigation = EnhancedIrrigation or {}

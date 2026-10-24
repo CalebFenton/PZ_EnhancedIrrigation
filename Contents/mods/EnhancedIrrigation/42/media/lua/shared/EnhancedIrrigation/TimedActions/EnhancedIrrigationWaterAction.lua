@@ -1,7 +1,8 @@
 require "TimedActions/ISBaseTimedAction"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Lines"
-require "EnhancedIrrigation/Taps"
+require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Lines/Taps"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 -- Water from Tank: the character holds a garden line's tap open, and the line runs for as long as
 -- they stand there, until they stop or the tank gives out. Modelled on vanilla's open-ended
