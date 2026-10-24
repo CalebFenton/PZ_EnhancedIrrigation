@@ -85,6 +85,7 @@ local function at(house, extra)
         tank = extra and extra.tank and T.at(extra.tank) or nil,
         generator = extra and extra.generator and T.at(extra.generator) or nil,
         hoursAgo = extra and extra.hoursAgo,
+        searchedHoursAgo = extra and extra.searchedHoursAgo,
         fields = extra and extra.fields,
     })
 end
@@ -458,6 +459,42 @@ T.test("irrigation_pump_house_pays_its_debt_switched_off", {
         expectNear("the generator's fuel once the debt is paid", owed.after.generator.fuel,
             owed.before.generator.fuel - OWED, FUEL)
         expect(owed.after.record.owedFuel == nil, "the house still owes " .. tostring(owed.after.record.owedFuel))
+    end,
+})
+
+-- A switched-on house whose last search for a generator to pay found none this game hour, as a
+-- house a Renewable Energy bank powers finds none, doesn't search again until the next hour: a
+-- generator started meanwhile burns nothing for that pass, and the house tells a bank it draws its
+-- part's draw, so the bank bills it; a pass with the search an hour old finds the generator, which
+-- pays, and the house tells a bank nothing. Catches a search of every square in reach made on every
+-- pass, or an hour that both or neither bill. Switched off until the first pass, so no pass finds
+-- the generator before it.
+T.test("irrigation_pump_house_looks_for_a_generator_once_an_hour", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, false)
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
+        if not spots then return end
+        self.generator = spots[2]
+        T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
+        self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
+        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(copyOf(self.house)) end,
+            "this client's power from the generator")
+        update(self, self.house, "searched", { hoursAgo = 1, searchedHoursAgo = 0, fields = { on = true },
+            generator = self.generator })
+        update(self, self.house, "next hour", { hoursAgo = 1, searchedHoursAgo = 1, generator = self.generator })
+    end,
+    validate = function(self)
+        local searched = self.reads.searched
+        expectNear("the generator's fuel within the hour", searched.after.generator.fuel, searched.before.generator.fuel, FUEL)
+        expect(searched.after.record.payer == nil, "the house found its payer within the hour of its last search")
+        expectNear("the draw the house tells a bank within the hour", searched.after.bankFuel or 0,
+            Pumps.PARTS[UTILITY].draw, 0.0001)
+        local nextHour = self.reads["next hour"]
+        expectNear("the generator's fuel the next hour", nextHour.after.generator.fuel,
+            nextHour.before.generator.fuel - burns(UTILITY, 1), FUEL)
+        expect(nextHour.after.bankFuel == nil, "with its generator paying the house tells a bank it draws "
+            .. tostring(nextHour.after.bankFuel))
     end,
 })
 

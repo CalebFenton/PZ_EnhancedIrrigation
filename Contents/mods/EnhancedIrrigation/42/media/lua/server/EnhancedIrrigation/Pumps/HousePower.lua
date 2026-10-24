@@ -83,7 +83,9 @@ end
 -- Who pays for the record's power now: { generator } when its payer is loaded, settling what it was
 -- owed; { away = true } when the payer it last had stands on a square that isn't loaded; or nil when
 -- no vanilla generator pays (a bank's power, or a generator it never saw). A search that found none
--- isn't made again within the pass, whose hours all stand as now.
+-- isn't made again within the game hour: it reads every square a generator could reach the house
+-- from, and a house a bank powers would make it every pass, each minute of a timer's window. So a
+-- generator started beside such a house pays from the next hour, the bank billing it until then.
 local function payerOf(record)
     if record.payer then
         local square = getCell():getGridSquare(record.payer.x, record.payer.y, record.payer.z)
@@ -102,13 +104,13 @@ local function payerOf(record)
         end
         record.payer, record.payerFuel = nil, nil
     end
-    local now = EnhancedIrrigation.now()
-    if record.foundNoPayerAt == now then
+    local hour = math.floor(EnhancedIrrigation.now())
+    if record.foundNoPayerAt == hour then
         return nil
     end
     local generator = nearestGenerator(record)
     if not generator then
-        record.foundNoPayerAt = now
+        record.foundNoPayerAt = hour
         return nil
     end
     record.payer = { x = generator:getX(), y = generator:getY(), z = generator:getZ() }

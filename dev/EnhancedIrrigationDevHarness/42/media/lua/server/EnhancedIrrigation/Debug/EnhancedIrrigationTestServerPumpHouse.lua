@@ -25,8 +25,9 @@ local function generatorAt(at)
 end
 
 -- The Pump House at args' x, y, z as plain values: its record's saved fields and summary (nil
--- without one), the tank at `args.tank` as Server.stateAt sees it, and the generator at
--- `args.generator`'s fuel and whether it runs.
+-- without one), the fuel an hour it tells a Renewable Energy bank it draws (`bankFuel`, nil for
+-- none), the tank at `args.tank` as Server.stateAt sees it, and the generator at `args.generator`'s
+-- fuel and whether it runs.
 local function stateAt(args)
     local record = recordAt(args)
     local state = {}
@@ -36,6 +37,8 @@ local function stateAt(args)
             state.record[key] = record[key]
         end
         state.summary = record:buildSummary()
+        local house = record:getIsoObject()
+        state.bankFuel = house and select(2, mod().PumpHouse.bankDraw(house)) or nil
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
     local generator = generatorAt(args.generator)
@@ -50,8 +53,10 @@ handler("pumpHouse.state", function(_, args)
 end)
 
 -- Sets `args.fields` on the Pump House's record, winds its clock back `args.hoursAgo` hours, if
--- given, and runs its ten-minute pass (PumpObject.update). Answers the clock's time, `now`, and the
--- state before and after, all in one call, so no ten-minute event runs in between.
+-- given, dates its last search that found no generator to pay `args.searchedHoursAgo` game hours
+-- back, if given (0: this hour), and runs its ten-minute pass (PumpObject.update). Answers the
+-- clock's time, `now`, and the state before and after, all in one call, so no ten-minute event runs
+-- in between.
 handler("pumpHouse.update", function(_, args)
     local record = recordAt(args)
     if not record then
@@ -62,6 +67,9 @@ handler("pumpHouse.update", function(_, args)
     end
     if args.hoursAgo then
         record.lastHour = mod().now() - args.hoursAgo
+    end
+    if args.searchedHoursAgo then
+        record.foundNoPayerAt = math.floor(mod().now()) - args.searchedHoursAgo
     end
     local reply = { now = mod().now(), before = stateAt(args) }
     record:update()
