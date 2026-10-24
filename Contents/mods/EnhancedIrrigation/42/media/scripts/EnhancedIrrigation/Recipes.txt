@@ -23,4 +23,56 @@ module Base
         AutoLearnAny = Woodwork:4;MetalWelding:3,
         OnAddToMenu = EnhancedIrrigation_NeverInMenu,
     }
+
+    /*
+        The Filter Crock, made as vanilla's clay jar is: shaped at a pottery wheel, with the water
+        from any container kept, then fired in a kiln. The charcoal crushed into the clay burns
+        out in the firing and leaves the pores the water seeps through. Both are learned together
+        with setting the crock up (Entities.txt): by Pottery 5, or by researching a Clay Jar
+        (shared/EnhancedIrrigation/Recipes.lua adds that at load) or a Filter Crock.
+    */
+    craftRecipe EnhancedIrrigation_ShapeFilterCrock
+    {
+        timedAction = Craft_PotteryWheel,
+        time = 150,
+        Tags = PotteryWheel,
+        category = Pottery,
+        NeedToBeLearn = true,
+        AutoLearnAny = Pottery:5,
+        SkillRequired = Pottery:4,
+        xpAward = Pottery:40,
+        Tooltip = Tooltip_EnhancedIrrigation_ShapeFilterCrock,
+        inputs
+        {
+            item 4 [Base.Clay],
+            item 2 tags[base:charcoal],
+            item 1 [*] mode:keep flags[ItemIsFluid;HandcraftOnly],
+            -fluid 0.5 categories[Water] mode:mixture,
+        }
+        outputs
+        {
+            item 1 EnhancedIrrigation.FilterCrockUnfired,
+        }
+    }
+
+    craftRecipe EnhancedIrrigation_FireFilterCrock
+    {
+        timedAction = Making_With_Kiln,
+        time = 20,
+        Tags = KilnSmall;KilnLarge,
+        category = Pottery,
+        NeedToBeLearn = true,
+        AutoLearnAny = Pottery:5,
+        SkillRequired = Pottery:4,
+        inputs
+        {
+            item 1 [EnhancedIrrigation.FilterCrockUnfired],
+            item 1 tags[base:startfire],
+            item 1 tags[base:log;base:charcoal],
+        }
+        outputs
+        {
+            item 1 EnhancedIrrigation.FilterCrock,
+        }
+    }
 }

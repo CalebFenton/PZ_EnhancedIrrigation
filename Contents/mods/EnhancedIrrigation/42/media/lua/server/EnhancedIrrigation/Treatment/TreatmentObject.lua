@@ -26,8 +26,10 @@ local LEAST_LITRES = 0.001
 -- a key of Treatment.UNITS, so the record knows its numbers unloaded too; head: litres of raw water
 -- waiting; headTainted: whether any of it is tainted; passed: litres treated since the last
 -- cleaning; ripeHours: wet hours the sand's film has grown; dryHours: hours since the head ran dry;
--- lastHour: when time last reached it.
-TreatmentObject.SAVED_FIELDS = { "unit", "head", "headTainted", "passed", "ripeHours", "dryHours", "lastHour" }
+-- cracked: a crock frost split; bucket: the full type of the bucket a crock stands in; lastHour:
+-- when time last reached it.
+TreatmentObject.SAVED_FIELDS = { "unit", "head", "headTainted", "passed", "ripeHours", "dryHours", "cracked",
+    "bucket", "lastHour" }
 
 function TreatmentObject:initNew()
     self.head = 0
@@ -35,6 +37,7 @@ function TreatmentObject:initNew()
     self.passed = 0
     self.ripeHours = 0
     self.dryHours = 0
+    self.cracked = false
     self.lastHour = EnhancedIrrigation.now()
 end
 
@@ -125,6 +128,25 @@ TreatmentObject.KINDS.sand = {
     end,
 }
 
+-- Water freezing in the crock's pores splits it: a hard freeze with any water in it cracks it, and
+-- the water runs out through the crack. A cracked crock passes nothing; fire a new one. Whole, it
+-- passes clean water whatever went in, slowed to a trickle once clogged.
+TreatmentObject.KINDS.crock = {
+    step = function(record, unit, spec, hours)
+        if record.cracked then
+            return
+        end
+        if record.head > 0 and record:temperature() <= Lines.HARD_FREEZE_CELSIUS then
+            record.cracked = true
+            record.head = 0
+            record.headTainted = false
+            return
+        end
+        local rate = spec.rate * (record:isClogged(spec) and Treatment.CLOGGED_FACTOR or 1)
+        record:pass(unit, rate * hours, FluidType.Water)
+    end,
+}
+
 -- Time -----------------------------------------------------------------------------------------------
 
 --- `hours` of time on the unit, in steps of an hour at most, so a long catch-up drains the head and
@@ -175,6 +197,11 @@ function TreatmentObject:clean()
     self.ripeHours = math.min(self.ripeHours, Treatment.CLEANED_RIPE_HOURS)
 end
 
+--- Scrub Crock: the clogged skin of the clay scrubbed off; nothing grows on a crock to tear.
+function TreatmentObject:scrub()
+    self.passed = 0
+end
+
 -- What every client keeps: the head, to the tenth of a litre, and the state the menu words, in
 -- whole hours, so a pass that changes nothing a player sees sends nothing.
 function TreatmentObject:buildSummary()
@@ -185,6 +212,7 @@ function TreatmentObject:buildSummary()
         ripeHours = math.floor(self.ripeHours),
         dryHours = math.floor(self.dryHours),
         clogged = spec ~= nil and self:isClogged(spec),
+        cracked = self.cracked == true,
     }
 end
 

@@ -3,29 +3,32 @@ require "TimedActions/ISReadABook"
 require "ISUI/ISInventoryPaneContextMenu"
 require "Entity/ISEntityUI"
 
--- How the character learns the mod's recipes, the build-menu ones (the Tank Stand and the Barrel
--- and Brick Filters) and Plumb to Tank (knowledge with nothing to craft, Recipes.txt), and where
--- the pamphlet that teaches them turns up. Reading goes through vanilla's read action, levels
--- through the authority's XP award, which fires LevelPerk; the lists are vanilla's own windows and
--- menus. Each side's copy of the character is checked: the authority's decides the builds and the
--- plumbing, this client's the menus. EnhancedIrrigationTestServerLearning.lua holds the server's
--- half.
+-- How the character learns the mod's recipes, the build-menu ones (the Tank Stand, the Barrel and
+-- Brick Filters and setting up a Filter Crock), the crock's wheel and kiln recipes, and Plumb to
+-- Tank (knowledge with nothing to craft, Recipes.txt), and where the pamphlet that teaches some of
+-- them turns up. Reading and researching go through vanilla's actions, levels through the
+-- authority's XP award, which fires LevelPerk; the lists are vanilla's own windows and menus. Each
+-- side's copy of the character is checked: the authority's decides the builds and the plumbing,
+-- this client's the menus. EnhancedIrrigationTestServerLearning.lua holds the server's half.
 
 local T = EnhancedIrrigationTest
 local test, expect = T.test, T.expect
 
 local PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
 local STAND, PLUMB = "EnhancedIrrigation_TankStand", "EnhancedIrrigation_PlumbToTank"
-local BUILDS = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter" }
-local RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB }
+local CROCK = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
+    "EnhancedIrrigation_FilterCrock" }
+local BUILDS = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter", CROCK[3] }
+local PAMPHLET_RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB }
+local RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB, CROCK[1], CROCK[2], CROCK[3] }
 
--- Every one of RECIPES marked true.
-local function all()
-    local marked = {}
-    for _, name in ipairs(RECIPES) do
-        marked[name] = true
+-- Each of `names` marked true.
+local function marked(names)
+    local set = {}
+    for _, name in ipairs(names) do
+        set[name] = true
     end
-    return marked
+    return set
 end
 
 -- Knowledge ---------------------------------------------------------------------------------------
@@ -71,8 +74,8 @@ local function expectKnown(self, what, expected)
     end
 end
 
--- Reading the pamphlet through vanilla's action teaches every recipe, on the authority too, whose
--- copy the builds and the plumbing ask.
+-- Reading the pamphlet through vanilla's action teaches its recipes, on the authority too, whose
+-- copy the builds and the plumbing ask, and not the crock's, which are a potter's.
 test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
     instant = true,
     run = function(self)
@@ -89,10 +92,39 @@ test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
             end
             ISTimedActionQueue.add(ISReadABook:new(p, item))
         end)
-        awaitKnown(self, all())
+        awaitKnown(self, marked(PAMPHLET_RECIPES))
     end,
     validate = function(self)
-        expectKnown(self, "reading Cisterns for Kentucky", all())
+        expectKnown(self, "reading Cisterns for Kentucky", marked(PAMPHLET_RECIPES))
+    end,
+})
+
+-- A potter at the research level of Shape Filter Crock (two-thirds of its Pottery 4) right-clicks a
+-- Clay Jar, which vanilla's script doesn't make researchable, and Research teaches the crock's
+-- three recipes, on both sides, and nothing else. Catches the jar's research added on one side
+-- only, or not at all.
+test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
+    instant = true,
+    hour = 12,
+    run = function(self)
+        T.knowRecipes(self, RECIPES, false)
+        T.setPerk(self, Perks.Pottery, 3)
+        T.give(self, "jar", { { type = "Base.ClayJar" } })
+        T.step(function()
+            local context = ISInventoryPaneContextMenu.createMenu(0, true, { self.items.jar[1] }, 0, 0)
+            if not T.need(self, type(context) == "table" and context, "the Clay Jar's right-click menu") then return end
+            local research = T.findNamed(context, context, getText("ContextMenu_ResearchCraft"))
+            self.offered = T.offered(research)
+            if self.offered then
+                T.choose(research)
+            end
+            context:hideAndChildren()
+        end)
+        awaitKnown(self, marked(CROCK))
+    end,
+    validate = function(self)
+        expect(self.offered, "the Clay Jar's menu offers no Research")
+        expectKnown(self, "researching a Clay Jar", marked(CROCK))
     end,
 })
 

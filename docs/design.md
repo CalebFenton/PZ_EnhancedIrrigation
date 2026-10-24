@@ -132,8 +132,9 @@ Every method turns Tainted Water into Water completely or not at all; the game h
   - Fuel it and light it like a vanilla fire. After about an hour hot, it passes about 30 L an hour clean until the fuel's gone. A drum that never got hot passes nothing.
   - It's a fire, under vanilla's fire rules: outdoors, away from walls, and never on a wooden platform you care about. Run it with the raw tank empty and the drum scorches.
 - **Filter Crock: clean water without plumbing.**
-  - A porous fired clay pot set in a bucket. "Pour In" raw water from any container; clean water seeps into the vessel below at about 10 L a day. Drink or fill from it with vanilla's actions.
-  - It clogs after so many litres, in one visible step; scrub it by hand. It cracks if frozen full.
+  - A porous fired clay pot set in a bucket. "Pour In" raw water from any container; clean water seeps into the bucket below at about 10 L a day. Drink or fill from it with vanilla's actions. The crock holds 8 L, the bucket 10.
+  - Always clean: charcoal crushed into the clay burns out in the kiln and leaves pores too fine for what taints the water, so there is nothing to ripen and nothing to keep alive.
+  - It clogs after 300 L, in one visible step, to a tenth of its rate; "Scrub Crock" by hand (15 minutes) restores it. A hard freeze with any water in it cracks it: the water runs out and it passes nothing more. "Take Down" gives back the bucket with its water, and the crock unless it's cracked; raw water still in the crock spills.
 - **Also:** boiling and tablets as in vanilla; a well is clean and practically endless, once something pumps it.
 - **Left out:**
   - **Bleach.** In real life it's the EPA's emergency advice (8 drops a gallon, 30 minutes). In this game any trace of Bleach fluid is deadly, so a dose would fight the engine.
@@ -179,8 +180,8 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | --- | --- | --- | --- | --- |
 | **Make Utility Pump** | Electricity 3, MetalWelding 2 | Blower Fan, 2 Small Sheet Metal, 4 Screws, 2 Electric Wire, Rubber Hose; Blow Torch (uses), Welding Rods (uses), welding mask, screwdriver | Utility Pump, lower condition ceiling than a found one | research a Utility Pump (Electricity 2); auto at Electricity 6 |
 | **Make Pipe Sprinkler** | MetalWelding 2 | Iron Pipe, empty Gardening Spray bottle (the head), 2 Screws; Hand Drill, pliers | Lawn Sprinkler, lower condition ceiling | research a Lawn Sprinkler (MetalWelding 1); auto at MetalWelding 4 |
-| **Shape Filter Crock** | Pottery 4 | 4 Clay, 2 Charcoal (crushed into the clay: it burns out and leaves pores), 0.5 L water; pottery wheel | Filter Crock (Unfired) | auto at Pottery 5; research a Clay Jar (Pottery 3) |
-| **Fire Filter Crock** | Pottery 4 | Filter Crock (Unfired), fuel; kiln | Filter Crock | with Shape Filter Crock |
+| **Shape Filter Crock** | Pottery 4 | 4 Clay, 2 Charcoal (crushed into the clay: it burns out and leaves pores), 0.5 L water; pottery wheel | Filter Crock (Unfired) | auto at Pottery 5; research a Clay Jar (Pottery 3) or a Filter Crock |
+| **Fire Filter Crock** | Pottery 4 | Filter Crock (Unfired), something to light it, a log or charcoal; kiln | Filter Crock | with Shape Filter Crock, by every route |
 
 ### Actions on the world (no build menu)
 
@@ -199,6 +200,8 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | **Replace Seal** (hand pump) | none | Leather Strips, Tire Piece, Tarp Piece or Plunger; screwdriver | everyone |
 | **Clean Filter** | none | bare hands, 60 minutes; 30 with a shovel, garden trowel or mason's trowel | with the filter |
 | **Pour In** (filters, crock) | none | any container of water, 1 minute per 4 L | everyone |
+| **Scrub Crock** | none | bare hands, 15 minutes | everyone |
+| **Take Down** (crock) | none | 2 minutes | everyone |
 | **Plumb Inlet**, **Plumb Outlet** (filters, boiler) | none | as Plumb to Tank | as Plumb to Tank |
 
 ### Builds (build menu)
@@ -215,7 +218,7 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | **Brick Filter** | Masonry 3 | 24 Clay Bricks, 4 uses of cement (`base:concrete`), 2 Gravel Bags, 6 Sand Bags, **15 Charcoal**, 1 Iron Pipe; mason's trowel, shovel | Pamphlet; auto at Masonry 5 |
 | **Boiler** (stone firebox) | Masonry 2 | Metal Drum, 12 Clay Bricks or Stone Blocks, 2 uses of cement, 2 Iron Pipe; mason's trowel, Pipe Wrench | research a Metal Drum (Masonry 1); auto at Masonry 4 |
 | **Boiler** (welded firebox) | MetalWelding 3 | Metal Drum, 4 Small Sheet Metal, 2 Iron Pipe, 4 Screws; Blow Torch, Welding Rods, mask | research a Metal Drum (MetalWelding 2); auto at MetalWelding 5 |
-| **Filter Crock** (placed) | none | a Filter Crock and a Bucket under it | with Shape Filter Crock |
+| **Filter Crock** (placed) | none | a Filter Crock and an empty bucket of any kind under it | with Shape Filter Crock, by every route |
 
 Charcoal (`base:charcoal`) is required in both sand filters. Sand is a shovel and a bag away. Charcoal means a kiln, a burner or a scavenged crate, which makes a working filter feel earned. It also makes the filter clog slower.
 
@@ -242,7 +245,7 @@ The Barrel Filter is the pamphlet's prize: built at Woodwork 2 by anyone who fin
 | Electric pump | per hour; heavily when dry | Electronics Scrap and a Tire Piece, lowering its ceiling | a new pump part |
 | Sand filter | clogs after so many litres (one visible step); the living layer dies after two dry days or a hard freeze | Clean Filter by hand, then a day of ripening | fresh sand and charcoal, then a full ripening |
 | Boiler | drum condition per hour burning; heavily when dry | weld a patch (Small Sheet Metal, torch), lowering its ceiling | a new drum |
-| Filter Crock | clogs after so many litres (one visible step) | scrub it by hand | fire a new one |
+| Filter Crock | clogs after 300 L (one visible step); cracks if a hard freeze finds water in it | scrub it by hand | fire a new one |
 | Timer Valve, Sprinkler Timer | — | — | works until its power fails |
 
 Upkeep lands in batches: feed and clean the filter, check the tanks, drain the pipes before a frost.
@@ -286,20 +289,23 @@ The mod stands alone. With Renewable Energy:
     - Vanilla's Plumb still shows on a buffered fixture under a barrel; the fixture menu takes it out once the fixture is plumbed.
     - Plumb to Tank on a fixture needs no room, so player-built cabins work; vanilla's Plumb still needs one.
     - A multiplayer server converts an old save's fixtures only when it first loads their chunk. The conversion itself is tested on a loaded chunk in multiplayer, and through a reload in single player.
-- **Treatment units** (filters now; the crock and boiler later). One shape for all of them: a head of raw water in a record (`enhanced_irrigation_treatment`: litres, all-or-nothing taint, litres passed, the film's wet and dry hours), treated at the unit's rate into its basin, the entity's own `FluidContainer`, which vanilla's menus drink, fill and empty. A kind's rules live in one table on each side (`Treatment.KINDS`, `TreatmentObject.KINDS`), so the crock and boiler add rows, not branches.
+- **Treatment units** (the filters and the crock now; the boiler later). One shape for all of them: a head of raw water in a record (`enhanced_irrigation_treatment`: litres, all-or-nothing taint, litres passed, the film's wet and dry hours, a crock's crack and its bucket), treated at the unit's rate into its basin, the entity's own `FluidContainer`, which vanilla's menus drink, fill and empty. A kind's rules live in one table on each side (`Treatment.KINDS`, `TreatmentObject.KINDS`), so the crock and boiler add rows, not branches.
   - The basin is `InputLocked`, which hides vanilla's pour, so water reaches it only through the unit; the record unlocks it for the moment it adds. No rain: a filter under the sky would otherwise fill its clean basin with tainted rain.
   - Unlike a line tile, a unit's record waits while its chunk is unloaded, as the basin it fills lives on the unit, and catches up the whole gap (at most a week) in steps of an hour once it loads: the head drains, then the sand dries, in that order.
   - Built from the build menu, which never fires `OnObjectAdded`, so the entity's `OnCreate` gives it its record at once.
   - Inlet and outlet are links like a fixture's (`inlet`, `outlet`), with Plumb to Tank's reach, pipe, time and learning. Water runs in from a tank at least level with the unit and out to one no higher; an inlet takes only a tank of nothing but water. One of each per unit, and not both to the same tank.
   - Pour In takes 1 minute per 4 L, about vanilla's pour. A hard freeze is the line's (−7 °C, the square's own air, which a room warms).
   - Sand and gravel are uses of vanilla's bags, four to a bag, as vanilla's sand floor and clay cement take them, so each empty sack comes back. The Barrel Filter's outlet is any pipe and a joint, glue or tape: the build menu can't ask for the joint only with plastic, and a threaded pipe still wants sealing into a stave. Clean Filter is quicker with any tool that lifts sand: a shovel or garden trowel (`base:takedirt`) or a mason's trowel.
+  - The crock's bucket is any `base:bucket`, as every kind holds 10 L. Its build input counts items (`ItemCount`): without it the game keeps an input that holds a fluid container. The `OnCreate` notes which bucket the build took, from the recipe's chosen inputs, and Take Down gives that one back. The crock is learned with its recipes rather than by everyone, as the design's Builds table has it; researching a Filter Crock teaches all three, so a crock made by someone else can still be set up.
+  - The crock's tile blocks placement but not walking, as vanilla's potted floor plants do; it has no scrap, so vanilla's Disassemble can't lose its water and record.
 - **Salvage.** "Salvage Pump" is the mod's own action on washer sprites (`appliances_laundry_01_0..7`) and dishwasher sprites (`appliances_cooking_01_72..79`). It marks the appliance stripped in its modData. Vanilla scrapping is left alone: it runs on the appliance's first material (`Fridge`: blowtorch and MetalWelding), so a scrap-table route would demand a welder for what is screwdriver work.
 - **Teaching.**
   - The pamphlet's `LearnedRecipes`.
   - `AutoLearnAny` on each recipe. Vanilla never applies it to a build entity's recipe, so the mod checks its builds' skills itself on each level-up and when a character loads.
   - World actions that need knowing (Plumb to Tank) are gated by a recipe that is never listed or craftable, so the pamphlet and the skill teach them the vanilla way.
   - `ResearchableRecipes` on the new items.
-  - For vanilla items (Metal Drum, Clay Jar), `ResearchableRecipes` added at load through the script item `[INFERENCE: DoParam works for it; check]`.
+  - For vanilla items (Clay Jar; the Metal Drum to come), `ResearchableRecipes` added as the mod's Lua loads, through the item script's own parser (`Item.DoParam`), which keeps only recipes that need learning. Each side loads its scripts before its Lua, so a file-load call suffices; a test researches a Clay Jar in single player and multiplayer.
+  - The crock's wheel and kiln recipes are craftRecipes, which vanilla's AutoLearn checks itself; they are in the mod's list too, so a multiplayer level up that teaches them reaches the client, as Plumb to Tank's does.
 - **Actions.** Timed actions whose `complete()` runs on the server and re-validates, as Renewable Energy's do. Endurance drawn like `ISChopTreeAction:useEndurance`. Noise through the world sound system.
 - **UI.** The Wind-up Valve and Timer Valve reuse the oven UI's timer knob. No other windows.
 - **Art.** Pipe tiles auto-shaped from their neighbours, per material, with a wet variant whose dark soil runs on from tile to tile along the pipe; tap, valves, stand, pumps, Pump House, filters, boiler, crock, sprinkler, olla. Made with Renewable Energy's Blender pipeline (`art/models/make.sh`, deterministic) and its own `tiledef` number (6143). The dev mod's `--art` mode stages every tile in the world and screenshots it, the check that previews alone can't give (depth, joins, scale beside vanilla).
@@ -312,7 +318,7 @@ Each phase is playable on its own:
 1. **Prove the risk.** Done: a throwaway test of fixture buffers (save, reload, multiplayer, vanilla menus, taint) and of plumbed-fixture conversion, in the dev mod, since replaced by phase 3's tests.
 2. **Gravity garden.** Done: tanks and height, Tank Stand, Plumb to Tank between tanks, Lay Line, Drill Holes, Fit Tap, Water from Tank, soak and root rot, frost, patching and draining, the pamphlet, its loot and learning, each with in-game tests in single player and multiplayer. Not yet played through: the summer-and-frost playtest under Starting numbers.
 3. **Fixtures.** Done: Plumb to Tank on fixtures, the vanilla Plumb override and old-save conversion behind the Plumbing Keeps Taint option, the washer's switch, each with in-game tests in single player and multiplayer. Two tanks, raw and clean, wait on phase 4's filters.
-4. **Safe water.** Barrel and Brick Filters done: Pour In, inlet and outlet links, ripening, dying dry or frozen, clogging and Clean Filter, learning, each with in-game tests in single player and multiplayer. Still to come: the Filter Crock, then the Boiler.
+4. **Safe water.** Barrel and Brick Filters and the Filter Crock done: Pour In, inlet and outlet links, ripening, dying dry or frozen, clogging and Clean Filter; the crock shaped and fired, set in a bucket, clogging and Scrub Crock, cracking in a frost, Take Down; learning, each with in-game tests in single player and multiplayer. Still to come: the Boiler.
 5. **Pumps.** Hand pumps and seals, Salvage Pump, Pump House, Utility Pump, sprinklers.
 6. **Automation.** Wind-up Valve, Timer Valve, Sprinkler Timer, Renewable Energy billing.
 
@@ -331,7 +337,7 @@ Vanilla's yardsticks: 1 L = 50 plant points; a plant drains about 4.8 points a d
 | Soak | dries 10 a day out, 5 in; waterlogged above 30; roots lose health at vanilla's drought rate while waterlogged | an hour too long sets a plant back; a forgotten night can kill a bed, sooner indoors |
 | Barrel / Brick Filter | about 4 / 16 L an hour; ripens in 3 days, 1 after a cleaning; dies after 2 dry days | a household's daily water from one barrel |
 | Boiler | about 30 L an hour once hot; heats in an hour; a log keeps it hot about an hour | fast clean water that costs a woodpile |
-| Filter Crock | about 10 L a day | one person's drinking and cooking |
+| Filter Crock | about 10 L a day; holds 8 L; clogs after 300 L | one person's drinking and cooking; a month of it before a scrub |
 
 Playtest: a 40-plant greenhouse and two survivors through one Kentucky summer and the first frost.
 

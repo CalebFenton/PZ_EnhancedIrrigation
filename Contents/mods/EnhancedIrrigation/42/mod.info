@@ -1,7 +1,7 @@
 name=Enhanced Irrigation
 id=cf_enhanced_irrigation
 author=Caleb Fenton
-description=Raised tanks, tanks plumbed together, sinks and baths that run from them, garden lines that water your beds, and sand filters that make the water safe to drink.
+description=Raised tanks, tanks plumbed together, sinks and baths that run from them, garden lines that water your beds, and sand filters and a clay filter crock that make the water safe to drink.
 category=features
 modversion=0.1.0
 pack=enhanced_irrigation

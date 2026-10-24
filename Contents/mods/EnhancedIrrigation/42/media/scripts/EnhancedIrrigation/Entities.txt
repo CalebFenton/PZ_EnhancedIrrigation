@@ -29,6 +29,12 @@ module Base
             DisplayName = EnhancedIrrigation_BrickFilter,
             Icon = EnhancedIrrigation_Build_BrickFilter,
         }
+        entity ES_EnhancedIrrigation_FilterCrock
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_FilterCrock,
+            Icon = EnhancedIrrigation_Build_FilterCrock,
+        }
         /* Vanilla's barrel icons: the raised barrels are never built from a menu. */
         entity ES_EnhancedIrrigation_RaisedBarrel
         {
@@ -198,6 +204,57 @@ module Base
                 item 24 [Base.Sandbag],
                 item 15 tags[base:charcoal],
                 item 1 [Base.MetalPipe],
+            }
+        }
+    }
+
+    /*
+        The Filter Crock (Items.txt, Recipes.txt) set in a bucket: raw water poured into the crock
+        seeps through its fired walls into the bucket, this FluidContainer, the bucket's size,
+        locked and rainless as a filter's basin is. Any empty bucket, as every kind holds 10 L,
+        counted as an item: the game uses up an input that holds a fluid container only then. The
+        OnCreate gives the unit its record at once and notes which bucket it took, which Take Down
+        gives back. Learned with Shape Filter Crock, so whoever can make a crock can set one up.
+    */
+    entity EnhancedIrrigation_FilterCrock
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_FilterCrock,
+            uiEnabled = false,
+        }
+        component FluidContainer
+        {
+            ContainerName = FilterCrock,
+            Capacity = 10.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+            InputLocked = true,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.TreatmentSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_136,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildLowNoTool,
+            time = 50,
+            category = Outdoors,
+            NeedToBeLearn = true,
+            AutoLearnAny = Pottery:5,
+            Tooltip = Tooltip_EnhancedIrrigation_FilterCrock,
+            inputs
+            {
+                item 1 [EnhancedIrrigation.FilterCrock],
+                item 1 tags[base:bucket] flags[IsEmpty;ItemCount],
             }
         }
     }

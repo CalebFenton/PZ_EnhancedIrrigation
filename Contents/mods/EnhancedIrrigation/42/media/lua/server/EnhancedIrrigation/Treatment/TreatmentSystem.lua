@@ -35,9 +35,20 @@ TreatmentSystem.System = EnhancedIrrigation.ObjectSystem.define({
 --- The SpriteConfig OnCreate of every unit's entity (Entities.txt), which the build menu calls on
 --- the authority once the unit stands on its square (ISBuildIsoEntity:setInfo): its record, at
 --- once, as nothing else announces a built entity to the system (OnObjectAdded fires only on a
---- multiplayer client). Returns nothing, so the build menu sends the unit on as it is.
+--- multiplayer client). Returns nothing, so the build menu sends the unit on as it is. A crock's
+--- record also notes which bucket the build took (the build menu's chosen inputs), for Take Down.
 function TreatmentSystem.onCreate(params)
     TreatmentSystem.System.instance:loadIsoObject(params.thumpable)
+    local record = Treatment.recordOf(params.thumpable)
+    if not (record and record:spec().kind == "crock" and params.craftRecipeData) then
+        return
+    end
+    local used = params.craftRecipeData:getAllConsumedItems()
+    for i = 0, used:size() - 1 do
+        if used:get(i):hasTag(ItemTag.BUCKET) then
+            record.bucket = used:get(i):getFullType()
+        end
+    end
 end
 
 -- Jobs -----------------------------------------------------------------------------------------------
@@ -60,6 +71,25 @@ local DO = {
         Treatment.recordOf(unit):clean()
         return true
     end,
+    [TreatmentJobs.SCRUB_CROCK] = function(character, unit)
+        Treatment.recordOf(unit):scrub()
+        return true
+    end,
+    -- The bucket comes back holding the basin's water as it is; the crock, unless frost split it.
+    -- Removing the unit removes its record (SGlobalObjectSystem.OnObjectAboutToBeRemoved).
+    [TreatmentJobs.TAKE_DOWN_CROCK] = function(character, unit)
+        local record = Treatment.recordOf(unit)
+        local bucket = instanceItem(record.bucket or Treatment.CROCK_BUCKET)
+        local basin = unit:getFluidContainer()
+        FluidContainer.Transfer(basin, bucket:getFluidContainer(), basin:getAmount())
+        local cracked = record.cracked
+        unit:getSquare():transmitRemoveItemFromSquare(unit)
+        EnhancedIrrigation.giveItems(character, bucket)
+        if not cracked then
+            EnhancedIrrigation.giveItems(character, Treatment.CROCK_ITEM)
+        end
+        return true
+    end,
 }
 
 --- Does `job` at `unit` with `with` for `character` on the authority (Jobs.perform), on the unit as
@@ -69,9 +99,13 @@ function TreatmentSystem.perform(character, job, unit, with)
     if not record then
         return false
     end
+    local x, y, z = unit:getX(), unit:getY(), unit:getZ()
     record:catchUp()
     local done = EnhancedIrrigation.Jobs.perform(TreatmentJobs, DO, character, job, unit, with)
-    record:afterChange()
+    -- Unless the job took the unit away, and its record with it.
+    if Treatment.recordAt(x, y, z) == record then
+        record:afterChange()
+    end
     return done
 end
 

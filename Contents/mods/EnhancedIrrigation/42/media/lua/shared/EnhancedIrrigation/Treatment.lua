@@ -18,7 +18,8 @@ EnhancedIrrigation.Treatment = Treatment
 Treatment.SYSTEM_NAME = "enhanced_irrigation_treatment"
 
 -- Every unit's tile, for load hooks.
-Treatment.SPRITES = { EnhancedIrrigation.Sprites.BARREL_FILTER, EnhancedIrrigation.Sprites.BRICK_FILTER }
+Treatment.SPRITES = { EnhancedIrrigation.Sprites.BARREL_FILTER, EnhancedIrrigation.Sprites.BRICK_FILTER,
+    EnhancedIrrigation.Sprites.FILTER_CROCK }
 
 -- Slow sand filters ----------------------------------------------------------------------------------
 
@@ -41,11 +42,18 @@ Treatment.POUR_LITRES_PER_MINUTE = 4
 -- how it treats; `head`, the litres of raw water it holds; `rate`, the litres an hour it treats;
 -- `clogLitres`, the litres it passes before it clogs; `plumbed`, whether it takes inlet and outlet
 -- links. Its basin's size is its entity's FluidContainer's. A Barrel Filter's rate is a household's
--- daily water in a day (design, Starting numbers); a Brick Filter has four times the sand.
+-- daily water in a day (design, Starting numbers); a Brick Filter has four times the sand. A Filter
+-- Crock seeps one person's drinking and cooking water in a day; it holds about what a bucket does.
 Treatment.UNITS = {
     EnhancedIrrigation_BarrelFilter = { kind = "sand", head = 50, rate = 4, clogLitres = 2000, plumbed = true },
     EnhancedIrrigation_BrickFilter = { kind = "sand", head = 200, rate = 16, clogLitres = 8000, plumbed = true },
+    EnhancedIrrigation_FilterCrock = { kind = "crock", head = 8, rate = 10 / 24, clogLitres = 300 },
 }
+
+-- The crock Take Down gives back, and the bucket it gives back when its record never learned which
+-- one the crock was set in.
+Treatment.CROCK_ITEM = "EnhancedIrrigation.FilterCrock"
+Treatment.CROCK_BUCKET = "Base.Bucket"
 
 --- The spec of `isoObject`'s unit (a row of UNITS), or nil when it isn't one.
 function Treatment.specOf(isoObject)
@@ -111,6 +119,15 @@ Treatment.KINDS = {
                 table.insert(words, getText("IGUI_EnhancedIrrigation_DryFor", math.floor(summary.dryHours)))
             end
             return words
+        end,
+    },
+    -- Fired clay with charcoal pores passes only clean water, so its state is whether it still can.
+    crock = {
+        words = function(summary)
+            if summary.cracked then
+                return { getText("IGUI_EnhancedIrrigation_Cracked") }
+            end
+            return summary.clogged and { getText("IGUI_EnhancedIrrigation_Clogged") } or {}
         end,
     },
 }

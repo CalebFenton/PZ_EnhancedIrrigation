@@ -1,6 +1,7 @@
 -- The hands-on jobs at a treatment unit (Treatment.lua), done on the authority by
 -- server/EnhancedIrrigation/Treatment/TreatmentSystem.lua: Pour In, from a carried container of
--- water into the unit's head, and Clean Filter, on a clogged sand filter. Pour In's `with` is the
+-- water into the unit's head; Clean Filter, on a clogged sand filter; Scrub Crock, on a clogged
+-- Filter Crock; and Take Down, lifting a crock out of its bucket. Pour In's `with` is the
 -- container. A unit's inlet and outlet links are LinkJobs'.
 
 require "EnhancedIrrigation/Utilities"
@@ -15,6 +16,12 @@ local Treatment = EnhancedIrrigation.Treatment
 
 TreatmentJobs.POUR_IN = "PourIn"
 TreatmentJobs.CLEAN_FILTER = "CleanFilter"
+TreatmentJobs.SCRUB_CROCK = "ScrubCrock"
+TreatmentJobs.TAKE_DOWN_CROCK = "TakeDownCrock"
+
+-- Minutes to scrub the clogged skin off a crock by hand, and to lift it out of its bucket.
+TreatmentJobs.SCRUB_MINUTES = 15
+TreatmentJobs.TAKE_DOWN_MINUTES = 2
 
 -- Minutes Clean Filter takes by hand, and with a tool that lifts the top of the sand: a shovel, a
 -- garden trowel (both base:takedirt) or a mason's trowel.
@@ -48,6 +55,12 @@ function TreatmentJobs.pourLitres(unit, item)
     return fluid and math.min(fluid:getAmount(), headRoom(unit)) or 0
 end
 
+--- Whether `unit` is a Filter Crock standing in its bucket.
+function TreatmentJobs.isCrock(unit)
+    local spec = Treatment.specOf(unit)
+    return spec ~= nil and spec.kind == "crock" and Treatment.isUnit(unit)
+end
+
 TreatmentJobs.JOBS = {
     [TreatmentJobs.POUR_IN] = {
         minutes = function(unit, item)
@@ -66,6 +79,10 @@ TreatmentJobs.JOBS = {
             end
             if not Treatment.isWater(fluid) then
                 return "Tooltip_EnhancedIrrigation_OnlyWater"
+            end
+            local summary = Treatment.currentSummary(unit)
+            if summary and summary.cracked then
+                return "Tooltip_EnhancedIrrigation_CrockCracked"
             end
             if headRoom(unit) <= 0 then
                 return "Tooltip_EnhancedIrrigation_HeadFull"
@@ -87,6 +104,28 @@ TreatmentJobs.JOBS = {
             end
             local summary = Treatment.currentSummary(unit)
             return not (summary and summary.clogged) and "Tooltip_EnhancedIrrigation_NotClogged" or nil
+        end,
+    },
+    [TreatmentJobs.SCRUB_CROCK] = {
+        minutes = TreatmentJobs.SCRUB_MINUTES,
+        position = "Low",
+        blocker = function(character, unit)
+            if not TreatmentJobs.isCrock(unit) then
+                return "Tooltip_EnhancedIrrigation_UnknownJob"
+            end
+            local summary = Treatment.currentSummary(unit)
+            if summary and summary.cracked then
+                return "Tooltip_EnhancedIrrigation_CrockCracked"
+            end
+            return not (summary and summary.clogged) and "Tooltip_EnhancedIrrigation_NotClogged" or nil
+        end,
+    },
+    -- Whatever is still waiting in the crock spills as it comes out; the bucket keeps its water.
+    [TreatmentJobs.TAKE_DOWN_CROCK] = {
+        minutes = TreatmentJobs.TAKE_DOWN_MINUTES,
+        position = "Low",
+        blocker = function(character, unit)
+            return not TreatmentJobs.isCrock(unit) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
         end,
     },
 }

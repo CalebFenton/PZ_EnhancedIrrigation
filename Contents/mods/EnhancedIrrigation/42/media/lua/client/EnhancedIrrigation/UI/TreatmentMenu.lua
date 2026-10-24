@@ -27,6 +27,10 @@ local Action = EnhancedIrrigationAction
 -- Each kind's own jobs, by their ContextMenu keys, in menu order.
 local KIND_JOBS = {
     sand = { { job = TreatmentJobs.CLEAN_FILTER, nameKey = "ContextMenu_EnhancedIrrigation_CleanFilter" } },
+    crock = {
+        { job = TreatmentJobs.SCRUB_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_ScrubCrock" },
+        { job = TreatmentJobs.TAKE_DOWN_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_TakeDownCrock" },
+    },
 }
 
 -- Each end of a unit's pipe: the job and the option's ContextMenu key.

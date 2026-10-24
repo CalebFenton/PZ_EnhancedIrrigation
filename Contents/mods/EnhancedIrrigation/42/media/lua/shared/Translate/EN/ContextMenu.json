@@ -21,5 +21,7 @@
     "ContextMenu_EnhancedIrrigation_PourIn": "Pour In",
     "ContextMenu_EnhancedIrrigation_CleanFilter": "Clean Filter",
     "ContextMenu_EnhancedIrrigation_PlumbInlet": "Plumb Inlet",
-    "ContextMenu_EnhancedIrrigation_PlumbOutlet": "Plumb Outlet"
+    "ContextMenu_EnhancedIrrigation_PlumbOutlet": "Plumb Outlet",
+    "ContextMenu_EnhancedIrrigation_ScrubCrock": "Scrub Crock",
+    "ContextMenu_EnhancedIrrigation_TakeDownCrock": "Take Down"
 }

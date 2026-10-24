@@ -8,13 +8,38 @@ EnhancedIrrigation.Recipes = Recipes
 
 -- The mod's recipes with AutoLearnAny or AutoLearnAll. Vanilla's AutoLearn check
 -- (ScriptManager.checkAutoLearn) walks only the craftRecipe scripts, which hold no entity's recipe,
--- so the build recipes' AutoLearn never teaches anything unless the mod asks for it. Plumb to Tank is
--- a craftRecipe vanilla checks too; it is here so that a level up that teaches it reaches the
--- client whichever LevelPerk hook runs first.
+-- so the build recipes' AutoLearn never teaches anything unless the mod asks for it. Plumb to Tank and
+-- the crock's wheel and kiln recipes are craftRecipes vanilla checks too; they are here so that a
+-- level up that teaches them reaches the client whichever LevelPerk hook runs first.
 Recipes.AUTO_LEARN = {
     "EnhancedIrrigation_TankStand", "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter",
-    "EnhancedIrrigation_PlumbToTank",
+    "EnhancedIrrigation_PlumbToTank", "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
+    "EnhancedIrrigation_FilterCrock",
 }
+
+-- Vanilla items that teach the mod's recipes when researched, by full type: what a player who
+-- handles one could work out from it. A vanilla item's script can't be edited in place, so the
+-- recipes are added to its ResearchableRecipes as the mod loads (Recipes.addResearch).
+Recipes.RESEARCH = {
+    -- A potter who studies a jar sees how to throw a porous one.
+    ["Base.ClayJar"] = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
+        "EnhancedIrrigation_FilterCrock" },
+}
+
+--- Adds RESEARCH to the vanilla items' scripts through their own parser (Item.DoParam), which keeps
+--- only recipes that need learning, as a script's own list does. Each side reads its own scripts,
+--- and loads them before its Lua, so this runs as the file loads.
+function Recipes.addResearch()
+    local scripts = getScriptManager()
+    for fullType, names in pairs(Recipes.RESEARCH) do
+        local item = scripts:getItem(fullType)
+        if item then
+            item:DoParam("ResearchableRecipes", table.concat(names, ";"))
+        end
+    end
+end
+
+Recipes.addResearch()
 
 -- The packet field of sendSyncPlayerFields that sends the known recipes (SyncPlayerFieldsPacket).
 local SYNC_RECIPES = 1

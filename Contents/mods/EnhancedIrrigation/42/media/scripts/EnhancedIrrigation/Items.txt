@@ -31,4 +31,32 @@ module EnhancedIrrigation
         OnCreate = ItemCodeOnCreate.onCreateRecipeMagazine,
         Tags = base:magazine;base:ignorezombiedensity,
     }
+
+    /*
+        The Filter Crock, shaped at a pottery wheel and fired in a kiln (Recipes.txt), set in a
+        bucket from the build menu (Entities.txt). Drawn with vanilla's clay jar models, as
+        vanilla's own clay pot is. Researching it teaches making and setting up another.
+    */
+    item FilterCrockUnfired
+    {
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = EnhancedIrrigation_FilterCrockUnfired,
+        StaticModel = ClayJarUnfired,
+        WorldStaticModel = ClayJarUnfired,
+        Tooltip = Tooltip_EnhancedIrrigation_FilterCrockUnfired,
+    }
+
+    item FilterCrock
+    {
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = EnhancedIrrigation_FilterCrock,
+        StaticModel = ClayJar,
+        WorldStaticModel = ClayJar,
+        Tooltip = Tooltip_EnhancedIrrigation_FilterCrockItem,
+        ResearchableRecipes = EnhancedIrrigation_ShapeFilterCrock;EnhancedIrrigation_FireFilterCrock;EnhancedIrrigation_FilterCrock,
+    }
 }
