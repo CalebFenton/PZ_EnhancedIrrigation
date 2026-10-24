@@ -763,4 +763,50 @@ function T.linkPump(self, pump, tank, fields)
     end, "this client's copy of the pump's outlet")
 end
 
+-- Pump Houses ---------------------------------------------------------------------------------------
+
+--- What a house is placed with: `part` (a full type) fitted as Fit Pump fits it, from an item new but
+--- for what `item` gives ({ condition, ceiling, fraction } of a point past its condition), then
+--- `fields` set on its record.
+function T.pumpHouseFitted(part, fields, item)
+    local fitting = { type = part }
+    for key, value in pairs(item or {}) do
+        fitting[key] = value
+    end
+    return { part = fitting, fields = fields }
+end
+
+--- The args of a server handler at the house, with the tank, generator and crop squares to read.
+function T.pumpHouseAt(house, extra)
+    return T.at(house, {
+        tank = extra and extra.tank and T.at(extra.tank) or nil,
+        generator = extra and extra.generator and T.at(extra.generator) or nil,
+        squares = extra and extra.squares and T.tiles(extra.squares) or nil,
+        water = extra and extra.water,
+        hoursAgo = extra and extra.hoursAgo,
+        fields = extra and extra.fields,
+    })
+end
+
+--- Queues the house's ten-minute pass on the server, `extra.hoursAgo` hours after its last, with
+--- `extra.fields` set first and the crops on `extra.squares` set to `extra.water`, into
+--- self.reads[label] ({ now, before, after }).
+function T.updatePumpHouse(self, house, label, extra)
+    T.read(self, "pumpHouse.update", T.pumpHouseAt(house, extra), label)
+end
+
+function T.readPumpHouseUntil(self, house, label, done)
+    T.readUntil(self, "pumpHouse.state", T.pumpHouseAt(house), label, done)
+end
+
+--- The litres `part` lifts in `hours`.
+function T.pumpLifts(part, hours)
+    return Pumps.perHour(Pumps.PARTS[part]) * hours
+end
+
+--- The generator fuel `part` burns in `hours`.
+function T.pumpBurns(part, hours)
+    return Pumps.PARTS[part].draw * SandboxVars.GeneratorFuelConsumption * hours
+end
+
 return T
