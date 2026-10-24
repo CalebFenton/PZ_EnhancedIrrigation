@@ -1,14 +1,8 @@
--- Pumps: placed things that lift water from a source beside them into a tank or a garden line
--- (docs/design.md, Pumps). A pump draws from the first source it finds (Pumps.sourceOf): a well
--- beside it, the fullest tank or trough beside it, or natural water its hose reaches; and it
--- delivers through one outlet, a link with `pump` set from its square (Links.lua) to a tank, which
--- it may fill up to its lift above its floor whatever the filling rule says, or to a tile of a
--- line, which it drives as a tap's tank does, with the push of its spec (Lines/Flow.lua). Water
--- moves only while something runs it: a hand pump while a character works it
--- (TimedActions/EnhancedIrrigationPumpAction.lua), a Pump House while it is switched on, has a
--- pump part fitted and has power. The authority keeps a record of each pump
--- (server/EnhancedIrrigation/Pumps/PumpObject.lua): a hand pump's seal and how worn it and the pump
--- are, a Pump House's part, its switch and who pays for its power, and where its hose drinks.
+-- Pumps lift water from a source beside them through one outlet into a tank, which a pump fills up
+-- to its lift above its floor whatever the filling rule says, or into a garden line, which it drives
+-- as a tap's tank does. Water moves only while something runs it: a hand pump while a character
+-- works it, a Pump House while it is switched on or its timer holds it open, with a part fitted and
+-- power.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -37,8 +31,7 @@ Pumps.SPRITES = { EnhancedIrrigation.Sprites.WOODEN_HAND_PUMP, EnhancedIrrigatio
 -- moves; `push`, the head it gives a garden line it feeds; `wearLitres`, the litres that take a
 -- point of its body's condition; `squeals`, whether it squeals as it works; `noise`, the radius
 -- and volume of the sound zombies hear while it works. A hand pump's rate fills a rain barrel in
--- an hour or two of sweat (design, Starting numbers); iron lifts higher and lasts five times as
--- long as wood, which is also loud enough to carry.
+-- an hour or two of sweat (design, Starting numbers); wood squeals, loud enough to carry.
 Pumps.UNITS = {
     EnhancedIrrigation_WoodenHandPump = {
         kind = "hand", lift = 1, rate = 6, push = 2, wearLitres = 300, squeals = true,
@@ -64,8 +57,7 @@ Pumps.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
 -- `wearPerHour`, the condition an hour of running takes; `draw`, the generator fuel an hour of
 -- running burns in vanilla's own units, before the GeneratorFuelConsumption option (IsoGenerator):
 -- a washer's for the pump out of one. A washer's pump is made for a drum's few minutes of draining,
--- so it lifts little and burns out within a week of running; a utility pump is made to run, and
--- empties a rain barrel in half an hour (design, Starting numbers).
+-- so it lifts little and burns out soon; a utility pump is made to run.
 Pumps.PARTS = {
     [Pumps.APPLIANCE_PUMP] = { lift = 1, rate = 6, push = 2, wearPerHour = 1, draw = 0.09,
         noise = { radius = 10, volume = 10 } },
