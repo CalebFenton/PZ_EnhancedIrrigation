@@ -674,8 +674,11 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_SealWornOut")
         T.expectOffered(self, "leather")
         T.expectOffered(self, "plunger")
-        expect(self.reads.leathered.record.sealWear == 0, "the leather seal went in worn")
-        expect(self.reads.replaced.record.sealWear == 0, "the plunger seal went in worn")
+        local leathered, replaced = self.reads.leathered.record, self.reads.replaced.record
+        expect(leathered.seal == LEATHER and leathered.sealWear == 0, "the leather went in as "
+            .. tostring(leathered.seal) .. " worn " .. tostring(leathered.sealWear))
+        expect(replaced.seal == PLUNGER and replaced.sealWear == 0, "the plunger went in as "
+            .. tostring(replaced.seal) .. " worn " .. tostring(replaced.sealWear))
         local left = self.counts.left
         for _, fullType in ipairs({ LEATHER, DIRTY_LEATHER, PLUNGER }) do
             expect(left[fullType] == 0, "Replace Seal left " .. tostring(left[fullType]) .. " " .. fullType)

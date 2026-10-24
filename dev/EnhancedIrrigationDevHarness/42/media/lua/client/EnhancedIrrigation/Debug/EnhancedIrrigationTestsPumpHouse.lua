@@ -257,6 +257,8 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
             .. tostring(record.partCeiling))
         expectWord(self, "fitted", partWord(APPLIANCE, WORN))
         T.expectOffered(self, "take out")
+        expect(self.reads.taken.record.part == nil, "Take Out Pump left " .. tostring(self.reads.taken.record.part)
+            .. " in the house")
         local items = self.reads.carried.items
         expect(#items == 1 and items[1].condition == WORN and items[1].ceiling == CEILING, "the server's part came back as "
             .. (items[1] and (items[1].condition .. " of " .. items[1].ceiling) or "nothing"))
@@ -385,6 +387,7 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
             Pumps.PARTS[APPLIANCE].wearPerHour, 0.001)
         expectWord(self, "running", getText("IGUI_EnhancedIrrigation_Running"))
         T.expectOffered(self, "off")
+        expect(not self.reads.off.record.on, "Turn Off left the house switched on")
     end,
 })
 
@@ -760,6 +763,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         expect(not hours.after.record.running, "the house runs outside its timer's window")
         expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
         T.expectOffered(self, "take off")
+        expect(self.reads.off.record.timer == nil, "Take Off Timer left the timer in the house")
         expect(#self.reads.carried.items == 1, "Take Off Timer gave back " .. #self.reads.carried.items .. " timers")
     end,
 })
