@@ -226,12 +226,12 @@ handler("water.runEvery", function(player, args, defer)
     return {}
 end)
 
--- Makes every line's air `args.celsius` until the test ends.
+-- Makes the air `args.celsius` wherever Frost reads it until the test ends.
 handler("lines.temperature", function(player, args, defer)
-    local LineObject = EnhancedIrrigation.LineObject
-    local before = LineObject.temperatureAt
-    LineObject.temperatureAt = function() return args.celsius end
-    defer(function() LineObject.temperatureAt = before end)
+    local Frost = EnhancedIrrigation.Frost
+    local before = Frost.celsiusAt
+    Frost.celsiusAt = function() return args.celsius end
+    defer(function() Frost.celsiusAt = before end)
     return {}
 end)
 

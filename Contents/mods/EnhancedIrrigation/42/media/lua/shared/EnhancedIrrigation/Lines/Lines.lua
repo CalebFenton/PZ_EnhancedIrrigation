@@ -7,6 +7,7 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
+require "EnhancedIrrigation/Frost"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Lines = {}
@@ -52,15 +53,10 @@ Lines.SOAK_DRY_IN = 5
 -- waterlogged plant also is to vanilla: rot takes both, leaving it where a parched plant stands.
 Lines.ROOT_ROT_PER_HOUR = (0.5 + 0.4) / 2
 
--- Frost and holes -----------------------------------------------------------------------------------
+-- Holes ---------------------------------------------------------------------------------------------
 
--- At or below this air temperature water standing in a pipe may split it (Pipes.KINDS
--- frostPerHour). Water supercools, and a pipe splits from the pressure an ice plug builds against
--- a closed end, not where the ice forms, so a light frost does nothing: in the University of
--- Illinois Building Research Council's tests for the ICC, unsheltered pipe began to freeze only
--- when the air fell to about 20 F, and plumbers saw bursts start in the teens
--- (iccsafe.org/wp-content/uploads/DIS-FreezeBurstPipe.pdf).
-Lines.HARD_FREEZE_CELSIUS = -7
+-- Read by Treatment until it reads Frost.
+Lines.HARD_FREEZE_CELSIUS = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS
 -- A punched hole may split brittle pipe as it's made (Pipes.KINDS punchCracks).
 Lines.PUNCH_CRACK_CHANCE = 0.2
 

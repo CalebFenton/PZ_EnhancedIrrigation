@@ -1,6 +1,7 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Frost"
 
 -- What the hours do to a line record (LineObject:advance): the soil's soak drying, waterlogged roots
 -- rotting and frost splitting full pipe, loaded or not. The hours are run on the server
@@ -9,7 +10,7 @@ require "EnhancedIrrigation/Lines/Lines"
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
-local Sprites, Lines = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines
+local Sprites, Lines, Frost = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.Frost
 
 local POINTS = 0.05
 local TANK_LITRES = 100
@@ -98,11 +99,11 @@ T.test("irrigation_time_frost_cracks_full_lines", {
         mild.fields = { full = false }
         T.placeLine(self, { full, empty, mild }, "clay")
         T.batch(function()
-            T.server(self, "lines.temperature", { celsius = Lines.HARD_FREEZE_CELSIUS - 1 })
+            T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS - 1 })
             T.server(self, "lines.pinRoll", {})
             T.read(self, "lines.age", { tiles = T.tiles({ full, empty }), hours = 1 }, "frozen")
             -- Below freezing, short of a hard freeze.
-            T.server(self, "lines.temperature", { celsius = Lines.HARD_FREEZE_CELSIUS / 2 })
+            T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS / 2 })
             T.server(self, "lines.set", { tiles = { T.at(mild, { fields = { full = true } }) } })
             T.server(self, "lines.pinRoll", {})
             T.read(self, "lines.age", { tiles = T.tiles({ mild }), hours = 1 }, "mild")
@@ -143,7 +144,7 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
             T.batch(function()
                 -- Caught up to now first, so the soak dries for exactly the hours away.
                 T.read(self, "lines.age", { tiles = T.tiles({ tile }), hours = 0 }, "left")
-                T.server(self, "lines.temperature", { celsius = Lines.HARD_FREEZE_CELSIUS - 1 })
+                T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS - 1 })
                 T.server(self, "lines.pinRoll", {})
                 T.read(self, "lines.age", { tiles = T.tiles({ tile }), hours = self.hours }, "away")
             end)

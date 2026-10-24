@@ -8,6 +8,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pipes"
+require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/ObjectSystem"
@@ -16,6 +17,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 
 local Sprites = EnhancedIrrigation.Sprites
 local Pipes = EnhancedIrrigation.Pipes
+local Frost = EnhancedIrrigation.Frost
 local Lines = EnhancedIrrigation.Lines
 local Sprinklers = EnhancedIrrigation.Sprinklers
 
@@ -161,22 +163,14 @@ function LineObject:dryAndRot(hours)
     self.sprinklerSoak = left
 end
 
---- The air temperature, in Celsius, at the tile of `record`: its square's when loaded, which a room
---- warms, else the world's. A field so a test can freeze the garden.
+-- Read by Treatment until it reads Frost.
 function LineObject.temperatureAt(record)
-    local square = record:getSquare()
-    if square then
-        return getClimateManager():getAirTemperatureForSquare(square)
-    end
-    return getClimateManager():getTemperature()
+    return Frost.celsiusAt(record)
 end
 
 -- Water standing in the pipe may split it in a hard freeze.
 function LineObject:freeze(hours)
-    if not self.full or self.cracked then
-        return
-    end
-    if LineObject.temperatureAt(self) > Lines.HARD_FREEZE_CELSIUS then
+    if not self.full or self.cracked or not Frost.isHard(self) then
         return
     end
     local perHour = Pipes.KINDS[self.material].frostPerHour
