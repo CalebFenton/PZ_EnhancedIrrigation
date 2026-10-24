@@ -2,9 +2,7 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsPumpHousePower.lua:
--- what powers a Pump House, a generator set down and the grid's shutoff moved to the past. Only
--- registers handlers, so a --stay rerun loads it again.
+-- Development only, not published. Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
 

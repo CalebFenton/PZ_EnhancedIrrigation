@@ -6,10 +6,8 @@ require "EnhancedIrrigation/Pumps/PumpClient"
 require "EnhancedIrrigation/SquareSounds"
 require "EnhancedIrrigation/UI/PumpMenu"
 
--- What powers a Pump House: the grid beside a room and not in the open, a generator that pays for
--- it in fuel, a house a storey up, the time a house was away and the grid's shutoff, and what a
--- house tells a Renewable Energy bank. Houses are placed, plumbed and run for set hours by their
--- own pass from server handlers, so the clock doesn't decide the sums.
+-- Houses are placed, plumbed and run for set hours by their own pass from server handlers, so the
+-- clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -90,8 +88,8 @@ T.test("irrigation_pump_house_power_refuses_the_grid_in_the_open", {
 -- it, and an hour lifts the Appliance Pump's rate of the well's water into the barrel, wearing the
 -- part by an hour's wear; the menu says it runs. Turn Off stops it and the hum. Catches a house the
 -- grid can't run beside a room, water at the wrong rate, wear that isn't by the hour, or a hum that
--- doesn't follow the switch. This client looks for running houses every frame while it lasts,
--- rather than every SquareSounds.CHECK_MS.
+-- doesn't follow the switch. This client looks for running houses every frame while it lasts, not
+-- every SquareSounds.CHECK_MS.
 T.test("irrigation_pump_house_power_runs_on_the_grid_beside_a_room", {
     instant = true,
     run = function(self)
