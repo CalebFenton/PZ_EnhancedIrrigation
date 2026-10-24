@@ -1,4 +1,4 @@
--- Hard frost: the air in which water left standing in a pipe, a filter's head or a boiler's drum
+-- Hard frost: the air in which water left standing in a pipe, a sand filter's head or a crock
 -- freezes solid and may split what holds it. Vanilla water never freezes, so the mod decides when.
 
 EnhancedIrrigation = EnhancedIrrigation or {}
