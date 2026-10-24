@@ -123,6 +123,7 @@ T.test("irrigation_valves_fit_and_take_off", {
         expect(shown, "the tap shows no valve: " .. table.concat(overlays, ", "))
         expect(#self.reads.carriedFitted.items == 0, "the fitted valve is still carried")
         T.expectOffered(self, "takeOff")
+        expect(self.reads.off.valve.item == nil, "the tap still has its " .. tostring(self.reads.off.valve.item) .. " after Take Off Valve")
         expect(#self.reads.carriedOff.items == 1, "Take Off Valve gave back " .. #self.reads.carriedOff.items .. " valves")
     end,
 })
