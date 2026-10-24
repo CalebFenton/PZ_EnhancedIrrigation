@@ -1,9 +1,12 @@
 -- The valves that run a tap with nobody holding it, and the timers that run a Pump House
--- (docs/design.md, Automation): what each item is, the minutes its knob offers, and when a timer's
--- daily window falls. What the menus, the jobs and the authority all read; running the water is
--- server/EnhancedIrrigation/Lines/ValveSystem.lua's and Pumps/PumpHouse.lua's.
+-- (docs/design.md, Automation): what each item is and the minutes its knob offers; when a timer's
+-- daily window falls is Timers.lua's. What the menus, the jobs and the authority all read; running
+-- the water is server/EnhancedIrrigation/Lines/ValveSystem.lua's and Pumps/PumpHouse.lua's.
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Timers"
+
+local Timers = EnhancedIrrigation.Timers
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Valves = {}
@@ -47,11 +50,6 @@ function Valves.isKnobMinutes(minutes)
     return false
 end
 
---- Whether `hour` is an hour of the day a timer may start at: a whole number 0 to 23.
-function Valves.isStartHour(hour)
-    return type(hour) == "number" and hour >= 0 and hour <= 23 and hour == math.floor(hour)
-end
-
 -- Jobs carry their setting as a string (EnhancedIrrigationAction's `with`).
 
 --- A Set Timer job's setting: the start hour and the minutes, as "hour:minutes".
@@ -63,7 +61,7 @@ end
 function Valves.decodeTimer(with)
     local start, minutes = string.match(tostring(with), "^(%d+):(%d+)$")
     start, minutes = tonumber(start), tonumber(minutes)
-    if not (Valves.isStartHour(start) and Valves.isKnobMinutes(minutes)) then
+    if not (Timers.isStartHour(start) and Valves.isKnobMinutes(minutes)) then
         return nil
     end
     return start, minutes
@@ -73,50 +71,6 @@ end
 function Valves.decodeWind(with)
     local minutes = tonumber(string.match(tostring(with), "^(%d+)$"))
     return Valves.isKnobMinutes(minutes) and minutes or nil
-end
-
--- Time --------------------------------------------------------------------------------------------
-
---- The hour of the day, 0 up to 24, at the world hour `worldHour` (EnhancedIrrigation.now). The
---- world's age doesn't start at midnight, so it is read off the clock now.
-function Valves.hourOfDay(worldHour)
-    local back = EnhancedIrrigation.now() - worldHour
-    return (getGameTime():getTimeOfDay() - back) % 24
-end
-
---- The stretches, as { from, to } world hours in order, of [from, to] that a daily window opening
---- at the hour `start` for `minutes` covers. None for 0 minutes.
-function Valves.openHours(from, to, start, minutes)
-    local found = {}
-    if not (minutes and minutes > 0 and start and to > from) then
-        return found
-    end
-    local length = minutes / 60
-    -- The last opening at or before `from`, which may still be open then.
-    local opens = from - (Valves.hourOfDay(from) - start) % 24
-    while opens < to do
-        local a, b = math.max(from, opens), math.min(to, opens + length)
-        if b > a then
-            table.insert(found, { from = a, to = b })
-        end
-        opens = opens + 24
-    end
-    return found
-end
-
---- Whether the daily window of `start` and `minutes` is open at the world hour `hour`.
-function Valves.isOpenAt(hour, start, minutes)
-    if not (minutes and minutes > 0 and start) then
-        return false
-    end
-    return (Valves.hourOfDay(hour) - start) % 24 < minutes / 60
-end
-
--- What the menus say ---------------------------------------------------------------------------------
-
---- The hour of the day `hour` as the panel and the menus show it.
-function Valves.hourText(hour)
-    return string.format("%02d:00", hour)
 end
 
 --- The minutes left on the wound valve of `valve` (a summary's), rounded up; 0 when run down.
@@ -137,7 +91,7 @@ function Valves.describe(valve)
         return getText("IGUI_EnhancedIrrigation_ValveRunDown", name)
     end
     if (valve.minutes or 0) > 0 then
-        return getText("IGUI_EnhancedIrrigation_TimerSet", name, Valves.hourText(valve.start), valve.minutes)
+        return getText("IGUI_EnhancedIrrigation_TimerSet", name, Timers.hourText(valve.start), valve.minutes)
     end
     return getText("IGUI_EnhancedIrrigation_TimerNotSet", name)
 end

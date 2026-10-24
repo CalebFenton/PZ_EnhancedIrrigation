@@ -13,10 +13,12 @@ require "TimedActions/ISTimedActionQueue"
 require "luautils"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Valves = EnhancedIrrigation.Valves
+local Timers = EnhancedIrrigation.Timers
 
 local ValveUI = ISPanelJoypad:derive("EnhancedIrrigationValveUI")
 EnhancedIrrigation.ValveUI = ValveUI
@@ -96,7 +98,7 @@ function ValveUI:prerender()
     if self.spec.timer then
         self:drawText(getText("IGUI_EnhancedIrrigation_StartsAt"), PAD, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
             1, 1, 1, 1, UIFont.Small)
-        self:drawTextRight(Valves.hourText(self.hour), self.width / 2 + 30, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
+        self:drawTextRight(Timers.hourText(self.hour), self.width / 2 + 30, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
             1, 1, 1, 1, UIFont.Small)
     end
     if self.refusal then

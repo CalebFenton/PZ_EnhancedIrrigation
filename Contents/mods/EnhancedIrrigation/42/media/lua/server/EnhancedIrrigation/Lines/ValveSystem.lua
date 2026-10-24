@@ -21,6 +21,7 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Taps"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/Lines/Flow"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -29,7 +30,7 @@ EnhancedIrrigation.ValveSystem = ValveSystem
 
 local Lines, Taps, Pumps, Valves = EnhancedIrrigation.Lines, EnhancedIrrigation.Taps, EnhancedIrrigation.Pumps,
     EnhancedIrrigation.Valves
-local Flow = EnhancedIrrigation.Flow
+local Flow, Timers = EnhancedIrrigation.Flow, EnhancedIrrigation.Timers
 
 -- The records of the taps with a valve, found again each ten minutes, and added to as one is fitted.
 local valved = {}
@@ -63,7 +64,7 @@ local function openStretches(record, tap, from, to)
         local untilHour = valve.untilHour or from
         return untilHour > from and { { from = from, to = math.min(to, untilHour) } } or {}
     end
-    local stretches = Valves.openHours(from, to, valve.start, valve.minutes)
+    local stretches = Timers.openHours(from, to, valve.start, valve.minutes)
     if Pumps.powered(tap) then
         return stretches
     end
@@ -92,7 +93,7 @@ local function isOpen(record, tap, now)
     if Valves.kindOf(valve.item) == "windup" then
         open = (valve.untilHour or now) > now
     else
-        open = Valves.isOpenAt(now, valve.start, valve.minutes) and Pumps.powered(tap)
+        open = Timers.isOpenAt(now, valve.start, valve.minutes) and Pumps.powered(tap)
     end
     return open and Taps.tankFor(tap) ~= nil
 end

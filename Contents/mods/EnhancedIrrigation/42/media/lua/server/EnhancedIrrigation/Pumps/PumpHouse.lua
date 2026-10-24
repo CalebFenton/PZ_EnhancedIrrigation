@@ -1,5 +1,5 @@
 -- What time does to a Pump House (PumpObject.KINDS.house): while it is switched on, or its timer
--- holds it open (Valves.lua), has a pump part fitted that isn't burnt out, and has power, it runs,
+-- holds it open (Timers.lua), has a pump part fitted that isn't burnt out, and has power, it runs,
 -- lifting its part's rate from its source into its outlet's tank as far as its lift, the tank's
 -- room and a finite source's water go, or driving the line its outlet feeds with what that takes
 -- up to its rate (Lines/Flow.lua), and wearing its part by the hour it runs, faster run dry. A
@@ -27,7 +27,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Timers"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
@@ -35,7 +35,7 @@ EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
 local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
-local Valves = EnhancedIrrigation.Valves
+local Timers = EnhancedIrrigation.Timers
 
 -- Power ----------------------------------------------------------------------------------------------
 
@@ -281,7 +281,7 @@ end
 --- Whether the timer of the record's Pump House holds it open at the world hour `hour`.
 function PumpHouse.timerOpen(record, hour)
     local timer = record.timer
-    return timer ~= nil and Valves.isOpenAt(hour, timer.start, timer.minutes)
+    return timer ~= nil and Timers.isOpenAt(hour, timer.start, timer.minutes)
 end
 
 --- What an hour or less of time from the world hour `from` does to the record's Pump House `pump`
@@ -298,7 +298,7 @@ function PumpHouse.step(record, pump, spec, hours, from)
         return
     end
     local timer = record.timer
-    for _, stretch in ipairs(timer and Valves.openHours(from, from + hours, timer.start, timer.minutes) or {}) do
+    for _, stretch in ipairs(timer and Timers.openHours(from, from + hours, timer.start, timer.minutes) or {}) do
         if record:isBurntOut() then
             return
         end
