@@ -201,17 +201,17 @@ function T.buildEntry(entity)
     return nil
 end
 
--- What one build of `recipe` takes, as T.give items (T.recipeInputs), with as many full drainables
--- as an input's uses need, where T.recipeInputs gives one: two sand bags for eight uses. Also the
--- inputs that had no possible item.
-local function buildInputs(recipe)
-    local items, unmatched = T.recipeInputs(recipe)
+-- What one build of `recipe` takes, as T.give items (T.recipeInputs, with `prefer`), with as many
+-- full drainables as an input's uses need, where T.recipeInputs gives one: two sand bags for eight
+-- uses. Also the inputs that had no possible item.
+local function buildInputs(recipe, prefer)
+    local items, unmatched = T.recipeInputs(recipe, prefer)
     if #unmatched > 0 then
         return items, unmatched
     end
     local inputs = recipe:getInputs()
     for i = 0, inputs:size() - 1 do
-        local input, item = inputs:get(i), T.inputItem(inputs:get(i))
+        local input, item = inputs:get(i), T.inputItem(inputs:get(i), prefer)
         if item:isItemType(ItemType.DRAINABLE) and not input:isItemCount() then
             local perItem = math.floor(1 / item:getUseDelta() + 0.0001)
             items[i + 1].count = math.ceil(input:getIntAmount() / perItem)
@@ -222,11 +222,12 @@ end
 
 --- Queues building `entity` (a full name) from the build menu at `handle`, through the build menu's
 --- own path (ISBuildIsoEntity, ISBuildAction): the character gets the recipe's skill levels and
---- knowledge and exactly its inputs, and the build waits for this client's copy of the tile
---- `sprite`. Whether the build menu could build it lands in self.canBuild and self.validSquare.
---- Returns the built tile's handle, or nil. ISBuildIsoEntity is server Lua, which loads after this
---- file, so it is reached at call time rather than through a require.
-function T.buildFromMenu(self, entity, handle, sprite)
+--- knowledge and exactly its inputs, each the first of `prefer` (full names) it takes if any
+--- (T.inputItem), and the build waits for this client's copy of the tile `sprite`. Whether the
+--- build menu could build it lands in self.canBuild and self.validSquare. Returns the built tile's
+--- handle, or nil. ISBuildIsoEntity is server Lua, which loads after this file, so it is reached at
+--- call time rather than through a require.
+function T.buildFromMenu(self, entity, handle, sprite, prefer)
     local info = T.need(self, T.buildEntry(entity), "the build menu entry of " .. entity)
     local recipe = info and info:getRecipe() and info:getRecipe():getCraftRecipe()
     if not T.need(self, recipe, "the build recipe of " .. entity) then return nil end
@@ -236,7 +237,7 @@ function T.buildFromMenu(self, entity, handle, sprite)
         T.setPerk(self, skill:getPerk(), skill:getLevel())
     end
     T.knowRecipes(self, { recipe:getName() }, true)
-    local inputs, unmatched = buildInputs(recipe)
+    local inputs, unmatched = buildInputs(recipe, prefer)
     if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return nil end
     T.give(self, "materials", inputs)
     T.server(self, "tanks.track", T.at(handle))
