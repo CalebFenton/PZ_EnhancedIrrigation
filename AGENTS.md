@@ -17,7 +17,8 @@
 - A test never waits out real time. Raise the clock speed (`T.setMultiplier`) for game time, run the mod's sums for set hours on the server (`lines.flow`, `lines.age`), date a timestamp back rather than waiting past it (`lines.lapseHold`), and shorten a real-time cadence from a server handler that puts it back when the test ends (`water.runEvery`). Set a chance's roll (`lines.pinRoll`) rather than rolling many times.
 - Give a new file under `Contents/` or the dev mod a `TEST_MAP` line in `dev/harness.conf` naming the tests that reach its code; without one, `--changed` runs every test.
 - Comments say why, without repeating values from the code.
-- When a change alters how a mechanic plays or where something spawns, update `docs/player-guide.md` in the same commit. It gives exact figures where players plan around them (costs, reach, times, levels) and rounded ones for rates.
+- When a change alters how a mechanic plays or where something spawns, update `docs/player-guide.md` in the same commit. It gives exact figures where players plan around them (costs, reach, times, levels) and rounded ones for rates. It leaves recipes' ingredients to the build menu and the crafting window, and says what kind of place has a thing and how rare it is, never every list it spawns in.
+- `README.md` is the Workshop page: after changing it, run `dev/workshop-txt.sh`, which writes `workshop.txt`'s description from it; the static check fails while the two differ.
 - When a change has something only a person playing can check (how it sounds, whether zombies come, how the work feels, how the art reads, a vanilla path no test drives), add it to `docs/playtest.md` in the same commit, saying how to set it up and what passes. Name those entries in your report rather than calling the change done untested.
 - `shared/EnhancedIrrigation/GlobalObjects.lua`, `client/EnhancedIrrigation/ClientObjects.lua` and `client/EnhancedIrrigation/UI/Needs.lua` are copies of Renewable Energy's; change both mods or neither.
 - Don't add `CLAUDE.md` files; the `AGENTS.md` files hold the agent instructions.
@@ -25,6 +26,7 @@
 ## Read when needed
 
 - Before designing or balancing a feature, read `docs/design.md`: what the mod adds, the build order, and the principles every cost, payoff and repair is weighed against.
+- Before changing `README.md`, read `dev/harness/docs/workshop-page.md`.
 - Before running in-game tests, handing them to subagents, or debugging a failure or a `LEAK`, read `dev/harness/docs/debugging.md`: which run answers which question, and the traps that cost reruns.
 - Before changing anything under `dev/harness`, read `dev/harness/AGENTS.md`: other mods share it.
 - Before changing scripts, translations, multiplayer sync, loot or tests, read `../RenewableEnergy/DEVELOPMENT.md` for the Build 42 behavior that fails silently and the command to decompile the game.
