@@ -124,19 +124,6 @@ handler("lines.read", function(player, args)
     return readTiles(args.tiles)
 end)
 
--- Sets each tile's `fields` on its record and shows it.
-handler("lines.set", function(player, args)
-    for _, at in ipairs(args.tiles) do
-        local record, missing = recordOrMissing(at)
-        if not record then return nil, missing end
-        for key, value in pairs(at.fields or {}) do
-            record[key] = value
-        end
-        record:afterChange()
-    end
-    return readTiles(args.tiles)
-end)
-
 -- Runs each tile's record as though `args.hours` had passed since its last pass, as the ten-minute
 -- pass does, loaded or not; the hours pass for its soil's wet spell too. Answers the tiles after,
 -- and in `before` as they were, read in the same call so no vanilla pass lands between.
