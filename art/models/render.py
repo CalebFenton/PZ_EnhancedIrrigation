@@ -186,10 +186,13 @@ def render_tiles(camera, stage, only=None):
     os.makedirs(TILE_DIR, exist_ok=True)
     atlas = np.zeros((ROWS * TILE_H, COLUMNS * TILE_W, 4), dtype=np.float32)
     if only:
-        if os.path.exists(DEPTH_FILE):
-            # The depth map as last written, grown to rows tiles added since.
-            written = kit.load_pixels(DEPTH_FILE)
-            atlas[:written.shape[0]] = written[:atlas.shape[0]]
+        # Every other tile keeps its depth from the map already written; a map written without
+        # them would leave them drawing nothing in game.
+        if not os.path.exists(DEPTH_FILE):
+            raise SystemExit("%s is missing: render every tile before rendering a few" % DEPTH_FILE)
+        written = kit.load_pixels(DEPTH_FILE)
+        # Fewer rows than the atlas when tiles were added since.
+        atlas[:written.shape[0]] = written[:atlas.shape[0]]
     else:
         for stale in os.listdir(TILE_DIR):
             if stale.endswith(".png"):
