@@ -8,6 +8,7 @@
 -- end whose tank, fixture, unit or pump is gone, as the buried pipe stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
@@ -43,7 +44,7 @@ LinkJobs.RECIPE = "EnhancedIrrigation_PlumbToTank"
 LinkJobs.PLUMB_TOOLS = { Pipes.WRENCH, { recipe = LinkJobs.RECIPE } }
 
 local function pipeWrench(character)
-    return character:getInventory():getFirstTagEvalRecurse(ItemTag.PIPE_WRENCH, EnhancedIrrigation.notBroken)
+    return character:getInventory():getFirstTagEvalRecurse(ItemTag.PIPE_WRENCH, EnhancedIrrigation.Materials.notBroken)
 end
 
 -- The tiles of pipe from `tank` to the square `with` names, 0 when it names none.

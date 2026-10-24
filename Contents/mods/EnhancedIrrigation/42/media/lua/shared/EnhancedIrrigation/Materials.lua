@@ -67,7 +67,7 @@ local function haveOf(character, material)
     elseif material.skill then
         return character:getPerkLevel(Perks[material.skill])
     elseif material.tool then
-        return EnhancedIrrigation.hasWorkingTool(character, ItemTag[material.tool]) and 1 or 0
+        return Materials.hasWorkingTool(character, ItemTag[material.tool]) and 1 or 0
     elseif isDrainable(material) then
         local uses = 0
         for _, item in ipairs(drainablesOf(character, material)) do
@@ -138,10 +138,55 @@ function Materials.consume(character, list)
         elseif takes(material) then
             local items = itemsTaken(inventory, material)
             for i = 0, items:size() - 1 do
-                EnhancedIrrigation.takeItem(character, items:get(i))
+                Materials.takeItem(character, items:get(i))
             end
         end
     end
+end
+
+--- Takes `item` from `character`: out of their hands and out of the container that holds it, and
+--- tells the clients. Authority only.
+function Materials.takeItem(character, item)
+    character:removeFromHands(item)
+    local container = item:getContainer()
+    if container then
+        container:Remove(item)
+        sendRemoveItemFromContainer(container, item)
+    end
+end
+
+--- Gives `character` `count` (default 1) of `itemOrType`, an item or a full type, dropping on
+--- their square what doesn't fit (Actions.addOrDropItem, which also syncs). Authority only.
+function Materials.giveItems(character, itemOrType, count)
+    for _ = 1, count or 1 do
+        local item = type(itemOrType) == "string" and instanceItem(itemOrType) or itemOrType
+        Actions.addOrDropItem(character, item)
+    end
+end
+
+function Materials.notBroken(item)
+    return not item:isBroken()
+end
+
+--- Whether `character` carries a working tool with `tag` (an ItemTag value), bags included.
+function Materials.hasWorkingTool(character, tag)
+    return character:getInventory():containsTagEvalRecurse(tag, Materials.notBroken)
+end
+
+-- A job's needs are a list of what it takes of the character, each { have, need } with what it
+-- names: `labelKey` (an IG_UI key) for drainable uses, `tool` (an ItemTag field) and `item` for a
+-- tool, `item` (a full type) for an item counted by type, `recipe` for a recipe to know (have 1
+-- when known). The same list refuses the job and tells the menu what it lacks, so the two can't
+-- disagree.
+
+--- The first of `needs` the character is short of, or nil when they have them all.
+function EnhancedIrrigation.firstUnmet(needs)
+    for _, need in ipairs(needs) do
+        if need.have < need.need then
+            return need
+        end
+    end
+    return nil
 end
 
 return Materials

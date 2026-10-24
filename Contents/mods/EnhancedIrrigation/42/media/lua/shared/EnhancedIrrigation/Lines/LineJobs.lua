@@ -43,7 +43,7 @@ LineJobs.VALVE_MINUTES = 1
 
 local function firstTagged(tag)
     return function(character)
-        return character:getInventory():getFirstTagEvalRecurse(ItemTag[tag], EnhancedIrrigation.notBroken)
+        return character:getInventory():getFirstTagEvalRecurse(ItemTag[tag], EnhancedIrrigation.Materials.notBroken)
     end
 end
 

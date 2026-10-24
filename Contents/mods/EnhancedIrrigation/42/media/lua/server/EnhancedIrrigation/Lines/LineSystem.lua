@@ -174,31 +174,31 @@ local DO = {
             Pipes.giveBack(character, record.tapMaterial, 1, record.tapConditions)
         end
         if record.valve then
-            EnhancedIrrigation.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(record))
+            EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(record))
         end
         if record.sprinkler then
-            EnhancedIrrigation.giveItems(character, LineSystem.takeSprinkler(record))
+            EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(record))
         end
         LineSystem.remove(object)
         return true
     end,
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
     [LineJobs.SET_SPRINKLER] = function(character, object, item)
-        EnhancedIrrigation.takeItem(character, item)
+        EnhancedIrrigation.Materials.takeItem(character, item)
         Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Pumps.ceilingOf(item) }
         return true
     end,
     [LineJobs.TAKE_SPRINKLER] = function(character, object)
-        EnhancedIrrigation.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
+        EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
         return true
     end,
     [LineJobs.FIT_VALVE] = function(character, object, item)
-        EnhancedIrrigation.takeItem(character, item)
+        EnhancedIrrigation.Materials.takeItem(character, item)
         EnhancedIrrigation.ValveSystem.fit(Lines.recordOf(object), item)
         return true
     end,
     [LineJobs.TAKE_VALVE] = function(character, object)
-        EnhancedIrrigation.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(Lines.recordOf(object)))
+        EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(Lines.recordOf(object)))
         return true
     end,
     [LineJobs.WIND_VALVE] = function(character, object, with)

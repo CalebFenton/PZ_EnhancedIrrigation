@@ -6,6 +6,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
@@ -73,12 +74,12 @@ local DO = {
         return true
     end,
     [PumpJobs.FIT_PUMP] = function(character, pump, item)
-        EnhancedIrrigation.takeItem(character, item)
+        EnhancedIrrigation.Materials.takeItem(character, item)
         Pumps.recordOf(pump):fitPart(item)
         return true
     end,
     [PumpJobs.TAKE_OUT_PUMP] = function(character, pump)
-        EnhancedIrrigation.giveItems(character, Pumps.recordOf(pump):takeOutPart())
+        EnhancedIrrigation.Materials.giveItems(character, Pumps.recordOf(pump):takeOutPart())
         return true
     end,
     -- The time before it was switched on did nothing, so it counts from now.
@@ -101,7 +102,7 @@ local DO = {
     end,
     -- The timer's setting starts at nothing: it never opens until set.
     [PumpJobs.FIT_TIMER] = function(character, pump, item)
-        EnhancedIrrigation.takeItem(character, item)
+        EnhancedIrrigation.Materials.takeItem(character, item)
         local record = Pumps.recordOf(pump)
         record.timer = { item = item:getFullType() }
         EnhancedIrrigation.PumpHouse.settle(record, pump)
@@ -109,7 +110,7 @@ local DO = {
     end,
     [PumpJobs.TAKE_TIMER] = function(character, pump)
         local record = Pumps.recordOf(pump)
-        EnhancedIrrigation.giveItems(character, instanceItem(record.timer.item))
+        EnhancedIrrigation.Materials.giveItems(character, instanceItem(record.timer.item))
         record.timer = nil
         EnhancedIrrigation.PumpHouse.settle(record, pump)
         return true

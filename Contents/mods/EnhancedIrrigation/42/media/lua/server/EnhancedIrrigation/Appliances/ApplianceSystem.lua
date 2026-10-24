@@ -4,6 +4,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Appliances/Appliances"
@@ -23,8 +24,8 @@ local DO = {
         local least, most = ApplianceJobs.SALVAGED_CONDITION[1], ApplianceJobs.SALVAGED_CONDITION[2]
         pump:setCondition(ZombRand(least, most + 1))
         Appliances.strip(appliance)
-        EnhancedIrrigation.giveItems(character, pump)
-        EnhancedIrrigation.giveItems(character, EnhancedIrrigation.Valves.WATER_VALVE)
+        EnhancedIrrigation.Materials.giveItems(character, pump)
+        EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.Valves.WATER_VALVE)
         return true
     end,
 }

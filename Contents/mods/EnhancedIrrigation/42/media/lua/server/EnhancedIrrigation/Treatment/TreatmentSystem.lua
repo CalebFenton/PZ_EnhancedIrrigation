@@ -6,6 +6,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Treatment/Treatment"
@@ -106,9 +107,9 @@ local DO = {
         FluidContainer.Transfer(basin, bucket:getFluidContainer(), basin:getAmount())
         local cracked = record.cracked
         unit:getSquare():transmitRemoveItemFromSquare(unit)
-        EnhancedIrrigation.giveItems(character, bucket)
+        EnhancedIrrigation.Materials.giveItems(character, bucket)
         if not cracked then
-            EnhancedIrrigation.giveItems(character, Treatment.CROCK_ITEM)
+            EnhancedIrrigation.Materials.giveItems(character, Treatment.CROCK_ITEM)
         end
         return true
     end,

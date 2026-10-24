@@ -7,6 +7,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Stands/Stands"
@@ -48,7 +49,7 @@ end
 local DO = {
     [StandJobs.SET_BARREL] = function(character, stand, barrel)
         local spec = Stands.barrelSpec(barrel)
-        EnhancedIrrigation.takeItem(character, barrel)
+        EnhancedIrrigation.Materials.takeItem(character, barrel)
         replace(stand, spec.entity, spec.sprite)
         return true
     end,
@@ -56,7 +57,7 @@ local DO = {
         local spec = Stands.raisedSpec(raised)
         local item = StandSystem.barrelItem(spec, raised:getSquare())
         replace(raised, Stands.STAND_ENTITY, Sprites.STAND)
-        EnhancedIrrigation.giveItems(character, item)
+        EnhancedIrrigation.Materials.giveItems(character, item)
         return true
     end,
 }

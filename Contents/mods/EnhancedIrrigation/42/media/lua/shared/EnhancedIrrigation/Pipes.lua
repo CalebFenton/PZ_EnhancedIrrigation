@@ -4,6 +4,7 @@
 -- pipe wrench.
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Sprites"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -95,7 +96,7 @@ function Pipes.giveBack(character, kind, lengths, conditions)
         if condition then
             item:setCondition(math.min(condition, item:getConditionMax()))
         end
-        EnhancedIrrigation.giveItems(character, item)
+        EnhancedIrrigation.Materials.giveItems(character, item)
     end
 end
 

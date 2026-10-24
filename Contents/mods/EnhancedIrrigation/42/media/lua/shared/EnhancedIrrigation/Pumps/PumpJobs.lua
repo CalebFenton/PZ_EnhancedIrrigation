@@ -7,6 +7,7 @@
 -- Plumb Pump.
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
@@ -133,7 +134,7 @@ end
 
 -- The screwdriver the jobs at a pump hold.
 local function screwdriver(character)
-    return character:getInventory():getFirstTagEvalRecurse(ItemTag.SCREWDRIVER, EnhancedIrrigation.notBroken)
+    return character:getInventory():getFirstTagEvalRecurse(ItemTag.SCREWDRIVER, EnhancedIrrigation.Materials.notBroken)
 end
 
 local SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }

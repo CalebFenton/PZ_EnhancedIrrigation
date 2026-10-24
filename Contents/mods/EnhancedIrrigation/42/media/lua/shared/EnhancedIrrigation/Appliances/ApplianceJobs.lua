@@ -3,6 +3,7 @@
 -- appliance's drain pump out as an Appliance Pump and leaves the appliance where it stands, stripped.
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Appliances/Appliances"
 
@@ -25,7 +26,7 @@ ApplianceJobs.SALVAGED_CONDITION = { 60, 100 }
 
 -- The screwdriver Salvage Pump holds.
 local function screwdriver(character)
-    return character:getInventory():getFirstTagEvalRecurse(ItemTag.SCREWDRIVER, EnhancedIrrigation.notBroken)
+    return character:getInventory():getFirstTagEvalRecurse(ItemTag.SCREWDRIVER, EnhancedIrrigation.Materials.notBroken)
 end
 
 ApplianceJobs.JOBS = {

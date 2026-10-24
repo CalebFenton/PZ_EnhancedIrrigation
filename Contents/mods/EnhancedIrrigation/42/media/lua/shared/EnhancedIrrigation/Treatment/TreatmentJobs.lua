@@ -6,6 +6,7 @@
 -- LinkJobs'. A boiler's fire is vanilla's (ISBBQMenu).
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 
@@ -37,7 +38,7 @@ TreatmentJobs.CLEAN_TOOLS = { ItemTag.TAKE_DIRT, ItemTag.MASONS_TROWEL }
 function TreatmentJobs.cleaningTool(character)
     local inventory = character:getInventory()
     for _, tag in ipairs(TreatmentJobs.CLEAN_TOOLS) do
-        local tool = inventory:getFirstTagEvalRecurse(tag, EnhancedIrrigation.notBroken)
+        local tool = inventory:getFirstTagEvalRecurse(tag, EnhancedIrrigation.Materials.notBroken)
         if tool then
             return tool
         end
