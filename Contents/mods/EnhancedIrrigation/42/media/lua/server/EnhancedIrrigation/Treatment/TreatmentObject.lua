@@ -140,9 +140,9 @@ function TreatmentObject:isClogged(spec)
     return spec.clogLitres ~= nil and self.passed >= spec.clogLitres
 end
 
--- The film grows while water stands on the sand and dies after two dry days, or when a hard freeze
--- turns the water on it to ice, which also stops the flow. A grown film passes clean water; an
--- unripe one passes the head's own.
+-- The film grows while water stands on the sand and dies once the sand has stood dry long enough
+-- (DRY_DEATH_HOURS), or when a hard freeze turns the water on it to ice, which also stops the flow.
+-- A grown film passes clean water; an unripe one passes the head's own.
 TreatmentObject.KINDS.sand = {
     step = function(record, unit, spec, hours)
         if record.head > 0 then
@@ -247,8 +247,8 @@ function TreatmentObject:scrub()
     self.passed = 0
 end
 
--- What every client keeps: the head, to the tenth of a litre, and the state the menu words, in
--- whole hours, so a pass that changes nothing a player sees sends nothing.
+-- What every client keeps: the head and the state the menu words, rounded, so a pass that changes
+-- nothing a player sees sends nothing.
 function TreatmentObject:buildSummary()
     local spec = self:spec()
     return {

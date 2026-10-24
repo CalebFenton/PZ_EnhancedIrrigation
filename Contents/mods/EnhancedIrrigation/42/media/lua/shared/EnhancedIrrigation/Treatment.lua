@@ -26,7 +26,8 @@ Treatment.SPRITES = { EnhancedIrrigation.Sprites.BARREL_FILTER, EnhancedIrrigati
 -- Wet hours a new layer of sand takes to grow the living film that cleans the water; until then
 -- the filter passes water as tainted as it came. Real filters are run to waste until mature.
 Treatment.RIPE_HOURS = 72
--- What a cleaning leaves of the film: stirring the top of the sand tears it, so it ripens for a day.
+-- What a cleaning leaves of the film: stirring the top of the sand tears part of it, so it ripens
+-- again for a while.
 Treatment.CLEANED_RIPE_HOURS = Treatment.RIPE_HOURS - 24
 -- Hours with nothing on the sand that kill the film, which lives on what the water brings.
 Treatment.DRY_DEATH_HOURS = 48
@@ -35,15 +36,16 @@ Treatment.CLOGGED_FACTOR = 0.1
 
 -- Pour In ---------------------------------------------------------------------------------------------
 
--- Litres a minute poured from a carried container: a bucket in a couple of minutes.
+-- Litres a minute poured from a carried container, about vanilla's pour.
 Treatment.POUR_LITRES_PER_MINUTE = 4
 
 -- Each unit's entity script name: `kind`, the row of KINDS (and of TreatmentObject.KINDS) that says
 -- how it treats; `head`, the litres of raw water it holds; `rate`, the litres an hour it treats;
 -- `clogLitres`, the litres it passes before it clogs; `plumbed`, whether it takes inlet and outlet
 -- links. Its basin's size is its entity's FluidContainer's. A Barrel Filter's rate is a household's
--- daily water in a day (design, Starting numbers); a Brick Filter has four times the sand. A Filter
--- Crock seeps one person's drinking and cooking water in a day; it holds about what a bucket does.
+-- daily water in a day (design, Starting numbers); a Brick Filter's bigger bed of sand scales its
+-- numbers. A Filter Crock seeps one person's drinking and cooking water in a day; it holds about
+-- what a bucket does.
 Treatment.UNITS = {
     EnhancedIrrigation_BarrelFilter = { kind = "sand", head = 50, rate = 4, clogLitres = 2000, plumbed = true },
     EnhancedIrrigation_BrickFilter = { kind = "sand", head = 200, rate = 16, clogLitres = 8000, plumbed = true },
