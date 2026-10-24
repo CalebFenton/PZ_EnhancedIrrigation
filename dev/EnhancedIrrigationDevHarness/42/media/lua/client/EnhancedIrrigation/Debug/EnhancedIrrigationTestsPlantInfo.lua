@@ -3,9 +3,8 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/UI/PlantInfo"
 
--- The plant info's soil line (UI/PlantInfo.lua) and the soil word in a line tile's summary that it
--- reads: crops on line tiles of set soaks, the plant info windows opened as Plant Info opens them
--- (ISPlantInfoAction) and drawn.
+-- The plant info's soil line and the soil word in a line tile's summary that it reads: crops on
+-- line tiles of set soaks, the plant info windows opened as Plant Info opens them and drawn.
 
 local T = EnhancedIrrigationTest
 local expect = T.expect
