@@ -4,9 +4,8 @@ require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/UI/TreatmentMenu"
 
--- The Filter Crock: shaped and fired, set in a bucket and taken down, seeping clean water, clogging
--- and cracking in frost. Time runs on the server through the record's own advance for set hours, so
--- the clock doesn't decide what a test sees.
+-- Time runs on the server through the record's own advance for set hours, so the clock doesn't
+-- decide what a test sees.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -254,6 +253,5 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
     end,
 })
 
--- The crock's basin through vanilla's menus (T.vanillaBasinTest).
 T.vanillaBasinTest({ name = "irrigation_treatment_crock_vanilla_menu_drinks_fills_and_empties_the_basin",
     entity = CROCK, litres = 8, tainted = false, inBucket = 5 })
