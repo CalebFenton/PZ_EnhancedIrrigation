@@ -1,5 +1,5 @@
--- Development only. The setup of the Enhanced Irrigation QA debug scenario
--- (EnhancedIrrigationDebugScenario.lua), for playing through the mod by hand: a character nothing
+-- Development only. The setup of the Enhanced Irrigation QA debug scenario, for playing through
+-- the mod by hand: a character nothing
 -- can see or hurt, who carries anything and has every skill and recipe the mod reads, and on an
 -- open lot between a farmhouse and its field, from north to south, beds of crops beside tanks to
 -- lay lines from, tanks to set up and plumb, and a row to each group of items the jobs take.
@@ -19,8 +19,8 @@ local Sprites = EnhancedIrrigation.Sprites
 QA.START = { x = 10458, y = 10062, z = 0 }
 
 local MARK = "EIQA"
--- The lot, in squares east and south of its north-west corner, and the margin round it cleared of
--- ground cover too.
+-- The lot, in squares east and south of its north-west corner, and the margin round it also
+-- cleared of trees and ground cover.
 local AREA = { w = 12, h = 20 }
 local MARGIN = 1
 -- Where the character is put: between the first two beds, beside their tanks.
@@ -58,8 +58,8 @@ local BEDS = {
 }
 local BED_CROPS = 10
 
--- The tanks to set up and plumb, in a row: an empty Tank Stand and an empty barrel to set on it,
--- and two barrels at one level close enough to plumb together, one full and one empty.
+-- The tanks to set up and plumb: an empty Tank Stand and an empty barrel to set on it, and two
+-- barrels within plumbing reach of each other, one full and one empty.
 local TANK_ROW = 8
 local TANKS = {
     { x = 1, sprite = Sprites.STAND },
