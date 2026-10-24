@@ -605,19 +605,20 @@ T.test("irrigation_pump_house_dry_source_wears_it_fast", {
 -- Condition the nearly burnt-out part has left: half an hour run dry.
 local LAST_CONDITION = 5
 
--- A part with its last few points run dry burns out within the hour: the house switches itself off,
--- the menu says the part is burnt out and greys Turn On out. Repair Pump with Electricity 2, a
--- screwdriver, Scrap Electronics and a Tire Piece restores it to a ceiling lowered by a repair's
--- loss, taking the scrap and the piece; the menu says so, and a second repair is refused as the
--- part is sounder than one would leave it. Catches a burnt-out pump that runs, a repair to new, or
--- one that takes nothing.
+-- A part already repaired once, with its last few points run dry, burns out within the hour: the
+-- house switches itself off, the menu says the part is burnt out and greys Turn On out. Repair Pump
+-- with Electricity 2, a screwdriver, Scrap Electronics and a Tire Piece restores it to its ceiling
+-- lowered by a repair's loss, taking the scrap and the piece; the menu says so, and a second repair
+-- is refused as the part is sounder than one would leave it. Catches a burnt-out pump that runs, a
+-- repair to new or from a new part's ceiling, or one that takes nothing.
 T.test("irrigation_pump_house_burns_out_and_is_repaired", {
     instant = true,
     run = function(self)
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }, { condition = LAST_CONDITION }))
+        self.house = placeHouse(self, spots[1], WOOD, fitted(APPLIANCE, { on = true },
+            { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
         waitForSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
         readMenu(self, function() return copyOf(self.house) end, "burnt")
@@ -639,7 +640,7 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_PartBurntOut", getItemNameFromFullType(APPLIANCE)))
         T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpBurntOut")
         T.expectOffered(self, "repair")
-        local restored = Parts.CONDITION - Pumps.REPAIR_LOSS
+        local restored = CEILING - Pumps.REPAIR_LOSS
         local repaired = self.reads.repaired.record
         expect(repaired.partCondition == restored and repaired.partCeiling == restored, "the repair left the part at "
             .. repaired.partCondition .. " of " .. repaired.partCeiling)
