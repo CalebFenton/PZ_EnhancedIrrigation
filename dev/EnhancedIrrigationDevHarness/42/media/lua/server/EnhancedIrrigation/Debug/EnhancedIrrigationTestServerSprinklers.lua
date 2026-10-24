@@ -51,6 +51,21 @@ local function readSquares(args)
     return squares
 end
 
+-- Sets the crop on each of `args.squares` to `args.water` water points, when given, so what a pass
+-- gives them is measured from room made in the same call, whatever passes ran before it.
+local function setWater(args)
+    if not args.water then
+        return
+    end
+    for _, at in ipairs(args.squares or {}) do
+        local plant = SFarmingSystem.instance:getLuaObjectAt(at.x, at.y, at.z)
+        if plant and plant.state ~= "plow" then
+            plant.waterLvl = args.water
+            plant:saveData()
+        end
+    end
+end
+
 -- The record of the pump at args' x, y, z as plain values, or nil without one.
 local function pumpFields(args)
     local record = args.x and mod().Pumps.recordAt(args.x, args.y, args.z)
@@ -95,9 +110,9 @@ handler("sprinklers.pump", function(player, args)
     return reply
 end)
 
--- Sets `args.fields` on the Pump House's record, winds its clock back `args.hoursAgo` hours and runs
--- its ten-minute pass (PumpObject.update). Answers the clock's time, `now`, and the state `before`
--- and `after`.
+-- Sets `args.fields` on the Pump House's record and the crops of `args.squares` to `args.water`
+-- (setWater), winds its clock back `args.hoursAgo` hours and runs its ten-minute pass
+-- (PumpObject.update). Answers the clock's time, `now`, and the state `before` and `after`.
 handler("sprinklers.house", function(_, args)
     local record = mod().Pumps.recordAt(args.x, args.y, args.z)
     if not record then
@@ -109,6 +124,7 @@ handler("sprinklers.house", function(_, args)
     if args.hoursAgo then
         record.lastHour = mod().now() - args.hoursAgo
     end
+    setWater(args)
     local reply = { now = mod().now(), before = stateOf(args) }
     record:update()
     reply.after = stateOf(args)

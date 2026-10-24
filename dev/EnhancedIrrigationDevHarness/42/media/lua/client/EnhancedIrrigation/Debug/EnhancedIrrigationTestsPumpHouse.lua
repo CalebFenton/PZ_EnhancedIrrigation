@@ -710,8 +710,9 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         T.waitForLines(self, self.tiles, "this client's copy of the running line", function(summary) return summary.running end)
         useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain running", false)
+        -- The crops dried in the same call, so the ten-minute passes since Turn On leave them room.
         T.read(self, "sprinklers.house", T.at(self.house, { hoursAgo = HALF_HOUR, squares = T.tiles(self.tiles),
-            tank = T.at(self.barrel) }), "half")
+            water = 0, tank = T.at(self.barrel) }), "half")
         T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
         T.waitForLines(self, self.tiles, "this client's copy of the stopped line", function(summary)
             return not summary.running
