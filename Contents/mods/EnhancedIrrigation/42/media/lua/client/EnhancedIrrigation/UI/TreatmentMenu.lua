@@ -80,7 +80,7 @@ function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
         menu:addOption(Treatment.statusText(unit, spec, summary)).notAvailable = true
     end
     addPourIn(menu, playerNum, character, unit)
-    for _, entry in ipairs(TreatmentJobs.KIND_JOBS[spec.kind] or {}) do
+    for _, entry in ipairs(TreatmentJobs.KIND_JOBS[spec.kind]) do
         JobOptions.add(menu, playerNum, character, "treatment", getText(entry.nameKey), entry.job, unit)
     end
     if spec.plumbed then
