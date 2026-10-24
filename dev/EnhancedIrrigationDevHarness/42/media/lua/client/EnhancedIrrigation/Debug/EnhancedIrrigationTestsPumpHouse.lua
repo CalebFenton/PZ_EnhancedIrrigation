@@ -371,11 +371,13 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
     end,
     validate = function(self)
         T.expectOffered(self, "on")
-        local after = self.reads.hour.after
-        expectNear("the barrel after an hour", after.tank.litres, lifts(APPLIANCE, 1), LITRES)
-        expect(not after.tank.tainted, "the well's water came out tainted")
-        expectNear("the part after an hour", after.record.partCondition,
-            Pumps.PART_CONDITION - Pumps.PARTS[APPLIANCE].wearPerHour, 0.001)
+        local hour = self.reads.hour
+        -- From the state before, in the same call: a ten-minute pass may have run the house since
+        -- Turn On.
+        expectNear("the barrel after an hour", hour.after.tank.litres - hour.before.tank.litres, lifts(APPLIANCE, 1), LITRES)
+        expect(not hour.after.tank.tainted, "the well's water came out tainted")
+        expectNear("the part after an hour", hour.before.record.partCondition - hour.after.record.partCondition,
+            Pumps.PARTS[APPLIANCE].wearPerHour, 0.001)
         expectWord(self, "running", getText("IGUI_EnhancedIrrigation_Running"))
         T.expectOffered(self, "off")
     end,
@@ -497,8 +499,11 @@ T.test("irrigation_pump_house_dry_source_wears_it_fast", {
         update(self, self.house, "dry", { hoursAgo = 2 })
     end,
     validate = function(self)
-        expectNear("the part after two dry hours", self.reads.dry.after.record.partCondition,
-            Pumps.PART_CONDITION - 2 * Pumps.PARTS[APPLIANCE].wearPerHour * Pumps.DRY_WEAR, 0.001)
+        local dry = self.reads.dry
+        -- From the state before, in the same call: a ten-minute pass may have run the house since it
+        -- was placed.
+        expectNear("the part after two dry hours", dry.before.record.partCondition - dry.after.record.partCondition,
+            2 * Pumps.PARTS[APPLIANCE].wearPerHour * Pumps.DRY_WEAR, 0.001)
     end,
 })
 
