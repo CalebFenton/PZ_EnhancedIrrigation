@@ -612,6 +612,29 @@ function T.flow(self, tap, hours, handles, label)
     T.read(self, "lines.flow", T.at(tap, { hours = hours, tiles = T.tiles(handles) }), label)
 end
 
+--- Queues taking away, when the test ends, any line tile on `handles`, such as those its jobs lay.
+function T.trackLines(self, handles)
+    T.server(self, "lines.track", { tiles = T.tiles(handles) })
+end
+
+--- The shape (Sprites.pipe) a pipe tile's name draws, or nil for any other name.
+function T.shapeOf(spriteName)
+    local material, _, shape = Sprites.pipeOf(spriteName)
+    return material and shape or nil
+end
+
+--- The Lay Line cursor for `material`, started as its menu option starts it unless `started`, and
+--- put away when the test ends. Called in a step.
+function T.layCursor(self, material, started)
+    local playerNum = T.player():getPlayerNum()
+    if not started then
+        EnhancedIrrigation.LineCursor.start(playerNum, material)
+    end
+    local cursor = getCell():getDrag(playerNum)
+    T.defer(self, function() getCell():setDrag(nil, playerNum) end)
+    return cursor
+end
+
 -- Tanks and crops -----------------------------------------------------------------------------------
 
 -- What T.placeTank places, by kind: the tile, and how many floors above the given square it goes.
