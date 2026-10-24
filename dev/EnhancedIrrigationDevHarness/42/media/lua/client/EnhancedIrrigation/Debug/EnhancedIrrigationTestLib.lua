@@ -259,7 +259,7 @@ function T.buildFromMenu(self, entity, handle, sprite, prefer)
             build:tryBuild(handle.x, handle.y, handle.z)
         end
     end)
-    T.waitFor(self, function() return T.tankCopy(built) ~= nil end, "this client's copy of the built " .. entity)
+    T.waitFor(self, function() return T.copyOf(built) ~= nil end, "this client's copy of the built " .. entity)
     return built
 end
 
@@ -541,7 +541,7 @@ end
 
 --- This client's copy of the object drawn as `sprite` (the handle's own unless given) on the
 --- handle's square, or nil.
-function T.tankCopy(handle, sprite)
+function T.copyOf(handle, sprite)
     return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), sprite or handle.sprite)
 end
 

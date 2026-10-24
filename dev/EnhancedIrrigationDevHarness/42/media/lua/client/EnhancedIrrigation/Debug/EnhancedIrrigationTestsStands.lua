@@ -21,7 +21,7 @@ local LITRES = 0.05
 
 local function useMenu(self, handle, label, find, choose)
     T.goNextTo(self, handle.square)
-    T.useOption(self, function() return T.tankCopy(handle) end, label, find, choose)
+    T.useOption(self, function() return T.copyOf(handle) end, label, find, choose)
 end
 
 local function job(id)
@@ -69,7 +69,7 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         self.stand = T.placeTank(self, spots[1], "stand")
         pickUpVanillaBarrel(self, spots[2])
         useMenu(self, self.stand, "set barrel", job(StandJobs.SET_BARREL), true)
-        T.waitFor(self, function() return T.tankCopy(self.stand, Sprites.RAISED_BARREL_CLOSED) ~= nil end,
+        T.waitFor(self, function() return T.copyOf(self.stand, Sprites.RAISED_BARREL_CLOSED) ~= nil end,
             "this client's copy of the barrel on the stand")
         T.batch(function()
             T.read(self, "tanks.read", T.at(self.stand), "raised")
@@ -100,7 +100,7 @@ T.test("irrigation_stands_set_barrel_refused_without_an_empty_barrel", {
         useMenu(self, self.stand, "no barrel", job(StandJobs.SET_BARREL), false)
         -- A barrel vanilla would never let the character pick up: one holding water.
         T.server(self, "stands.giveBarrel", { barrel = BARREL, litres = 20 })
-        T.useOption(self, function() return T.tankCopy(self.stand) end, "full barrel", job(StandJobs.SET_BARREL), false)
+        T.useOption(self, function() return T.copyOf(self.stand) end, "full barrel", job(StandJobs.SET_BARREL), false)
         T.read(self, "tanks.perform", T.at(self.stand, { feature = "stand", job = StandJobs.SET_BARREL, barrel = true }),
             "forced")
     end,
@@ -126,7 +126,7 @@ T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
         useMenu(self, self.tank, "open lid", function(context)
             return T.findNamed(context, context, getText("ContextMenu_OpenLid"))
         end, true)
-        T.waitFor(self, function() return T.tankCopy(self.tank, Sprites.RAISED_BARREL) ~= nil end,
+        T.waitFor(self, function() return T.copyOf(self.tank, Sprites.RAISED_BARREL) ~= nil end,
             "this client's copy of the opened barrel")
         T.read(self, "tanks.read", T.at(self.tank), "opened")
         T.step(function() self.levelAfter = T.clientLevel(self.tank) end)
@@ -188,7 +188,7 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
         T.waitFor(self, function() return T.player():getInventory():getFirstTypeRecurse(BARREL_HELD) == nil end,
             "this client to let go of vanilla's barrel")
         useMenu(self, self.tank, "take down", job(StandJobs.TAKE_DOWN), true)
-        T.waitFor(self, function() return T.tankCopy(self.tank, Sprites.STAND) ~= nil end, "this client's copy of the stand")
+        T.waitFor(self, function() return T.copyOf(self.tank, Sprites.STAND) ~= nil end, "this client's copy of the stand")
         T.batch(function()
             T.read(self, "tanks.read", T.at(self.tank), "stand")
             T.read(self, "stands.barrels", { dropped = true }, "after")

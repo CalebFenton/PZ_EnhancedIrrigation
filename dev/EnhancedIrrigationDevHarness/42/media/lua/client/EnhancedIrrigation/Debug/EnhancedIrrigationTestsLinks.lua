@@ -21,7 +21,7 @@ local PASS_LITRES = 60
 
 local function useMenu(self, handle, label, find, choose)
     T.goNextTo(self, handle.square)
-    T.useOption(self, function() return T.tankCopy(handle) end, label, find, choose)
+    T.useOption(self, function() return T.copyOf(handle) end, label, find, choose)
 end
 
 local function job(id, with)
@@ -63,7 +63,7 @@ local function placeAmphora(self, handle, litres)
     local tank = { x = handle.x, y = handle.y, z = handle.z, sprite = AMPHORA, square = handle.square }
     T.server(self, "tanks.place", T.at(tank, { sprite = AMPHORA, litres = litres }))
     T.waitFor(self, function()
-        local copy = T.tankCopy(tank)
+        local copy = T.copyOf(tank)
         return copy ~= nil and math.abs(copy:getFluidContainer():getAmount() - litres) < LITRES
     end, "this client's copy of the amphora")
     return tank
@@ -71,7 +71,7 @@ end
 
 -- A tank's capacity from this client's copy, which its entity script gives it.
 local function capacityOf(handle)
-    return T.tankCopy(handle):getFluidContainer():getCapacity()
+    return T.copyOf(handle):getFluidContainer():getCapacity()
 end
 
 -- How Unplumb names buried pipe to an empty spot `tiles` tiles east.
@@ -143,7 +143,7 @@ T.test("irrigation_links_plumb_lists_no_well", {
                     and option.param2 == LinkJobs.PLUMB
             end)
         end, false)
-        T.useOption(self, function() return T.tankCopy(self.barrel) end, "no tank in reach", function(context)
+        T.useOption(self, function() return T.copyOf(self.barrel) end, "no tank in reach", function(context)
             return T.findNamed(context, context, getText("ContextMenu_EnhancedIrrigation_NoTankInReach"))
         end, false)
     end,
@@ -175,7 +175,7 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
         local with, past = Links.encode(T.at(self.high), "iron"), Links.encode(T.at(self.far), "iron")
         useMenu(self, self.low, "one tile past", job(LinkJobs.PLUMB, past), false)
         T.read(self, "tanks.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB, with = past }), "forced")
-        local low = function() return T.tankCopy(self.low) end
+        local low = function() return T.copyOf(self.low) end
         T.useOption(self, low, "at the limit", job(LinkJobs.PLUMB, with), true)
         T.readUntil(self, "links.read", T.at(self.low), "links", function(reply) return #reply.links > 0 end)
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
@@ -226,7 +226,7 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
         local function plumb(kind)
             return job(LinkJobs.PLUMB, Links.encode(T.at(self.b), kind))
         end
-        local a = function() return T.tankCopy(self.a) end
+        local a = function() return T.copyOf(self.a) end
         useMenu(self, self.a, "iron", plumb("iron"), false)
         T.useOption(self, a, "plastic", plumb("plastic"), false)
         T.useOption(self, a, "lead", plumb("lead"), true)
@@ -276,7 +276,7 @@ T.test("irrigation_links_unplumb_gives_back_the_pipe", {
         T.waitFor(self, function() return viewedLinks(self.a) > 0 and #ironConditions() == 0 end,
             "this client's copy of the link, the pipe gone into it")
         T.step(function() self.viewedPlumbed = viewedLinks(self.a) end)
-        T.useOption(self, function() return T.tankCopy(self.a) end, "unplumb",
+        T.useOption(self, function() return T.copyOf(self.a) end, "unplumb",
             job(LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
         T.readUntil(self, "links.read", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
         T.waitFor(self, function() return #ironConditions() == count end, "this client's copy of the pipe given back")
@@ -314,7 +314,7 @@ T.test("irrigation_links_levels_tanks_on_one_level", {
         self.a = placeAmphora(self, spots[1], 4 * PASS_LITRES)
         self.b = T.placeTank(self, spots[2], "lidded")
         T.step(function()
-            self.start = T.tankCopy(self.a):getFluidContainer():getAmount()
+            self.start = T.copyOf(self.a):getFluidContainer():getAmount()
             self.ca, self.cb = capacityOf(self.a), capacityOf(self.b)
         end)
         T.read(self, "links.flow", T.at(self.a, { to = T.at(self.b), litres = PASS_LITRES, passes = 3 }), "flow")
@@ -401,13 +401,13 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
             T.server(self, "tanks.remove", T.at(self.b))
             T.read(self, "links.pass", T.at(self.a, { litres = PASS_LITRES }), "bare")
         end)
-        T.waitFor(self, function() return T.tankCopy(self.b) == nil end, "this client to lose the tank taken away")
+        T.waitFor(self, function() return T.copyOf(self.b) == nil end, "this client to lose the tank taken away")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
         useMenu(self, self.a, "unplumb the bare end", job(LinkJobs.UNPLUMB, with), false)
         self.again = T.placeTank(self, spots[2], "lidded")
         local plumbWith = Links.encode(T.at(self.b), "iron")
-        T.useOption(self, function() return T.tankCopy(self.a) end, "plumb again", job(LinkJobs.PLUMB, plumbWith), false)
+        T.useOption(self, function() return T.copyOf(self.a) end, "plumb again", job(LinkJobs.PLUMB, plumbWith), false)
         T.batch(function()
             T.read(self, "tanks.perform", T.at(self.a, { feature = "link", job = LinkJobs.PLUMB, with = plumbWith }),
                 "forced")
@@ -450,7 +450,7 @@ T.test("irrigation_links_unplumb_from_the_bare_floor", {
             T.server(self, "tanks.remove", T.at(self.a))
             T.server(self, "tanks.remove", T.at(self.b))
         end)
-        T.waitFor(self, function() return T.tankCopy(self.a) == nil and T.tankCopy(self.b) == nil end,
+        T.waitFor(self, function() return T.copyOf(self.a) == nil and T.copyOf(self.b) == nil end,
             "this client to lose both tanks")
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
         T.goNextTo(self, self.a.square)

@@ -44,12 +44,8 @@ local MINUTE = 1 / 60
 
 -- Pumps -------------------------------------------------------------------------------------------------
 
-local function copyOf(pump)
-    return T.objectWithSprite(getSquare(pump.x, pump.y, pump.z), pump.sprite)
-end
-
 local function summaryOf(pump)
-    local copy = copyOf(pump)
+    local copy = T.copyOf(pump)
     return copy and Pumps.summaryOf(copy)
 end
 
@@ -99,7 +95,7 @@ end
 
 local function useMenu(self, pump, label, find, choose)
     T.goNextTo(self, pump.square)
-    T.useOption(self, function() return copyOf(pump) end, label, find, choose)
+    T.useOption(self, function() return T.copyOf(pump) end, label, find, choose)
 end
 
 local function pumpOption(context)
@@ -127,7 +123,7 @@ end
 local function readMenu(self, pump, label)
     self.names = self.names or {}
     T.step(function()
-        local copy = copyOf(pump)
+        local copy = T.copyOf(pump)
         local context = T.need(self, copy and T.worldMenu(copy), "a world menu for " .. label)
         if not context then return end
         local names = {}
@@ -261,10 +257,10 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         useMenu(self, self.pump, "pump", pumpOption, true)
         read(self, self.pump, "after", { tank = T.at(self.tank), well = T.at(self.well) })
         T.waitFor(self, function()
-            local copy = T.tankCopy(self.tank)
+            local copy = T.copyOf(self.tank)
             return copy ~= nil and copy:getFluidContainer():getAmount() > BARREL_LITRES - LITRES
         end, "this client's copy of the full barrel")
-        T.useOption(self, function() return copyOf(self.pump) end, "full", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "full", pumpOption, false)
     end,
     validate = function(self)
         T.expectOffered(self, "outlet")
@@ -304,7 +300,7 @@ T.test("irrigation_pumps_stop_when_the_character_is_exhausted", {
         useMenu(self, self.pump, "pump", pumpOption, true)
         read(self, self.pump, "after", { tank = T.at(self.tank) })
         setEndurance(self, Pumps.EXHAUSTED / 2)
-        T.useOption(self, function() return copyOf(self.pump) end, "tired", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "tired", pumpOption, false)
     end,
     validate = function(self)
         T.expectOffered(self, "pump")
@@ -323,7 +319,7 @@ local OTHER = "EnhancedIrrigationTestOther"
 -- isValid always passes, so only the authority's own check can stop it.
 local function pumpUnchecked(self, pump)
     T.step(function()
-        local copy = copyOf(pump)
+        local copy = T.copyOf(pump)
         if not T.need(self, copy, "this client's copy of the pump") then return end
         local action = EnhancedIrrigationPumpAction:new(T.player(), copy)
         action.isValid = function() return true end
@@ -350,7 +346,7 @@ T.test("irrigation_pumps_one_worker_per_pump", {
         waitForSummary(self, self.pump, function(summary) return summary.heldBy == OTHER end,
             "this client's summary of the pump another player holds")
         T.goNextTo(self, self.pump.square)
-        T.useOption(self, function() return copyOf(self.pump) end, "while held", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "while held", pumpOption, false)
         pumpUnchecked(self, self.pump)
         read(self, self.pump, "refused", { tank = T.at(self.tank) })
         -- The other player's action has been silent too long.
@@ -405,7 +401,7 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         T.goNextTo(self, self.pump.square)
         readMenu(self, self.pump, "source")
         T.step(function()
-            self.sourceName = T.tankCopy(self.source):getFluidContainer():getTranslatedContainerName()
+            self.sourceName = T.copyOf(self.source):getFluidContainer():getTranslatedContainerName()
         end)
         run(self, self.pump, "ran", { MINUTE, 1 }, nil, self.tank)
     end,
@@ -543,7 +539,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
             local b = Pumps.outletEnd(T.at(self.pump))
             self.unplumbLabel = LinkMenu.linkLabel(T.at(self.pump), b)
         end)
-        T.useOption(self, function() return copyOf(self.pump) end, "unplumb", function(context)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "unplumb", function(context)
             return T.findNamed(context, context, self.unplumbLabel)
         end, false)
         T.goNextTo(self, untapped[2].square)
@@ -651,7 +647,7 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         waitForSummary(self, self.pump, function(summary) return summary.sealWorn end, "this client's summary of the worn seal")
         T.goNextTo(self, self.pump.square)
         readMenu(self, self.pump, "worn")
-        T.useOption(self, function() return copyOf(self.pump) end, "pump", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
         T.give(self, "seals", { { type = "Base.Screwdriver" }, { type = LEATHER }, { type = PLUNGER } })
         T.step(function() self.leather, self.plunger = self.items.seals[2], self.items.seals[3] end)
         useMenu(self, self.pump, "leather", function(context)
@@ -710,7 +706,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         waitForSummary(self, self.pump, function(summary) return summary.wornOut end, "this client's summary of the worn pump")
         T.goNextTo(self, self.pump.square)
         readMenu(self, self.pump, "worn")
-        T.useOption(self, function() return copyOf(self.pump) end, "pump", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
         T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
         -- The cursor lists what it can smash on the square it hovers, once the character sees it.
         T.waitFor(self, function()
@@ -725,7 +721,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
             return false
         end, "the Destroy cursor offering the pump")
         T.step(function() self.cursor:create(self.pump.x, self.pump.y, self.pump.z) end)
-        T.waitFor(self, function() return copyOf(self.pump) == nil end, "this client to lose the smashed pump")
+        T.waitFor(self, function() return T.copyOf(self.pump) == nil end, "this client to lose the smashed pump")
         read(self, self.pump, "smashed")
     end,
     validate = function(self)

@@ -43,12 +43,8 @@ local FUEL = 0.0005
 
 -- Houses -------------------------------------------------------------------------------------------------
 
-local function copyOf(house)
-    return T.objectWithSprite(getSquare(house.x, house.y, house.z), house.sprite)
-end
-
 local function summaryOf(house)
-    local copy = copyOf(house)
+    local copy = T.copyOf(house)
     return copy and Pumps.summaryOf(copy)
 end
 
@@ -115,7 +111,7 @@ end
 
 local function useMenu(self, house, label, find, choose)
     T.goNextTo(self, house.square)
-    T.useOption(self, function() return copyOf(house) end, label, find, choose)
+    T.useOption(self, function() return T.copyOf(house) end, label, find, choose)
 end
 
 -- Queues the names of every option in the world menu of `getObject()` into self.names[label].
@@ -206,7 +202,7 @@ for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
             waitForSummary(self, self.house, function() return true end, "this client's summary of the built house")
-            readMenu(self, function() return copyOf(self.house) end, "built")
+            readMenu(self, function() return T.copyOf(self.house) end, "built")
             useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), false)
         end,
         validate = function(self)
@@ -242,7 +238,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         end, true)
         readUntil(self, self.house, "fitted", function(state) return state.record.part ~= nil end)
         waitForSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
-        readMenu(self, function() return copyOf(self.house) end, "fitted")
+        readMenu(self, function() return T.copyOf(self.house) end, "fitted")
         useMenu(self, self.house, "take out", job(PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
         T.read(self, "items.carried", { type = APPLIANCE }, "carried")
@@ -371,7 +367,7 @@ T.test("irrigation_pump_house_runs_on_the_grid_beside_a_room", {
             return EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum of the running house")
         update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
-        readMenu(self, function() return copyOf(self.house) end, "running")
+        readMenu(self, function() return T.copyOf(self.house) end, "running")
         useMenu(self, self.house, "off", job(PumpJobs.TURN_OFF), true)
         readUntil(self, self.house, "off", function(state) return not state.record.on end)
         waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
@@ -414,7 +410,7 @@ T.test("irrigation_pump_house_runs_on_a_generator_and_burns_its_fuel", {
         T.placeTank(self, spots[2], "well")
         self.tank = T.placeTank(self, spots[3], "raisedLidded")
         link(self, self.house, self.tank)
-        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(copyOf(self.house)) end,
+        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
         useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
@@ -456,7 +452,7 @@ T.test("irrigation_pump_house_pays_its_debt_switched_off", {
         self.payer = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
         T.read(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }), "generator")
         self.house = placeHouse(self, spots[1], WOOD, fitted(UTILITY))
-        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(copyOf(self.house)) end,
+        T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
         update(self, self.house, "away", { hoursAgo = 1, generator = self.generator,
             fields = { on = true, payer = T.at(self.payer), payerFuel = PAYER_FUEL } })
@@ -501,7 +497,7 @@ T.test("irrigation_pump_house_stops_when_its_generator_is_spent", {
         link(self, self.house, self.tank)
         update(self, self.house, "spent", { hoursAgo = 2 * FUEL_HOURS, tank = self.tank, generator = self.generator })
         waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
-        readMenu(self, function() return copyOf(self.house) end, "spent")
+        readMenu(self, function() return T.copyOf(self.house) end, "spent")
     end,
     validate = function(self)
         local before, after = self.reads.spent.before, self.reads.spent.after
@@ -589,14 +585,14 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
             { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
         waitForSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
-        readMenu(self, function() return copyOf(self.house) end, "burnt")
+        readMenu(self, function() return T.copyOf(self.house) end, "burnt")
         useMenu(self, self.house, "on", job(PumpJobs.TURN_ON), false)
         T.setPerk(self, Perks.Electricity, 2)
         T.give(self, "kit", { { type = "Base.Screwdriver" }, { type = "Base.ElectronicsScrap" }, { type = "Base.TirePiece" } })
         useMenu(self, self.house, "repair", job(PumpJobs.REPAIR_PUMP), true)
         readUntil(self, self.house, "repaired", function(state) return state.record.partCondition > 0 end)
         waitForSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
-        readMenu(self, function() return copyOf(self.house) end, "repaired")
+        readMenu(self, function() return T.copyOf(self.house) end, "repaired")
         useMenu(self, self.house, "again", job(PumpJobs.REPAIR_PUMP), false)
         T.count(self, "used", { "Base.ElectronicsScrap", "Base.TirePiece", "Base.Screwdriver" })
     end,
@@ -712,7 +708,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         useMenu(self, self.house, "fit", job(PumpJobs.FIT_TIMER), true)
         readUntil(self, self.house, "fitted", function(state) return state.record.timer ~= nil end)
         T.waitFor(self, function()
-            local copy = copyOf(self.house)
+            local copy = T.copyOf(self.house)
             local attached = copy and copy:getAttachedAnimSprite()
             for i = 0, (attached and attached:size() or 0) - 1 do
                 if attached:get(i):getName() == Sprites.HOUSE_TIMER then
@@ -738,7 +734,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         update(self, self.house, "hours", { hoursAgo = 3, tank = self.tank })
         waitForSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
             "this client's summary of the set timer")
-        readMenu(self, function() return copyOf(self.house) end, "set")
+        readMenu(self, function() return T.copyOf(self.house) end, "set")
         useMenu(self, self.house, "take off", job(PumpJobs.TAKE_TIMER), true)
         readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
         T.read(self, "items.carried", { type = Valves.TIMER }, "carried")

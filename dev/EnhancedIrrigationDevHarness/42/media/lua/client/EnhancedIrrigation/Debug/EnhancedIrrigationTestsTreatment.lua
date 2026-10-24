@@ -29,10 +29,6 @@ local SPRITES = { [BARREL] = Sprites.BARREL_FILTER, [BRICK] = Sprites.BRICK_FILT
 
 -- Units -----------------------------------------------------------------------------------------------
 
-local function copyOf(handle)
-    return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), handle.sprite)
-end
-
 --- Queues placing the unit `entity` at `handle` (up `opts.up` storeys), with `opts.fields` on its
 --- record, and a wait for this client's copy and its summary. Returns its handle, with `spec`.
 local function placeUnit(self, handle, entity, opts)
@@ -43,7 +39,7 @@ local function placeUnit(self, handle, entity, opts)
     T.server(self, "treatment.place", T.at(unit, { sprite = unit.sprite, fields = opts.fields }))
     T.waitFor(self, function()
         unit.square = getSquare(unit.x, unit.y, unit.z)
-        local copy = copyOf(unit)
+        local copy = T.copyOf(unit)
         return copy ~= nil and Treatment.summaryOf(copy) ~= nil
     end, "this client's copy of the " .. entity)
     return unit
@@ -68,7 +64,7 @@ end
 -- summary satisfies `holds(summary)`, if given.
 local function waitForCopy(self, unit, litres, holds, what)
     T.waitFor(self, function()
-        local copy = copyOf(unit)
+        local copy = T.copyOf(unit)
         local summary = copy and Treatment.summaryOf(copy)
         return summary ~= nil and (not litres or math.abs(copy:getFluidContainer():getAmount() - litres) < LITRES)
             and (not holds or holds(summary))
@@ -82,7 +78,7 @@ local function waitForServer(self, unit, label, key)
     T.waitFor(self, function()
         local read = self.reads and self.reads[label]
         local state = read and (read.after or read.steps and read.steps[#read.steps] or read)
-        local summary = Treatment.summaryOf(copyOf(unit))
+        local summary = Treatment.summaryOf(T.copyOf(unit))
         return state ~= nil and state.summary ~= nil and summary ~= nil and summary[key] == state.summary[key]
     end, "this client's summary of " .. label)
 end
@@ -92,7 +88,7 @@ end
 local function setFire(self, unit, label, lit, fuel)
     T.read(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }), label)
     T.waitFor(self, function()
-        local copy = copyOf(unit)
+        local copy = T.copyOf(unit)
         return copy ~= nil and copy:isLit() == lit
     end, "this client's copy of the boiler " .. (lit and "lit" or "out"))
 end
@@ -123,7 +119,7 @@ end
 
 local function useMenu(self, unit, label, find, choose)
     T.goNextTo(self, unit.square)
-    T.useOption(self, function() return copyOf(unit) end, label, find, choose)
+    T.useOption(self, function() return T.copyOf(unit) end, label, find, choose)
 end
 
 local function job(id, with)
@@ -138,7 +134,7 @@ end
 local function readMenu(self, unit, label)
     self.names = self.names or {}
     T.step(function()
-        local copy = copyOf(unit)
+        local copy = T.copyOf(unit)
         local context = T.need(self, copy and T.worldMenu(copy), "a world menu for " .. label)
         if not context then return end
         local names = {}
@@ -182,7 +178,7 @@ end
 
 -- This client's copy's basin as the state expectBasin reads.
 local function clientBasin(unit)
-    local copy = copyOf(unit)
+    local copy = T.copyOf(unit)
     local basin = copy and copy:getFluidContainer()
     return basin and { basin = { litres = basin:getAmount(), tainted = basin:isTainted() } } or nil
 end
@@ -210,7 +206,7 @@ for _, entity in ipairs({ BARREL, BRICK }) do
             if not self.unit then return end
             self.unit.spec = Treatment.UNITS[entity]
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-            T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
+            T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built filter")
             readMenu(self, self.unit, "built")
         end,
@@ -257,7 +253,7 @@ T.test("irrigation_treatment_pour_in_fills_the_head", {
         end)
         T.read(self, "treatment.carried", { type = "Base.Bucket" }, "bucket")
         T.waitFor(self, function()
-            local summary = Treatment.summaryOf(copyOf(self.unit))
+            local summary = Treatment.summaryOf(T.copyOf(self.unit))
             return summary ~= nil and summary.head > head - 1
         end, "this client's summary of the full head")
         useMenu(self, self.unit, "full", function(context)
@@ -472,7 +468,7 @@ T.test("irrigation_treatment_inlet_refuses_a_lower_tank", {
         self.tank = T.placeTank(self, spots[2], "ground", 100)
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
-        T.useOption(self, function() return copyOf(self.unit) end, "lower tank", function(context)
+        T.useOption(self, function() return T.copyOf(self.unit) end, "lower tank", function(context)
             local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.tank))
             return inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbInlet", function(option)
                 return option.name == label
@@ -509,7 +505,7 @@ T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
                 return option.name == label
             end)
         end, false)
-        T.useOption(self, function() return copyOf(self.unit) end, "outlet",
+        T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
             linkJob(LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
         run(self, self.unit, "passed", { 1 }, nil, self.tank)
@@ -679,7 +675,7 @@ for _, case in ipairs({
             end, "this client's copies of the filled bottle and bucket")
             T.goNextTo(self, spots[1].square)
             T.step(function()
-                local copy = copyOf(self.unit)
+                local copy = T.copyOf(self.unit)
                 local context = T.need(self, copy and T.worldMenu(copy), "a world menu for the unit")
                 if not context then return end
                 local drink = optionRunning(context, ISWorldObjectContextMenu.onDrink)
@@ -833,7 +829,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         if not self.unit then return end
         self.unit.spec = Treatment.UNITS[CROCK]
         readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-        T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
+        T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
             "this client's summary of the crock")
         readMenu(self, self.unit, "built")
         self.litres = 6
@@ -889,7 +885,7 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         -- The server's answer decides what this client's copy must come to show.
         T.waitFor(self, function()
             local after = self.reads.run and self.reads.run.steps[1]
-            local copy = copyOf(self.unit)
+            local copy = T.copyOf(self.unit)
             local summary = copy and Treatment.summaryOf(copy)
             return after ~= nil and summary ~= nil and math.abs(summary.head - after.record.head) < 0.1
                 and math.abs(copy:getFluidContainer():getAmount() - after.basin.litres) < LITRES
@@ -1068,11 +1064,11 @@ for _, entity in ipairs({ STONE, WELDED }) do
             if not self.unit then return end
             self.unit.spec = Treatment.UNITS[entity]
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-            T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
+            T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built boiler")
             readMenu(self, self.unit, "built")
             T.step(function()
-                local copy = copyOf(self.unit)
+                local copy = T.copyOf(self.unit)
                 self.clientFire = copy ~= nil and instanceof(copy, "IsoFireplace")
             end)
         end,
@@ -1147,7 +1143,7 @@ end
 -- reads its menu into "burning".
 local function burning(self)
     T.waitFor(self, function()
-        local copy = copyOf(self.unit)
+        local copy = T.copyOf(self.unit)
         return copy ~= nil and copy:isLit() and copy:hasAnimatedAttachments()
     end, "this client's copy of the boiler burning, with vanilla's flames")
     readMenu(self, self.unit, "burning")
@@ -1348,7 +1344,7 @@ T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
         useMenu(self, self.unit, "inlet", linkJob(LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "inlet plumbed", function(state) return state.inlet end)
-        T.useOption(self, function() return copyOf(self.unit) end, "outlet",
+        T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
             linkJob(LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.clean), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
         setFire(self, self.unit, "lit", true, FUEL)

@@ -45,14 +45,9 @@ end
 
 -- Fixtures ------------------------------------------------------------------------------------------
 
--- This client's copy of the fixture at `handle`, or nil.
-local function copyOf(handle)
-    return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), handle.sprite)
-end
-
 -- What vanilla's menus and actions read off this client's copy of the fixture, or nil without one.
 local function clientState(handle)
-    local fixture = copyOf(handle)
+    local fixture = T.copyOf(handle)
     if not fixture then
         return nil
     end
@@ -107,7 +102,7 @@ end
 
 local function useFixtureMenu(self, handle, label, find, choose)
     T.goNextTo(self, handle.square)
-    T.useOption(self, function() return copyOf(handle) end, label, find, choose)
+    T.useOption(self, function() return T.copyOf(handle) end, label, find, choose)
 end
 
 -- Queues the server's view of the fixture, with the tank's, into self.reads[label] once
@@ -297,8 +292,8 @@ T.test("irrigation_fixtures_vanilla_plumb_keeps_taint", {
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
         waitForCopy(self, self.sink, function(state) return state.buffer and state.tainted end,
             "this client's copy of the plumbed sink")
-        T.useOption(self, function() return copyOf(self.sink) end, "plumb again", vanillaPlumb, false)
-        T.useOption(self, function() return copyOf(self.sink) end, "unplumb",
+        T.useOption(self, function() return T.copyOf(self.sink) end, "plumb again", vanillaPlumb, false)
+        T.useOption(self, function() return T.copyOf(self.sink) end, "unplumb",
             job(LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), false)
         T.count(self, "left", { "Base.PipeWrench" })
     end,
@@ -438,7 +433,7 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
         self.sink = placeFixture(self, spots[1], SINK, { buffer = { litres = sinkLitres(), tainted = true } })
         T.goNextTo(self, spots[1].square)
         T.step(function()
-            local sink = copyOf(self.sink)
+            local sink = T.copyOf(self.sink)
             local context = T.need(self, sink and T.worldMenu(sink), "a world menu for the sink")
             if not context then return end
             local drink = optionRunning(context, ISWorldObjectContextMenu.onDrink)
@@ -490,7 +485,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
         T.goNextTo(self, spots[1].square)
         T.step(function()
             self.client = clientState(self.sink)
-            local context = T.need(self, copyOf(self.sink) and T.worldMenu(copyOf(self.sink)), "a world menu for the sink")
+            local context = T.need(self, T.copyOf(self.sink) and T.worldMenu(T.copyOf(self.sink)), "a world menu for the sink")
             if not context then return end
             local drink = optionRunning(context, ISWorldObjectContextMenu.onDrink)
             self.drink, self.drinkTooltip = T.offered(drink), drink and T.tooltipOf(drink) or ""
@@ -548,7 +543,7 @@ T.test("irrigation_fixtures_washer_keeps_its_switch", {
         self.washer = placeFixture(self, spots[1], WASHER, { washer = true, buffer = { litres = sinkLitres() } })
         T.goNextTo(self, spots[1].square)
         T.step(function()
-            local washer = copyOf(self.washer)
+            local washer = T.copyOf(self.washer)
             self.isWasher = washer ~= nil and instanceof(washer, "IsoClothingWasher")
             local context = T.need(self, washer and T.worldMenu(washer), "a world menu for the washer")
             if not context then return end
