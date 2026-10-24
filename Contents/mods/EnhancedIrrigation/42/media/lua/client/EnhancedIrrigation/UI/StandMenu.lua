@@ -3,16 +3,16 @@
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/UI/Needs"
+require "EnhancedIrrigation/UI/JobOptions"
 require "EnhancedIrrigation/Stands/Stands"
 require "EnhancedIrrigation/Stands/StandJobs"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local StandMenu = {}
 EnhancedIrrigation.StandMenu = StandMenu
 
 local Needs, Stands, StandJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Stands, EnhancedIrrigation.StandJobs
-local Action = EnhancedIrrigationAction
+local JobOptions = EnhancedIrrigation.JobOptions
 
 local function addStandOptions(context, playerNum, character, object)
     if Stands.isStand(object) then
@@ -21,19 +21,16 @@ local function addStandOptions(context, playerNum, character, object)
         if #carried > 1 then
             local submenu = Needs.addSubMenu(context, name)
             for _, entry in ipairs(carried) do
-                local option = submenu:addOption(entry.item:getDisplayName(), playerNum, Action.queue, "stand",
-                    StandJobs.SET_BARREL, object, entry.item)
-                Needs.refuse(option, StandJobs.refusal(character, StandJobs.SET_BARREL, object, entry.item))
+                JobOptions.add(submenu, playerNum, character, "stand", entry.item:getDisplayName(), StandJobs.SET_BARREL,
+                    object, entry.item)
             end
         else
-            local barrel = carried[1] and carried[1].item
-            local option = context:addOption(name, playerNum, Action.queue, "stand", StandJobs.SET_BARREL, object, barrel)
-            Needs.refuse(option, StandJobs.refusal(character, StandJobs.SET_BARREL, object, barrel))
+            JobOptions.add(context, playerNum, character, "stand", name, StandJobs.SET_BARREL, object,
+                carried[1] and carried[1].item)
         end
     elseif Stands.isRaised(object) then
-        local option = context:addOption(getText("ContextMenu_EnhancedIrrigation_TakeBarrelDown"), playerNum, Action.queue,
-            "stand", StandJobs.TAKE_DOWN, object)
-        Needs.refuse(option, StandJobs.refusal(character, StandJobs.TAKE_DOWN, object))
+        JobOptions.add(context, playerNum, character, "stand", getText("ContextMenu_EnhancedIrrigation_TakeBarrelDown"),
+            StandJobs.TAKE_DOWN, object)
     end
 end
 

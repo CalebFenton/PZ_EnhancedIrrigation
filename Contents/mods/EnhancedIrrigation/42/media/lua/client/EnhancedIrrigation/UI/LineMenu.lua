@@ -14,7 +14,7 @@ require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/UI/ValveUI"
 require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+require "EnhancedIrrigation/UI/JobOptions"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationWaterAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -25,7 +25,7 @@ local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
 local Taps = EnhancedIrrigation.Taps
 local Pipes = EnhancedIrrigation.Pipes
-local Needs = EnhancedIrrigation.Needs
+local Needs, JobOptions = EnhancedIrrigation.Needs, EnhancedIrrigation.JobOptions
 local Materials = EnhancedIrrigation.Materials
 local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
 
@@ -58,9 +58,7 @@ end
 -- Options -------------------------------------------------------------------------------------------
 
 local function addJob(menu, playerNum, character, nameKey, job, object, with)
-    local option = menu:addOption(getText(nameKey), playerNum, EnhancedIrrigationAction.queue, "line", job, object, with)
-    Needs.show(option, LineJobs.needs(character, job, object, with), LineJobs.blocker(character, job, object, with))
-    return option
+    return JobOptions.add(menu, playerNum, character, "line", getText(nameKey), job, object, with)
 end
 
 -- The Lawn Sprinkler carried in the best condition, or nil.
@@ -82,9 +80,10 @@ local function addSprinkler(menu, playerNum, character, line, state)
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeSprinkler", LineJobs.TAKE_SPRINKLER, line)
         return
     end
+    local sprinkler = bestSprinkler(character)
     local option = addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_SetSprinkler",
-        LineJobs.SET_SPRINKLER, line, bestSprinkler(character))
-    option.itemForTexture = bestSprinkler(character)
+        LineJobs.SET_SPRINKLER, line, sprinkler)
+    option.itemForTexture = sprinkler
 end
 
 -- Drill Holes uses the first tool carried that gets into the pipe (LineJobs.holeTool), which its
@@ -95,18 +94,6 @@ local function addDrill(menu, playerNum, character, line, state)
     if tool and option.toolTip and LineJobs.mayCrack(tool, state.material) then
         option.toolTip.description = option.toolTip.description .. " " .. getText("Tooltip_EnhancedIrrigation_MayCrack")
     end
-end
-
--- The first valve of each kind carried, in Valves.ORDER.
-local function valvesCarried(character)
-    local found = {}
-    for _, fullType in ipairs(Valves.ORDER) do
-        local item = character:getInventory():getFirstTypeRecurse(fullType)
-        if item then
-            table.insert(found, item)
-        end
-    end
-    return found
 end
 
 -- Whether the tile `line` still has a valve of `kind`, for its panel.
@@ -157,19 +144,8 @@ local function addValve(menu, playerNum, character, line, state)
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_VALVE, line)
         return
     end
-    local carried = valvesCarried(character)
-    if #carried == 0 then
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_FitValve", LineJobs.FIT_VALVE, line)
-        return
-    end
-    local sub = Needs.addSubMenu(menu, getText("ContextMenu_EnhancedIrrigation_FitValve"))
-    for _, item in ipairs(carried) do
-        local option = sub:addOption(item:getDisplayName(), playerNum, EnhancedIrrigationAction.queue, "line",
-            LineJobs.FIT_VALVE, line, item)
-        Needs.show(option, LineJobs.needs(character, LineJobs.FIT_VALVE, line, item),
-            LineJobs.blocker(character, LineJobs.FIT_VALVE, line, item))
-        option.itemForTexture = item
-    end
+    JobOptions.addEach(menu, playerNum, character, "line", getText("ContextMenu_EnhancedIrrigation_FitValve"),
+        LineJobs.FIT_VALVE, line, JobOptions.firstOfEach(character, Valves.ORDER))
 end
 
 local function addLineOptions(context, playerNum, character, line, state)

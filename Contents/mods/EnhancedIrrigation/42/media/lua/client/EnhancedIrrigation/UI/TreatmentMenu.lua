@@ -13,8 +13,8 @@ require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/UI/Needs"
+require "EnhancedIrrigation/UI/JobOptions"
 require "EnhancedIrrigation/UI/LinkMenu"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentMenu = {}
@@ -23,7 +23,7 @@ EnhancedIrrigation.TreatmentMenu = TreatmentMenu
 local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Treatment, TreatmentJobs, LinkMenu = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs,
     EnhancedIrrigation.LinkMenu
-local Action = EnhancedIrrigationAction
+local JobOptions = EnhancedIrrigation.JobOptions
 
 -- Each kind's own jobs, by their ContextMenu keys, in menu order.
 local KIND_JOBS = {
@@ -41,10 +41,6 @@ local PLUMB_ENDS = {
     { role = "outlet", job = LinkJobs.PLUMB_OUTLET, nameKey = "ContextMenu_EnhancedIrrigation_PlumbOutlet" },
 }
 
-local function showJob(option, character, job, unit, with)
-    Needs.show(option, TreatmentJobs.needs(character, job, unit, with), TreatmentJobs.blocker(character, job, unit, with))
-end
-
 -- The containers in the main inventory holding any fluid, which Pour In lists as vanilla's pour
 -- does (ISWorldObjectContextMenuLogic.addFluidFromItem); greyed out are those that aren't water.
 local function containersCarried(character)
@@ -61,19 +57,8 @@ local function containersCarried(character)
 end
 
 local function addPourIn(menu, playerNum, character, unit)
-    local name = getText("ContextMenu_EnhancedIrrigation_PourIn")
-    local carried = containersCarried(character)
-    if #carried == 0 then
-        Needs.refuse(menu:addOption(name), "Tooltip_EnhancedIrrigation_NoWaterCarried")
-        return
-    end
-    local submenu = Needs.addSubMenu(menu, name)
-    for _, item in ipairs(carried) do
-        local option = submenu:addOption(item:getDisplayName(), playerNum, Action.queue, "treatment",
-            TreatmentJobs.POUR_IN, unit, item)
-        option.itemForTexture = item
-        showJob(option, character, TreatmentJobs.POUR_IN, unit, item)
-    end
+    JobOptions.addEach(menu, playerNum, character, "treatment", getText("ContextMenu_EnhancedIrrigation_PourIn"),
+        TreatmentJobs.POUR_IN, unit, containersCarried(character))
 end
 
 local function addPlumbing(menu, playerNum, character, unit)
@@ -112,8 +97,7 @@ function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
     end
     addPourIn(menu, playerNum, character, unit)
     for _, entry in ipairs(KIND_JOBS[spec.kind] or {}) do
-        local option = menu:addOption(getText(entry.nameKey), playerNum, Action.queue, "treatment", entry.job, unit)
-        showJob(option, character, entry.job, unit)
+        JobOptions.add(menu, playerNum, character, "treatment", getText(entry.nameKey), entry.job, unit)
     end
     if spec.plumbed then
         addPlumbing(menu, playerNum, character, unit)

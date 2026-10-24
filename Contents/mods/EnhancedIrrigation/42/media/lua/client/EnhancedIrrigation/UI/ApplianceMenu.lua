@@ -7,7 +7,7 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
 require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+require "EnhancedIrrigation/UI/JobOptions"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceMenu = {}
@@ -45,10 +45,8 @@ function ApplianceMenu.onFill(playerNum, context, worldobjects, test)
     if Appliances.refusesSwitchOn(appliance) then
         refuseSwitches(context, context)
     end
-    local job = ApplianceJobs.SALVAGE_PUMP
-    local option = context:addOption(getText("ContextMenu_EnhancedIrrigation_SalvagePump"), playerNum,
-        EnhancedIrrigationAction.queue, "appliance", job, appliance)
-    Needs.show(option, ApplianceJobs.needs(character, job, appliance), ApplianceJobs.blocker(character, job, appliance))
+    EnhancedIrrigation.JobOptions.add(context, playerNum, character, "appliance",
+        getText("ContextMenu_EnhancedIrrigation_SalvagePump"), ApplianceJobs.SALVAGE_PUMP, appliance)
 end
 
 Events.OnFillWorldObjectContextMenu.Add(ApplianceMenu.onFill)

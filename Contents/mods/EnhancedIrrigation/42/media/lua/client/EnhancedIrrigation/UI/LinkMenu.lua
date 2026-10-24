@@ -18,7 +18,7 @@ require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Lines"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+require "EnhancedIrrigation/UI/JobOptions"
 -- Registers its menu first, so a raised barrel lists its stand's options above its plumbing.
 require "EnhancedIrrigation/UI/StandMenu"
 
@@ -29,7 +29,7 @@ EnhancedIrrigation.LinkMenu = LinkMenu
 local Needs, Tanks, Links = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 local LinkJobs, Pipes, Fixtures = EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes, EnhancedIrrigation.Fixtures
 local Treatment, Pumps, Lines = EnhancedIrrigation.Treatment, EnhancedIrrigation.Pumps, EnhancedIrrigation.Lines
-local Action = EnhancedIrrigationAction
+local JobOptions = EnhancedIrrigation.JobOptions
 
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
@@ -95,11 +95,6 @@ function LinkMenu.linkLabel(here, there)
     return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", LinkMenu.tankLabel(here, there))
 end
 
--- A link job's option, greyed out as LinkJobs refuses it.
-function LinkMenu.showLink(option, character, job, object, with)
-    Needs.show(option, LinkJobs.needs(character, job, object, with), LinkJobs.blocker(character, job, object, with))
-end
-
 --- A plumbing option at `object` (a tank, a fixture, a unit or a pump): a submenu of the tanks in
 --- reach, and with `spec.lines` the garden lines too, each by its nearest tile, each with a submenu
 --- of the pipe the character carries to lay to it, as Lay Line lists it, greyed out with what the
@@ -134,9 +129,8 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
             local pipes = Needs.addSubMenu(submenu, entry.label)
             for _, kind in ipairs(kinds) do
                 local with = Links.encode(entry.at, kind)
-                local option = pipes:addOption(getItemNameFromFullType(Pipes.KINDS[kind].item), playerNum,
-                    Action.queue, "link", spec.job, object, with)
-                LinkMenu.showLink(option, character, spec.job, object, with)
+                JobOptions.add(pipes, playerNum, character, "link", getItemNameFromFullType(Pipes.KINDS[kind].item),
+                    spec.job, object, with)
             end
         end
     end
@@ -155,9 +149,8 @@ function LinkMenu.addUnplumbOptions(context, playerNum, character, object)
     for _, link in ipairs(links) do
         local there = Links.otherEnd(link, here)
         local with = Links.encode(there)
-        local option = submenu:addOption(LinkMenu.linkLabel(here, there), playerNum, Action.queue, "link",
-            LinkJobs.UNPLUMB, object, with)
-        LinkMenu.showLink(option, character, LinkJobs.UNPLUMB, object, with)
+        JobOptions.add(submenu, playerNum, character, "link", LinkMenu.linkLabel(here, there), LinkJobs.UNPLUMB,
+            object, with)
     end
 end
 

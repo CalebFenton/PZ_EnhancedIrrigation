@@ -16,8 +16,8 @@ require "EnhancedIrrigation/Lines/Valves"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/ValveUI"
-require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
+require "EnhancedIrrigation/UI/JobOptions"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpMenu = {}
@@ -25,44 +25,22 @@ EnhancedIrrigation.PumpMenu = PumpMenu
 
 local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
-local Action = EnhancedIrrigationAction
 local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
+local JobOptions = EnhancedIrrigation.JobOptions
 
--- The seals in the inventory, bags included, one of each kind, in Pumps.SEALS' order.
-local function sealsCarried(character)
-    local found = {}
-    local inventory = character:getInventory()
-    for _, seal in ipairs(Pumps.SEALS) do
-        local item = inventory:getFirstTypeRecurse(seal.type)
-        if item then
-            table.insert(found, item)
-        end
-    end
-    return found
+local function addJob(menu, playerNum, character, nameKey, job, pump, with)
+    return JobOptions.add(menu, playerNum, character, "pump", getText(nameKey), job, pump, with)
+end
+
+-- The full type of each seal, in Pumps.SEALS' order.
+local SEAL_TYPES = {}
+for _, seal in ipairs(Pumps.SEALS) do
+    table.insert(SEAL_TYPES, seal.type)
 end
 
 local function addReplaceSeal(menu, playerNum, character, pump)
-    local name = getText("ContextMenu_EnhancedIrrigation_ReplaceSeal")
-    local carried = sealsCarried(character)
-    if #carried == 0 then
-        Needs.refuse(menu:addOption(name), "Tooltip_EnhancedIrrigation_NoSeal")
-        return
-    end
-    local submenu = Needs.addSubMenu(menu, name)
-    for _, item in ipairs(carried) do
-        local option = submenu:addOption(item:getDisplayName(), playerNum, Action.queue, "pump", PumpJobs.REPLACE_SEAL,
-            pump, item)
-        option.itemForTexture = item
-        Needs.show(option, PumpJobs.needs(character, PumpJobs.REPLACE_SEAL, pump, item),
-            PumpJobs.blocker(character, PumpJobs.REPLACE_SEAL, pump, item))
-    end
-end
-
--- Adds the option of `job` named by `nameKey`, greyed out saying why when it would be refused.
-local function addJob(menu, playerNum, character, pump, job, nameKey, with)
-    local option = menu:addOption(getText(nameKey), playerNum, Action.queue, "pump", job, pump, with)
-    Needs.show(option, PumpJobs.needs(character, job, pump, with), PumpJobs.blocker(character, job, pump, with))
-    return option
+    JobOptions.addEach(menu, playerNum, character, "pump", getText("ContextMenu_EnhancedIrrigation_ReplaceSeal"),
+        PumpJobs.REPLACE_SEAL, pump, JobOptions.firstOfEach(character, SEAL_TYPES))
 end
 
 -- The pump parts in the inventory, bags included, each one, as each is as worn as it is.
@@ -79,21 +57,13 @@ local function partsCarried(character)
     return found
 end
 
+local function partName(item)
+    return getText("IGUI_EnhancedIrrigation_PartCondition", item:getDisplayName(), item:getCondition())
+end
+
 local function addFitPump(menu, playerNum, character, pump)
-    local name = getText("ContextMenu_EnhancedIrrigation_FitPump")
-    local carried = partsCarried(character)
-    if #carried == 0 then
-        Needs.refuse(menu:addOption(name), "Tooltip_EnhancedIrrigation_NoPumpPart")
-        return
-    end
-    local submenu = Needs.addSubMenu(menu, name)
-    for _, item in ipairs(carried) do
-        local option = submenu:addOption(getText("IGUI_EnhancedIrrigation_PartCondition", item:getDisplayName(),
-            item:getCondition()), playerNum, Action.queue, "pump", PumpJobs.FIT_PUMP, pump, item)
-        option.itemForTexture = item
-        Needs.show(option, PumpJobs.needs(character, PumpJobs.FIT_PUMP, pump, item),
-            PumpJobs.blocker(character, PumpJobs.FIT_PUMP, pump, item))
-    end
+    JobOptions.addEach(menu, playerNum, character, "pump", getText("ContextMenu_EnhancedIrrigation_FitPump"),
+        PumpJobs.FIT_PUMP, pump, partsCarried(character), partName)
 end
 
 -- A hand pump's own options: Pump and Replace Seal.
@@ -142,44 +112,30 @@ end
 local function addTimer(menu, playerNum, character, pump, summary)
     if summary and summary.timer then
         menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetValveTimer"), character, PumpMenu.openTimer, pump)
-        addJob(menu, playerNum, character, pump, PumpJobs.TAKE_TIMER, "ContextMenu_EnhancedIrrigation_TakeOffTimer")
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffTimer", PumpJobs.TAKE_TIMER, pump)
         return
     end
-    local name = getText("ContextMenu_EnhancedIrrigation_FitTimer")
-    local carried = {}
-    for _, fullType in ipairs(Valves.ORDER) do
-        local item = Valves.ITEMS[fullType].house and character:getInventory():getFirstTypeRecurse(fullType)
-        if item then
-            table.insert(carried, item)
-        end
-    end
-    if #carried == 0 then
-        addJob(menu, playerNum, character, pump, PumpJobs.FIT_TIMER, "ContextMenu_EnhancedIrrigation_FitTimer")
-        return
-    end
-    local submenu = Needs.addSubMenu(menu, name)
-    for _, item in ipairs(carried) do
-        local option = submenu:addOption(item:getDisplayName(), playerNum, Action.queue, "pump", PumpJobs.FIT_TIMER, pump, item)
-        option.itemForTexture = item
-        Needs.show(option, PumpJobs.needs(character, PumpJobs.FIT_TIMER, pump, item),
-            PumpJobs.blocker(character, PumpJobs.FIT_TIMER, pump, item))
-    end
+    local carried = JobOptions.firstOfEach(character, Valves.ORDER, function(fullType)
+        return Valves.ITEMS[fullType].house
+    end)
+    JobOptions.addEach(menu, playerNum, character, "pump", getText("ContextMenu_EnhancedIrrigation_FitTimer"),
+        PumpJobs.FIT_TIMER, pump, carried)
 end
 
 -- A Pump House's own options: Fit Pump while it is empty, else Take Out Pump; its switch; Repair
 -- Pump; its timer.
 local function addHouseOptions(menu, playerNum, character, pump, summary)
     if summary and summary.part then
-        addJob(menu, playerNum, character, pump, PumpJobs.TAKE_OUT_PUMP, "ContextMenu_EnhancedIrrigation_TakeOutPump")
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOutPump", PumpJobs.TAKE_OUT_PUMP, pump)
     else
         addFitPump(menu, playerNum, character, pump)
     end
     if summary and summary.on then
-        addJob(menu, playerNum, character, pump, PumpJobs.TURN_OFF, "ContextMenu_Turn_Off")
+        addJob(menu, playerNum, character, "ContextMenu_Turn_Off", PumpJobs.TURN_OFF, pump)
     else
-        addJob(menu, playerNum, character, pump, PumpJobs.TURN_ON, "ContextMenu_Turn_On")
+        addJob(menu, playerNum, character, "ContextMenu_Turn_On", PumpJobs.TURN_ON, pump)
     end
-    addJob(menu, playerNum, character, pump, PumpJobs.REPAIR_PUMP, "ContextMenu_EnhancedIrrigation_RepairPump")
+    addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_RepairPump", PumpJobs.REPAIR_PUMP, pump)
     addTimer(menu, playerNum, character, pump, summary)
 end
 
