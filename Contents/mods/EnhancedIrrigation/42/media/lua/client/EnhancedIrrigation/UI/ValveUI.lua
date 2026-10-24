@@ -28,11 +28,6 @@ local REACH = 3
 -- The panel open for each player, by player number.
 ValveUI.instances = {}
 
---- The hour of the day `hour` as the panel and the menus show it.
-function ValveUI.hourText(hour)
-    return string.format("%02d:00", hour)
-end
-
 function ValveUI:initialise()
     ISPanelJoypad.initialise(self)
     local y = PAD + FONT_HGT_SMALL + PAD
@@ -98,7 +93,7 @@ function ValveUI:prerender()
     if self.spec.timer then
         self:drawText(getText("IGUI_EnhancedIrrigation_StartsAt"), PAD, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
             1, 1, 1, 1, UIFont.Small)
-        self:drawTextRight(ValveUI.hourText(self.hour), self.width / 2 + 30, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
+        self:drawTextRight(Valves.hourText(self.hour), self.width / 2 + 30, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
             1, 1, 1, 1, UIFont.Small)
     end
     if self.refusal then

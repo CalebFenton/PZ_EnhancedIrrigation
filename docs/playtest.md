@@ -11,6 +11,7 @@ Set up with `dev/run-debug-client.sh`, then main menu > Scenarios > **Enhanced I
 - **A Pump House hums and draws zombies.** Switch one on (grid power beside a house, or a generator). Pass: a motor loop (vanilla's gas pump ambience) plays while it runs, stops when it's switched off, burns out or loses power, and starts again for a player who walks back into range. Zombies within 10 tiles (Appliance Pump) or 20 (Utility Pump) come over in time.
 - **The open tap sounds.** Water from Tank plays vanilla's watering sound and stops when the tap closes.
 - **A valve's water sounds.** Wind a Wind-up Valve for 5 minutes and walk off a few tiles, then come back. Pass: the watering sound plays at the tap, without gaps or stacking, while it runs and stops when it shuts; a player who walks into range hears it start.
+- **A Pump House on its timer.** Set a timer on a switched-off house to open at the next hour for 10 minutes, and wait for it. Pass: the hum starts within a game minute of the hour and stops within a minute of the window's end, and zombies hear it only while it hums.
 
 ## How it plays
 

@@ -1,9 +1,10 @@
 -- The right-click options of pumps (Pumps.lua): one submenu named for the pump, with a line saying
 -- where it draws, how it stands and what it fills; then at a hand pump Pump and Replace Seal, with a
 -- submenu of the seals carried; at a Pump House Fit Pump, with a submenu of the pump parts carried,
--- or Take Out Pump, Turn On or Turn Off, and Repair Pump; then Plumb Outlet, with a submenu of the
--- tanks and garden lines in reach, and Unplumb. Each is greyed out saying why when its job would be
--- refused (PumpJobs, LinkJobs).
+-- or Take Out Pump, Turn On or Turn Off, and Repair Pump, and Fit Timer, with a submenu of the
+-- timers carried, or Set Timer, which opens the timer's panel (ValveUI), and Take Off Timer; then
+-- Plumb Outlet, with a submenu of the tanks and garden lines in reach, and Unplumb. Each is greyed
+-- out saying why when its job would be refused (PumpJobs, LinkJobs).
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -11,8 +12,10 @@ require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
+require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/UI/TankMenu"
+require "EnhancedIrrigation/UI/ValveUI"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
@@ -23,6 +26,7 @@ EnhancedIrrigation.PumpMenu = PumpMenu
 local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Pumps, PumpJobs, TankMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.TankMenu
 local Action = EnhancedIrrigationAction
+local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
 
 -- The seals in the inventory, bags included, one of each kind, in Pumps.SEALS' order.
 local function sealsCarried(character)
@@ -100,7 +104,60 @@ local function addHandOptions(menu, playerNum, character, pump)
     addReplaceSeal(menu, playerNum, character, pump)
 end
 
--- A Pump House's own options: Fit Pump while it is empty, else Take Out Pump; its switch; Repair Pump.
+-- Whether the Pump House `pump` still has a timer, for its panel.
+local function hasTimer(pump)
+    local summary = Pumps.currentSummary(pump)
+    return summary ~= nil and summary.timer ~= nil
+end
+
+--- Opens `character`'s panel for the timer of the Pump House `pump`: its hour and knob.
+function PumpMenu.openTimer(character, pump)
+    local timer = Pumps.currentSummary(pump).timer
+    return ValveUI.open(character, {
+        title = getItemNameFromFullType(timer.item),
+        object = pump,
+        feature = "pump",
+        job = PumpJobs.SET_TIMER,
+        okKey = "ContextMenu_EnhancedIrrigation_SetTimer",
+        timer = true,
+        start = timer.start,
+        minutes = timer.minutes,
+        blocker = function(who, object, with) return PumpJobs.blocker(who, PumpJobs.SET_TIMER, object, with) end,
+        stillThere = hasTimer,
+    })
+end
+
+-- A Pump House with a timer offers its panel and Take Off Timer; one without, Fit Timer with a
+-- submenu of the timers carried, or greyed out saying it needs one.
+local function addTimer(menu, playerNum, character, pump, summary)
+    if summary and summary.timer then
+        menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetValveTimer"), character, PumpMenu.openTimer, pump)
+        addJob(menu, playerNum, character, pump, PumpJobs.TAKE_TIMER, "ContextMenu_EnhancedIrrigation_TakeOffTimer")
+        return
+    end
+    local name = getText("ContextMenu_EnhancedIrrigation_FitTimer")
+    local carried = {}
+    for _, fullType in ipairs(Valves.ORDER) do
+        local item = Valves.ITEMS[fullType].house and character:getInventory():getFirstTypeRecurse(fullType)
+        if item then
+            table.insert(carried, item)
+        end
+    end
+    if #carried == 0 then
+        addJob(menu, playerNum, character, pump, PumpJobs.FIT_TIMER, "ContextMenu_EnhancedIrrigation_FitTimer")
+        return
+    end
+    local submenu = Needs.addSubMenu(menu, name)
+    for _, item in ipairs(carried) do
+        local option = submenu:addOption(item:getDisplayName(), playerNum, Action.queue, "pump", PumpJobs.FIT_TIMER, pump, item)
+        option.itemForTexture = item
+        Needs.show(option, PumpJobs.needs(character, PumpJobs.FIT_TIMER, pump, item),
+            PumpJobs.blocker(character, PumpJobs.FIT_TIMER, pump, item))
+    end
+end
+
+-- A Pump House's own options: Fit Pump while it is empty, else Take Out Pump; its switch; Repair
+-- Pump; its timer.
 local function addHouseOptions(menu, playerNum, character, pump, summary)
     if summary and summary.part then
         addJob(menu, playerNum, character, pump, PumpJobs.TAKE_OUT_PUMP, "ContextMenu_EnhancedIrrigation_TakeOutPump")
@@ -113,6 +170,7 @@ local function addHouseOptions(menu, playerNum, character, pump, summary)
         addJob(menu, playerNum, character, pump, PumpJobs.TURN_ON, "ContextMenu_Turn_On")
     end
     addJob(menu, playerNum, character, pump, PumpJobs.REPAIR_PUMP, "ContextMenu_EnhancedIrrigation_RepairPump")
+    addTimer(menu, playerNum, character, pump, summary)
 end
 
 function PumpMenu.onFill(playerNum, context, worldobjects, test)

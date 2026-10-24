@@ -99,6 +99,27 @@ local DO = {
         Pumps.recordOf(pump):repairPart()
         return true
     end,
+    -- The timer's setting starts at nothing: it never opens until set.
+    [PumpJobs.FIT_TIMER] = function(character, pump, item)
+        EnhancedIrrigation.takeItem(character, item)
+        local record = Pumps.recordOf(pump)
+        record.timer = { item = item:getFullType() }
+        EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
+    end,
+    [PumpJobs.TAKE_TIMER] = function(character, pump)
+        local record = Pumps.recordOf(pump)
+        EnhancedIrrigation.giveItems(character, instanceItem(record.timer.item))
+        record.timer = nil
+        EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
+    end,
+    [PumpJobs.SET_TIMER] = function(character, pump, with)
+        local record = Pumps.recordOf(pump)
+        record.timer.start, record.timer.minutes = EnhancedIrrigation.Valves.decodeTimer(with)
+        EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
+    end,
 }
 
 --- Does `job` at `pump` with `with` for `character` on the authority (Jobs.perform), then shows

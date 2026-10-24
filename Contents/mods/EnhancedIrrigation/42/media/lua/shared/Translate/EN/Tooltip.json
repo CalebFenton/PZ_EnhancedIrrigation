@@ -89,5 +89,8 @@
     "Tooltip_EnhancedIrrigation_HasValve": "The tap already has a valve. Take it off first.",
     "Tooltip_EnhancedIrrigation_NoValve": "Needs a Wind-up Valve, a Timer Valve or a Sprinkler Timer in your inventory.",
     "Tooltip_EnhancedIrrigation_NoValveHere": "There is no such valve on this tap.",
-    "Tooltip_EnhancedIrrigation_ValveRunning": "The tap's valve is running it."
+    "Tooltip_EnhancedIrrigation_ValveRunning": "The tap's valve is running it.",
+    "Tooltip_EnhancedIrrigation_HasTimer": "A timer is already fitted. Take it off first.",
+    "Tooltip_EnhancedIrrigation_NoTimer": "Needs a Timer Valve or a Sprinkler Timer in your inventory.",
+    "Tooltip_EnhancedIrrigation_NoTimerHere": "There is no timer fitted."
 }

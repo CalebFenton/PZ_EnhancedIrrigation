@@ -56,9 +56,9 @@
     "IGUI_EnhancedIrrigation_Running": "running",
     "IGUI_EnhancedIrrigation_NoPower": "no power",
     "IGUI_EnhancedIrrigation_SwitchedOff": "off",
-    "IGUI_EnhancedIrrigation_ValveMinutesLeft": "%1, %2 min left",
-    "IGUI_EnhancedIrrigation_ValveRunDown": "%1, run down",
-    "IGUI_EnhancedIrrigation_TimerSet": "%1, daily at %2 for %3 min",
-    "IGUI_EnhancedIrrigation_TimerNotSet": "%1, not set",
+    "IGUI_EnhancedIrrigation_ValveMinutesLeft": "%1: %2 min left",
+    "IGUI_EnhancedIrrigation_ValveRunDown": "%1: run down",
+    "IGUI_EnhancedIrrigation_TimerSet": "%1: daily at %2 for %3 min",
+    "IGUI_EnhancedIrrigation_TimerNotSet": "%1: not set",
     "IGUI_EnhancedIrrigation_StartsAt": "Starts at"
 }

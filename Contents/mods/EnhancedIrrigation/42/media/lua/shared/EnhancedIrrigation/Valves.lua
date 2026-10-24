@@ -104,21 +104,42 @@ function Valves.openHours(from, to, start, minutes)
     return found
 end
 
---- The hours of [from, to] the daily window of `start` and `minutes` covers.
-function Valves.openLength(from, to, start, minutes)
-    local hours = 0
-    for _, stretch in ipairs(Valves.openHours(from, to, start, minutes)) do
-        hours = hours + stretch.to - stretch.from
-    end
-    return hours
-end
-
 --- Whether the daily window of `start` and `minutes` is open at the world hour `hour`.
 function Valves.isOpenAt(hour, start, minutes)
     if not (minutes and minutes > 0 and start) then
         return false
     end
     return (Valves.hourOfDay(hour) - start) % 24 < minutes / 60
+end
+
+-- What the menus say ---------------------------------------------------------------------------------
+
+--- The hour of the day `hour` as the panel and the menus show it.
+function Valves.hourText(hour)
+    return string.format("%02d:00", hour)
+end
+
+--- The minutes left on the wound valve of `valve` (a summary's), rounded up; 0 when run down.
+function Valves.minutesLeft(valve)
+    local left = (valve.untilHour or 0) - EnhancedIrrigation.now()
+    return left > 0 and math.ceil(left * 60 - 0.001) or 0
+end
+
+--- What the valve or timer of `valve` (a summary's: item, start, minutes, untilHour) is and how it
+--- is set: a wind-up's minutes left or run down, a timer's hour and minutes or not set.
+function Valves.describe(valve)
+    local name = getItemNameFromFullType(valve.item)
+    if Valves.kindOf(valve.item) == "windup" then
+        local left = Valves.minutesLeft(valve)
+        if left > 0 then
+            return getText("IGUI_EnhancedIrrigation_ValveMinutesLeft", name, left)
+        end
+        return getText("IGUI_EnhancedIrrigation_ValveRunDown", name)
+    end
+    if (valve.minutes or 0) > 0 then
+        return getText("IGUI_EnhancedIrrigation_TimerSet", name, Valves.hourText(valve.start), valve.minutes)
+    end
+    return getText("IGUI_EnhancedIrrigation_TimerNotSet", name)
 end
 
 return Valves

@@ -16,6 +16,7 @@ require "EnhancedIrrigation/GlobalObjects"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/Lines"
+require "EnhancedIrrigation/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Pumps = {}
@@ -366,17 +367,20 @@ local function handWords(words, summary)
 end
 
 -- The words of a Pump House's `summary`: its part and how worn, then whether it runs, is off or is
--- switched on with no power.
+-- switched on with no power, then its timer and how it is set.
 local function houseWords(words, summary)
     if not summary.part then
         table.insert(words, getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
-        return
+    else
+        local name = getItemNameFromFullType(summary.part)
+        table.insert(words, summary.burntOut and getText("IGUI_EnhancedIrrigation_PartBurntOut", name)
+            or getText("IGUI_EnhancedIrrigation_PartCondition", name, summary.partCondition))
+        table.insert(words, getText(summary.running and "IGUI_EnhancedIrrigation_Running"
+            or summary.on and "IGUI_EnhancedIrrigation_NoPower" or "IGUI_EnhancedIrrigation_SwitchedOff"))
     end
-    local name = getItemNameFromFullType(summary.part)
-    table.insert(words, summary.burntOut and getText("IGUI_EnhancedIrrigation_PartBurntOut", name)
-        or getText("IGUI_EnhancedIrrigation_PartCondition", name, summary.partCondition))
-    table.insert(words, getText(summary.running and "IGUI_EnhancedIrrigation_Running"
-        or summary.on and "IGUI_EnhancedIrrigation_NoPower" or "IGUI_EnhancedIrrigation_SwitchedOff"))
+    if summary.timer then
+        table.insert(words, EnhancedIrrigation.Valves.describe(summary.timer))
+    end
 end
 
 --- The menu's line for `pump` with `summary`: where it draws; a hand pump's seal and body, or a Pump

@@ -626,6 +626,77 @@ T.test("irrigation_pump_house_grid_runs_a_gap_until_the_shutoff", {
     end,
 })
 
+-- Timer ---------------------------------------------------------------------------------------------------
+
+-- Indoors on the grid, switched off: Fit Timer from the menu fits the Timer Valve carried, which
+-- shows by the house's plug; Set Timer from its panel opens it two hours before the hour now for
+-- 30 minutes; three hours gone by, the house lifted half an hour of the Appliance Pump's water into
+-- the barrel and wore its part by half an hour, and isn't running now; the menu names the timer;
+-- Take Off Timer gives it back. Catches a timer that never runs the house, runs it outside its
+-- window or all the time, or is lost taking it off.
+T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
+    instant = true,
+    run = function(self)
+        local Valves, PumpMenu, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.PumpMenu, EnhancedIrrigation.ValveUI
+        T.setGrid(self, true)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
+        if not spots then return end
+        self.house = placeHouse(self, spots[1], METAL, fitted(APPLIANCE))
+        T.placeTank(self, spots[2], "well")
+        self.tank = T.placeTank(self, spots[3], "raisedLidded")
+        link(self, self.house, self.tank)
+        T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = Valves.TIMER } })
+        useMenu(self, self.house, "fit", job(PumpJobs.FIT_TIMER), true)
+        readUntil(self, self.house, "fitted", function(state) return state.record.timer ~= nil end)
+        T.waitFor(self, function()
+            local copy = copyOf(self.house)
+            local attached = copy and copy:getAttachedAnimSprite()
+            for i = 0, (attached and attached:size() or 0) - 1 do
+                if attached:get(i):getName() == Sprites.HOUSE_TIMER then
+                    return true
+                end
+            end
+            return false
+        end, "this client's copy of the house showing its timer")
+        self.start = (math.floor(getGameTime():getTimeOfDay()) - 2) % 24
+        useMenu(self, self.house, "set", function(context)
+            return T.findOption(context, context, function(option) return option.onSelect == PumpMenu.openTimer end)
+        end, true)
+        T.step(function()
+            local panel = T.need(self, ValveUI.instances[T.player():getPlayerNum()], "the timer's panel")
+            if not panel then return end
+            for _ = 1, (self.start - panel.hour) % 24 do
+                panel:onClick(panel.hourUp)
+            end
+            panel.knob:setKnobPosition(30)
+            panel:onClick(panel.ok)
+        end)
+        readUntil(self, self.house, "set", function(state) return state.record.timer.minutes == 30 end)
+        update(self, self.house, "hours", { hoursAgo = 3, tank = self.tank })
+        waitForSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
+            "this client's summary of the set timer")
+        readMenu(self, function() return copyOf(self.house) end, "set")
+        useMenu(self, self.house, "take off", job(PumpJobs.TAKE_TIMER), true)
+        readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
+        T.read(self, "pumpHouse.carried", { type = Valves.TIMER }, "carried")
+    end,
+    validate = function(self)
+        local Valves = EnhancedIrrigation.Valves
+        T.expectOffered(self, "fit")
+        expect(self.reads.fitted.record.timer.item == Valves.TIMER, "the fitted timer is " .. tostring(self.reads.fitted.record.timer.item))
+        T.expectOffered(self, "set")
+        expect(self.reads.set.record.timer.start == self.start, "the timer starts at " .. tostring(self.reads.set.record.timer.start))
+        local hours = self.reads.hours
+        expectNear("the barrel after its window", hours.after.tank.litres - hours.before.tank.litres, lifts(APPLIANCE, 0.5), LITRES)
+        expectNear("the part after its window", hours.before.record.partCondition - hours.after.record.partCondition,
+            Pumps.PARTS[APPLIANCE].wearPerHour * 0.5, 0.001)
+        expect(not hours.after.record.running, "the house runs outside its timer's window")
+        expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
+        T.expectOffered(self, "take off")
+        expect(#self.reads.carried.items == 1, "Take Off Timer gave back " .. #self.reads.carried.items .. " timers")
+    end,
+})
+
 -- Hours the house is away while its chunk is unloaded.
 local AWAY_HOURS = 1
 

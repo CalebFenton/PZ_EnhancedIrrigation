@@ -2,19 +2,23 @@
 -- server/EnhancedIrrigation/Pumps/PumpSystem.lua: at a hand pump, Pump, which runs for as long as
 -- the character works the handle (TimedActions/EnhancedIrrigationPumpAction.lua), and Replace Seal,
 -- whose `with` is the seal carried; at a Pump House, Fit Pump, whose `with` is the pump part carried,
--- Take Out Pump, Turn On, Turn Off and Repair Pump. A pump's outlet is LinkJobs' Plumb Pump.
+-- Take Out Pump, Turn On, Turn Off, Repair Pump, and Fit Timer, Take Off Timer and Set Timer, whose
+-- `with`s are the timer carried and its setting (Valves.decodeTimer). A pump's outlet is LinkJobs'
+-- Plumb Pump.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/Pumps"
+require "EnhancedIrrigation/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpJobs = {}
 EnhancedIrrigation.PumpJobs = PumpJobs
 
 local Pumps, Tanks, Lines = EnhancedIrrigation.Pumps, EnhancedIrrigation.Tanks, EnhancedIrrigation.Lines
+local Valves = EnhancedIrrigation.Valves
 
 PumpJobs.PUMP = "Pump"
 PumpJobs.REPLACE_SEAL = "ReplaceSeal"
@@ -23,6 +27,9 @@ PumpJobs.TAKE_OUT_PUMP = "TakeOutPump"
 PumpJobs.TURN_ON = "TurnOn"
 PumpJobs.TURN_OFF = "TurnOff"
 PumpJobs.REPAIR_PUMP = "RepairPump"
+PumpJobs.FIT_TIMER = "FitTimer"
+PumpJobs.TAKE_TIMER = "TakeTimer"
+PumpJobs.SET_TIMER = "SetTimer"
 
 -- Minutes to take a hand pump's cap off, swap the cup on its plunger and screw it back.
 PumpJobs.SEAL_MINUTES = 10
@@ -32,6 +39,9 @@ PumpJobs.FIT_MINUTES = 15
 PumpJobs.TAKE_OUT_MINUTES = 10
 PumpJobs.SWITCH_MINUTES = 1
 PumpJobs.REPAIR_MINUTES = 30
+-- Minutes to screw a timer into a Pump House's switch wiring and to take it out.
+PumpJobs.TIMER_MINUTES = 5
+PumpJobs.TAKE_TIMER_MINUTES = 3
 
 -- The Tooltip key saying how high a pump of each lift fills a tank.
 PumpJobs.LIFT_KEYS = {
@@ -132,6 +142,15 @@ local SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
 function PumpJobs.carriesPart(character, item)
     return instanceof(item, "InventoryItem") and Pumps.partSpec(item:getFullType()) ~= nil
         and character:getInventory():containsRecursive(item)
+end
+
+--- Whether `item` is a timer that switches a Pump House (Valves.ITEMS `house`) `character` carries.
+function PumpJobs.carriesTimer(character, item)
+    if not instanceof(item, "InventoryItem") then
+        return false
+    end
+    local spec = Valves.ITEMS[item:getFullType()]
+    return spec ~= nil and spec.house == true and character:getInventory():containsRecursive(item)
 end
 
 PumpJobs.JOBS = {
@@ -240,6 +259,39 @@ PumpJobs.JOBS = {
             { item = "Base.ElectronicsScrap", need = 1 },
             { item = "Base.TirePiece", need = 1 },
         },
+    },
+    -- The timer goes in as the item carried, taken by the job itself.
+    [PumpJobs.FIT_TIMER] = {
+        minutes = PumpJobs.TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
+        blocker = function(character, pump, item)
+            local summary = houseSummary(pump)
+            if not summary then
+                return "Tooltip_EnhancedIrrigation_UnknownJob"
+            end
+            if summary.timer then
+                return "Tooltip_EnhancedIrrigation_HasTimer"
+            end
+            return not PumpJobs.carriesTimer(character, item) and "Tooltip_EnhancedIrrigation_NoTimer" or nil
+        end,
+        materials = { SCREWDRIVER },
+    },
+    [PumpJobs.TAKE_TIMER] = {
+        minutes = PumpJobs.TAKE_TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
+        blocker = function(character, pump)
+            local summary = houseSummary(pump)
+            return not (summary and summary.timer) and "Tooltip_EnhancedIrrigation_NoTimerHere" or nil
+        end,
+        materials = { SCREWDRIVER },
+    },
+    [PumpJobs.SET_TIMER] = {
+        minutes = PumpJobs.SWITCH_MINUTES, position = "Mid",
+        blocker = function(character, pump, with)
+            local summary = houseSummary(pump)
+            if not (summary and summary.timer) then
+                return "Tooltip_EnhancedIrrigation_NoTimerHere"
+            end
+            return not Valves.decodeTimer(with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+        end,
     },
 }
 

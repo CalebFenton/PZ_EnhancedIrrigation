@@ -1,21 +1,23 @@
 -- The authority's record of one pump (shared/EnhancedIrrigation/Pumps.lua): a hand pump's seal and
 -- how far it has worn, and its body's condition, which lifting water wears (PumpObject.lift); a
--- Pump House's part, its condition, its switch and who pays for its power (Pumps/PumpHouse.lua);
--- and where its hose drinks. Like a treatment unit's, a pump's record waits while its square, the
--- squares it draws from or its outlet's far end aren't loaded, keeping its clock, and catches the
--- whole gap up once they are; time alone moves no water through a hand pump, which runs only while
--- worked, but runs a Pump House that is switched on.
+-- Pump House's part, its condition, its switch, its timer and who pays for its power
+-- (Pumps/PumpHouse.lua); and where its hose drinks. Like a treatment unit's, a pump's record waits
+-- while its square, the squares it draws from or its outlet's far end aren't loaded, keeping its
+-- clock, and catches the whole gap up once they are; time alone moves no water through a hand
+-- pump, which runs only while worked, but runs a Pump House that is switched on or whose timer
+-- opens.
 
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
-local Pumps = EnhancedIrrigation.Pumps
+local Sprites, Pumps = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pumps
 
 local PumpObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Pump")
 EnhancedIrrigation.PumpObject = PumpObject
@@ -26,12 +28,13 @@ EnhancedIrrigation.PumpObject = PumpObject
 -- litres lifted; intake: { x, y } of the natural water the hose drinks from, nil for none, kept so
 -- an unloaded river still counts; lastHour: when time last reached it. A Pump House's: part: the
 -- full type of the pump part fitted, nil for none; partCondition, a float, and partCeiling: its
--- condition and the most a repair restores, as its item carried them; on: its switch; running:
--- whether it ran at its last pass; grid: whether the grid powered it then; payer: { x, y, z } of the
--- generator that pays for its power, payerFuel: that generator's fuel when last seen, and owedFuel:
--- what it burned since its square was last loaded.
+-- condition and the most a repair restores, as its item carried them; on: its switch; timer:
+-- { item, start, minutes } of the timer fitted (Valves.lua), nil for none; running: whether it ran
+-- at its last pass; grid: whether the grid powered it then; payer: { x, y, z } of the generator
+-- that pays for its power, payerFuel: that generator's fuel when last seen, and owedFuel: what it
+-- burned since its square was last loaded.
 PumpObject.SAVED_FIELDS = { "unit", "seal", "sealWear", "condition", "intake", "lastHour", "part", "partCondition",
-    "partCeiling", "on", "running", "grid", "payer", "payerFuel", "owedFuel" }
+    "partCeiling", "on", "timer", "running", "grid", "payer", "payerFuel", "owedFuel" }
 
 function PumpObject:initNew()
     self.sealWear = 0
@@ -48,8 +51,9 @@ function PumpObject:stateFromIsoObject(isoObject)
     self.summary = self:buildSummary()
 end
 
--- The chunk loaded again; the next pass catches up the time it was away.
+-- The chunk loaded again: show its timer; the next pass catches up the time it was away.
 function PumpObject:stateToIsoObject(isoObject)
+    self:show()
 end
 
 function PumpObject:spec()
@@ -253,8 +257,23 @@ function PumpObject:isRunning()
     return self.holder ~= nil
 end
 
--- Tells the clients, and the tiles of the line its outlet feeds whether it runs them.
+-- A Pump House's overlay: its timer, if one is fitted.
+local function isTimerOverlay(name)
+    return name == Sprites.HOUSE_TIMER
+end
+
+--- Shows a Pump House's timer by its plug while one is fitted. Does nothing while its chunk is
+--- unloaded, or at a hand pump.
+function PumpObject:show()
+    local pump = self:getIsoObject()
+    if pump and self:isHouse() then
+        EnhancedIrrigation.showOverlays(pump, isTimerOverlay, self.timer and { Sprites.HOUSE_TIMER } or {})
+    end
+end
+
+-- Shows and tells the clients, and the tiles of the line its outlet feeds whether it runs them.
 function PumpObject:afterChange()
+    self:show()
     self:sendSummary()
     local outlet = Pumps.outletOf(self)
     local b = outlet and outlet.b
@@ -265,16 +284,18 @@ end
 
 -- What every client keeps, as the menu words it, rounded, so wear that changes nothing a player
 -- sees sends nothing: a hand pump's seal and body, and who works it now (PumpSystem.hold); a Pump
--- House's part, its condition and ceiling, its switch and whether it runs now; and where the hose
--- drinks.
+-- House's part, its condition and ceiling, its switch, its timer and whether it runs now; and where
+-- the hose drinks.
 function PumpObject:buildSummary()
     if self:isHouse() then
+        local timer = self.timer
         return {
             part = self.part,
             partCondition = self.part and math.ceil(self.partCondition) or nil,
             partCeiling = self.partCeiling,
             burntOut = self:isBurntOut(),
             on = self.on == true,
+            timer = timer and { item = timer.item, start = timer.start, minutes = timer.minutes },
             running = self.running == true,
             intake = self.intake,
         }

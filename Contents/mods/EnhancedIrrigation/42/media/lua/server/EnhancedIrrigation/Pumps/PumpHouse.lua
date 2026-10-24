@@ -1,8 +1,10 @@
--- What time does to a Pump House (PumpObject.KINDS.house): while it is switched on, has a pump part
--- fitted that isn't burnt out, and has power, it runs every pass, lifting its part's rate from its
--- source into its outlet's tank as far as its lift, the tank's room and a finite source's water go,
--- or driving the line its outlet feeds with what that takes up to its rate (Lines/Flow.lua), and
--- wearing its part by the hour it runs, faster run dry. A full tank stops the water, not the pump.
+-- What time does to a Pump House (PumpObject.KINDS.house): while it is switched on, or its timer
+-- holds it open (Valves.lua), has a pump part fitted that isn't burnt out, and has power, it runs,
+-- lifting its part's rate from its source into its outlet's tank as far as its lift, the tank's
+-- room and a finite source's water go, or driving the line its outlet feeds with what that takes
+-- up to its rate (Lines/Flow.lua), and wearing its part by the hour it runs, faster run dry. A
+-- full tank stops the water, not the pump. The switch runs it whatever the timer says; switched
+-- off, the timer runs it in its daily window, as a plug-in timer powers what is plugged into it.
 --
 -- Power, as a washer has it: the grid in a room or beside one, which costs nothing; else a running
 -- vanilla generator in reach, the nearest, which burns fuel for the part's draw at vanilla's rate
@@ -25,6 +27,7 @@ require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
+require "EnhancedIrrigation/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
@@ -32,6 +35,7 @@ EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps, PumpJobs, Tanks = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.Tanks
 local Lines, Flow, PumpObject = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow, EnhancedIrrigation.PumpObject
+local Valves = EnhancedIrrigation.Valves
 
 -- Power ----------------------------------------------------------------------------------------------
 
@@ -263,14 +267,9 @@ function PumpHouse.run(record, pump, part, hours)
     return ran
 end
 
---- What an hour or less of time from the world hour `from` does to the record's Pump House `pump`:
---- runs it for as long as it has power (PumpHouse.run) while it is switched on with a sound part,
---- and bills its payer for the hours it ran off the grid.
-function PumpHouse.step(record, pump, spec, hours, from)
-    local part = Pumps.partSpec(record.part)
-    if not (part and record.on and not record:isBurntOut()) then
-        return
-    end
+-- Runs the record's Pump House for as long of `hours` from the world hour `from` as it has power,
+-- and bills its payer for the hours it ran off the grid.
+local function runPowered(record, pump, part, hours, from)
     local powered, free, payer = poweredHours(record, pump, part, hours, from)
     if powered <= 0 then
         return
@@ -279,10 +278,38 @@ function PumpHouse.step(record, pump, spec, hours, from)
     bill(record, payer, part, math.max(0, ran - free))
 end
 
+--- Whether the timer of the record's Pump House holds it open at the world hour `hour`.
+function PumpHouse.timerOpen(record, hour)
+    local timer = record.timer
+    return timer ~= nil and Valves.isOpenAt(hour, timer.start, timer.minutes)
+end
+
+--- What an hour or less of time from the world hour `from` does to the record's Pump House `pump`
+--- with a sound part: runs it (PumpHouse.run) for as long as it has power, the whole time while it
+--- is switched on, else the stretches its timer holds it open; and bills its payer for the hours it
+--- ran off the grid.
+function PumpHouse.step(record, pump, spec, hours, from)
+    local part = Pumps.partSpec(record.part)
+    if not (part and not record:isBurntOut()) then
+        return
+    end
+    if record.on then
+        runPowered(record, pump, part, hours, from)
+        return
+    end
+    local timer = record.timer
+    for _, stretch in ipairs(timer and Valves.openHours(from, from + hours, timer.start, timer.minutes) or {}) do
+        if record:isBurntOut() then
+            return
+        end
+        runPowered(record, pump, part, stretch.to - stretch.from, stretch.from)
+    end
+end
+
 --- How the record's Pump House `pump` stands once caught up, loaded: fuel it owes paid once its
 --- payer is loaded, however it stands now; whether the grid powers it now, for the next gap;
---- switched off once its part is burnt out; and whether it runs now: switched on, with a sound part
---- and power, a generator's with fuel left.
+--- switched off once its part is burnt out; and whether it runs now: switched on or held open by
+--- its timer, with a sound part and power, a generator's with fuel left.
 function PumpHouse.settle(record, pump)
     if record.owedFuel and record.payer then
         PumpHouse.payerOf(record)
@@ -292,7 +319,8 @@ function PumpHouse.settle(record, pump)
         record.on = nil
     end
     local part = Pumps.partSpec(record.part)
-    local running = part ~= nil and record.on == true and Pumps.powered(pump)
+    local wanted = record.on == true or PumpHouse.timerOpen(record, EnhancedIrrigation.now())
+    local running = part ~= nil and not record:isBurntOut() and wanted and Pumps.powered(pump)
     if running and not record.grid then
         local fuel = fuelLeft(record, PumpHouse.payerOf(record))
         running = fuel == nil or fuel > 0
@@ -305,12 +333,17 @@ PumpObject.KINDS.house.settle = PumpHouse.settle
 
 -- Noise ----------------------------------------------------------------------------------------------
 
--- Each game minute, every Pump House running on a loaded square makes its part's noise for zombies,
--- as a running washer does (ClothingWasherLogic.updateSound).
+-- Each game minute, every Pump House with a timer runs its pass, so it starts and stops within the
+-- minute its window opens and shuts rather than at the next ten-minute pass; then every one
+-- running on a loaded square makes its part's noise for zombies, as a running washer does
+-- (ClothingWasherLogic.updateSound).
 Events.EveryOneMinute.Add(function()
     local system = Pumps.serverSystem
     for i = 1, system and system:getLuaObjectCount() or 0 do
         local record = system:getLuaObjectByIndex(i)
+        if record.timer and record:getIsoObject() then
+            record:update()
+        end
         local part = record.running and Pumps.partSpec(record.part)
         local pump = part and record:getIsoObject()
         if pump then

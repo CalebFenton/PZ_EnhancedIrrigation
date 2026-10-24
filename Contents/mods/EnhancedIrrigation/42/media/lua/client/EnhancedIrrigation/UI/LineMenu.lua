@@ -31,28 +31,6 @@ local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
 
 -- What a tile is ------------------------------------------------------------------------------------
 
--- The minutes left on a wound valve of `summary`, rounded up, 0 when run down.
-local function minutesLeft(summary)
-    local left = (summary.untilHour or 0) - EnhancedIrrigation.now()
-    return left > 0 and math.ceil(left * 60 - 0.001) or 0
-end
-
---- What the tap's valve of `valve` (a line summary's) is and how it is set.
-function LineMenu.describeValve(valve)
-    local name = getItemNameFromFullType(valve.item)
-    if Valves.kindOf(valve.item) == "windup" then
-        local left = minutesLeft(valve)
-        if left > 0 then
-            return getText("IGUI_EnhancedIrrigation_ValveMinutesLeft", name, left)
-        end
-        return getText("IGUI_EnhancedIrrigation_ValveRunDown", name)
-    end
-    if (valve.minutes or 0) > 0 then
-        return getText("IGUI_EnhancedIrrigation_TimerSet", name, ValveUI.hourText(valve.start), valve.minutes)
-    end
-    return getText("IGUI_EnhancedIrrigation_TimerNotSet", name)
-end
-
 function LineMenu.describe(state)
     local holes = state.holed and "IGUI_EnhancedIrrigation_Holed" or "IGUI_EnhancedIrrigation_NoHoles"
     local parts = { getText(holes) }
@@ -66,7 +44,7 @@ function LineMenu.describe(state)
         table.insert(parts, getText("IGUI_EnhancedIrrigation_Tapped"))
     end
     if state.valve then
-        table.insert(parts, LineMenu.describeValve(state.valve))
+        table.insert(parts, Valves.describe(state.valve))
     end
     if state.sprinkler then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_WithSprinkler"))
@@ -153,7 +131,7 @@ function LineMenu.openValve(character, line)
         okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
         timer = not windUp,
         start = valve.start,
-        minutes = windUp and minutesLeft(valve) or valve.minutes,
+        minutes = windUp and Valves.minutesLeft(valve) or valve.minutes,
         blocker = function(who, object, with)
             return LineJobs.blocker(who, windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER, object, with)
         end,
