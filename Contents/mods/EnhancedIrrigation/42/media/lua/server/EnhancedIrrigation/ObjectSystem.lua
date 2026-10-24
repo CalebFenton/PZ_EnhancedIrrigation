@@ -25,9 +25,9 @@ local Sprites = EnhancedIrrigation.Sprites
 local Object = SGlobalObject:derive("EnhancedIrrigation_Object")
 ObjectSystem.Object = Object
 
---- The game hours since the record last caught up, now caught up (EnhancedIrrigation.catchUp).
+--- The game hours since the record last caught up, now caught up (EnhancedIrrigation.hoursSince).
 function Object:elapsedHours()
-    return EnhancedIrrigation.catchUp(self)
+    return EnhancedIrrigation.hoursSince(self)
 end
 
 function Object:update()

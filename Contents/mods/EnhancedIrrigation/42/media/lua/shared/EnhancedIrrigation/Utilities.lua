@@ -65,41 +65,17 @@ EnhancedIrrigation.LONGEST_PASS = 24 * 7
 
 --- The game hours since `holder.lastHour`, at most LONGEST_PASS, and none the first time; stamps
 --- `holder.lastHour` with now, so the next pass counts from here.
-function EnhancedIrrigation.catchUp(holder)
+function EnhancedIrrigation.hoursSince(holder)
     local now = EnhancedIrrigation.now()
     local hours = math.min(EnhancedIrrigation.LONGEST_PASS, now - (holder.lastHour or now))
     holder.lastHour = now
     return hours
 end
 
---- An action advances by GameTime.getMultiplier() each tick (BaseAction.update), and in the same
---- tick the clock advances getMultiplier() / (2 * minutesPerDay) in-game minutes (GameTime.update),
---- so one in-game minute is 2 * minutesPerDay units at any frame rate or game speed.
-function EnhancedIrrigation.unitsPerMinute()
-    return 2 * getGameTime():getMinutesPerDay()
-end
-
 --- Whether `object` is still in the world, rather than a copy left behind by a removal or a
 --- chunk reload.
 function EnhancedIrrigation.onSquare(object)
     return object ~= nil and object:getObjectIndex() ~= -1
-end
-
---- Whether `object` is its square's floor: what a job on the ground works at, such as laying a
---- line tile or taking up buried pipe whose tank is gone.
-function EnhancedIrrigation.isFloor(object)
-    local square = object and object:getSquare()
-    return square ~= nil and square:getFloor() == object
-end
-
---- Whether `character` stands within `reach` squares on each axis of the middle of `target`'s
---- square, on its level: where the menu walked them for a job there (luautils.walkAdj), with room
---- for drift and a client's lag. The authority checks it before doing a job.
-function EnhancedIrrigation.withinReach(character, target, reach)
-    local square = target:getSquare()
-    return square ~= nil and math.abs(character:getX() - (square:getX() + 0.5)) <= reach
-        and math.abs(character:getY() - (square:getY() + 0.5)) <= reach
-        and math.abs(character:getZ() - square:getZ()) < 1
 end
 
 --- The game entity script whose SpriteConfig names the tile `spriteName`, or nil: what an object

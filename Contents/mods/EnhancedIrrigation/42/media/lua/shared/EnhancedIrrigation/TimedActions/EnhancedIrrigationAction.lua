@@ -25,6 +25,30 @@ local Action = EnhancedIrrigationAction
 local Stands, LineJobs, Treatment = EnhancedIrrigation.Stands, EnhancedIrrigation.LineJobs, EnhancedIrrigation.Treatment
 local Pumps = EnhancedIrrigation.Pumps
 
+--- An action advances by GameTime.getMultiplier() each tick (BaseAction.update), and in the same
+--- tick the clock advances getMultiplier() / (2 * minutesPerDay) in-game minutes (GameTime.update),
+--- so one in-game minute is 2 * minutesPerDay units at any frame rate or game speed.
+local function unitsPerMinute()
+    return 2 * getGameTime():getMinutesPerDay()
+end
+
+--- Whether `object` is its square's floor: what a job on the ground works at, such as laying a
+--- line tile or taking up buried pipe whose tank is gone.
+local function isFloor(object)
+    local square = object and object:getSquare()
+    return square ~= nil and square:getFloor() == object
+end
+
+--- Whether `character` stands within `reach` squares on each axis of the middle of `target`'s
+--- square, on its level: where the menu walked them for a job there (luautils.walkAdj), with room
+--- for drift and a client's lag. The authority checks it before doing a job.
+function Action.withinReach(character, target, reach)
+    local square = target:getSquare()
+    return square ~= nil and math.abs(character:getX() - (square:getX() + 0.5)) <= reach
+        and math.abs(character:getY() - (square:getY() + 0.5)) <= reach
+        and math.abs(character:getZ() - square:getZ()) < 1
+end
+
 -- Each feature: isTarget(object), the objects it works at; jobs, its job module
 -- (Jobs.define), whose JOBS[job] rows also say how long the job takes and how it looks;
 -- perform(character, job, object, with), which does the job on the authority and returns whether
@@ -44,13 +68,13 @@ local FEATURES = {
     link = {
         isTarget = function(object)
             return EnhancedIrrigation.Tanks.isTank(object) or EnhancedIrrigation.Fixtures.isFixture(object)
-                or Treatment.isUnit(object) or Pumps.isPump(object) or EnhancedIrrigation.isFloor(object)
+                or Treatment.isUnit(object) or Pumps.isPump(object) or isFloor(object)
         end,
         jobs = EnhancedIrrigation.LinkJobs,
         perform = function(...) return EnhancedIrrigation.LinkSystem.perform(...) end,
     },
     line = {
-        isTarget = function(object) return EnhancedIrrigation.Lines.isLine(object) or EnhancedIrrigation.isFloor(object) end,
+        isTarget = function(object) return EnhancedIrrigation.Lines.isLine(object) or isFloor(object) end,
         jobs = LineJobs,
         perform = function(...) return EnhancedIrrigation.LineSystem.perform(...) end,
     },
@@ -92,7 +116,7 @@ function Action:getDuration()
     if type(minutes) == "function" then
         minutes = minutes(self.object, self.with, self.character)
     end
-    return minutes * EnhancedIrrigation.unitsPerMinute()
+    return minutes * unitsPerMinute()
 end
 
 function Action:isValid()
@@ -107,7 +131,7 @@ function Action:isValid()
     if isItem(self.with) and not self.character:getInventory():containsRecursive(self.with) then
         return false
     end
-    return EnhancedIrrigation.withinReach(self.character, self.object, Action.REACH)
+    return Action.withinReach(self.character, self.object, Action.REACH)
 end
 
 function Action:waitToStart()
@@ -165,7 +189,7 @@ end
 -- character is at the object, which NetTimedAction doesn't.
 function Action:complete()
     if not EnhancedIrrigation.onSquare(self.object)
-            or (isServer() and not EnhancedIrrigation.withinReach(self.character, self.object, Action.REACH)) then
+            or (isServer() and not Action.withinReach(self.character, self.object, Action.REACH)) then
         return false
     end
     return FEATURES[self.feature].perform(self.character, self.job, self.object, self.with)

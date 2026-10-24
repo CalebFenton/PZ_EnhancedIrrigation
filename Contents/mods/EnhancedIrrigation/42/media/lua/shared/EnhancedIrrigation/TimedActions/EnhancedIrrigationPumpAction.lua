@@ -40,7 +40,7 @@ end
 -- Runs the pump for the world time since the last run (`lastHour`, set once the work starts).
 -- Authority only.
 function Action:run()
-    local hours = EnhancedIrrigation.catchUp(self)
+    local hours = EnhancedIrrigation.hoursSince(self)
     if self.finished then
         return
     end
@@ -54,7 +54,7 @@ end
 -- Whether the character still stands at the pump: what isValid() checks, which the server never
 -- calls, so the authority asks this itself before it starts and before each run.
 function Action:atPump()
-    return EnhancedIrrigation.withinReach(self.character, self.pump, EnhancedIrrigationAction.REACH)
+    return EnhancedIrrigationAction.withinReach(self.character, self.pump, EnhancedIrrigationAction.REACH)
 end
 
 -- Starts the work, holding the pump; the water counts from here. Returns whether it started.

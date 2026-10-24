@@ -257,7 +257,7 @@ end
 
 local function everyTenMinutes()
     local self = LinkSystem.instance
-    local hours = EnhancedIrrigation.catchUp(self)
+    local hours = EnhancedIrrigation.hoursSince(self)
     if hours > 0 then
         self:pass(hours)
     end

@@ -39,7 +39,7 @@ end
 -- Runs the line for the world time since the last run (`lastHour`, set once the tap opens).
 -- Authority only.
 function Action:run()
-    local hours = EnhancedIrrigation.catchUp(self)
+    local hours = EnhancedIrrigation.hoursSince(self)
     if self.finished then
         return
     end
@@ -73,7 +73,7 @@ end
 -- Whether the character still stands at the tap: what isValid() checks, which the server never
 -- calls, so the authority asks this itself before it opens the tap and before each run.
 function Action:atTap()
-    return EnhancedIrrigation.withinReach(self.character, self.tap, EnhancedIrrigationAction.REACH)
+    return EnhancedIrrigationAction.withinReach(self.character, self.tap, EnhancedIrrigationAction.REACH)
 end
 
 -- The tap held open runs the line; a character who walked off let go of it. Authority only.
