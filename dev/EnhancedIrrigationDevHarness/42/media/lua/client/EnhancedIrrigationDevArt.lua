@@ -6,6 +6,7 @@
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Utilities"
 local Stage = require "EnhancedIrrigationDevStage"
+local Harness = require "PZHarness/Stage"
 local Capture = require "PZHarness/Capture"
 
 local Art = {}
@@ -127,126 +128,13 @@ local function layBlock(lot, material, left, top, fields)
     LineSystem.place(lotSquare(lot, left + 3, top + 1), material, fields)
 end
 
--- How far from a place the trees go: near a building, a tree out of the character's sight draws
--- as a black silhouette full of holes (IsoTree.render).
-local TREE_RADIUS = 30
--- The character faces the camera last.
-local LOOK_AROUND = { IsoDirections.N, IsoDirections.E, IsoDirections.S, IsoDirections.W, IsoDirections.SE }
--- Lighting passes a facing is held for: the main thread hands the facing to the lighting thread on
--- its next update, the thread's next pass sees with it, and the pass after that one is back.
-local LOOK_PASSES = 3
--- The lighting thread shows a change of facing within about a tenth of a second, so lighting this
--- long unchanged has settled.
-local SETTLE_MS = 300
-local SETTLE_RADIUS = 15
--- Steps to scroll in to reach the closest zoom.
-local STEPS_TO_CLOSEST = 8
-
--- How many squares around the character it has seen, and the sum of their light levels: together
--- they change when a square is newly seen or its light changes.
-local function lightingState(player)
-    local here = player:getCurrentSquare()
-    if not here then
-        return nil, nil
-    end
-    local cell, x, y, z = getCell(), here:getX(), here:getY(), here:getZ()
-    local playerNum = player:getPlayerNum()
-    local seen, light = 0, 0
-    for dx = -SETTLE_RADIUS, SETTLE_RADIUS do
-        for dy = -SETTLE_RADIUS, SETTLE_RADIUS do
-            local square = cell:getGridSquare(x + dx, y + dy, z)
-            if square then
-                seen = seen + (square:isSeen(playerNum) and 1 or 0)
-                light = light + math.floor(square:getLightLevel(playerNum) * 100)
-            end
-        end
-    end
-    return seen, light
-end
-
--- A runSteps wait until the lighting around the character has settled: no square newly seen and
--- no light level changed for SETTLE_MS.
-local function lightingSettled(player)
-    -- The lighting changes only once per pass of its thread, so the area is scanned once a pass
-    -- rather than every one of the hundreds of frames a second an uncapped run draws.
-    local interval = 1000 / getPerformance():getLightingFPS()
-    local lastSeen, lastLight, since, sampled
-    return function()
-        local now = getTimestampMs()
-        if sampled and now - sampled < interval then
-            return false
-        end
-        sampled = now
-        local seen, light = lightingState(player)
-        if seen ~= lastSeen or light ~= lastLight or not since then
-            lastSeen, lastLight, since = seen, light, now
-            return false
-        end
-        return now - since >= SETTLE_MS
-    end
-end
-
--- Removes every tree within TREE_RADIUS of x, y on level z.
-local function removeTrees(x, y, z)
-    local cell = getCell()
-    for dx = -TREE_RADIUS, TREE_RADIUS do
-        for dy = -TREE_RADIUS, TREE_RADIUS do
-            local square = cell:getGridSquare(x + dx, y + dy, z)
-            local tree = square and square:getTree()
-            if tree then
-                square:RemoveTileObject(tree)
-            end
-        end
-    end
-end
-
--- Adds the steps that put the character on `square` and have it look around, since squares it
--- never saw are drawn dark. Its sight sweeps round with each turn, so only the last waits for the
--- lighting to settle.
-local function addLookAround(steps, player, square)
-    table.insert(steps, function()
-        -- To the middle: teleportTo alone leaves it on the north-west corner, inside the footprint
-        -- of whatever stands diagonally behind it.
-        PZHarness.Fixtures.teleportToMiddle(player, square:getX(), square:getY(), square:getZ())
-        return function()
-            return player:getCurrentSquare() == square
-        end
-    end)
-    for _, direction in ipairs(LOOK_AROUND) do
-        local target = direction:ToVector()
-        local length = math.sqrt(target:getX() ^ 2 + target:getY() ^ 2)
-        local targetX, targetY = target:getX() / length, target:getY() / length
-        -- Turned at once, body and animation, rather than over the half second a turn takes.
-        table.insert(steps, function()
-            player:setTargetAndCurrentDirection(targetX, targetY)
-            local untilMs = getTimestampMs() + LOOK_PASSES * 1000 / getPerformance():getLightingFPS()
-            return function()
-                return getTimestampMs() >= untilMs
-            end
-        end)
-    end
-    table.insert(steps, function()
-        return lightingSettled(player)
-    end)
-end
-
--- Sets the zoom `stepsOut` steps out from the closest.
-local function zoomOut(stepsOut)
-    for _ = 1, STEPS_TO_CLOSEST do
-        getCore():doZoomScroll(0, -1)
-    end
-    for _ = 1, stepsOut do
-        getCore():doZoomScroll(0, 1)
-    end
-end
-
 -- Builds the whole stage. Returns what was missing, or nil.
 local function buildStage(lot)
     local LineSystem = EnhancedIrrigation.LineSystem
     if not LineSystem or not SFarmingSystem then
         return "the authority's systems (LineSystem, SFarmingSystem); --art runs in single player only"
     end
-    removeTrees(lot.x, lot.y, lot.z)
+    Harness.removeTrees(lot.x, lot.y, lot.z)
     Stage.clearLot(lot, AREA.w, AREA.h, MARGIN)
     for _, wall in ipairs(WALLS) do
         PZHarness.Fixtures.newTile(lotSquare(lot, wall.x, wall.y), wall.sprite)
@@ -319,10 +207,9 @@ local function addShot(steps, player, lot, shot)
             end
         end)
     end
-    addLookAround(steps, player, lotSquare(lot, shot.x, shot.y))
+    Harness.addLookAround(steps, player, lotSquare(lot, shot.x, shot.y))
     table.insert(steps, function()
-        zoomOut(shot.zoomSteps)
-        return Capture.zoomSettled()
+        return Harness.zoomOut(shot.zoomSteps)
     end)
     table.insert(steps, function()
         return Capture.DRAW_FRAMES
@@ -337,7 +224,7 @@ function Art.capture(onDone)
     local player = getPlayer()
     local lot = findLot(player)
     if not lot then
-        run:fail("no open lot within " .. Stage.SEARCH_RADIUS .. " squares")
+        run:fail("no open lot within " .. Harness.SEARCH_RADIUS .. " squares")
         return
     end
     print(string.format("%s stage at %d,%d natural=%s", MARK, lot.x, lot.y, tostring(lot.natural)))

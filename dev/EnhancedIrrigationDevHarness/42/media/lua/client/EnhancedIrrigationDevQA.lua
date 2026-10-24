@@ -298,7 +298,7 @@ function QA.setup(player)
     local lot = Stage.findLot(player, AREA.w, AREA.h, true)
     if not lot then
         print(MARK .. " no open lot of soil or grass " .. AREA.w .. "x" .. AREA.h .. " within "
-            .. Stage.SEARCH_RADIUS .. " squares")
+            .. PZHarness.Stage.SEARCH_RADIUS .. " squares")
         return
     end
     local summary = { types = 0, items = 0, unknown = {}, unplaced = {} }

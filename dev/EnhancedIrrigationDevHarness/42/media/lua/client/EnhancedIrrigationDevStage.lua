@@ -1,65 +1,14 @@
--- Development only. What the --art mode and the Enhanced Irrigation QA scenario need besides the
--- harness: finding a lot near the character, clearing its trees and ground cover, building the
--- mod's tiles and sowing crops on it.
+-- Development only. What the --art and --promo modes and the Enhanced Irrigation QA scenario need
+-- besides the harness's staging (PZHarness/Stage.lua): finding a lot near the character, clearing
+-- it, building the mod's tiles and sowing crops on it.
 
 require "PZHarness/Fixtures"
 require "EnhancedIrrigation/Utilities"
+local Harness = require "PZHarness/Stage"
 
 local Stage = {}
 
--- How far around the character a place is looked for, in squares.
-Stage.SEARCH_RADIUS = 40
-
---- The loaded square closest to the character, within SEARCH_RADIUS on its level, for which
---- `accepts(square)` holds, or nil. Of squares as close, the one furthest west, then north.
-function Stage.closestSquare(player, accepts)
-    local here = player:getCurrentSquare()
-    local x, y, z = here:getX(), here:getY(), here:getZ()
-    local best, bestDistance, bestDx, bestDy
-    -- Ring by ring outwards, until no square of the next ring can be as close as the best.
-    for radius = 0, Stage.SEARCH_RADIUS do
-        if bestDistance and radius * radius > bestDistance then
-            break
-        end
-        for sx, sy in PZHarness.Fixtures.ring(x, y, radius) do
-            local dx, dy = sx - x, sy - y
-            local distance = dx * dx + dy * dy
-            if not bestDistance or distance < bestDistance
-                or (distance == bestDistance and (dx < bestDx or (dx == bestDx and dy < bestDy))) then
-                local square = getCell():getGridSquare(sx, sy, z)
-                if square and accepts(square) then
-                    best, bestDistance, bestDx, bestDy = square, distance, dx, dy
-                end
-            end
-        end
-    end
-    return best
-end
-
--- The tileset of the litter the world's generation strews on open ground: twigs, small stumps and
--- fallen branches (tiledefinitions_erosion, WorldGen's generic_plant), only some of which vanilla
--- flags as removable.
-local LITTER = "d_generic_1_"
-
---- Grass, weeds and bushes a character could pull up (as vanilla's remove-grass and building code
---- tell them from other objects), and litter.
-function Stage.isGroundCover(object)
-    local props = object:getProperties()
-    local sprite = object:getSprite() and object:getSprite():getName()
-    return (props ~= nil and (props:has(IsoFlagType.canBeRemoved)
-        or (props:has(IsoFlagType.vegitation) and object:getType() ~= IsoObjectType.tree)))
-        or (sprite ~= nil and luautils.stringStarts(sprite, LITTER))
-end
-
---- Clears the ground cover off `square`, so what is set on it shows.
-function Stage.clearGroundCover(square)
-    local objects = square:getObjects()
-    for i = objects:size() - 1, 0, -1 do
-        if Stage.isGroundCover(objects:get(i)) then
-            square:RemoveTileObject(objects:get(i))
-        end
-    end
-end
+local isGroundCover, clearGroundCover = Harness.isGroundCover, Harness.clearGroundCover
 
 local function isNaturalFloor(square)
     local floor = square:getFloor()
@@ -78,7 +27,7 @@ local function isOpen(square, natural)
     local objects = square:getObjects()
     for i = 0, objects:size() - 1 do
         local object = objects:get(i)
-        if not object:isFloor() and object:getType() ~= IsoObjectType.tree and not Stage.isGroundCover(object) then
+        if not object:isFloor() and object:getType() ~= IsoObjectType.tree and not isGroundCover(object) then
             return false
         end
     end
@@ -97,13 +46,30 @@ local function lotFits(cornerX, cornerY, z, w, h, natural)
     return true
 end
 
+-- Whether a lot `w` by `h` at x, y keeps `gap` squares from each of `others`.
+local function isApart(x, y, w, h, others, gap)
+    for _, other in ipairs(others) do
+        if x < other.x + other.w + gap and other.x < x + w + gap and y < other.y + other.h + gap
+            and other.y < y + h + gap then
+            return false
+        end
+    end
+    return true
+end
+
 --- The north-west corner of the closest lot `w` by `h` squares whose every square is open (only
---- trees and ground cover on it), on soil or grass with `natural`, or nil. Returns { x, y, z }.
-function Stage.findLot(player, w, h, natural)
-    local corner = Stage.closestSquare(player, function(square)
-        return lotFits(square:getX(), square:getY(), square:getZ(), w, h, natural)
+--- trees and ground cover on it), on soil or grass with `natural`, or nil. With `others` (lots this
+--- returned), it keeps `gap` squares from each of them; with `clearance`, the squares that far
+--- round it are open too, of any floor, so that no building or fence stands at its edge. Returns
+--- { x, y, z, w, h }.
+function Stage.findLot(player, w, h, natural, others, gap, clearance)
+    local c = clearance or 0
+    local corner = Harness.closestSquare(player, function(square)
+        local x, y, z = square:getX(), square:getY(), square:getZ()
+        return isApart(x, y, w, h, others or {}, gap or 0) and lotFits(x, y, z, w, h, natural)
+            and (c == 0 or lotFits(x - c, y - c, z, w + 2 * c, h + 2 * c, false))
     end)
-    return corner and { x = corner:getX(), y = corner:getY(), z = corner:getZ() } or nil
+    return corner and { x = corner:getX(), y = corner:getY(), z = corner:getZ(), w = w, h = h } or nil
 end
 
 --- The square `x`, `y` squares east and south of `lot`'s corner, `up` floors above it.
@@ -122,7 +88,7 @@ function Stage.clearLot(lot, w, h, margin)
                 square:RemoveTileObject(tree)
             end
             if square then
-                Stage.clearGroundCover(square)
+                clearGroundCover(square)
             end
         end
     end
