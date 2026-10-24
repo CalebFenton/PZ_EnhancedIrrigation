@@ -176,8 +176,8 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
 
 -- Upkeep --------------------------------------------------------------------------------------------
 
--- Tape over a crack makes the tile whole: it no longer says cracked, and taken up it gives back its
--- pipe like any other. Catches a patch that leaves the tile cracked, or scrap.
+-- Tape over a crack makes the tile whole: its summary doesn't say cracked, and taken up it gives
+-- back its pipe like any other. Catches a patch that leaves the tile cracked, or scrap.
 T.test("irrigation_lines_patch_crack", {
     instant = true,
     run = function(self)
