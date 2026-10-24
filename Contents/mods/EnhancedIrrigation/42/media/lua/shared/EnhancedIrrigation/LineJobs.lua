@@ -132,6 +132,10 @@ function LineJobs.layBlocker(square, pending)
     if not touches and #Tanks.tanksReaching(x, y, z) == 0 and not pumpBeside(x, y, z) then
         return "Tooltip_EnhancedIrrigation_NoTankReach"
     end
+    -- A pump's outlet stays buried where its tile was taken up, and feeds a tile laid back there.
+    if Pumps.pumpFeeding({ { x = x, y = y, z = z } }) then
+        fed = fed + 1
+    end
     -- One line takes one tap or one pump: two would each run every outlet on it.
     if fed >= 2 then
         return "Tooltip_EnhancedIrrigation_JoinsTwoFeeds"

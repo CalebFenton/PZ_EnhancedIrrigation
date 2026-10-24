@@ -326,6 +326,38 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
     end,
 })
 
+-- A pump's outlet stays buried where its tile was taken up, and still feeds a tile laid back
+-- there: laying it beside a line tapped since is refused on the cursor and by the authority, as
+-- joining a tapped and a pumped line is. Catches a pumped tile laid onto a tapped line.
+T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
+    instant = true,
+    run = function(self)
+        local rows = T.row(self, 2)
+        if not rows then return end
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        local tiles = rows[1]
+        T.trackLines(self, tiles)
+        tiles[1].fields = T.tapped()
+        T.placeLine(self, { tiles[1] }, "iron")
+        placePump(self, spots[1])
+        T.server(self, "pumps.link", T.at(spots[1], { tank = T.at(tiles[2]) }))
+        T.waitFor(self, function() return EnhancedIrrigation.Pumps.outletOf(T.at(spots[1])) ~= nil end,
+            "this client's copy of the pump's outlet")
+        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
+        T.goNextTo(self, tiles[2].square)
+        T.step(function() self.refusal = layCursor(self, "iron"):refusal(tiles[2].square) end)
+        T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
+            "forced")
+    end,
+    validate = function(self)
+        expect(self.refusal == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "on a pump's outlet beside a tap: "
+            .. tostring(self.refusal))
+        local forced = self.reads.forced
+        expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile on a pump's outlet beside a tap")
+    end,
+})
+
 -- A wall parts line on either side of it: laying beside line behind a wall finds nothing to join,
 -- their shapes don't meet and the crop behind the wall gets none of the water. A door frame is no
 -- wall, so a line enters a greenhouse by its door. Catches a wall check missing from laying, the
