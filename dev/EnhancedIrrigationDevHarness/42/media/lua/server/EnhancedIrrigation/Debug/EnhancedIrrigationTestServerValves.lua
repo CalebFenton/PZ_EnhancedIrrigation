@@ -43,13 +43,11 @@ local function readWater(args)
     return reply
 end
 
--- Puts the valve `args.item` on the tap at x, y, z as Fit Valve does, set to `args.start` and
--- `args.minutes` if given.
+-- Puts the valve `args.item` on the tap at x, y, z as Fit Valve does.
 handler("valves.place", function(_, args)
     local record, missing = recordAt(args)
     if not record then return nil, missing end
     EnhancedIrrigation.ValveSystem.fit(record, instanceItem(args.item))
-    record.valve.start, record.valve.minutes = args.start, args.minutes
     record:afterChange()
     return valveOf(record)
 end)
