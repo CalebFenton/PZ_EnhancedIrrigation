@@ -3,10 +3,9 @@ require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Frost"
 
--- What the hours do to a line record (LineObject:advance): the soil's soak drying, waterlogged roots
--- rotting and frost splitting full pipe, loaded or not. The hours are run on the server
--- (lines.age), each record as though they had passed since its last pass, so the clock doesn't
--- decide them.
+-- What the hours do to a line record: the soil's soak drying, waterlogged roots rotting and frost
+-- splitting full pipe, loaded or not. The hours are run on the server, each record as though they
+-- had passed since its last pass, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -14,8 +13,7 @@ local Sprites, Lines, Frost = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lin
 
 local POINTS = 0.05
 local TANK_LITRES = 100
--- How long the waterlogged soil of the root rot test stays above the threshold as it dries, of the
--- twice as long it ages.
+-- How long the root rot test's soil stays waterlogged as it dries; the test ages it twice that.
 local LOGGED_HOURS = 6
 
 -- Soak dries faster outdoors than in, at each side's rate, and the tile's soil stops showing wet
@@ -26,7 +24,6 @@ T.test("irrigation_time_soak_dries", {
         local indoor = T.row(self, 1, { indoors = true })
         if not (outdoor and indoor) then return end
         self.tiles = { outdoor[1][1], indoor[1][1] }
-        -- What a day outdoors dries, no more.
         self.start = Lines.SOAK_DRY_OUT
         for _, tile in ipairs(self.tiles) do
             tile.fields = { soak = self.start }
@@ -146,7 +143,8 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
         self.hours = (Lines.HOLE_RATE * Lines.POINTS_PER_LITRE - Lines.DAMP / 2) / self.dryPerHour
         T.reload(self, tile, function()
             T.batch(function()
-                -- Caught up to now first, so the soak dries for exactly the hours away.
+                -- Aged by no hours first, which drops the hours since its last pass, so the soak
+                -- dries for exactly the hours away.
                 T.read(self, "lines.age", { tiles = T.tiles({ tile }), hours = 0 }, "left")
                 T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS - 1 })
                 T.server(self, "lines.pinRoll", {})
