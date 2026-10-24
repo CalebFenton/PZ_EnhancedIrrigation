@@ -68,6 +68,11 @@ function TreatmentObject:spec()
     return self.unit and Treatment.UNITS[self.unit]
 end
 
+--- The litres of raw water the head has room for.
+function TreatmentObject:headRoom()
+    return math.max(0, self:spec().head - self.head)
+end
+
 --- Adds `litres` of raw water to the head, `tainted` or not; the caller kept to its room.
 function TreatmentObject:fill(litres, tainted)
     self.head = self.head + litres
@@ -98,7 +103,7 @@ function TreatmentObject:draw(tank, hours)
     if self:isBurntThrough() or not Treatment.isWater(fluid) then
         return false
     end
-    local litres = math.min(Links.RATE * hours, fluid:getAmount(), self:spec().head - self.head)
+    local litres = math.min(Links.RATE * hours, fluid:getAmount(), self:headRoom())
     if litres < Links.LEAST_FLOW then
         return false
     end

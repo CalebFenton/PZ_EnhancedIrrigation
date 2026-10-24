@@ -77,7 +77,7 @@ local DO = {
     [TreatmentJobs.POUR_IN] = function(character, unit, item)
         local record = Treatment.recordOf(unit)
         local fluid = item:getFluidContainer()
-        local litres = math.min(fluid:getAmount(), record:spec().head - record.head)
+        local litres = math.min(fluid:getAmount(), record:headRoom())
         local tainted = fluid:isTainted()
         fluid:removeFluid(litres, false)
         item:syncItemFields()
