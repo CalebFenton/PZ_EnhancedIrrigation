@@ -164,7 +164,7 @@ end
 function PumpSystem.pump(character, pump, hours)
     local record = Pumps.recordOf(pump)
     if not record then
-        return "Tooltip_EnhancedIrrigation_UnknownJob"
+        return EnhancedIrrigation.Jobs.UNKNOWN
     end
     record:catchUp()
     local into, source = Pumps.flowOf(pump)
