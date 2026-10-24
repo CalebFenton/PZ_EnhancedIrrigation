@@ -1,4 +1,5 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
+require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Stands/StandJobs"
 require "EnhancedIrrigation/UI/StandMenu"
 
@@ -10,6 +11,7 @@ require "EnhancedIrrigation/UI/StandMenu"
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Stands, StandJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Stands, EnhancedIrrigation.StandJobs
+local Tanks = EnhancedIrrigation.Tanks
 
 -- Vanilla's lidded rain barrel, which no rain fills meanwhile, so an empty one stays empty and a
 -- filled one holds what the test put in.
@@ -25,6 +27,12 @@ local function pickUpVanillaBarrel(self, handle)
     T.pickUpAsPlayer(self, placed, BARREL)
     T.waitFor(self, function() return T.player():getInventory():getFirstTypeRecurse(BARREL_HELD) ~= nil end,
         "the barrel vanilla's pickup gives")
+end
+
+-- This client's level of the tank on the handle's square, or nil without one.
+local function clientLevel(handle)
+    local tank = Tanks.tankOn(getSquare(handle.x, handle.y, handle.z))
+    return tank and Tanks.levelOf(tank) or nil
 end
 
 -- The build menu builds a Tank Stand from its recipe on a bare square. Catches a recipe or entity
@@ -61,7 +69,7 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
             T.read(self, "tanks.read", T.at(self.stand), "raised")
             T.count(self, "left", { BARREL_HELD })
         end)
-        T.step(function() self.clientLevel = T.clientLevel(self.stand) end)
+        T.step(function() self.clientLevel = clientLevel(self.stand) end)
     end,
     validate = function(self)
         T.expectOffered(self, "set barrel")
@@ -108,14 +116,14 @@ T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
         if not spots then return end
         self.litres = 30
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
-        T.step(function() self.levelBefore = T.clientLevel(self.tank) end)
+        T.step(function() self.levelBefore = clientLevel(self.tank) end)
         T.useMenu(self, self.tank, "open lid", function(context)
             return T.findNamed(context, context, getText("ContextMenu_OpenLid"))
         end, true)
         T.waitFor(self, function() return T.copyOf(self.tank, Sprites.RAISED_BARREL) ~= nil end,
             "this client's copy of the opened barrel")
         T.read(self, "tanks.read", T.at(self.tank), "opened")
-        T.step(function() self.levelAfter = T.clientLevel(self.tank) end)
+        T.step(function() self.levelAfter = clientLevel(self.tank) end)
     end,
     validate = function(self)
         local z = self.tank.z

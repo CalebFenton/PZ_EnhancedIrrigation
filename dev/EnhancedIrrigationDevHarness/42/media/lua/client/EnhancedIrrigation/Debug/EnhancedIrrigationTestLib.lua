@@ -20,7 +20,7 @@ local Sprites = EnhancedIrrigation.Sprites
 local Pumps = EnhancedIrrigation.Pumps
 
 -- How long this client may take to show what the server changed.
-T.SYNC_MS = 5000
+local SYNC_MS = 5000
 -- How near this client's copy of a tank's water must come to what the server put in it.
 local COPY_LITRES = 0.01
 -- How near the litres a test reads of a tank, basin or fixture must come to its sums.
@@ -30,14 +30,14 @@ T.WALL_WEST = "walls_exterior_house_01_0"
 
 -- Waits and reads -----------------------------------------------------------------------------------
 
---- Queues a wait until `condition()` holds or `ms` (T.SYNC_MS unless given) pass; missing `what` if
+--- Queues a wait until `condition()` holds or `ms` (SYNC_MS unless given) pass; missing `what` if
 --- it never held.
 function T.waitFor(self, condition, what, ms)
     local sinceMs, held = nil, false
     T.waitUntil(function()
         sinceMs = sinceMs or getTimestampMs()
         held = condition() and true or false
-        return held or getTimestampMs() - sinceMs > (ms or T.SYNC_MS)
+        return held or getTimestampMs() - sinceMs > (ms or SYNC_MS)
     end, math.huge, what)
     T.step(function() T.need(self, held, what) end)
 end
@@ -605,11 +605,6 @@ function T.readLines(self, handles, label)
     T.read(self, "lines.read", { tiles = T.tiles(handles) }, label)
 end
 
---- Queues taking away, when the test ends, any line tile on `handles`, such as those its jobs lay.
-function T.trackLines(self, handles)
-    T.server(self, "lines.track", { tiles = T.tiles(handles) })
-end
-
 --- Queues running the line tapped at `tap` for `hours` on the server as the tap runs it; the reply,
 --- the litres `drawn` (nil when no tank fed it), why the water stops, `stopped`, if it does, and
 --- `handles`' tiles, lands in self.reads[label].
@@ -684,12 +679,6 @@ function T.hasOverlay(names, name)
         end
     end
     return false
-end
-
---- This client's level of the tank on the handle's square, or nil without one.
-function T.clientLevel(handle)
-    local tank = Tanks.tankOn(getSquare(handle.x, handle.y, handle.z))
-    return tank and Tanks.levelOf(tank) or nil
 end
 
 --- Queues a sown crop on `handle` at `water` water points, and a wait for this client's copy.

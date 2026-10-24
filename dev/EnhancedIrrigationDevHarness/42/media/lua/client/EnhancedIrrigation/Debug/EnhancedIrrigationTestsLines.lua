@@ -35,6 +35,11 @@ local function readUntil(self, handles, label, done)
     T.readUntil(self, "lines.read", { tiles = T.tiles(handles) }, label, function(reply) return done(reply.tiles) end)
 end
 
+-- Queues taking away, when the test ends, any line tile on `handles`, such as those its jobs lay.
+local function trackLines(self, handles)
+    T.server(self, "lines.track", { tiles = T.tiles(handles) })
+end
+
 local function recordOf(self, label, i)
     local tiles = self.reads[label] and self.reads[label].tiles
     return tiles and tiles[i] and tiles[i].record
@@ -71,7 +76,7 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
         if not rows then return end
         local tiles = rows[1]
         self.tiles = tiles
-        T.trackLines(self, tiles)
+        trackLines(self, tiles)
         T.placeTank(self, tiles[1], "above", 0)
         T.give(self, "pipes", { { type = "Base.MetalPipe", count = #tiles } })
         T.goNextTo(self, tiles[2].square)
@@ -138,7 +143,7 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         if not rows then return end
         local tile = rows[1][1]
         self.tile = tile
-        T.trackLines(self, { tile })
+        trackLines(self, { tile })
         T.placeTank(self, tile, "above", 0)
         T.give(self, "weak joints", { { type = "Base.Woodglue" }, { type = "Base.Scotchtape" } })
         T.give(self, "pipes", { { type = "Base.Pipe" } })
@@ -177,7 +182,6 @@ T.test("irrigation_lines_first_tile_needs_a_tank", {
         local rows = T.row(self, 3, { minDistance = 2 })
         if not rows then return end
         local tiles = rows[1]
-        T.trackLines(self, tiles)
         T.give(self, "pipes", { { type = "Base.MetalPipe", count = #tiles }, { type = "Base.PipeWrench" } })
         T.step(function()
             if not T.need(self, #Tanks.tanksReaching(tiles[1].x, tiles[1].y, tiles[1].z) == 0,
@@ -212,7 +216,7 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         if not rows then return end
         local tiles = rows[1]
         self.size = #tiles
-        T.trackLines(self, tiles)
+        trackLines(self, tiles)
         tiles[1].fields = T.tapped()
         tiles[3].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
@@ -253,7 +257,7 @@ T.test("irrigation_lines_first_tile_beside_a_pump", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 2, 0 } }, { bare = true, minDistance = 2 })
         if not spots then return end
         local pump, beside, far = spots[1], spots[2], spots[3]
-        T.trackLines(self, { beside, far })
+        trackLines(self, { beside, far })
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.placePump(self, pump, IRON_PUMP)
         T.goNextTo(self, beside.square)
@@ -286,7 +290,7 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         local tiles = rows[1]
-        T.trackLines(self, tiles)
+        trackLines(self, tiles)
         tiles[1].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
         T.placePump(self, spots[1], IRON_PUMP)
@@ -316,7 +320,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         local tiles = rows[1]
-        T.trackLines(self, tiles)
+        trackLines(self, tiles)
         T.placeLine(self, { tiles[2] }, "iron")
         T.placePump(self, spots[1], IRON_PUMP)
         T.linkPump(self, spots[1], tiles[2])
@@ -354,7 +358,6 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
         if not rows then return end
         local behind, inside, doorway = rows[1][1], rows[1][2], rows[1][3]
         self.tiles = { behind, inside, doorway }
-        T.trackLines(self, self.tiles)
         -- The wall stands on the middle square's west edge, the door frame on the east square's.
         T.placeTile(self, inside.square, T.WALL_WEST)
         T.placeTile(self, doorway.square, DOOR_FRAME_WEST)
@@ -671,7 +674,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
         local rows = T.row(self, 1)
         if not rows then return end
         local tile = rows[1][1]
-        T.trackLines(self, { tile })
+        trackLines(self, { tile })
         T.placeTank(self, tile, "above", 0)
         self.worn = math.floor(instanceItem(Pipes.KINDS.iron.item):getConditionMax() / 2)
         T.give(self, "pipe", { { type = Pipes.KINDS.iron.item, condition = self.worn }, { type = "Base.PipeWrench" } })
