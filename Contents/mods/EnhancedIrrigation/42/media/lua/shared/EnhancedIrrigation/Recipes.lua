@@ -8,10 +8,13 @@ EnhancedIrrigation.Recipes = Recipes
 
 -- The mod's recipes with AutoLearnAny or AutoLearnAll. Vanilla's AutoLearn check
 -- (ScriptManager.checkAutoLearn) walks only the craftRecipe scripts, which hold no entity's recipe,
--- so the Tank Stand's AutoLearn never teaches anything unless the mod asks for it. Plumb to Tank is
+-- so the build recipes' AutoLearn never teaches anything unless the mod asks for it. Plumb to Tank is
 -- a craftRecipe vanilla checks too; it is here so that a level up that teaches it reaches the
 -- client whichever LevelPerk hook runs first.
-Recipes.AUTO_LEARN = { "EnhancedIrrigation_TankStand", "EnhancedIrrigation_PlumbToTank" }
+Recipes.AUTO_LEARN = {
+    "EnhancedIrrigation_TankStand", "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter",
+    "EnhancedIrrigation_PlumbToTank",
+}
 
 -- The packet field of sendSyncPlayerFields that sends the known recipes (SyncPlayerFieldsPacket).
 local SYNC_RECIPES = 1

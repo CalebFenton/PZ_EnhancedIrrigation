@@ -7,23 +7,26 @@ require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Lines"
 require "EnhancedIrrigation/LineJobs"
+require "EnhancedIrrigation/Treatment"
+require "EnhancedIrrigation/TreatmentJobs"
 
--- Every hands-on job of fixed length at one of the mod's objects (StandJobs, LinkJobs, LineJobs).
+-- Every hands-on job of fixed length at one of the mod's objects (StandJobs, LinkJobs, LineJobs,
+-- TreatmentJobs).
 -- In multiplayer the client runs start() and perform() and the server rebuilds the action from
 -- new()'s parameters and runs complete(), which does the job; single player runs both. A global,
 -- as the server finds the class by its Type (NetTimedAction.parse).
 EnhancedIrrigationAction = EnhancedIrrigationAction or ISBaseTimedAction:derive("EnhancedIrrigationAction")
 
 local Action = EnhancedIrrigationAction
-local Stands, LineJobs = EnhancedIrrigation.Stands, EnhancedIrrigation.LineJobs
+local Stands, LineJobs, Treatment = EnhancedIrrigation.Stands, EnhancedIrrigation.LineJobs, EnhancedIrrigation.Treatment
 
 -- Each feature: isTarget(object), the objects it works at; jobs, its job module
 -- (Jobs.define), whose JOBS[job] rows also say how long the job takes and how it looks;
 -- perform(character, job, object, with), which does the job on the authority and returns whether
 -- it was done, looked up when a job completes, since server files load after shared ones.
--- A JOBS row: minutes (a number, or function(object, with)); anim and position (the loot animation
--- low down when absent); heavy (heavy work while it lasts); sound, played while it lasts, and
--- doneSound, when it's done; equip(character, object, with), which picks the tool to hold while
+-- A JOBS row: minutes (a number, or function(object, with, character)); anim and position (the loot
+-- animation low down when absent); heavy (heavy work while it lasts); sound, played while it lasts,
+-- and doneSound, when it's done; equip(character, object, with), which picks the tool to hold while
 -- the job is done.
 local FEATURES = {
     stand = {
@@ -31,12 +34,12 @@ local FEATURES = {
         jobs = EnhancedIrrigation.StandJobs,
         perform = function(...) return EnhancedIrrigation.StandSystem.perform(...) end,
     },
-    -- Plumbing works at a tank or a fixture; Unplumb also at the floor of an end whose tank or
-    -- fixture is gone.
+    -- Plumbing works at a tank, a fixture or a treatment unit; Unplumb also at the floor of an end
+    -- whose tank, fixture or unit is gone.
     link = {
         isTarget = function(object)
             return EnhancedIrrigation.Tanks.isTank(object) or EnhancedIrrigation.Fixtures.isFixture(object)
-                or EnhancedIrrigation.isFloor(object)
+                or Treatment.isUnit(object) or EnhancedIrrigation.isFloor(object)
         end,
         jobs = EnhancedIrrigation.LinkJobs,
         perform = function(...) return EnhancedIrrigation.LinkSystem.perform(...) end,
@@ -45,6 +48,11 @@ local FEATURES = {
         isTarget = function(object) return EnhancedIrrigation.Lines.isLine(object) or EnhancedIrrigation.isFloor(object) end,
         jobs = LineJobs,
         perform = function(...) return EnhancedIrrigation.LineSystem.perform(...) end,
+    },
+    treatment = {
+        isTarget = Treatment.isUnit,
+        jobs = EnhancedIrrigation.TreatmentJobs,
+        perform = function(...) return EnhancedIrrigation.TreatmentSystem.perform(...) end,
     },
 }
 
@@ -67,7 +75,7 @@ function Action:getDuration()
     end
     local minutes = rowOf(self.feature, self.job).minutes
     if type(minutes) == "function" then
-        minutes = minutes(self.object, self.with)
+        minutes = minutes(self.object, self.with, self.character)
     end
     return minutes * EnhancedIrrigation.unitsPerMinute()
 end

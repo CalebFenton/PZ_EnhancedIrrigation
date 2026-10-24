@@ -1,11 +1,12 @@
 -- The authority's side of the links (shared/EnhancedIrrigation/Links.lua): a Global Object System
 -- with no objects, used for what it saves with the world (its own modData keys) and sends the
 -- clients (its initial state on connect, then a command on each change). Every ten minutes water
--- finds its level through each link between two tanks loaded at both ends, and each plumbed
--- fixture's tank refills its buffer. A link is buried pipe, run through walls and under floors as
--- vanilla's plumbing is, so it never freezes or wears: unlike a garden line it has nothing to age.
--- Nor does it go with a tank or fixture: taken down, picked up or smashed, it leaves the pipe in
--- the ground, and one set on that square again is on it.
+-- finds its level through each link between two tanks loaded at both ends, each plumbed fixture's
+-- tank refills its buffer, and each treatment unit's inlet fills its head and its outlet empties
+-- its basin. A link is buried pipe, run through walls and under floors as vanilla's plumbing is,
+-- so it never freezes or wears: unlike a garden line it has nothing to age. Nor does it go with a
+-- tank, fixture or unit: taken down, picked up or smashed, it leaves the pipe in the ground, and
+-- one set on that square again is on it.
 
 if isClient() then return end
 
@@ -19,6 +20,7 @@ require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Fixtures"
 require "EnhancedIrrigation/Fixtures/FixtureSystem"
+require "EnhancedIrrigation/Treatment/TreatmentSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkSystem = SGlobalObjectSystem:derive("EnhancedIrrigation_LinkSystem")
@@ -28,6 +30,7 @@ local Links, LinkJobs, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigati
     EnhancedIrrigation.Tanks
 local Materials, Fixtures, FixtureSystem = EnhancedIrrigation.Materials, EnhancedIrrigation.Fixtures,
     EnhancedIrrigation.FixtureSystem
+local TreatmentSystem = EnhancedIrrigation.TreatmentSystem
 
 -- Litres an hour a link carries at most: a pipe under a barrel's head passes a few litres a
 -- minute.
@@ -71,13 +74,17 @@ function LinkSystem:sendLinks()
 end
 
 --- Adds the link from the square `a` to the square `b`: `kind` pipe in `lengths` lengths whose
---- items were at `conditions`, none for vanilla's Plumb; `fixture` when `b` is a plumbed fixture.
+--- items were at `conditions`, none for vanilla's Plumb; `role` ("fixture", "inlet" or "outlet")
+--- when `b` is a plumbed fixture or a unit's inlet, or `a` a unit's outlet, set true on the link.
 --- Returns the link.
-function LinkSystem:addLink(a, b, kind, lengths, conditions, fixture)
+function LinkSystem:addLink(a, b, kind, lengths, conditions, role)
     local link = {
         a = { x = a.x, y = a.y, z = a.z }, b = { x = b.x, y = b.y, z = b.z }, kind = kind, lengths = lengths,
-        conditions = conditions, fixture = fixture or nil,
+        conditions = conditions,
     }
+    if role then
+        link[role] = true
+    end
     table.insert(self.links, link)
     self:sendLinks()
     return link
@@ -115,6 +122,19 @@ local DO = {
     [LinkJobs.PLUMB_ABOVE] = function(character, fixture, with)
         local other = Links.decode(with)
         FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), nil, 0, nil)
+        return true
+    end,
+    -- The tank the unit draws from, at the link's `a` end, as fixtures' tanks are.
+    [LinkJobs.PLUMB_INLET] = function(character, unit, with, materials)
+        local kind, lengths = LinkJobs.pipeFor(unit, with)
+        LinkSystem.instance:addLink(Links.decode(with), EnhancedIrrigation.squareOf(unit), kind, lengths,
+            Materials.conditions(character, materials), "inlet")
+        return true
+    end,
+    [LinkJobs.PLUMB_OUTLET] = function(character, unit, with, materials)
+        local kind, lengths = LinkJobs.pipeFor(unit, with)
+        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(unit), Links.decode(with), kind, lengths,
+            Materials.conditions(character, materials), "outlet")
         return true
     end,
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
@@ -195,20 +215,26 @@ local function refill(link, hours)
 end
 
 --- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks,
---- or from a tank into a fixture's buffer. A link with an end unloaded, or gone from it, waits.
+--- from a tank into a fixture's buffer or a unit's head, or out of a unit's basin into a tank. A
+--- link with an end unloaded, or gone from it, waits.
 function LinkSystem:pass(hours)
     local changed = {}
     for _, link in ipairs(self.links) do
+        local tank
         if link.fixture then
-            local tank = refill(link, hours)
-            if tank then
-                changed[tank] = true
-            end
+            tank = refill(link, hours)
+        elseif link.inlet then
+            tank = TreatmentSystem.feed(link, LinkSystem.LINK_RATE * hours)
+        elseif link.outlet then
+            tank = TreatmentSystem.drain(link, LinkSystem.LINK_RATE * hours)
         else
             local tankA, tankB = Tanks.tankAt(link.a.x, link.a.y, link.a.z), Tanks.tankAt(link.b.x, link.b.y, link.b.z)
             if tankA and tankB and flow(tankA, tankB, hours) then
                 changed[tankA], changed[tankB] = true, true
             end
+        end
+        if tank then
+            changed[tank] = true
         end
     end
     for tank in pairs(changed) do

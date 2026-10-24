@@ -3,26 +3,37 @@ require "TimedActions/ISReadABook"
 require "ISUI/ISInventoryPaneContextMenu"
 require "Entity/ISEntityUI"
 
--- How the character learns the mod's two recipes, the Tank Stand (a build-menu recipe) and Plumb to
--- Tank (knowledge with nothing to craft, Recipes.txt), and where the pamphlet that teaches them
--- turns up. Reading goes through vanilla's read action, levels through the authority's XP award,
--- which fires LevelPerk; the lists are vanilla's own windows and menus. Each side's copy of the
--- character is checked: the authority's decides the build and the plumbing, this client's the
--- menus. EnhancedIrrigationTestServerLearning.lua holds the server's half.
+-- How the character learns the mod's recipes, the build-menu ones (the Tank Stand and the Barrel
+-- and Brick Filters) and Plumb to Tank (knowledge with nothing to craft, Recipes.txt), and where
+-- the pamphlet that teaches them turns up. Reading goes through vanilla's read action, levels
+-- through the authority's XP award, which fires LevelPerk; the lists are vanilla's own windows and
+-- menus. Each side's copy of the character is checked: the authority's decides the builds and the
+-- plumbing, this client's the menus. EnhancedIrrigationTestServerLearning.lua holds the server's
+-- half.
 
 local T = EnhancedIrrigationTest
 local test, expect = T.test, T.expect
 
 local PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
 local STAND, PLUMB = "EnhancedIrrigation_TankStand", "EnhancedIrrigation_PlumbToTank"
-local BOTH = { STAND, PLUMB }
+local BUILDS = { STAND, "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter" }
+local RECIPES = { STAND, BUILDS[2], BUILDS[3], PLUMB }
+
+-- Every one of RECIPES marked true.
+local function all()
+    local marked = {}
+    for _, name in ipairs(RECIPES) do
+        marked[name] = true
+    end
+    return marked
+end
 
 -- Knowledge ---------------------------------------------------------------------------------------
 
--- Which of BOTH this client's copy of the character knows.
+-- Which of RECIPES this client's copy of the character knows.
 local function knownHere()
     local known, p = {}, T.player()
-    for _, name in ipairs(BOTH) do
+    for _, name in ipairs(RECIPES) do
         known[name] = p:isRecipeActuallyKnown(name)
     end
     return known
@@ -39,7 +50,7 @@ local function awaitKnown(self, expected)
         end
         return true
     end
-    T.serverUntil(self, "learning.known", { names = BOTH }, function(reply) return knowsAll(reply and reply.known) end)
+    T.serverUntil(self, "learning.known", { names = RECIPES }, function(reply) return knowsAll(reply and reply.known) end)
     for name, want in pairs(expected) do
         if want then
             T.waitFor(self, function() return knownHere()[name] end, "this client's copy of the character knowing " .. name)
@@ -50,22 +61,22 @@ local function awaitKnown(self, expected)
     end)
 end
 
--- Expects each side to know exactly the recipes `expected` marks true, of BOTH, after `what`.
+-- Expects each side to know exactly the recipes `expected` marks true, of RECIPES, after `what`.
 local function expectKnown(self, what, expected)
     for side, known in pairs(self.known or {}) do
-        for _, name in ipairs(BOTH) do
+        for _, name in ipairs(RECIPES) do
             local want = expected[name] == true
             expect(known[name] == want, what .. (want and " did not teach " or " taught ") .. name .. " on the " .. side)
         end
     end
 end
 
--- Reading the pamphlet through vanilla's action teaches both recipes, on the authority too, whose
--- copy the build and the plumbing ask.
-test("irrigation_learning_reading_the_pamphlet_teaches_both_recipes", {
+-- Reading the pamphlet through vanilla's action teaches every recipe, on the authority too, whose
+-- copy the builds and the plumbing ask.
+test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
     instant = true,
     run = function(self)
-        T.knowRecipes(self, BOTH, false)
+        T.knowRecipes(self, RECIPES, false)
         T.give(self, "pamphlet", { { type = PAMPHLET } })
         -- A title read within the literature cooldown teaches nothing (ISReadABook:complete), and
         -- every copy shares its title, so a rerun in the same world would read nothing.
@@ -78,10 +89,10 @@ test("irrigation_learning_reading_the_pamphlet_teaches_both_recipes", {
             end
             ISTimedActionQueue.add(ISReadABook:new(p, item))
         end)
-        awaitKnown(self, { [STAND] = true, [PLUMB] = true })
+        awaitKnown(self, all())
     end,
     validate = function(self)
-        expectKnown(self, "reading Cisterns for Kentucky", { [STAND] = true, [PLUMB] = true })
+        expectKnown(self, "reading Cisterns for Kentucky", all())
     end,
 })
 
@@ -101,14 +112,14 @@ local function autoLearnOf(name)
     return skills
 end
 
--- Which of BOTH a character with `perk` at `level` and every other perk at 0 has the AutoLearn
+-- Which of RECIPES a character with `perk` at `level` and every other perk at 0 has the AutoLearn
 -- skills of, as their scripts state them.
 local function earnedAt(perk, level)
     local function meets(skill)
         return skill.level <= (skill.perk == perk and level or 0)
     end
     local earned = {}
-    for _, name in ipairs(BOTH) do
+    for _, name in ipairs(RECIPES) do
         local skills = autoLearnOf(name)
         for _, skill in ipairs(skills.any) do
             earned[name] = earned[name] or meets(skill)
@@ -124,10 +135,10 @@ local function earnedAt(perk, level)
     return earned
 end
 
--- Every perk and level BOTH name in their AutoLearn skills, once each, and the highest.
+-- Every perk and level RECIPES name in their AutoLearn skills, once each, and the highest.
 local function autoLearnLevels()
     local rows, seen, highest = {}, {}, nil
-    for _, name in ipairs(BOTH) do
+    for _, name in ipairs(RECIPES) do
         local skills = autoLearnOf(name)
         for _, list in ipairs({ skills.any, skills.all }) do
             for _, skill in ipairs(list) do
@@ -155,23 +166,23 @@ local function levelsWith(rows, perk, level)
     return levels
 end
 
--- For each perk and level the recipes' AutoLearn skills name, a character who knows neither recipe
+-- For each perk and level the recipes' AutoLearn skills name, a character who knows none of them
 -- levels that perk up to that level, every other at 0, and then knows exactly the recipes whose
 -- AutoLearn it meets, on both sides: vanilla's AutoLearn teaches Plumb to Tank, a craftRecipe, and
--- the mod's LevelPerk hook the stand, since vanilla's skips build recipes. Catches a recipe taught
+-- the mod's LevelPerk hook the builds, since vanilla's skips build recipes. Catches a recipe taught
 -- a level early or never, or taught on one side only.
 test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
     timeoutSeconds = 90,
     run = function(self)
         local rows = autoLearnLevels()
-        if not T.need(self, #rows > 0, "an AutoLearn skill on " .. table.concat(BOTH, " or ")) then return end
+        if not T.need(self, #rows > 0, "an AutoLearn skill on " .. table.concat(RECIPES, " or ")) then return end
         self.rows, self.results = rows, {}
-        T.knowRecipes(self, BOTH, false)
+        T.knowRecipes(self, RECIPES, false)
         for i, row in ipairs(rows) do
-            -- Each row starts knowing neither; knowRecipes puts back what was known before the test.
-            T.step(function() PZHarness.Fixtures.forgetRecipes(T.player(), BOTH) end)
+            -- Each row starts knowing none; knowRecipes puts back what was known before the test.
+            T.step(function() PZHarness.Fixtures.forgetRecipes(T.player(), RECIPES) end)
             T.server(self, "learning.levelUp", { perk = row.perk, levels = levelsWith(rows, row.perk, row.level - 1),
-                names = BOTH, forget = BOTH })
+                names = RECIPES, forget = RECIPES })
             awaitKnown(self, earnedAt(row.perk, row.level))
             T.step(function()
                 self.results[i] = { up = self.server["learning.levelUp"] or {}, known = self.known }
@@ -198,10 +209,10 @@ test("irrigation_learning_joining_server_catches_up_earned_recipes", {
     mpOnly = "single player has one copy of the character, which IsoWorld.init's own check covers",
     run = function(self)
         local rows, highest = autoLearnLevels()
-        if not T.need(self, highest, "an AutoLearn skill on " .. table.concat(BOTH, " or ")) then return end
+        if not T.need(self, highest, "an AutoLearn skill on " .. table.concat(RECIPES, " or ")) then return end
         self.highest = highest
-        T.knowRecipes(self, BOTH, false)
-        T.server(self, "learning.setLevels", { levels = levelsWith(rows, highest.perk, highest.level), names = BOTH })
+        T.knowRecipes(self, RECIPES, false)
+        T.server(self, "learning.setLevels", { levels = levelsWith(rows, highest.perk, highest.level), names = RECIPES })
         T.step(function()
             local Recipes = EnhancedIrrigation.Recipes
             sendClientCommand(T.player(), Recipes.COMMAND_MODULE, Recipes.CATCH_UP, {})
@@ -210,8 +221,11 @@ test("irrigation_learning_joining_server_catches_up_earned_recipes", {
     end,
     validate = function(self)
         local before = self.server["learning.setLevels"] or {}
-        expect(before.known and not before.known[STAND] and not before.known[PLUMB],
-            "setting the levels alone taught the server a recipe, so the catch-up is untested")
+        local knewAny = not before.known
+        for _, name in ipairs(RECIPES) do
+            knewAny = knewAny or before.known[name] == true
+        end
+        expect(not knewAny, "setting the levels alone taught the server a recipe, so the catch-up is untested")
         local highest = self.highest
         expectKnown(self, "joining at " .. highest.perk .. " " .. highest.level, earnedAt(highest.perk, highest.level))
     end,
@@ -278,7 +292,7 @@ end
 -- shown. Its logic does hold it, so OnAddToMenu is what keeps it out.
 test("irrigation_learning_plumb_to_tank_in_no_crafting_list", {
     run = function(self)
-        T.knowRecipes(self, BOTH, true)
+        T.knowRecipes(self, RECIPES, true)
         T.defer(self, function() ISEntityUI.CloseWindows() end)
         T.step(function()
             ISEntityUI.OpenHandcraftWindow(T.player(), nil, "*")
@@ -308,11 +322,11 @@ test("irrigation_learning_plumb_to_tank_in_no_crafting_list", {
     end,
 })
 
--- The build menu shows the Tank Stand to a character who knows it, searched for too, and never
--- Plumb to Tank.
-test("irrigation_learning_build_menu_shows_the_stand_not_plumbing", {
+-- The build menu shows each build to a character who knows it, the Tank Stand searched for too,
+-- and never Plumb to Tank.
+test("irrigation_learning_build_menu_shows_the_builds_not_plumbing", {
     run = function(self)
-        T.knowRecipes(self, BOTH, true)
+        T.knowRecipes(self, RECIPES, true)
         T.defer(self, function() ISEntityUI.CloseWindows() end)
         T.step(function()
             ISEntityUI.OpenBuildWindow(T.player(), nil, "*")
@@ -324,7 +338,9 @@ test("irrigation_learning_build_menu_shows_the_stand_not_plumbing", {
         end)
     end,
     validate = function(self)
-        expectShown(self.default, STAND, true, "the build menu")
+        for _, name in ipairs(BUILDS) do
+            expectShown(self.default, name, true, "the build menu")
+        end
         expectShown(self.searched, STAND, true, "the build menu searched for it")
         expectShown(self.default, PLUMB, false, "the build menu")
     end,
@@ -335,7 +351,7 @@ test("irrigation_learning_build_menu_shows_the_stand_not_plumbing", {
 -- refreshed as it does when the inventory changes (ISHandCraftPanel:update, drawDirty).
 test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
     run = function(self)
-        T.knowRecipes(self, BOTH, true)
+        T.knowRecipes(self, RECIPES, true)
         T.defer(self, function() ISEntityUI.CloseWindows() end)
         T.give(self, "pamphlet", { { type = PAMPHLET } })
         local function craftable()

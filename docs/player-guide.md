@@ -2,7 +2,7 @@
 
 How the mod's systems work, for players who want more than the Workshop page tells them, and where to start looking for the gear. Figures assume the default sandbox settings and vanilla's own plant figures: 1 L of water is 50 water points, a plant holds 100, and a plant uses about 5 a day.
 
-This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, and garden lines. Pumps, filters, boilers and timers are planned, but they aren't in the game yet.
+This version has raised tanks, tanks plumbed together, sinks, baths, toilets and washers plumbed to a tank, garden lines, and sand filters that make rain water safe to drink. Pumps, boilers, the filter crock and timers are planned, but they aren't in the game yet.
 
 ## Mechanics
 
@@ -14,7 +14,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Level | A tank's level is the floor it stands on, plus one if it's on a Tank Stand. A barrel on the ground is level 0. A barrel on a stand, or on the floor one storey up, is level 1. A barrel on a stand one storey up is level 2. |
 | Pressure | A tap runs only from a tank at least one level above the line. A barrel on the ground waters nothing by gravity. Each extra level pushes harder: two levels above the line run about 1.4 times as fast, three about 1.7 times. |
 | Filling a tank | Rain, through an open lid, as with vanilla's barrels. You can also pour in water with vanilla's fluid menu, or let a tank plumbed to it fill it from above. |
-| Taint | Water keeps whatever taint it had. Rain comes in tainted, and nothing in this version cleans it. |
+| Taint | Water keeps whatever taint it had. Rain comes in tainted; a ripe sand filter is what cleans it (Making water safe, below). |
 
 ### Tank Stand
 
@@ -48,7 +48,7 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Height | The tank must stand at least a level above the fixture, as for a tap. One on the fixture's own level is greyed out, saying so. |
 | Vanilla's Plumb | Vanilla's **Plumb**, on a fixture in a room under a barrel one storey up, still works without learning and takes no pipe, only a Pipe Wrench. It makes the same connection as Plumb to Tank, so the barrel's water stays tainted. A rooftop barrel no longer purifies. Sandbox: **Plumbing keeps taint**. |
 | The fixture's water | Where no town water reaches it (after the shutoff, or in a cabin you built), a plumbed fixture holds its own water: 20 L for a sink, toilet, shower or washer, 100 L for a bath. It fills from the tank, then refills up to 20 L every ten minutes while the tank has water and the height. Drink, fill, wash and the washer use vanilla's own actions on it. |
-| Taint | The fixture holds the tank's water as it is. A tainted tank gives tainted taps, with vanilla's warning and sickness. Nothing in this version cleans it. |
+| Taint | The fixture holds the tank's water as it is. A tainted tank gives tainted taps, with vanilla's warning and sickness. Plumb the fixture to a clean tank that a filter fills. |
 | The town's water | While the town's water still runs, it wins: a plumbed fixture in a house gives clean town water and leaves the tank alone. Within ten minutes of the shutoff it switches to the tank. The water vanilla leaves in a fixture's pipes after the shutoff (20 L in a sink) is set aside while it's plumbed, and comes back when you unplumb it, along with whatever the fixture still holds. |
 | Unplumb | From the fixture, the tank, or the bare floor where the tank stood: 10 minutes with a Pipe Wrench. Every length comes back; vanilla's Plumb laid none. |
 | Washer | A plumbed washing machine keeps its **Turn On** switch. It needs power, and draws about a litre a minute while it runs, which the tank keeps up with. |
@@ -88,14 +88,29 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 | Cracks | A cracked tile leaks about 3 L an hour while the tap runs, more from a higher tank. The water wets the ground but no plant gets it. **Patch Crack** takes 3 minutes and one use of glue, epoxy or duct tape on any pipe. |
 | Take Up Pipe | 3 minutes. Each length comes back in the condition it went in; laid pipe doesn't wear. A cracked length is lost, and a tap's length comes back with its tile. The joints are used up. A sledgehammer also removes a tile, but you lose the pipe. |
 
+### Making water safe
+
+| Mechanic | How it works |
+|---|---|
+| Building a filter | In the build menu, beside the rain collectors. **Barrel Filter**: Carpentry 2; 6 planks, 5 nails, a gravel bag, 2 sand bags, 5 charcoal, one plastic, iron or lead pipe and one use of glue, epoxy or duct tape; a hammer and a shovel, which you keep. **Brick Filter**: Masonry 3; 24 clay bricks, a bucket of cement or concrete (4 uses), 2 gravel bags, 6 sand bags, 15 charcoal and an iron pipe; a mason's trowel and a shovel, which you keep. Each emptied bag gives its sack back. Both give XP. You learn them from *Cisterns for Kentucky*, or at Carpentry 6 and Masonry 5. |
+| How it works | Raw water waits on top of the sand and seeps through into the filter's basin below, about 4 L an hour in a Barrel Filter (about 100 L a day) and 16 L an hour in a Brick Filter. The top holds 50 L in a barrel and 200 L in brick; so does the basin. Once the basin is full, the water waits on top. The menu's first line says how much is waiting and how the sand is. |
+| Pour In | Right-click the filter, then **Pour In** and the container. Any container of water or tainted water in your main inventory; nothing else goes on the sand. It takes a minute for every 4 L, and the container keeps what doesn't fit. |
+| Ripening | A new filter passes water as tainted as it came in for its first 3 days of use (72 hours with water on the sand), then clean. Check the basin with vanilla's tooltip, and Empty it before plumbing its outlet to a clean tank, or the first batch taints the tank. |
+| Keeping it alive | The sand's film needs water. Two days with nothing on the sand kill it, and it ripens again from scratch. So does a hard freeze (-7 °C or colder) while water stands on the sand, and nothing passes that hour. An empty filter, or one in a heated room, rides out the frost. |
+| Clogging | After 2000 L through a Barrel Filter, or 8000 L through a Brick Filter, it slows to a tenth of its rate and its menu says **Clogged**. **Clean Filter** takes 60 minutes by hand, or 30 with a shovel, garden trowel or mason's trowel. After a cleaning the filter passes tainted water for a day while it ripens again. |
+| Drinking from it | The basin works with vanilla's own actions: drink, fill a container, or empty it. Vanilla won't pour into it, so water only reaches it through the sand. |
+| Plumb Inlet | From the filter's menu, to a tank in reach. Reach, pipe, joints, time and learning are the same as Plumb to Tank. The tank must stand at least level with the filter. Every ten minutes it tops the filter up, as long as the tank holds nothing but water. Taint goes with it. |
+| Plumb Outlet | From the filter's menu, to a tank that stands no higher than the filter. Every ten minutes it empties the basin into the tank. Use a lidded tank so rain can't taint it. A filter has one inlet and one outlet, to different tanks. |
+| Unplumb | From the filter, the tank, or the bare floor where either stood, as for tanks. |
+
 ### Learning and options
 
 | Mechanic | How it works |
 |---|---|
-| *Cisterns for Kentucky* | Teaches the Tank Stand and Plumb to Tank, for tanks and fixtures. Reading it eases boredom and stress, as vanilla's magazines do. |
-| Skills | Carpentry 5 teaches the Tank Stand; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
-| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe. |
-| XP | Only building the Tank Stand gives XP. |
+| *Cisterns for Kentucky* | Teaches the Tank Stand, Plumb to Tank (for tanks, fixtures and filters) and the Barrel and Brick Filters. Reading it eases boredom and stress, as vanilla's magazines do. |
+| Skills | Carpentry 5 teaches the Tank Stand, Carpentry 6 the Barrel Filter, Masonry 5 the Brick Filter; Carpentry 4 or Welding 3 teaches Plumb to Tank. A character who already has those levels when the mod is added learns them on entering the world. |
+| No learning needed | Vanilla's Plumb, laying lines, drilling holes, fitting taps, watering, patching, draining and taking up pipe, Pour In and Clean Filter. |
+| XP | Building the Tank Stand and the Barrel Filter give Carpentry XP; the Brick Filter gives Masonry XP. |
 | Sandbox | **Cisterns for Kentucky loot** multiplies how often the pamphlet is found, from 0 to 4. At 0 it's never found, and only the skills teach its plans. **Plumbing keeps taint** (on by default): vanilla's Plumb makes the mod's connection and old plumbed fixtures change over; off, vanilla's plumbing is untouched and a rooftop barrel's water comes out clean. |
 | Adding to a save | The pamphlet turns up only in containers nobody has opened yet. Barrels already in your world count as tanks straight away. |
 
@@ -103,24 +118,28 @@ This version has raised tanks, tanks plumbed together, sinks, baths, toilets and
 
 | What | Kind | Made from, or found | Used for |
 |---|---|---|---|
-| *Cisterns for Kentucky* | Pamphlet, weight 0.1 | Found only | Teaches the Tank Stand and Plumb to Tank |
+| *Cisterns for Kentucky* | Pamphlet, weight 0.1 | Found only | Teaches the Tank Stand, the filters and Plumb to Tank |
 | Tank Stand | Built | Carpentry 3: 4 logs, 6 planks, 8 nails; hammer, saw | Holds one rain barrel a level up |
 | Raised Rain Barrel | A barrel on a stand | Set Barrel on Stand | A 600 L tank a level up |
+| Barrel Filter | Built | Carpentry 2: 6 planks, 5 nails, gravel bag, 2 sand bags, 5 charcoal, a pipe and a joint; hammer, shovel | About 100 L of clean water a day, once ripe |
+| Brick Filter | Built | Masonry 3: 24 clay bricks, 4 uses of cement, 2 gravel bags, 6 sand bags, 15 charcoal, an iron pipe; mason's trowel, shovel | Four times a Barrel Filter's water |
 | Garden line tile | Laid | One tile of pipe and its joint | Carries water; holed, it waters the plant on its square |
 | Tap | Fitted to a line tile | A Pipe Wrench, one length of pipe and its joint | Where you run the line |
-| Buried pipe | Plumbed between tanks, or from a tank to a fixture | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, or into a fixture |
+| Buried pipe | Plumbed between tanks, from a tank to a fixture, or into and out of a filter | 1 length of pipe per 3 tiles, with joints; none for vanilla's Plumb | Moves water between tanks, into a fixture, or through a filter |
 | Plumbed fixture | A vanilla sink, bath, shower, toilet or washer | Plumb to Tank, or vanilla's Plumb | Holds its tank's water for vanilla's drink, fill, wash and washer |
 
 Everything else is vanilla:
 
 | Vanilla item | Used for |
 |---|---|
-| Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps and buried pipe |
-| Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack |
-| Bucket of Clay Cement or Concrete | Joints in clay pipe |
-| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, vanilla's Plumb, Unplumb |
+| Plastic, Iron and Lead Pipe; Clay Pipe Segments | Lines, taps, buried pipe and a filter's outlet |
+| Glue, Epoxy, Duct Tape | Joints in plastic pipe; patching any crack; the Barrel Filter's outlet |
+| Bucket of Clay Cement or Concrete | Joints in clay pipe; the Brick Filter |
+| Pipe Wrench | Laying iron or lead line, Fit Tap, Plumb to Tank, Plumb Inlet and Outlet, vanilla's Plumb, Unplumb |
 | Hand Drill, Auger Drill, awls, Stone Drill, hammer and nails | Drill Holes |
 | Rain barrel | Set on a Tank Stand |
+| Sand Bag, Gravel Bag, Charcoal, Clay Bricks | The filters |
+| Shovel, garden trowel, mason's trowel | Building the filters; Clean Filter |
 
 ## Where to look
 
@@ -137,4 +156,4 @@ Everything else is vanilla:
 
 ### Places already set up
 
-None. Every stand, line and link is one you build.
+None. Every stand, line, filter and link is one you build.

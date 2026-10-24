@@ -17,5 +17,9 @@
     "ContextMenu_EnhancedIrrigation_WaterFromTank": "Water from Tank",
     "ContextMenu_EnhancedIrrigation_PatchCrack": "Patch Crack",
     "ContextMenu_EnhancedIrrigation_DrainLine": "Drain Line",
-    "ContextMenu_EnhancedIrrigation_TakeUpPipe": "Take Up Pipe"
+    "ContextMenu_EnhancedIrrigation_TakeUpPipe": "Take Up Pipe",
+    "ContextMenu_EnhancedIrrigation_PourIn": "Pour In",
+    "ContextMenu_EnhancedIrrigation_CleanFilter": "Clean Filter",
+    "ContextMenu_EnhancedIrrigation_PlumbInlet": "Plumb Inlet",
+    "ContextMenu_EnhancedIrrigation_PlumbOutlet": "Plumb Outlet"
 }

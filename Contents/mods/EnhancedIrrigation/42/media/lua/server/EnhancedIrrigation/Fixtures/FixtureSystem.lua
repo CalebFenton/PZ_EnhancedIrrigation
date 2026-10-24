@@ -96,7 +96,7 @@ end
 function FixtureSystem.plumb(fixture, tank, kind, lengths, conditions)
     FixtureSystem.ensureBuffer(fixture)
     local link = EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(tank),
-        EnhancedIrrigation.squareOf(fixture), kind, lengths, conditions, true)
+        EnhancedIrrigation.squareOf(fixture), kind, lengths, conditions, "fixture")
     link.reserve = holdReserve(fixture)
     if not Fixtures.townWaterRuns(fixture) and FixtureSystem.fill(tank, fixture, Fixtures.capacityOf(fixture)) then
         Tanks.sync(tank)

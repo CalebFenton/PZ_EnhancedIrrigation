@@ -26,11 +26,11 @@ function Server.squareAt(args)
 end
 
 --- Whether `object` is one of the things the tank tests place: a stand, with or without its barrel,
---- a tank, or a well, which isn't one.
+--- a tank, a treatment unit, or a well, which isn't a tank.
 function Server.isPlaced(object)
     local EI = mod()
     return EI.Stands.isStand(object) or EI.Stands.isRaised(object) or EI.Tanks.isTank(object)
-        or EI.entityName(object) == "Well"
+        or EI.Treatment.isUnit(object) or EI.entityName(object) == "Well"
 end
 
 --- Removes the stand or tank at x, y, z the way the game removes an object.
@@ -98,11 +98,12 @@ end
 
 -- Tanks ---------------------------------------------------------------------------------------------
 
--- Builds the object of the tile `sprite` on `square` as the build menu builds one
--- (ISBuildIsoEntity:setInfo): a thumpable with the entity that owns the tile, holding `litres` of
--- water (tainted when `tainted`). Sends it to the clients with its water: a sync sent after can
--- reach a client before the object does, which drops it. Returns it, or nil and what is missing.
-local function build(square, sprite, litres, tainted)
+--- Builds the object of the tile `sprite` on `square` as the build menu builds one
+--- (ISBuildIsoEntity:setInfo): a thumpable with the entity that owns the tile, holding `litres` of
+--- water (tainted when `tainted`), without its OnCreate. Sends it to the clients with its water: a
+--- sync sent after can reach a client before the object does, which drops it. Returns it, or nil
+--- and what is missing.
+function Server.build(square, sprite, litres, tainted)
     local script = mod().tileEntity(sprite)
     if not script then
         return nil, "the entity of the tile " .. tostring(sprite)
@@ -135,7 +136,7 @@ handler("tanks.place", function(_, args, defer)
             getCell():checkHaveRoof(args.x, args.y)
         end)
     end
-    local object, missing = build(square, args.sprite, args.litres, args.tainted)
+    local object, missing = Server.build(square, args.sprite, args.litres, args.tainted)
     if not object then
         return nil, missing
     end
@@ -160,7 +161,7 @@ handler("tanks.remove", function(_, args)
 end)
 
 -- The system whose perform does each action feature's jobs.
-local SYSTEMS = { stand = "StandSystem", link = "LinkSystem" }
+local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "TreatmentSystem" }
 
 -- Runs the job `args.job` of the action feature `args.feature` at the object at x, y, z through the
 -- authority's own perform (what the action's complete() calls), with `args.with`, or with the first

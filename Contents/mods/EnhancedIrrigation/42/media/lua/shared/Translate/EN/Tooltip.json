@@ -27,6 +27,16 @@
     "Tooltip_EnhancedIrrigation_FixturePlumbed": "This fixture is already plumbed to a tank.",
     "Tooltip_EnhancedIrrigation_NotCracked": "This pipe isn't cracked.",
     "Tooltip_EnhancedIrrigation_LineEmpty": "The line is already empty.",
-    "Tooltip_EnhancedIrrigation_CisternsForKentucky": "A University of Kentucky extension leaflet on keeping and moving farm water: a barrel on a log stand for pressure, and tanks piped together to share what the rain gives.",
-    "Tooltip_EnhancedIrrigation_TankStand": "A log tower a storey high. A rain barrel set on its deck stands high enough to water a garden line below."
+    "Tooltip_EnhancedIrrigation_CisternsForKentucky": "A University of Kentucky extension leaflet on keeping and moving farm water: a barrel on a log stand for pressure, tanks piped together to share what the rain gives, and a slow sand filter to make it safe to drink.",
+    "Tooltip_EnhancedIrrigation_TankStand": "A log tower a storey high. A rain barrel set on its deck stands high enough to water a garden line below.",
+    "Tooltip_EnhancedIrrigation_BarrelFilter": "A barrel of sand over gravel and charcoal. Raw water poured on top seeps through slowly; once the sand has ripened for three days of steady use, what comes out is safe to drink.",
+    "Tooltip_EnhancedIrrigation_BrickFilter": "A brick tank of sand over gravel and charcoal, with four times a barrel filter's water. Once the sand has ripened for three days of steady use, what comes out is safe to drink.",
+    "Tooltip_EnhancedIrrigation_NoWaterCarried": "Needs a container of water in your inventory.",
+    "Tooltip_EnhancedIrrigation_OnlyWater": "Only water can go on the sand.",
+    "Tooltip_EnhancedIrrigation_HeadFull": "It is full to the brim.",
+    "Tooltip_EnhancedIrrigation_NotClogged": "Not clogged.",
+    "Tooltip_EnhancedIrrigation_InletPlumbed": "This already has an inlet.",
+    "Tooltip_EnhancedIrrigation_OutletPlumbed": "This already has an outlet.",
+    "Tooltip_EnhancedIrrigation_InletTankTooLow": "The tank must stand at least level with it for water to run in.",
+    "Tooltip_EnhancedIrrigation_OutletTankTooHigh": "The tank must stand no higher than it for water to run out."
 }

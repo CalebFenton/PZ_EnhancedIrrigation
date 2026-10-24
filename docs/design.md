@@ -124,8 +124,9 @@ Every method turns Tainted Water into Water completely or not at all; the game h
   - The part that cleans is the mat of algae and bacteria that grows on the sand (the schmutzdecke). That's the "plants that clean water" idea, and it's real. It also means you keep it alive.
   - **Ripening:** a new filter puts out tainted water for 3 days, and for 1 day after a cleaning. Real filters are run to waste until mature. The filter doesn't divert: check its outlet (vanilla's tooltip says "Tainted" or not), Empty it, and only then plumb its outlet to the clean tank. Plumb it too soon and you taint the clean tank.
   - **Alive:** feed it every day or so. Two dry days, or a hard freeze, kill the layer, and it ripens again from scratch.
-  - **Slow:** a Barrel Filter yields about 100 L a day however hard you push; the extra spills on the ground and never bypasses the sand. A Brick Filter yields four times that.
+  - **Slow:** a Barrel Filter yields about 100 L a day however hard you push. Its head (the water waiting on the sand) holds what the barrel holds, and nothing bypasses the sand: Pour In leaves what doesn't fit in your container, and an inlet draws only what fits. A Brick Filter yields four times that.
   - **Clogged:** after enough water has passed, it slows to a trickle and its menu says so: one step, not a slow fade. "Clean Filter" stirs and skims the top of the sand by hand; a shovel or a trowel makes it quicker. It ripens for a day after. The sand lasts years. (Real household filters are cleaned the same way, by stirring or scraping the top centimetre or two: CDC, EPA; *Cisterns for Kentucky* says replace the top two inches when it clogs.)
+  - **Frozen:** a hard freeze with water on the sand kills the film, and the ice passes nothing that hour. An empty filter rides out the frost.
 - **Boiler: clean water for fuel.**
   - A Metal Drum over a firebox, with an inlet from the raw tank and an outlet to the clean tank. Water held at 60 °C for half an hour, or boiled, is safe (CDC).
   - Fuel it and light it like a vanilla fire. After about an hour hot, it passes about 30 L an hour clean until the fuel's gone. A drum that never got hot passes nothing.
@@ -196,8 +197,9 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | **Bury Olla** | Pottery 1 | an unglazed Clay Jar; a trowel or shovel | auto at Pottery 1 |
 | **Pump** (at a hand pump) | none | endurance | everyone |
 | **Replace Seal** (hand pump) | none | Leather Strips, Tire Piece, Tarp Piece or Plunger; screwdriver | everyone |
-| **Clean Filter** | none | bare hands; quicker with a shovel or trowel | with the filter |
-| **Pour In** (crock) | none | any container of water | everyone |
+| **Clean Filter** | none | bare hands, 60 minutes; 30 with a shovel, garden trowel or mason's trowel | with the filter |
+| **Pour In** (filters, crock) | none | any container of water, 1 minute per 4 L | everyone |
+| **Plumb Inlet**, **Plumb Outlet** (filters, boiler) | none | as Plumb to Tank | as Plumb to Tank |
 
 ### Builds (build menu)
 
@@ -209,7 +211,7 @@ New items stop there. Everything else is vanilla items given a new job, plus pla
 | **Pump House** (wood or sheet-metal box; takes one pump part) | Woodwork 2 or MetalWelding 1, plus Electricity 1 to wire it | 4 Planks + 4 Nails, or 2 Small Sheet Metal + 4 Screws; 2 Electric Wire, 2 Rubber Hose; screwdriver | research a Utility or Appliance Pump (Electricity 1); Pamphlet |
 | **Wind-up Valve** (on a tap) | none | Kitchen Timer, 2 Screws, 1 Rubber Hose (the diaphragm); screwdriver | everyone |
 | **Timer Valve** (on a tap or a Pump House) | Electricity 2 | Alarm Clock, Water Valve, 2 Electric Wire, 1 Electronics Scrap; screwdriver, pliers, Pipe Wrench | research a Water Valve or Sprinkler Timer (Electricity 1); auto at Electricity 4 |
-| **Barrel Filter** | Woodwork 2 | 6 Planks, 5 Nails (the barrel), 1 Gravel Bag, 2 Sand Bags, **5 Charcoal** (required), 1 pipe and a joint (the outlet); hammer, shovel | Pamphlet; auto at Woodwork 6 |
+| **Barrel Filter** | Woodwork 2 | 6 Planks, 5 Nails (the barrel), 1 Gravel Bag, 2 Sand Bags, **5 Charcoal** (required), 1 pipe of any kind and a joint (the outlet); hammer, shovel | Pamphlet; auto at Woodwork 6 |
 | **Brick Filter** | Masonry 3 | 24 Clay Bricks, 4 uses of cement (`base:concrete`), 2 Gravel Bags, 6 Sand Bags, **15 Charcoal**, 1 Iron Pipe; mason's trowel, shovel | Pamphlet; auto at Masonry 5 |
 | **Boiler** (stone firebox) | Masonry 2 | Metal Drum, 12 Clay Bricks or Stone Blocks, 2 uses of cement, 2 Iron Pipe; mason's trowel, Pipe Wrench | research a Metal Drum (Masonry 1); auto at Masonry 4 |
 | **Boiler** (welded firebox) | MetalWelding 3 | Metal Drum, 4 Small Sheet Metal, 2 Iron Pipe, 4 Screws; Blow Torch, Welding Rods, mask | research a Metal Drum (MetalWelding 2); auto at MetalWelding 5 |
@@ -263,7 +265,7 @@ The mod stands alone. With Renewable Energy:
 
 ## How it's built
 
-- **Authority and state.** The server owns everything. Each line tile is a record in a global object system (`enhanced_irrigation_line`), saved with `setObjectModDataKeys` so it lives, dries and freezes while its chunk is unloaded; clients get a rounded summary per tile. Tank-to-tank links have no tile of their own, so they live in a second system's own saved data (`enhanced_irrigation_link`), sent to clients whole when they change. Tanks keep no record: a tank is what its entity says, which survives the vanilla lid swap that drops an object's modData. Later pumps, filters, boilers and fixtures get records like the line tiles'.
+- **Authority and state.** The server owns everything. Each line tile is a record in a global object system (`enhanced_irrigation_line`), saved with `setObjectModDataKeys` so it lives, dries and freezes while its chunk is unloaded; clients get a rounded summary per tile. Tank-to-tank links have no tile of their own, so they live in a second system's own saved data (`enhanced_irrigation_link`), sent to clients whole when they change. Tanks keep no record: a tank is what its entity says, which survives the vanilla lid swap that drops an object's modData. Filters have records of their own (Treatment units, below), which wait while unloaded; pumps and boilers will.
 - **Topology.** A line is worked out from its tiles when it runs (breadth-first from the tap through same-floor neighbours), not stored, so laying or lifting a tile needs no bookkeeping beyond reshaping its neighbours' sprites, whatever lifts it: Take Up, a sledgehammer or another mod. Two neighbours join unless a solid wall or a window stands between them (`Lines.joins`); a doorway, door or not, joins, so a line enters a greenhouse by its door, and a fence or low wall joins, as a pipe is laid over what a player hops. Laying, the shapes and the flow ask the same test. An edge on a square that isn't loaded joins, as its walls can't be read; every edge a player works at is loaded.
 - **Ticks.** `EveryTenMinutes` on the server, as farming does, with elapsed time from `getWorldAgeHours()`. Water from Tank runs the flow for the world time that passed: from the action's `update()` in single player, from the server's `animEvent` (`emulateAnimEvent`, as vanilla's trough filling does) in multiplayer.
 - **Unloaded chunks.**
@@ -284,6 +286,13 @@ The mod stands alone. With Renewable Energy:
     - Vanilla's Plumb still shows on a buffered fixture under a barrel; the fixture menu takes it out once the fixture is plumbed.
     - Plumb to Tank on a fixture needs no room, so player-built cabins work; vanilla's Plumb still needs one.
     - A multiplayer server converts an old save's fixtures only when it first loads their chunk. The conversion itself is tested on a loaded chunk in multiplayer, and through a reload in single player.
+- **Treatment units** (filters now; the crock and boiler later). One shape for all of them: a head of raw water in a record (`enhanced_irrigation_treatment`: litres, all-or-nothing taint, litres passed, the film's wet and dry hours), treated at the unit's rate into its basin, the entity's own `FluidContainer`, which vanilla's menus drink, fill and empty. A kind's rules live in one table on each side (`Treatment.KINDS`, `TreatmentObject.KINDS`), so the crock and boiler add rows, not branches.
+  - The basin is `InputLocked`, which hides vanilla's pour, so water reaches it only through the unit; the record unlocks it for the moment it adds. No rain: a filter under the sky would otherwise fill its clean basin with tainted rain.
+  - Unlike a line tile, a unit's record waits while its chunk is unloaded, as the basin it fills lives on the unit, and catches up the whole gap (at most a week) in steps of an hour once it loads: the head drains, then the sand dries, in that order.
+  - Built from the build menu, which never fires `OnObjectAdded`, so the entity's `OnCreate` gives it its record at once.
+  - Inlet and outlet are links like a fixture's (`inlet`, `outlet`), with Plumb to Tank's reach, pipe, time and learning. Water runs in from a tank at least level with the unit and out to one no higher; an inlet takes only a tank of nothing but water. One of each per unit, and not both to the same tank.
+  - Pour In takes 1 minute per 4 L, about vanilla's pour. A hard freeze is the line's (−7 °C, the square's own air, which a room warms).
+  - Sand and gravel are uses of vanilla's bags, four to a bag, as vanilla's sand floor and clay cement take them, so each empty sack comes back. The Barrel Filter's outlet is any pipe and a joint, glue or tape: the build menu can't ask for the joint only with plastic, and a threaded pipe still wants sealing into a stave. Clean Filter is quicker with any tool that lifts sand: a shovel or garden trowel (`base:takedirt`) or a mason's trowel.
 - **Salvage.** "Salvage Pump" is the mod's own action on washer sprites (`appliances_laundry_01_0..7`) and dishwasher sprites (`appliances_cooking_01_72..79`). It marks the appliance stripped in its modData. Vanilla scrapping is left alone: it runs on the appliance's first material (`Fridge`: blowtorch and MetalWelding), so a scrap-table route would demand a welder for what is screwdriver work.
 - **Teaching.**
   - The pamphlet's `LearnedRecipes`.
@@ -303,7 +312,7 @@ Each phase is playable on its own:
 1. **Prove the risk.** Done: a throwaway test of fixture buffers (save, reload, multiplayer, vanilla menus, taint) and of plumbed-fixture conversion, in the dev mod, since replaced by phase 3's tests.
 2. **Gravity garden.** Done: tanks and height, Tank Stand, Plumb to Tank between tanks, Lay Line, Drill Holes, Fit Tap, Water from Tank, soak and root rot, frost, patching and draining, the pamphlet, its loot and learning, each with in-game tests in single player and multiplayer. Not yet played through: the summer-and-frost playtest under Starting numbers.
 3. **Fixtures.** Done: Plumb to Tank on fixtures, the vanilla Plumb override and old-save conversion behind the Plumbing Keeps Taint option, the washer's switch, each with in-game tests in single player and multiplayer. Two tanks, raw and clean, wait on phase 4's filters.
-4. **Safe water.** Barrel and Brick Filters, the Boiler, the Filter Crock.
+4. **Safe water.** Barrel and Brick Filters done: Pour In, inlet and outlet links, ripening, dying dry or frozen, clogging and Clean Filter, learning, each with in-game tests in single player and multiplayer. Still to come: the Filter Crock, then the Boiler.
 5. **Pumps.** Hand pumps and seals, Salvage Pump, Pump House, Utility Pump, sprinklers.
 6. **Automation.** Wind-up Valve, Timer Valve, Sprinkler Timer, Renewable Energy billing.
 

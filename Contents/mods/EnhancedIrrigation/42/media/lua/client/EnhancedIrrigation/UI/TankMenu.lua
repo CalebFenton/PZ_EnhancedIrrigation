@@ -1,9 +1,9 @@
 -- The right-click options of tanks and Tank Stands: Set Barrel on Stand and Take Barrel Down on a
 -- stand, and on any tank Plumb to Tank, with a submenu of the tanks in reach, and Unplumb, with a
--- submenu of the pipe buried from it, to tanks and fixtures. The floor where a plumbed tank stood
--- also offers Unplumb, so pipe whose tanks are both gone is found where it was laid. Each option is
--- greyed out saying why when its job would be refused (StandJobs, LinkJobs). A fixture's own
--- options are FixtureMenu.lua's.
+-- submenu of the pipe buried from it, to tanks, fixtures and treatment units. The floor where a
+-- plumbed tank stood also offers Unplumb, so pipe whose tanks are both gone is found where it was
+-- laid. Each option is greyed out saying why when its job would be refused (StandJobs, LinkJobs).
+-- A fixture's own options are FixtureMenu.lua's, a unit's TreatmentMenu.lua's.
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
@@ -16,6 +16,7 @@ require "EnhancedIrrigation/StandJobs"
 require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/LinkJobs"
 require "EnhancedIrrigation/Fixtures"
+require "EnhancedIrrigation/Treatment"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -25,6 +26,7 @@ EnhancedIrrigation.TankMenu = TankMenu
 local Needs, Tanks, Stands = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Stands
 local StandJobs, Links, LinkJobs = EnhancedIrrigation.StandJobs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Pipes, Fixtures, Action = EnhancedIrrigation.Pipes, EnhancedIrrigation.Fixtures, EnhancedIrrigationAction
+local Treatment = EnhancedIrrigation.Treatment
 
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
@@ -35,7 +37,9 @@ function TankMenu.direction(here, there)
     if dx == 0 and dy == 0 then
         return getText(there.z > here.z and "IGUI_EnhancedIrrigation_Above" or "IGUI_EnhancedIrrigation_Below")
     end
-    local sector = math.floor((math.atan2(-dy, dx) + math.pi / 8) / (math.pi / 4)) % 8
+    -- Shifted a turn first: the game's Lua keeps the dividend's sign in %, so a square to the south
+    -- would give a negative sector.
+    local sector = (math.floor((math.atan2(-dy, dx) + math.pi / 8) / (math.pi / 4)) + 8) % 8
     return getText("IGUI_EnhancedIrrigation_Direction_" .. DIRECTIONS[sector + 1])
 end
 
@@ -51,9 +55,10 @@ function TankMenu.tankLabel(here, there)
         distance, direction, Tanks.levelOf(tank))
 end
 
---- The name the game gives `fixture` ("Sink", "Bath"), as its own menus name it.
-function TankMenu.fixtureName(fixture)
-    local props = fixture:getSprite():getProperties()
+--- The name the game gives `object` ("Sink", "Bath", "Barrel Filter"), a fixture or a unit, as its
+--- own menus name it.
+function TankMenu.objectName(object)
+    local props = object:getSprite():getProperties()
     local name = props:get("CustomName")
     if not name then
         return ""
@@ -62,14 +67,15 @@ function TankMenu.fixtureName(fixture)
     return Translator.getMoveableDisplayName(group and (group .. " " .. name) or name)
 end
 
---- How Unplumb names the buried pipe from the square `here` to the square `there`: by the tank or
---- fixture at its far end, or as pipe to an empty spot when that square is loaded with neither.
+--- How Unplumb names the buried pipe from the square `here` to the square `there`: by the tank,
+--- fixture or unit at its far end, or as pipe to an empty spot when that square is loaded with
+--- none of them.
 function TankMenu.linkLabel(here, there)
     local square = getCell():getGridSquare(there.x, there.y, there.z)
-    local fixture = Fixtures.fixtureOn(square)
-    if fixture then
+    local object = Fixtures.fixtureOn(square) or Treatment.unitOn(square)
+    if object then
         return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", getText("ContextMenu_EnhancedIrrigation_FixtureThere",
-            TankMenu.fixtureName(fixture), Links.distance(here, there), TankMenu.direction(here, there)))
+            TankMenu.objectName(object), Links.distance(here, there), TankMenu.direction(here, there)))
     end
     if square and not Tanks.tankOn(square) then
         return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", Links.distance(here, there),
@@ -106,14 +112,15 @@ function TankMenu.showLink(option, character, job, object, with)
     Needs.show(option, LinkJobs.needs(character, job, object, with), LinkJobs.blocker(character, job, object, with))
 end
 
---- Plumb to Tank at `object` (a tank, or a fixture): a submenu of the tanks in reach, each with a
---- submenu of the pipe the character carries to lay to it, as Lay Line lists it, greyed out with
---- what the run takes. `spec`: `job`, the LinkJobs job each pipe queues; `skip(at)`, which tanks to
---- leave out; `refusal(at)`, a Tooltip key greying a tank out before its pipe is listed, or nil;
---- `noneKey`, what the submenu says when it lists none.
+--- A plumbing option at `object` (a tank, a fixture or a unit): a submenu of the tanks in reach,
+--- each with a submenu of the pipe the character carries to lay to it, as Lay Line lists it, greyed
+--- out with what the run takes. `spec`: `nameKey`, the option's ContextMenu key; `job`, the
+--- LinkJobs job each pipe queues; `skip(at)`, which tanks to leave out; `refusal(at)`, a Tooltip key
+--- greying a tank out before its pipe is listed, or nil; `noneKey`, what the submenu says when it
+--- lists none.
 function TankMenu.addPlumbOptions(context, playerNum, character, object, spec)
     local here = EnhancedIrrigation.squareOf(object)
-    local name = getText("ContextMenu_EnhancedIrrigation_PlumbToTank")
+    local name = getText(spec.nameKey)
     local tools = EnhancedIrrigation.Materials.needs(character, LinkJobs.PLUMB_TOOLS)
     if EnhancedIrrigation.firstUnmet(tools) then
         Needs.show(context:addOption(name), tools)
@@ -145,8 +152,8 @@ function TankMenu.addPlumbOptions(context, playerNum, character, object, spec)
     end
 end
 
---- Unplumb at `object`, a tank, a fixture, or the floor of a square one stood on: a submenu of the
---- pipe buried from its square.
+--- Unplumb at `object`, a tank, a fixture, a unit, or the floor of a square one stood on: a submenu
+--- of the pipe buried from its square.
 function TankMenu.addUnplumbOptions(context, playerNum, character, object)
     local here = EnhancedIrrigation.squareOf(object)
     local links = Links.linksAt(here)
@@ -161,13 +168,13 @@ function TankMenu.addUnplumbOptions(context, playerNum, character, object)
     end
 end
 
--- The floor of the first right-clicked square with no tank or fixture on it that buried pipe runs
--- from, or nil. A fixture offers its own Unplumb (FixtureMenu.lua).
+-- The floor of the first right-clicked square with no tank, fixture or unit on it that buried pipe
+-- runs from, or nil. Fixtures and units offer their own Unplumb (FixtureMenu.lua, TreatmentMenu.lua).
 local function bareEnd(worldobjects)
     for _, clicked in ipairs(worldobjects) do
         local square = clicked:getSquare()
         local floor = square and square:getFloor()
-        if floor and not Tanks.tankOn(square) and not Fixtures.fixtureOn(square)
+        if floor and not Tanks.tankOn(square) and not Fixtures.fixtureOn(square) and not Treatment.unitOn(square)
                 and #Links.linksAt(EnhancedIrrigation.squareOf(floor)) > 0 then
             return floor
         end
@@ -191,6 +198,7 @@ function TankMenu.onFill(playerNum, context, worldobjects, test)
     if tank then
         local here = EnhancedIrrigation.squareOf(tank)
         TankMenu.addPlumbOptions(context, playerNum, character, tank, {
+            nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
             job = LinkJobs.PLUMB,
             skip = function(at) return Links.find(here, at) ~= nil end,
             refusal = function() return nil end,

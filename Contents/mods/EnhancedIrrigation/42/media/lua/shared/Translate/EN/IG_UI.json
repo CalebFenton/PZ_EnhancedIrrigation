@@ -23,5 +23,10 @@
     "IGUI_EnhancedIrrigation_Soil": "Soil",
     "IGUI_EnhancedIrrigation_Damp": "Damp",
     "IGUI_EnhancedIrrigation_Soaked": "Soaked",
-    "IGUI_EnhancedIrrigation_Waterlogged": "Waterlogged"
+    "IGUI_EnhancedIrrigation_Waterlogged": "Waterlogged",
+    "IGUI_EnhancedIrrigation_Head": "%1 of %2 L waiting",
+    "IGUI_EnhancedIrrigation_Ripe": "ripe",
+    "IGUI_EnhancedIrrigation_Ripening": "ripening, %1 hours to go",
+    "IGUI_EnhancedIrrigation_Clogged": "Clogged",
+    "IGUI_EnhancedIrrigation_DryFor": "dry for %1 hours"
 }

@@ -1,9 +1,10 @@
--- The jobs that plumb a tank to another tank or to a fixture and take the pipe out again, done on
--- the authority by server/EnhancedIrrigation/Links/LinkSystem.lua. A job's `with` names the square
--- of the link's other end and, for Plumb, the pipe the player chose to lay (Links.encode). Plumb
--- works at a tank; Plumb Fixture and vanilla's Plumb (Plumb Above) at a fixture, toward its tank;
--- Unplumb at either end, or at the floor of an end whose tank or fixture is gone, as the buried
--- pipe stays (Links.lua).
+-- The jobs that plumb a tank to another tank, to a fixture or to a treatment unit's inlet or outlet,
+-- and take the pipe out again, done on the authority by server/EnhancedIrrigation/Links/
+-- LinkSystem.lua. A job's `with` names the square of the link's other end and, for Plumb, the pipe
+-- the player chose to lay (Links.encode). Plumb works at a tank; Plumb Fixture and vanilla's Plumb
+-- (Plumb Above) at a fixture, toward its tank; Plumb Inlet and Plumb Outlet at a unit, toward the
+-- tank it draws from or fills; Unplumb at either end, or at the floor of an end whose tank,
+-- fixture or unit is gone, as the buried pipe stays (Links.lua).
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Jobs"
@@ -11,18 +12,21 @@ require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links"
 require "EnhancedIrrigation/Fixtures"
+require "EnhancedIrrigation/Treatment"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
 EnhancedIrrigation.LinkJobs = LinkJobs
 
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
-local Fixtures = EnhancedIrrigation.Fixtures
+local Fixtures, Treatment = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Treatment
 
 LinkJobs.PLUMB = "PlumbToTank"
 LinkJobs.PLUMB_FIXTURE = "PlumbFixture"
 -- Vanilla's Plumb, which needs no pipe and no learning: a fixture to the tank straight above it.
 LinkJobs.PLUMB_ABOVE = "PlumbAbove"
+LinkJobs.PLUMB_INLET = "PlumbInlet"
+LinkJobs.PLUMB_OUTLET = "PlumbOutlet"
 LinkJobs.UNPLUMB = "Unplumb"
 
 -- The knowledge recipe the pamphlet teaches; it is never crafted, only known.
@@ -96,6 +100,66 @@ function LinkJobs.fixtureBlocker(fixture, with)
     return nil, here, other
 end
 
+-- Each end a unit's pipe can be: the Tooltip key saying the unit has that end plumbed already, and
+-- the one saying the tank stands where water can't run that way (design, Tanks and height).
+local UNIT_ENDS = {
+    inlet = { plumbed = "Tooltip_EnhancedIrrigation_InletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_InletTankTooLow" },
+    outlet = { plumbed = "Tooltip_EnhancedIrrigation_OutletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_OutletTankTooHigh" },
+}
+
+--- Whether water runs between a tank at `tankLevel` and a unit at `unitLevel` through the unit's
+--- `role` end: into its head from a tank at least level with it, out of its basin into a tank no
+--- higher.
+function LinkJobs.runsFor(role, tankLevel, unitLevel)
+    if role == "inlet" then
+        return tankLevel >= unitLevel
+    end
+    return unitLevel >= tankLevel
+end
+
+--- Why the unit `unit`'s `role` end ("inlet" or "outlet") can't be plumbed to the tank on the square
+--- `with` names, as far as both ends go, a Tooltip key, or nil; and the two squares.
+function LinkJobs.unitBlocker(unit, with, role)
+    local here, other = endsOf(unit, with)
+    local spec = Treatment.specOf(unit)
+    if not (here and spec and spec.plumbed and Treatment.isUnit(unit) and UNIT_ENDS[role]) then
+        return "Tooltip_EnhancedIrrigation_UnknownJob"
+    end
+    local tank = Tanks.tankAt(other.x, other.y, other.z)
+    if not tank then
+        return "Tooltip_EnhancedIrrigation_TankGone"
+    end
+    if Treatment.linkOf(here, role) then
+        return UNIT_ENDS[role].plumbed
+    end
+    if Links.find(here, other) then
+        return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
+    end
+    if not LinkJobs.runsFor(role, Tanks.levelOf(tank), Treatment.levelOf(unit)) then
+        return UNIT_ENDS[role].wrongLevel
+    end
+    return nil, here, other
+end
+
+-- The row of Plumb Inlet or Plumb Outlet: Plumb Fixture's, toward a unit's `role` end.
+local function unitPlumbJob(role)
+    return {
+        minutes = function(unit, with) return Links.minutesFor(runTiles(unit, with)) end,
+        position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
+        blocker = function(character, unit, with)
+            local blocker, here, other = LinkJobs.unitBlocker(unit, with, role)
+            if blocker then
+                return blocker
+            end
+            if Links.distance(here, other) > Links.MAX_TILES then
+                return "Tooltip_EnhancedIrrigation_OutOfReach"
+            end
+            return not LinkJobs.pipeFor(unit, with) and "Tooltip_EnhancedIrrigation_UnknownJob" or nil
+        end,
+        materials = plumbMaterials,
+    }
+end
+
 LinkJobs.JOBS = {
     [LinkJobs.PLUMB] = {
         minutes = function(tank, with) return Links.minutesFor(runTiles(tank, with)) end,
@@ -146,6 +210,8 @@ LinkJobs.JOBS = {
         end,
         materials = { Pipes.WRENCH },
     },
+    [LinkJobs.PLUMB_INLET] = unitPlumbJob("inlet"),
+    [LinkJobs.PLUMB_OUTLET] = unitPlumbJob("outlet"),
     [LinkJobs.UNPLUMB] = {
         minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
         blocker = function(character, object, with)

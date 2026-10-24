@@ -1,11 +1,11 @@
 /*
-    The Tank Stand the build menu builds, and the raised rain barrels a stand becomes when a barrel
-    is set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with the mod's prefix, as
-    craftRecipes are, since magazines and research look recipes up by bare name. A DisplayName is
-    looked up, without its spaces, in Recipes.json.
+    The Tank Stand and the sand filters the build menu builds, and the raised rain barrels a stand
+    becomes when a barrel is set on it (shared/EnhancedIrrigation/Stands.lua). In module Base with
+    the mod's prefix, as craftRecipes are, since magazines and research look recipes up by bare
+    name. A DisplayName is looked up, without its spaces, in Recipes.json.
 
-    The stand is taught by Cisterns for Kentucky or learned with Woodwork; vanilla applies an
-    entity recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
+    The stand and the filters are taught by Cisterns for Kentucky or learned with a skill; vanilla
+    applies an entity recipe's AutoLearn nowhere, so shared/EnhancedIrrigation/Recipes.lua does.
 */
 module Base
 {
@@ -16,6 +16,18 @@ module Base
             LuaWindowClass = ISEntityWindow,
             DisplayName = EnhancedIrrigation_TankStand,
             Icon = EnhancedIrrigation_Build_TankStand,
+        }
+        entity ES_EnhancedIrrigation_BarrelFilter
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_BarrelFilter,
+            Icon = EnhancedIrrigation_Build_BarrelFilter,
+        }
+        entity ES_EnhancedIrrigation_BrickFilter
+        {
+            LuaWindowClass = ISEntityWindow,
+            DisplayName = EnhancedIrrigation_BrickFilter,
+            Icon = EnhancedIrrigation_Build_BrickFilter,
         }
         /* Vanilla's barrel icons: the raised barrels are never built from a menu. */
         entity ES_EnhancedIrrigation_RaisedBarrel
@@ -69,6 +81,123 @@ module Base
                 item 4 [Base.Log],
                 item 6 [Base.Plank],
                 item 8 [Base.Nails],
+            }
+        }
+    }
+
+    /*
+        The sand filters (shared/EnhancedIrrigation/Treatment.lua): raw water poured or piped onto
+        the sand seeps through into the basin below, this FluidContainer, which vanilla's menus
+        drink, fill and empty from. InputLocked keeps vanilla from pouring into it, so water
+        reaches it only through the sand; no rain falls in. The OnCreate gives the built filter its
+        record at once.
+
+        Sand and gravel are uses of vanilla's bags, four to a bag, as vanilla's own sand floor and
+        clay cement take them; each empty sack comes back. The outlet is any of vanilla's three
+        pipes and a joint: the build menu can't ask for the joint only with plastic pipe, and a
+        threaded pipe still wants sealing into a barrel's stave.
+    */
+    entity EnhancedIrrigation_BarrelFilter
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_BarrelFilter,
+            uiEnabled = false,
+        }
+        component FluidContainer
+        {
+            ContainerName = BarrelFilter,
+            Capacity = 50.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+            InputLocked = true,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.TreatmentSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_134,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildWoodenStructureMedium,
+            time = 200,
+            category = Outdoors,
+            Tags = Carpentry,
+            NeedToBeLearn = true,
+            AutoLearnAny = Woodwork:6,
+            SkillRequired = Woodwork:2,
+            xpAward = Woodwork:30,
+            Tooltip = Tooltip_EnhancedIrrigation_BarrelFilter,
+            inputs
+            {
+                item 1 tags[base:hammer] mode:keep flags[Prop1;MayDegradeVeryLight],
+                item 1 tags[base:takedirt] mode:keep flags[MayDegradeLight],
+                item 6 [Base.Plank],
+                item 5 [Base.Nails],
+                item 4 [Base.Gravelbag],
+                item 8 [Base.Sandbag],
+                item 5 tags[base:charcoal],
+                item 1 [Base.Pipe;Base.MetalPipe;Base.LeadPipe],
+                item 1 [Base.Glue;Base.Epoxy;Base.DuctTape],
+            }
+        }
+    }
+
+    /* The same filter in brick, with four times the sand, and an iron outlet mortared in. */
+    entity EnhancedIrrigation_BrickFilter
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_EnhancedIrrigation_BrickFilter,
+            uiEnabled = false,
+        }
+        component FluidContainer
+        {
+            ContainerName = BrickFilter,
+            Capacity = 200.0,
+            InitialPercentMin = 0.0,
+            InitialPercentMax = 0.0,
+            InputLocked = true,
+        }
+        component SpriteConfig
+        {
+            OnCreate = EnhancedIrrigation.TreatmentSystem.onCreate,
+            face S
+            {
+                layer
+                {
+                    row = enhanced_irrigation_01_135,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = Make_With_Brick,
+            time = 400,
+            category = Outdoors,
+            NeedToBeLearn = true,
+            AutoLearnAny = Masonry:5,
+            SkillRequired = Masonry:3,
+            xpAward = Masonry:50,
+            Tooltip = Tooltip_EnhancedIrrigation_BrickFilter,
+            inputs
+            {
+                item 1 tags[base:masonstrowel] mode:keep flags[Prop1;MayDegradeLight],
+                item 1 tags[base:takedirt] mode:keep flags[MayDegradeLight],
+                item 24 [Base.ClayBrick],
+                item 4 tags[base:concrete] flags[DontRecordInput],
+                item 8 [Base.Gravelbag],
+                item 24 [Base.Sandbag],
+                item 15 tags[base:charcoal],
+                item 1 [Base.MetalPipe],
             }
         }
     }

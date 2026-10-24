@@ -8,7 +8,10 @@
 --
 -- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, conditions }: its ends, the pipe in
 -- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), all of which Unplumb gives
--- back, and the condition of each item of that pipe as it went in (Materials.conditions).
+-- back, and the condition of each item of that pipe as it went in (Materials.conditions). One of
+-- `fixture` (b is a plumbed fixture, Fixtures.lua), `inlet` (b is a treatment unit fed from the
+-- tank at a) or `outlet` (a is a unit whose basin empties into the tank at b, Treatment.lua) is
+-- true when the link isn't between two tanks.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
