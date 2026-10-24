@@ -19,9 +19,12 @@ local Sprites, Lines, Pumps = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lin
 Sprinklers.ITEM = "EnhancedIrrigation.LawnSprinkler"
 
 -- Litres an hour a sprinkler asks of a pumped line, and the share of it lost to the air and the
--- paths between the beds: fast and wasteful, so ten minutes soaks a bed and an hour empties a rain
--- barrel (design, Starting numbers).
-Sprinklers.RATE = 600
+-- paths between the beds: each square gets 90 plant points an hour, about what a pumped hole gives
+-- its own. Vanilla's plant drinks about 5 points a day, so 3 minutes a day keeps a bed level and
+-- the soil dries off what up to 10 gives past that (Lines.SOAK_DRY_OUT), as for a holed line: a
+-- run set by watching a held tap suits both (design, Starting numbers). Faster, no daily run lay
+-- between a dry bed and a drowned one.
+Sprinklers.RATE = 54
 Sprinklers.LOST = 0.5
 -- Squares the rectangle reaches from the sprinkler along the line and across it: five by three.
 Sprinklers.ALONG = 2

@@ -89,7 +89,7 @@ Two or three weeks in, the taps run dry. A month or two in, you're planting. Wat
   1. **Hold it.** "Water from Tank" is a timed action at the tap. While you stand there, every hole on the line runs, the beds darken and the water sounds. Stop when you judge it's enough, or when the tank gives out.
   2. **Wind-up Valve.** Wind it with the oven's timer knob. It opens, runs, and shuts when it runs down. You start it each time.
   3. **Timer Valve** or a found **Sprinkler Timer.** It opens at one hour every day for the minutes you set, while its square has power. If the power fails, it shuts.
-- **Sprinklers.** A Lawn Sprinkler set on a line tile throws water over a wide rectangle. It needs a pump driving the line, since a storey of head is about 3.5 psi and a sprinkler wants several times that. It's fast and wasteful: about half goes to air and paths, and it soaks soil faster.
+- **Sprinklers.** A Lawn Sprinkler set on a line tile throws water over a wide rectangle. It needs a pump driving the line, since a storey of head is about 3.5 psi and a sprinkler wants several times that. It waters 15 squares without a hole drilled, and it's wasteful: about half goes to air and paths.
 - **Too much water.**
   - Each outlet tile keeps a `soak` value. Water delivered to a plant already at 100 raises it, and it dries a little each day.
   - While the soil is waterlogged the plant's roots rot: it loses health at vanilla's own drought rate, which stops when the soil dries. Health is vanilla's hidden 0-100 score: it falls when a plant is thirsty, cold or sick, sets the harvest, and at 0 the plant dies; the plant's sprite turns sickly below half and dying below a quarter. Rain never adds soak.
@@ -349,7 +349,7 @@ Vanilla's yardsticks: 1 L = 50 plant points; a plant drains about 4.8 points a d
 | Fixture refill | up to 20 L per ten minutes | a bath refills in under an hour |
 | Hand pumps | 6 / 8 L a game minute | a 600 L barrel in about 75-100 minutes of sweat |
 | Appliance / Utility Pump | 6 / 20 L a game minute | a barrel in under two hours / half an hour |
-| Lawn sprinkler | 600 L/h over about 15 tiles, half lost | ten minutes soaks a bed; an hour empties a barrel |
+| Lawn sprinkler | 54 L/h over about 15 tiles, half lost: 90 plant points an hour a square | about what a pumped hole gives its plant, so one daily run (3 minutes keeps a bed level, the soil dries off up to 10) suits a holed line and a sprinkler alike; at 600 L/h a timer's only safe run was a minute or two |
 | Soak | dries 10 a day out, 5 in; waterlogged above 30; roots lose health at vanilla's drought rate while waterlogged | an hour too long sets a plant back; a forgotten night can kill a bed, sooner indoors |
 | Barrel / Brick Filter | about 4 / 16 L an hour; ripens in 3 days, 1 after a cleaning; dies after 2 dry days | a household's daily water from one barrel |
 | Boiler | about 30 L an hour once hot; heats in an hour; a log keeps it hot about an hour | fast clean water that costs a woodpile |

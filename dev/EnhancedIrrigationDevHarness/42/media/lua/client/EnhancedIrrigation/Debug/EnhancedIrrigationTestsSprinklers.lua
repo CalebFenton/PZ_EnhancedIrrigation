@@ -108,19 +108,20 @@ local function indexOf(dx, dy)
     return nil
 end
 
--- Hours the second run soaks the rectangle for: past full, so every square waterlogs.
-local SOAK_HOURS = 0.25
+-- Hours the second run soaks the rectangle for: past full, so every square waterlogs, a dry crop
+-- filling and its soil soaking at the sprinkler's 90 points an hour.
+local SOAK_HOURS = 3
 -- Hours the soaked rectangle is left after, while its roots rot.
 local ROT_HOURS = 2
 
 -- A sprinkler in the middle of a three-tile line running north to south, driven by an iron hand
--- pump, which lifts less than the sprinkler asks: a minute's work waters every crop of the five by
--- three rectangle along the line the same, at the pump's rate less what the air takes, and none
--- past it, and wears the seal by what the pump lifted. Left on, it fills every crop and waterlogs
--- the soil, on the line's tiles and off them, which the plant info says of a crop off the line;
--- left a while, that crop's roots rot and its soil dries as a line tile's do. Catches a sprinkler
--- that waters off its rectangle or turned across the line, one that takes more than its pump
--- lifts, soak lost off the line, or soil that never dries or rots.
+-- pump, which lifts more than the sprinkler asks: a minute's work waters every crop of the five by
+-- three rectangle along the line the same, at the sprinkler's rate less what the air takes, and
+-- none past it, and wears the seal by what the line took. Left on, it fills every crop and
+-- waterlogs the soil, on the line's tiles and off them, which the plant info says of a crop off the
+-- line; left a while, that crop's roots rot and its soil dries as a line tile's do. Catches a
+-- sprinkler that waters off its rectangle or turned across the line, a pump that lifts more than
+-- its line takes, soak lost off the line, or soil that never dries or rots.
 T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
     instant = true,
     run = function(self)
