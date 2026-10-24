@@ -2,10 +2,9 @@ require "PZHarness/ServerFixtures"
 require "PZHarness/Fixtures"
 require "PZHarness/Checks"
 
--- Development only, not published. The server's half of EnhancedIrrigationTestsLearning.lua: the
--- authority's copy of the character's recipes and skills, and its loot tables, which only the
--- authority fills (Distributions.lua leaves a multiplayer client out). A --stay rerun loads this
--- file again, so it only registers handlers.
+-- Development only, not published. Loot tables are checked here because only the authority fills
+-- them (Distributions.lua leaves a multiplayer client out). A --stay rerun loads this file again,
+-- so it only registers handlers.
 
 local handler = PZHarness.serverHandler
 local Fixtures = PZHarness.Fixtures
@@ -216,8 +215,7 @@ end
 
 -- Each list of each item of Distributions.LOOT hands the item out through the game's own roll of a
 -- container that picks it (ItemPickerJava.rollItem), within `args.fills` fills, with the item's
--- option and the loot rarity option of its kind at their highest, so the rarest weight spawns about
--- one fill in four.
+-- option and the loot rarity option of its kind at their highest.
 handler("learning.lootRolls", function(player, args, defer)
     local expect, _, failures = PZHarness.Checks.new()
     local D = distributions(expect)

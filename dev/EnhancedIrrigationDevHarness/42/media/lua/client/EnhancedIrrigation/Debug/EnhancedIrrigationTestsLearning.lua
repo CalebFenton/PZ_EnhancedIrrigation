@@ -5,12 +5,10 @@ require "TimedActions/ISReadABook"
 require "ISUI/ISInventoryPaneContextMenu"
 require "Entity/ISEntityUI"
 
--- How the character learns the mod's recipes, that no crafting list shows Plumb to Tank (knowledge
--- with nothing to craft), and where the mod's found items turn up. Reading and researching go
--- through vanilla's actions, levels through the authority's XP award, which fires LevelPerk; the
--- lists are vanilla's own windows and menus. Each side's copy of the character is checked: the
--- authority's decides the builds and the plumbing, this client's the menus.
--- EnhancedIrrigationTestServerLearning.lua holds the server's half.
+-- Plumb to Tank is knowledge with nothing to craft, so no crafting list may show it. Reading and
+-- researching go through vanilla's actions, levels through the authority's XP award, which fires
+-- LevelPerk; the lists are vanilla's own windows and menus. Each side's copy of the character is
+-- checked: the authority's decides the builds and the plumbing, this client's the menus.
 
 local T = EnhancedIrrigationTest
 local test, expect = T.test, T.expect
@@ -141,10 +139,9 @@ local function research(self, label, fullType, name)
     end)
 end
 
--- A potter at the research level of Shape Filter Crock (two-thirds of its Pottery 4) right-clicks a
--- Clay Jar, which vanilla's script doesn't make researchable, and Research teaches the crock's
--- three recipes, on both sides, and nothing else. Catches the jar's research added on one side
--- only, or not at all.
+-- A potter at the research level of Shape Filter Crock right-clicks a Clay Jar, which vanilla's
+-- script doesn't make researchable, and Research teaches the crock's three recipes, on both sides,
+-- and nothing else. Catches the jar's research added on one side only, or not at all.
 test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
     instant = true,
     hour = 12,
@@ -160,10 +157,10 @@ test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
     end,
 })
 
--- A character at the research level of both boilers (two-thirds of each one's skill: Masonry for
--- the stone firebox, MetalWelding for the welded) researches a Metal Drum, which vanilla's script
--- doesn't make researchable, and learns both boilers, on both sides, and nothing else. Catches the
--- drum's research added on one side only, or not at all.
+-- A character at the research level of both boilers (Masonry for the stone firebox, MetalWelding
+-- for the welded) researches a Metal Drum, which vanilla's script doesn't make researchable, and
+-- learns both boilers, on both sides, and nothing else. Catches the drum's research added on one
+-- side only, or not at all.
 test("irrigation_learning_researching_a_metal_drum_teaches_the_boilers", {
     instant = true,
     hour = 12,
