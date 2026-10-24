@@ -78,6 +78,11 @@ PumpJobs.JOBS = {
     -- Worked for as long as the character keeps at it, so it has no minutes of its own.
     [PumpJobs.PUMP] = {
         blocker = function(character, pump)
+            -- Someone else works the handle (PumpSystem.hold).
+            local summary = Pumps.currentSummary(pump)
+            if summary and summary.heldBy and summary.heldBy ~= character:getUsername() then
+                return "Tooltip_EnhancedIrrigation_PumpInUse"
+            end
             local tank, refusal = PumpJobs.flowOf(pump)
             if not tank then
                 return refusal

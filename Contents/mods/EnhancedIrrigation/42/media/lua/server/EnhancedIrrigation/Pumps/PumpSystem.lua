@@ -1,6 +1,6 @@
 -- The authority's side of pumps (shared/EnhancedIrrigation/Pumps.lua): their Global Object System,
--- a record for each pump built, the jobs of PumpJobs done for real, and the water a pump lifts
--- from its source into its outlet's tank.
+-- a record for each pump built, the jobs of PumpJobs done for real, who holds each pump, and the
+-- water a pump lifts from its source into its outlet's tank.
 
 if isClient() then return end
 
@@ -11,6 +11,7 @@ require "EnhancedIrrigation/Pumps"
 require "EnhancedIrrigation/PumpJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpSystem = {}
@@ -70,6 +71,78 @@ function PumpSystem.perform(character, job, pump, with)
     record:afterChange()
     return done
 end
+
+-- Holding ------------------------------------------------------------------------------------------
+
+-- One Pump works a pump at a time, as one Water from Tank runs a tap (Lines/TapSystem.lua): the
+-- action holding it is the record's `holder`, its character's name `heldBy`, which the summary
+-- carries so every menu can say so, and `heldMs` when it last ran the pump. None of them is saved:
+-- a loaded world has no action running.
+
+-- How long, in real milliseconds, a pump stays held after its action last ran it. A multiplayer
+-- server drops the action of a client that disconnects mid-run without stopping it
+-- (ActionManager.disconnectPlayer), so a hold its action no longer renews lets go by itself. Single
+-- player has no such end, and runs its pump by game minutes, which a long day draws out.
+PumpSystem.HOLD_LAPSE_MS = 5 * EnhancedIrrigationPumpAction.RUN_MS
+
+-- The records of the pumps held now.
+local held = {}
+
+local function lapsed(record)
+    return isServer() and getTimestampMs() - record.heldMs > PumpSystem.HOLD_LAPSE_MS
+end
+
+local function letGo(record)
+    record.holder, record.heldBy, record.heldMs = nil, nil, nil
+    held[record] = nil
+    -- Unless the pump went while held, taking its record.
+    if record.x and Pumps.recordAt(record.x, record.y, record.z) == record then
+        record:sendSummary()
+    end
+end
+
+-- Lets go of every pump held for which `matches(record)` holds.
+local function letGoWhere(matches)
+    local found = {}
+    for record in pairs(held) do
+        if matches(record) then
+            table.insert(found, record)
+        end
+    end
+    for _, record in ipairs(found) do
+        letGo(record)
+    end
+end
+
+--- Holds `pump` for the Pump `action`, unless another action holds it. Returns whether `action`
+--- holds it now.
+function PumpSystem.hold(pump, action)
+    local record = Pumps.recordOf(pump)
+    if not record or (record.holder and record.holder ~= action and not lapsed(record)) then
+        return false
+    end
+    record.holder, record.heldBy, record.heldMs = action, action.character:getUsername(), getTimestampMs()
+    held[record] = true
+    record:sendSummary()
+    return true
+end
+
+--- Notes that `action` ran the pump it holds just now.
+function PumpSystem.renew(action)
+    for record in pairs(held) do
+        if record.holder == action then
+            record.heldMs = getTimestampMs()
+        end
+    end
+end
+
+--- Lets go of the pump `action` holds, if any.
+function PumpSystem.release(action)
+    letGoWhere(function(record) return record.holder == action end)
+end
+
+-- A hold whose action went silent lets go, so the menus offer the pump again.
+Events.EveryOneMinute.Add(function() letGoWhere(lapsed) end)
 
 -- Pumping --------------------------------------------------------------------------------------------
 

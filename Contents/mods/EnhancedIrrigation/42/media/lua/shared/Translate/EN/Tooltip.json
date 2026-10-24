@@ -21,6 +21,7 @@
     "Tooltip_EnhancedIrrigation_LineHasTap": "This line already has a tap.",
     "Tooltip_EnhancedIrrigation_NoTap": "The line has no tap.",
     "Tooltip_EnhancedIrrigation_TapInUse": "Someone is already at this tap.",
+    "Tooltip_EnhancedIrrigation_PumpInUse": "Someone is already working this pump.",
     "Tooltip_EnhancedIrrigation_TankEmpty": "The tank is empty.",
     "Tooltip_EnhancedIrrigation_NoPressure": "The tank must stand a storey above the line.",
     "Tooltip_EnhancedIrrigation_FixtureNoPressure": "The tank must stand a storey above the fixture.",

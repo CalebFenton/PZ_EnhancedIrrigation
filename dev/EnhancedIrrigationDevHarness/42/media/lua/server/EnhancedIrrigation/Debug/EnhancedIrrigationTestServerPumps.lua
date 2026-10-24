@@ -180,3 +180,28 @@ handler("pumps.runEvery", function(_, args, defer)
     defer(function() Action.RUN_MS = before end)
     return {}
 end)
+
+-- Holds the pump at x, y, z for a stand-in for another player named `args.as`, as their Pump holds
+-- it once the work starts, and leaves it silent from then on, as a client's action goes that
+-- disconnects mid-run: it never runs the pump again nor lets go. Let go when the test ends.
+-- Answers whether it held the pump.
+handler("pumps.hold", function(_, args, defer)
+    local pump = pumpAt(args)
+    if not pump then
+        return nil, "the pump at " .. args.x .. "," .. args.y
+    end
+    local standIn = { character = { getUsername = function() return args.as end } }
+    defer(function() mod().PumpSystem.release(standIn) end)
+    return { held = mod().PumpSystem.hold(pump, standIn) }
+end)
+
+-- Dates the hold on the pump at x, y, z back past PumpSystem.HOLD_LAPSE_MS, as if its action had
+-- been silent that long, so the test doesn't wait it out in real time.
+handler("pumps.lapseHold", function(_, args)
+    local record = recordAt(args)
+    if not (record and record.heldMs) then
+        return nil, "a held pump at " .. args.x .. "," .. args.y
+    end
+    record.heldMs = getTimestampMs() - mod().PumpSystem.HOLD_LAPSE_MS - 1
+    return {}
+end)

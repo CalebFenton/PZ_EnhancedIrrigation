@@ -310,6 +310,74 @@ T.test("irrigation_pumps_stop_when_the_character_is_exhausted", {
     end,
 })
 
+-- The stand-in for another player who holds a pump in these tests.
+local OTHER = "EnhancedIrrigationTestOther"
+
+-- Queues working the pump for a character whose client doesn't check that it may: the action's
+-- isValid always passes, so only the authority's own check can stop it.
+local function pumpUnchecked(self, pump)
+    T.step(function()
+        local copy = copyOf(pump)
+        if not T.need(self, copy, "this client's copy of the pump") then return end
+        local action = EnhancedIrrigationPumpAction:new(T.player(), copy)
+        action.isValid = function() return true end
+        ISTimedActionQueue.add(action)
+    end)
+end
+
+-- Another player holding the pump greys this character's Pump out saying someone is at it, and the
+-- authority refuses an unchecked one, lifting nothing; once their silent hold lapses, this
+-- character's Pump holds it while it runs and lets go when it stops. Catches two characters at one
+-- handle lifting twice the rate, or a hold that outlives its work.
+T.test("irrigation_pumps_one_worker_per_pump", {
+    instant = true,
+    mpOnly = "a hold lapses only on a multiplayer server, and single player's own refusal of the unchecked action stops the test's queue",
+    timeoutSeconds = 120,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
+        if not spots then return end
+        self.pump = placePump(self, spots[1], IRON, { seal = LEATHER })
+        T.placeTank(self, spots[2], "well")
+        self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
+        link(self, self.pump, self.tank)
+        T.read(self, "pumps.hold", T.at(self.pump, { as = OTHER }), "other")
+        waitForSummary(self, self.pump, function(summary) return summary.heldBy == OTHER end,
+            "this client's summary of the pump another player holds")
+        T.goNextTo(self, self.pump.square)
+        T.useOption(self, function() return copyOf(self.pump) end, "while held", pumpOption, false)
+        pumpUnchecked(self, self.pump)
+        read(self, self.pump, "refused", { tank = T.at(self.tank) })
+        -- The other player's action has been silent too long.
+        T.server(self, "pumps.lapseHold", T.at(self.pump))
+        quickRuns(self)
+        waitForSummary(self, self.pump, function(summary) return summary.heldBy == nil end,
+            "this client's summary of the pump, freed")
+        T.step(function()
+            T.onTick(self, function()
+                local summary = summaryOf(self.pump)
+                if summary and summary.heldBy == T.player():getUsername() then
+                    self.heldByMe = true
+                end
+            end)
+        end)
+        -- The worked pump holds the queue until it stops itself at the full tank.
+        useMenu(self, self.pump, "freed", pumpOption, true)
+        read(self, self.pump, "let go", { tank = T.at(self.tank) })
+    end,
+    validate = function(self)
+        expect(self.reads.other.held, "the other player couldn't hold the free pump")
+        T.expectRefused(self, "while held", "Tooltip_EnhancedIrrigation_PumpInUse")
+        expectNear("the tank's water while another player held the pump", self.reads.refused.tank.litres,
+            BARREL_LITRES - ROOM, LITRES)
+        T.expectOffered(self, "freed")
+        expect(self.heldByMe, "the pump wasn't held for this character while it ran")
+        local after = self.reads["let go"]
+        expectNear("the tank once this character's work stopped", after.tank.litres, BARREL_LITRES, LITRES)
+        expect(after.summary.heldBy == nil, "the pump is still held by " .. tostring(after.summary.heldBy)
+            .. " after this character's work stopped")
+    end,
+})
+
 -- Sources -----------------------------------------------------------------------------------------------
 
 -- Litres in the tainted barrel beside the iron pump: more than a minute's lift, less than an hour's.

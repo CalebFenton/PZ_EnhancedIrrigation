@@ -8,8 +8,9 @@ require "EnhancedIrrigation/PumpJobs"
 -- the pump wears out, or they are exhausted. Open-ended as Water from Tank
 -- (EnhancedIrrigationWaterAction.lua) is: the authority runs the pump for the world time gone by,
 -- on a timed event the multiplayer server raises itself (emulateAnimEvent), or from update() in
--- single player, and once more when it stops. A global, as the server finds the class by its Type
--- (NetTimedAction.parse).
+-- single player, and once more when it stops. The action holds the pump while it works
+-- (PumpSystem.hold): it frees itself however the action ends. A global, as the server finds the
+-- class by its Type (NetTimedAction.parse).
 EnhancedIrrigationPumpAction = EnhancedIrrigationPumpAction or ISBaseTimedAction:derive("EnhancedIrrigationPumpAction")
 
 local Action = EnhancedIrrigationPumpAction
@@ -42,6 +43,7 @@ function Action:run()
     if self.finished then
         return
     end
+    EnhancedIrrigation.PumpSystem.renew(self)
     if EnhancedIrrigation.PumpSystem.pump(self.character, self.pump, hours) then
         self.finished = true
         self:finish()
@@ -54,22 +56,25 @@ function Action:atPump()
     return EnhancedIrrigation.withinReach(self.character, self.pump, EnhancedIrrigationAction.REACH)
 end
 
--- Starts the work; the water counts from here. Returns whether it started. Authority only.
+-- Starts the work, holding the pump; the water counts from here. Returns whether it started.
+-- Authority only.
 function Action:open()
-    if not (self:atPump() and not PumpJobs.refusal(self.character, PumpJobs.PUMP, self.pump)) then
+    if not (self:atPump() and not PumpJobs.refusal(self.character, PumpJobs.PUMP, self.pump)
+            and EnhancedIrrigation.PumpSystem.hold(self.pump, self)) then
         return false
     end
     self.lastHour = EnhancedIrrigation.now()
     return true
 end
 
--- The character let go of the handle, whatever ended the action: the last stretch runs. Authority
--- only.
+-- The character let go of the handle, whatever ended the action: the last stretch runs, and the
+-- pump is free. Authority only.
 function Action:letGo()
     if self.lastHour and not self.finished then
         self:run()
     end
     self.finished = true
+    EnhancedIrrigation.PumpSystem.release(self)
 end
 
 -- The handle worked lifts water; a character who walked off stopped working it. Authority only.

@@ -162,7 +162,8 @@ function PumpObject:afterChange()
 end
 
 -- What every client keeps: the seal and the body as the menu words them, rounded, so lifting that
--- changes nothing a player sees sends nothing, and where the hose drinks.
+-- changes nothing a player sees sends nothing, where the hose drinks, and who works it now
+-- (PumpSystem.hold).
 function PumpObject:buildSummary()
     local sealLitres = Pumps.sealLitres(self.seal)
     return {
@@ -172,6 +173,7 @@ function PumpObject:buildSummary()
         condition = math.ceil(self.condition),
         wornOut = self:isWornOut(),
         intake = self.intake,
+        heldBy = self.heldBy,
     }
 end
 
