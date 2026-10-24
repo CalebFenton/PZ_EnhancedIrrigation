@@ -36,20 +36,17 @@ local function copyOf(handle)
 end
 
 --- Queues placing the unit `entity` at `handle` (up `opts.up` storeys), with `opts.fields` on its
---- record and `opts.basin` = { litres, tainted } in its basin, and a wait for this client's copy and
---- its summary. Returns its handle, with `spec`.
+--- record, and a wait for this client's copy and its summary. Returns its handle, with `spec`.
 local function placeUnit(self, handle, entity, opts)
     opts = opts or {}
     local up = opts.up or 0
     local unit = { x = handle.x, y = handle.y, z = handle.z + up, sprite = SPRITES[entity],
         spec = Treatment.UNITS[entity], square = up == 0 and handle.square or nil }
-    T.server(self, "treatment.place", T.at(unit, { sprite = unit.sprite, fields = opts.fields, basin = opts.basin }))
-    local litres = opts.basin and opts.basin.litres or 0
+    T.server(self, "treatment.place", T.at(unit, { sprite = unit.sprite, fields = opts.fields }))
     T.waitFor(self, function()
         unit.square = getSquare(unit.x, unit.y, unit.z)
         local copy = copyOf(unit)
         return copy ~= nil and Treatment.summaryOf(copy) ~= nil
-            and math.abs(copy:getFluidContainer():getAmount() - litres) < LITRES
     end, "this client's copy of the " .. entity)
     return unit
 end
@@ -90,6 +87,40 @@ local function waitForServer(self, unit, label, key)
         local summary = Treatment.summaryOf(copyOf(unit))
         return state ~= nil and state.summary ~= nil and summary ~= nil and summary[key] == state.summary[key]
     end, "this client's summary of " .. label)
+end
+
+-- Queues the boiler's fire set on the authority (treatment.fire: `fuel` minutes if given, lit or
+-- not) and a wait for this client's copy to show it, as vanilla's own fire actions leave it.
+local function setFire(self, unit, label, lit, fuel)
+    T.read(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }), label)
+    T.waitFor(self, function()
+        local copy = copyOf(unit)
+        return copy ~= nil and copy:isLit() == lit
+    end, "this client's copy of the boiler " .. (lit and "lit" or "out"))
+end
+
+-- Fuel for the tests' fires, in minutes: longer than any test runs one.
+local FUEL = 600
+
+-- Queues `litres` of raw water, tainted if `tainted`, set in the unit's head and treated into its
+-- basin by the hours its rate takes (self.reads.filled), a boiler lit for them and put out after,
+-- then a wait for this client's copy of the basin. A sand filter's film is grown for clean water
+-- and new for tainted, so its basin holds the water as it was.
+local function fillBasin(self, unit, litres, tainted)
+    local spec = unit.spec
+    local fields, hours = { head = litres, headTainted = tainted == true }, litres / spec.rate
+    if spec.kind == "sand" then
+        fields.ripeHours = tainted and 0 or Treatment.RIPE_HOURS
+    elseif spec.kind == "boiler" then
+        -- A cold drum passes nothing until it is hot.
+        hours = hours + Treatment.HOT_HOURS
+        setFire(self, unit, "filled lit", true, FUEL)
+    end
+    run(self, unit, "filled", { hours }, fields)
+    if spec.kind == "boiler" then
+        setFire(self, unit, "filled out", false)
+    end
+    waitForCopy(self, unit, litres, nil, "this client's copy of the filled basin")
 end
 
 local function useMenu(self, unit, label, find, choose)
@@ -478,7 +509,8 @@ T.test("irrigation_treatment_outlet_fills_a_tank_no_higher", {
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 }, { 0, 2 } }, { bare = true })
         if not spots then return end
         self.litres = 30
-        self.unit = placeUnit(self, spots[1], BARREL, { basin = { litres = self.litres } })
+        self.unit = placeUnit(self, spots[1], BARREL)
+        fillBasin(self, self.unit, self.litres)
         self.tank = T.placeTank(self, spots[2], "lidded")
         self.high = T.placeTank(self, spots[3], "raised")
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
@@ -645,7 +677,8 @@ for _, case in ipairs({
         run = function(self)
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
-            self.unit = placeUnit(self, spots[1], case.entity, { basin = { litres = case.litres, tainted = case.tainted } })
+            self.unit = placeUnit(self, spots[1], case.entity)
+            fillBasin(self, self.unit, case.litres, case.tainted)
             T.give(self, "items", { { type = "Base.Bucket" }, { type = "Base.WaterBottle" } })
             -- Full, so vanilla's Fill lists only the bucket.
             T.server(self, "treatment.fillCarried", { type = "Base.WaterBottle", fluid = "Water", litres = 10 })
@@ -684,6 +717,7 @@ for _, case in ipairs({
             expect(self.empty, "the menu offers no Empty")
             expect(not self.pour, "the menu offers vanilla's pour into the basin")
             local bucket = self.reads.bucket
+            expect(bucket.litres > case.inBucket + 1, "Fill took nothing from the basin")
             expectNear("the basin and bucket", self.reads.drawn.basin.litres + bucket.litres, case.litres + case.inBucket,
                 LITRES)
             expect(bucket.tainted == case.tainted, "the bucket filled from the basin holds "
@@ -806,9 +840,10 @@ T.test("irrigation_treatment_crock_fired_in_a_kiln", {
 })
 
 -- The build menu sets a Filter Crock in an empty bucket on a bare square, with its record at once:
--- this client's menu reads its empty head. Take Down then gives back that bucket and the crock and
--- takes the unit away, record and all. Catches a crock the build menu can't set up, a unit without
--- its record, or Take Down losing the crock or swapping the bucket.
+-- this client's menu reads its empty head. Take Down, once the crock has seeped water into that
+-- bucket, gives back the bucket holding it clean, and the crock, and takes the unit away, record
+-- and all. Catches a crock the build menu can't set up, a unit without its record, or Take Down
+-- losing the crock, swapping the bucket or spilling its water.
 T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
     instant = true,
     run = function(self)
@@ -816,14 +851,18 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         if not spots then return end
         self.unit = T.buildFromMenu(self, "Base." .. CROCK, spots[1], SPRITES[CROCK], { FORGED_BUCKET })
         if not self.unit then return end
+        self.unit.spec = Treatment.UNITS[CROCK]
         readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
         T.count(self, "built", { Treatment.CROCK_ITEM, FORGED_BUCKET })
         T.waitFor(self, function() return Treatment.summaryOf(copyOf(self.unit)) ~= nil end,
             "this client's summary of the crock")
         readMenu(self, self.unit, "built")
+        self.litres = 6
+        fillBasin(self, self.unit, self.litres)
         useMenu(self, self.unit, "take down", job(TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "taken", { Treatment.CROCK_ITEM, FORGED_BUCKET })
+        T.read(self, "treatment.carried", { type = FORGED_BUCKET }, "bucket")
     end,
     validate = function(self)
         local built = self.reads.built
@@ -841,6 +880,9 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         expect(back[Treatment.CROCK_ITEM] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_ITEM]) .. " crocks")
         expect(back[FORGED_BUCKET] == 1, "Take Down gave back " .. tostring(back[FORGED_BUCKET])
             .. " forged buckets, the crock's record naming " .. tostring(self.reads.built.record.bucket))
+        local bucket = self.reads.bucket
+        expectNear("the bucket's water", bucket.litres, self.litres, LITRES)
+        expect(not bucket.tainted, "the bucket came back tainted")
     end,
 })
 
@@ -963,37 +1005,38 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
     end,
 })
 
--- Take Down gives back the bucket the crock stood in with the clean water it held, and the crock;
--- a cracked crock is lost, its bucket and water still given back. Catches the water spilled, the
--- taint made up, or a cracked crock returned whole.
+-- A crock frost cracked is lost to Take Down, which still gives back the bucket it stood in, with
+-- the water it seeped before the frost: the plain bucket Take Down falls back on, as this crock's
+-- record never learned which it stood in. Catches the water spilled with the crock, or a cracked
+-- crock returned whole.
 T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.whole = placeUnit(self, spots[1], CROCK, { fields = { bucket = FORGED_BUCKET }, basin = { litres = 6 } })
-        self.cracked = placeUnit(self, spots[2], CROCK, { fields = { cracked = true, bucket = Treatment.CROCK_BUCKET },
-            basin = { litres = 3 } })
-        useMenu(self, self.whole, "whole", job(TreatmentJobs.TAKE_DOWN_CROCK), true)
-        readUntil(self, self.whole, "whole", function(state) return not state.found end)
-        useMenu(self, self.cracked, "cracked", job(TreatmentJobs.TAKE_DOWN_CROCK), true)
-        readUntil(self, self.cracked, "cracked", function(state) return not state.found end)
-        T.count(self, "back", { Treatment.CROCK_ITEM, FORGED_BUCKET, Treatment.CROCK_BUCKET })
-        T.read(self, "treatment.carried", { type = FORGED_BUCKET }, "forged")
-        T.read(self, "treatment.carried", { type = Treatment.CROCK_BUCKET }, "plain")
+        self.unit = placeUnit(self, spots[1], CROCK)
+        self.litres = 3
+        fillBasin(self, self.unit, self.litres)
+        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
+        run(self, self.unit, "frozen", { 1 }, { head = self.unit.spec.head })
+        useMenu(self, self.unit, "take down", job(TreatmentJobs.TAKE_DOWN_CROCK), true)
+        readUntil(self, self.unit, "taken", function(state) return not state.found end)
+        T.count(self, "back", { Treatment.CROCK_ITEM, Treatment.CROCK_BUCKET })
+        T.read(self, "treatment.carried", { type = Treatment.CROCK_BUCKET }, "bucket")
     end,
     validate = function(self)
-        T.expectOffered(self, "whole")
-        T.expectOffered(self, "cracked")
-        expect(not self.reads.whole.record and not self.reads.cracked.record, "Take Down left a record")
+        local frozen = self.reads.frozen.steps[1]
+        expect(frozen.record.cracked, "the frost didn't crack the crock")
+        expectNear("the cracked crock's basin", frozen.basin.litres, self.litres, LITRES)
+        T.expectOffered(self, "take down")
+        local taken = self.reads.taken
+        expect(not taken.found and not taken.record, "Take Down left the unit or its record")
         local back = self.counts.back
-        expect(back[Treatment.CROCK_ITEM] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_ITEM])
-            .. " crocks from one whole and one cracked")
-        expect(back[FORGED_BUCKET] == 1 and back[Treatment.CROCK_BUCKET] == 1, "Take Down didn't give back both buckets")
-        local forged, plain = self.reads.forged, self.reads.plain
-        expectNear("the whole crock's bucket", forged.litres, 6, LITRES)
-        expect(not forged.tainted, "the whole crock's bucket came back tainted")
-        expectNear("the cracked crock's bucket", plain.litres, 3, LITRES)
+        expect(back[Treatment.CROCK_ITEM] == 0, "Take Down gave back " .. tostring(back[Treatment.CROCK_ITEM])
+            .. " crocks from a cracked one")
+        expect(back[Treatment.CROCK_BUCKET] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_BUCKET])
+            .. " plain buckets")
+        expectNear("the cracked crock's bucket", self.reads.bucket.litres, self.litres, LITRES)
     end,
 })
 
@@ -1033,19 +1076,6 @@ end
 local function running(handler)
     return function(context) return optionRunning(context, handler) end
 end
-
--- Queues the boiler's fire set on the authority (treatment.fire: `fuel` minutes if given, lit or
--- not) and a wait for this client's copy to show it, as vanilla's own fire actions leave it.
-local function setFire(self, unit, label, lit, fuel)
-    T.read(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }), label)
-    T.waitFor(self, function()
-        local copy = copyOf(unit)
-        return copy ~= nil and copy:isLit() == lit
-    end, "this client's copy of the boiler " .. (lit and "lit" or "out"))
-end
-
--- Fuel for the tests' fires, in minutes: longer than any test runs one.
-local FUEL = 600
 
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
 -- on both sides, with its record at once, its drum taken. Its menu holds vanilla's Add Fuel and

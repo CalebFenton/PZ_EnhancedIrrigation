@@ -76,8 +76,7 @@ end
 -- Places the unit tile `args.sprite` at x, y, z as the build menu builds it, its record made as its
 -- OnCreate makes it (a boiler's fireplace too), then sends what stands there to the clients, on a
 -- floor laid for it if the square has none (a unit on the storey above), with `args.fields` set on
--- the record and `args.basin` = { litres, tainted } in its basin. Answers its state. Removed, with
--- its links, record and floor, when the test ends.
+-- the record. Answers its state. Removed, with its links, record and floor, when the test ends.
 handler("treatment.place", function(_, args, defer)
     local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
     if not square then
@@ -111,13 +110,6 @@ handler("treatment.place", function(_, args, defer)
         return nil, "the unit's record after its OnCreate"
     end
     setFields(record, args.fields)
-    if args.basin then
-        local basin = unit:getFluidContainer()
-        basin:setInputLocked(false)
-        basin:addFluid(args.basin.tainted and FluidType.TaintedWater or FluidType.Water, args.basin.litres)
-        basin:setInputLocked(true)
-        unit:sync()
-    end
     record:sendSummary()
     return stateAt(args)
 end)
