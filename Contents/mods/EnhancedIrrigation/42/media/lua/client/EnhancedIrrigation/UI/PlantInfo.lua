@@ -19,9 +19,7 @@ local LEFT = 13
 local RIGHT = 17
 local BOTTOM = 8
 
---- The IG_UI key of the soil word for the plant `plant` (a CPlantGlobalObject), or nil when nothing
---- wetted the soil under it: the wettest of the word its own line tile carries and the words of the
---- sprinklers that water it (Sprinklers.soilKeyAt).
+--- The IG_UI key of the soil word under `plant` (Sprinklers.soilKeyAt), or nil when dry.
 function PlantInfo.soilKeyOf(plant)
     local square = plant:getSquare()
     return square and Sprinklers.soilKeyAt(square:getX(), square:getY(), square:getZ()) or nil

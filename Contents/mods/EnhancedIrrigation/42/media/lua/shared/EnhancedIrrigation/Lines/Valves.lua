@@ -5,11 +5,11 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Timers"
 
-local Timers = EnhancedIrrigation.Timers
-
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Valves = {}
 EnhancedIrrigation.Valves = Valves
+
+local Timers = EnhancedIrrigation.Timers
 
 Valves.WIND_UP = "EnhancedIrrigation.WindUpValve"
 Valves.TIMER = "EnhancedIrrigation.TimerValve"

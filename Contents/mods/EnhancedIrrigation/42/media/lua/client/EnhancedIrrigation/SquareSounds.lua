@@ -3,6 +3,7 @@
 
 require "EnhancedIrrigation/Utilities"
 
+EnhancedIrrigation = EnhancedIrrigation or {}
 local SquareSounds = {}
 EnhancedIrrigation.SquareSounds = SquareSounds
 

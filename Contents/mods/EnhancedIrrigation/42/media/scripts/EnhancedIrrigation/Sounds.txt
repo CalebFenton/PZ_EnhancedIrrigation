@@ -16,7 +16,7 @@ module Base
     }
 
     /* A running Pump House's motor: the hum of a filling station's pump, the nearest the game has,
-       looped on each client while the house runs (client/EnhancedIrrigation/Pumps/PumpClient.lua). */
+       looped on each client while the house runs. */
     sound EnhancedIrrigationPumpHouseRunning
     {
         category = Object,
