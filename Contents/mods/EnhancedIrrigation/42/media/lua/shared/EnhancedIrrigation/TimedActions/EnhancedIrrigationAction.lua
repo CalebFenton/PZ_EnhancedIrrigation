@@ -14,8 +14,7 @@ require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
 
--- Every hands-on job of fixed length at one of the mod's objects, or at an appliance (StandJobs,
--- LinkJobs, LineJobs, TreatmentJobs, PumpJobs, ApplianceJobs).
+-- Every hands-on job of fixed length at one of the mod's objects, or at an appliance.
 -- In multiplayer the client runs start() and perform() and the server rebuilds the action from
 -- new()'s parameters and runs complete(), which does the job; single player runs both. A global,
 -- as the server finds the class by its Type (NetTimedAction.parse).
@@ -40,8 +39,7 @@ local function isFloor(object)
 end
 
 --- Whether `character` stands within `reach` squares on each axis of the middle of `target`'s
---- square, on its level: where the menu walked them for a job there (luautils.walkAdj), with room
---- for drift and a client's lag. The authority checks it before doing a job.
+--- square, on its level.
 function Action.withinReach(character, target, reach)
     local square = target:getSquare()
     return square ~= nil and math.abs(character:getX() - (square:getX() + 0.5)) <= reach

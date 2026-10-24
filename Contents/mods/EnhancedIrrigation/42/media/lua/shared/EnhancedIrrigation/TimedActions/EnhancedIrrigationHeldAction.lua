@@ -2,19 +2,18 @@ require "TimedActions/ISBaseTimedAction"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
--- An action with no end of its own: the character holds something to work it (a tap open, a hand
--- pump's handle) until they stop, walk off, or the authority stops it. Modelled on vanilla's
--- open-ended ISAddWaterToTrough: the authority runs it for the world time gone by, on a timed event
--- the multiplayer server raises itself (emulateAnimEvent), or from update() in single player, and
--- once more when it stops. The action holds its target while it runs (Holds.lua) and frees it
--- however it ends. Never queued itself.
+-- An action with no end of its own, modelled on vanilla's open-ended ISAddWaterToTrough: the
+-- character holds its target (Holds.lua) until they stop or walk off, or the authority stops it.
+-- The authority runs it for the world time gone by, on a timed event the multiplayer server raises
+-- itself (emulateAnimEvent), or from update() in single player, and once more as it ends.
 --
 -- Each action derived from it is a global with its own Type and its own new(character, <target>),
--- as the server finds the class by its Type (NetTimedAction.parse) and rebuilds the action from the
--- parameter names of the class's own new (NetTimedAction.set). It defines target(); isTarget(object);
--- refusal(), why it can't start, if it can't; hold(), whether it holds the target now; runFor(hours),
--- which runs it on the authority and returns the Tooltip key of why it stops, or nil; playSounds(),
--- started again by keepPlaying while it lasts; LOOT_POSITION; RUN_EVENT; and HEAVY, for heavy work.
+-- the parameter named as the target's field: the server finds the class by its Type
+-- (NetTimedAction.parse) and rebuilds the action from the parameter names of the class's new
+-- (NetTimedAction.set). It defines target(); isTarget(object); refusal(), a Tooltip key or nil;
+-- hold(), whether it holds the target now; runFor(hours), on the authority, the Tooltip key of
+-- why it stops or nil; playSounds(), through keepPlaying; LOOT_POSITION; RUN_EVENT; and HEAVY for
+-- heavy work.
 EnhancedIrrigationHeldAction = EnhancedIrrigationHeldAction or ISBaseTimedAction:derive("EnhancedIrrigationHeldAction")
 
 local Action = EnhancedIrrigationHeldAction

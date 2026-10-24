@@ -1,7 +1,6 @@
--- The authority's side of the features it keeps in a Global Object System (garden pipe): a system
--- per feature that saves each object's record with the world, runs every record each ten minutes,
--- loaded or not, and sends every client its summary; and a base for the records. Each side reads
--- them through the accessors of shared/EnhancedIrrigation/GlobalObjects.lua.
+-- The authority's side of the features kept in a Global Object System: a system per feature that
+-- saves each object's record with the world and sends every client its summary, and a base for the
+-- records. Each side reads them through the accessors of GlobalObjects.addAccessors.
 
 if isClient() then return end
 

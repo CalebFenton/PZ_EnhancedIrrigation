@@ -6,10 +6,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Lines/Valves"
 
--- Where the mod's found items turn up: Cisterns for Kentucky wherever a 1993 extension leaflet on
--- farm water would have been left, the Utility Pump wherever tools and garage kit are, and the Lawn
--- Sprinkler wherever garden kit is, each a find rather than a given. apply() puts them into the
--- game's loot lists in OnInitGlobalModData, each scaled by its sandbox option.
+-- Where the mod's found items turn up in the game's loot lists, each a find rather than a given.
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Distributions = {}

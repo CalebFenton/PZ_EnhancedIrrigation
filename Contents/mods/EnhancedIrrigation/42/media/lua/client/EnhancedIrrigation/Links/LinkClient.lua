@@ -1,7 +1,6 @@
--- This client's copy of the tank links (shared/EnhancedIrrigation/Links/Links.lua), which the menu
--- lists: the system of the same name as the authority's (server/EnhancedIrrigation/Links/
--- LinkSystem.lua) gets the list with its initial state and again with each "links" command. Also
--- in single player, where the server's commands loop back.
+-- This client's copy of the tank links, which the menu lists: the system named as the authority's
+-- gets the list with its initial state and again with each "links" command, in single player too,
+-- where the server's commands loop back.
 
 require "Map/CGlobalObjectSystem"
 require "EnhancedIrrigation/Links/Links"

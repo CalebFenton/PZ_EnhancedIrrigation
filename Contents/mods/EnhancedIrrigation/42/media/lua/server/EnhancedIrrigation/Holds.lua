@@ -1,6 +1,8 @@
--- Who holds each tap and hand pump: one open-ended action at a time works one, the record's
--- `holder`, its character's name `heldBy`, which the summary carries so every menu can say so, and
--- `heldMs` when it last ran it. None of them is saved: a loaded world has no action running.
+-- Who holds each tap and hand pump. One open-ended action (EnhancedIrrigationHeldAction) works a
+-- record at a time: the action is the record's `holder`, its character's name `heldBy`, which the
+-- summary carries so every menu can say so, and `heldMs` when it last ran it. None of them is
+-- saved: a loaded world has no action running. A change tells through the record's afterChange, as
+-- a hand pump's hold also decides whether its outlet's line runs (PumpObject.isRunning).
 
 if isClient() then return end
 
@@ -17,14 +19,12 @@ EnhancedIrrigation.Holds = Holds
 -- player has no such end, and runs its actions by game minutes, which a long day draws out.
 Holds.LAPSE_MS = 5 * EnhancedIrrigationHeldAction.RUN_MS
 
--- The records held now.
 local held = {}
 
 local function lapsed(record)
     return isServer() and getTimestampMs() - record.heldMs > Holds.LAPSE_MS
 end
 
--- The record tells what changed through its afterChange: a pump's hold runs its outlet's line.
 local function letGo(record)
     record.holder, record.heldBy, record.heldMs = nil, nil, nil
     held[record] = nil
