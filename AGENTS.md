@@ -18,6 +18,7 @@
 - Give a new file under `Contents/` or the dev mod a `TEST_MAP` line in `dev/harness.conf` naming the tests that reach its code; without one, `--changed` runs every test.
 - Comments say why, without repeating values from the code.
 - When a change alters how a mechanic plays or where something spawns, update `docs/player-guide.md` in the same commit. It gives exact figures where players plan around them (costs, reach, times, levels) and rounded ones for rates.
+- When a change has something only a person playing can check (how it sounds, whether zombies come, how the work feels, how the art reads, a vanilla path no test drives), add it to `docs/playtest.md` in the same commit, saying how to set it up and what passes. Name those entries in your report rather than calling the change done untested.
 - `shared/EnhancedIrrigation/GlobalObjects.lua`, `client/EnhancedIrrigation/ClientObjects.lua` and `client/EnhancedIrrigation/UI/Needs.lua` are copies of Renewable Energy's; change both mods or neither.
 - Don't add `CLAUDE.md` files; the `AGENTS.md` files hold the agent instructions.
 
