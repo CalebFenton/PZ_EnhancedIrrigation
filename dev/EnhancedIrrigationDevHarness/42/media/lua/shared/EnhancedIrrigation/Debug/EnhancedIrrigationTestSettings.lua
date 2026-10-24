@@ -6,7 +6,7 @@ require "PZHarness/Fixtures"
 PZHarness.registerTests({
     hour = 10,
     -- Farming, which the plant info's soil line reads, and every skill the mod's recipes and
-    -- builds require: each test gets their levels back.
+    -- builds require, so a test that changes one leaves the next its starting level.
     perks = { Perks.Farming, Perks.Woodwork, Perks.MetalWelding, Perks.Masonry, Perks.Pottery,
         Perks.Electricity },
     sandbox = "EnhancedIrrigation",
