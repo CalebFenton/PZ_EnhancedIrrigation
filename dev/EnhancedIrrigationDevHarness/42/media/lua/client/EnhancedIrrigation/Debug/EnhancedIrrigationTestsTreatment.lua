@@ -969,9 +969,10 @@ T.test("irrigation_treatment_crock_clogged_until_scrubbed", {
     end,
 })
 
--- A hard freeze cracks a crock with water in it, which then holds and passes nothing, its menu says
--- so and Pour In is greyed out; an empty crock rides it out. Catches frost ignored, a cracked crock
--- still filling its bucket, or an empty one cracked.
+-- A hard freeze cracks a crock with water in it, which spills and passes nothing that hour; its menu
+-- says so and Pour In is greyed out, so it takes no water again; an empty crock rides it out.
+-- Catches frost ignored, a crock that passes water as it cracks, a cracked crock poured into, or an
+-- empty one cracked.
 T.test("irrigation_treatment_crock_cracks_frozen_full", {
     instant = true,
     run = function(self)
@@ -980,7 +981,7 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         self.wet = placeUnit(self, spots[1], CROCK)
         self.dry = placeUnit(self, spots[2], CROCK)
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
-        run(self, self.wet, "wet", { 1, 1 }, { head = 5 })
+        run(self, self.wet, "wet", { 1 }, { head = 5 })
         run(self, self.dry, "dry", { 1 }, { head = 0 })
         waitForCopy(self, self.wet, nil, function(summary) return summary.cracked end,
             "this client's summary of the cracked crock")
@@ -998,7 +999,7 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
     validate = function(self)
         local wet = self.reads.wet
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Head", 0, self.wet.spec.head))
-        expectNear("the cracked crock's basin", wet.steps[2].basin.litres, wet.before.basin.litres, LITRES)
+        expectNear("the cracked crock's basin", wet.steps[1].basin.litres, wet.before.basin.litres, LITRES)
         expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Cracked"), false)
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Cracked"))
         T.expectRefused(self, "pour", "Tooltip_EnhancedIrrigation_CrockCracked")
