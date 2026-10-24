@@ -11,10 +11,8 @@ require "EnhancedIrrigation/SquareSounds"
 require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/LineMenu"
 
--- The Pump Houses and Make Utility Pump: building the houses from the build menu, fitting and
--- taking out a part, a dry source and burning out, Repair Pump, the timer, a garden line a house
--- drives, a house's chunk away and back, and a Utility Pump made. Houses are placed, plumbed and
--- run for set hours by their own pass from server handlers, so the clock doesn't decide the sums.
+-- Houses are placed, plumbed and run for set hours by their own pass from server handlers, so the
+-- clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -156,8 +154,8 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
 -- Wear -------------------------------------------------------------------------------------------------
 
 -- Indoors on the grid, beside a dry barrel, its outlet plumbed to another: two hours wear the
--- Appliance Pump ten times as fast as running wet, and lift nothing. Catches a dry pump that wears
--- as if it lifted water, or one that wears dry only with nowhere to pump to.
+-- Appliance Pump faster than running wet, and lift nothing. Catches a dry pump that wears as if it
+-- lifted water, or one that wears dry only with nowhere to pump to.
 T.test("irrigation_pump_house_dry_source_wears_it_fast", {
     instant = true,
     run = function(self)
@@ -466,8 +464,8 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
 -- Make Utility Pump from a Blower Fan, at a table, with the skills, the knowledge and exactly a
 -- craft's inputs, makes a Utility Pump at the made ceiling, taking the fan, the sheet metal and the
 -- hose, two uses of the torch and one of the rods. Catches a recipe the game won't craft, a made
--- pump as good as a found one, or welding that takes whole items. Its surface is the work table
--- the scenario sets beside the start (T.placeWorkTable only checks it is there).
+-- pump as good as a found one, or welding that takes whole items. Its surface is a work table by
+-- the character, which the scenario sets down and T.placeWorkTable sets down again if it is gone.
 T.test("irrigation_pump_house_make_utility_pump", {
     instant = true,
     run = function(self)
