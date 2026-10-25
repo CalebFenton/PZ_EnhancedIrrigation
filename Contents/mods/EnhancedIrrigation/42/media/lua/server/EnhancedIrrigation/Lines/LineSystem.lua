@@ -85,9 +85,9 @@ function LineSystem.place(square, material, fields)
     return record
 end
 
--- Takes the line tile `isoObject` off its square with its record, tap and all, and reshapes the
--- neighbours.
-local function remove(isoObject)
+--- Takes the line tile `isoObject` off its square with its record, tap and all, and reshapes the
+--- neighbours. Authority only.
+function LineSystem.remove(isoObject)
     local square = isoObject:getSquare()
     local x, y, z = isoObject:getX(), isoObject:getY(), isoObject:getZ()
     local record = Lines.recordOf(isoObject)
@@ -102,7 +102,7 @@ end
 -- A tile removed any other way (a sledgehammer, a mod's RemoveTileObject) loses its record, tap and
 -- all, as vanilla's handler does, and its neighbours reshape. The tile is still on its square
 -- during the event, but the shapes come from the records, so they reshape at once. Take Up's
--- remove takes the record first and reshapes itself.
+-- LineSystem.remove takes the record first and reshapes itself.
 function LineSystem.System:OnObjectAboutToBeRemoved(isoObject)
     local record = self:isValidIsoObject(isoObject) and Lines.recordOf(isoObject)
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
@@ -175,7 +175,7 @@ local DO = {
         if record.sprinkler then
             EnhancedIrrigation.Materials.giveItems(character, takeSprinkler(record))
         end
-        remove(object)
+        LineSystem.remove(object)
     end,
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
     [LineJobs.SET_SPRINKLER] = function(character, object, item)
