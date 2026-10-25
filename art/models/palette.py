@@ -1,5 +1,4 @@
 """The materials the builders draw with, by name."""
-from kit import material
 
 # Pipe materials have no grime: its blotches follow each part's own coordinates, so two tiles'
 # halves of one pipe would not match where they meet.
@@ -84,4 +83,6 @@ PALETTE = {
 
 def M(name):
     """The material of PALETTE called `name`, made on first use."""
+    # Imported here so mod_icon.py, which runs without Blender, can read the colours.
+    from shading import material
     return material(**PALETTE[name])

@@ -3,8 +3,9 @@ import math
 
 from mathutils import Vector
 
-from kit import LEFT, RIGHT, TOWARD, UP, box, cylinder, lathe, spline, stain, tube
+from kit import LEFT, RIGHT, TOWARD, UP, box, cylinder, lathe, spline, tube
 from palette import M
+from shading import stain
 from sprites import PIPE_MATERIALS, SHAPES
 
 
@@ -133,7 +134,7 @@ def _wet_soil(material, arms):
     """The wet patch under a pipe tile: soil darkened by water, darkest round the middle, where an
     outlet drips, and in a band along each arm that runs into the next wet tile's. Its edge noise
     differs from tile to tile but for a strip along each edge, which every tile shares, so wet
-    neighbours join without a seam (kit.stain). Opaque inside, where neighbours overlap (see
+    neighbours join without a seam (shading.stain). Opaque inside, where neighbours overlap (see
     WET_OVERHANG), so its colour carries a little of the grass's, which can't show through there."""
     variant = 1 + PIPE_MATERIALS.index(material) * SHAPES + sum(arms)
     return stain("EI_WetSoil_%s_%d" % (material, sum(arms)), "#3e321d", [DIRECTIONS[bit] for bit in arms],
