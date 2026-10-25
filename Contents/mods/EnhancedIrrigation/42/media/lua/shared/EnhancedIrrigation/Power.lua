@@ -18,9 +18,9 @@ function Power.powered(object)
     return ItemContainer.isObjectPowered(object, true)
 end
 
---- The world hour after which the grid is off (SandboxOptions.doesPowerGridExist): ElecShutModifier
---- days into the apocalypse, which the world joined TimeSinceApo months in.
-function Power.shutoffHour()
+-- The world hour after which the grid is off (SandboxOptions.doesPowerGridExist): ElecShutModifier
+-- days into the apocalypse, which the world joined TimeSinceApo months in.
+local function shutoffHour()
     local options = getSandboxOptions()
     return (options:getElecShutModifier() - (options:getTimeSinceApo() - 1) * 30) * 24
 end
@@ -29,7 +29,7 @@ end
 --- after a wait: up to the shutoff if it powered the object at its last loaded pass (`wasGrid`),
 --- else none, so a gap is never run on a grid the object had no part of.
 function Power.gridHours(wasGrid, from, to)
-    return wasGrid and math.max(0, math.min(to, Power.shutoffHour()) - from) or 0
+    return wasGrid and math.max(0, math.min(to, shutoffHour()) - from) or 0
 end
 
 return Power

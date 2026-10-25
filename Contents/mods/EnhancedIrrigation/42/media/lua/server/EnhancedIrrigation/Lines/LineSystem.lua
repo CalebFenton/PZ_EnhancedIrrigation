@@ -37,9 +37,9 @@ LineSystem.System = EnhancedIrrigation.ObjectSystem.define({
 -- The name a line tile's object carries; nothing shows it, and the server has no translations.
 local OBJECT_NAME = "EnhancedIrrigationLine"
 
---- Shows the tile at x, y, z and its four neighbours as their records say, after a tile came or
---- went between them.
-function LineSystem.reshapeAround(x, y, z)
+-- Shows the tile at x, y, z and its four neighbours as their records say, after a tile came or
+-- went between them.
+local function reshapeAround(x, y, z)
     local record = Lines.recordAt(x, y, z)
     if record then
         record:show()
@@ -81,13 +81,13 @@ function LineSystem.place(square, material, fields)
         record[key] = value
     end
     record:sendSummary()
-    LineSystem.reshapeAround(square:getX(), square:getY(), square:getZ())
+    reshapeAround(square:getX(), square:getY(), square:getZ())
     return record
 end
 
---- Takes the line tile `isoObject` off its square with its record, tap and all, and reshapes the
---- neighbours. Authority only.
-function LineSystem.remove(isoObject)
+-- Takes the line tile `isoObject` off its square with its record, tap and all, and reshapes the
+-- neighbours.
+local function remove(isoObject)
     local square = isoObject:getSquare()
     local x, y, z = isoObject:getX(), isoObject:getY(), isoObject:getZ()
     local record = Lines.recordOf(isoObject)
@@ -95,21 +95,30 @@ function LineSystem.remove(isoObject)
         LineSystem.System.instance:removeLuaObject(record)
     end
     square:transmitRemoveItemFromSquare(isoObject)
-    LineSystem.reshapeAround(x, y, z)
+    reshapeAround(x, y, z)
     forgetRunningAround(x, y, z)
 end
 
 -- A tile removed any other way (a sledgehammer, a mod's RemoveTileObject) loses its record, tap and
 -- all, as vanilla's handler does, and its neighbours reshape. The tile is still on its square
 -- during the event, but the shapes come from the records, so they reshape at once. Take Up's
--- LineSystem.remove takes the record first and reshapes itself.
+-- remove takes the record first and reshapes itself.
 function LineSystem.System:OnObjectAboutToBeRemoved(isoObject)
     local record = self:isValidIsoObject(isoObject) and Lines.recordOf(isoObject)
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
     if record then
-        LineSystem.reshapeAround(isoObject:getX(), isoObject:getY(), isoObject:getZ())
+        reshapeAround(isoObject:getX(), isoObject:getY(), isoObject:getZ())
         forgetRunningAround(isoObject:getX(), isoObject:getY(), isoObject:getZ())
     end
+end
+
+-- Takes the sprinkler off the tile of `record`. Returns it as an item, as it went on.
+local function takeSprinkler(record)
+    local item = instanceItem(Sprinklers.ITEM)
+    item:setCondition(record.sprinkler.condition)
+    Parts.setCeiling(item, record.sprinkler.ceiling)
+    record.sprinkler = nil
+    return item
 end
 
 -- What each job does at `object`: the floor for Lay, else a line tile, whose record
@@ -164,9 +173,9 @@ local DO = {
             EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(record))
         end
         if record.sprinkler then
-            EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(record))
+            EnhancedIrrigation.Materials.giveItems(character, takeSprinkler(record))
         end
-        LineSystem.remove(object)
+        remove(object)
     end,
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
     [LineJobs.SET_SPRINKLER] = function(character, object, item)
@@ -174,7 +183,7 @@ local DO = {
         Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Parts.ceilingOf(item) }
     end,
     [LineJobs.TAKE_SPRINKLER] = function(character, object)
-        EnhancedIrrigation.Materials.giveItems(character, LineSystem.takeSprinkler(Lines.recordOf(object)))
+        EnhancedIrrigation.Materials.giveItems(character, takeSprinkler(Lines.recordOf(object)))
     end,
     [LineJobs.FIT_VALVE] = function(character, object, item)
         EnhancedIrrigation.Materials.takeItem(character, item)
@@ -190,15 +199,6 @@ local DO = {
         EnhancedIrrigation.ValveSystem.setTimer(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeTimer(with))
     end,
 }
-
---- Takes the sprinkler off the tile of `record`. Returns it as an item, as it went on.
-function LineSystem.takeSprinkler(record)
-    local item = instanceItem(Sprinklers.ITEM)
-    item:setCondition(record.sprinkler.condition)
-    Parts.setCeiling(item, record.sprinkler.ceiling)
-    record.sprinkler = nil
-    return item
-end
 
 --- Does `job` at `object` with `with` for `character` on the authority (ObjectSystem.perform); Lay
 --- makes the tile's record. Returns whether it was done.

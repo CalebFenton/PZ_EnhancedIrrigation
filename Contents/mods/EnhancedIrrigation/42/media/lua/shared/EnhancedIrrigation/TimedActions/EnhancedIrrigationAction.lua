@@ -38,12 +38,12 @@ local function isFloor(object)
     return square ~= nil and square:getFloor() == object
 end
 
---- Whether `character` stands within `reach` squares on each axis of the middle of `target`'s
+--- Whether `character` stands within REACH squares on each axis of the middle of `target`'s
 --- square, on its level.
-function Action.withinReach(character, target, reach)
+function Action.withinReach(character, target)
     local square = target:getSquare()
-    return square ~= nil and math.abs(character:getX() - (square:getX() + 0.5)) <= reach
-        and math.abs(character:getY() - (square:getY() + 0.5)) <= reach
+    return square ~= nil and math.abs(character:getX() - (square:getX() + 0.5)) <= Action.REACH
+        and math.abs(character:getY() - (square:getY() + 0.5)) <= Action.REACH
         and math.abs(character:getZ() - square:getZ()) < 1
 end
 
@@ -133,7 +133,7 @@ function Action:isValid()
     if isItem(self.with) and not self.character:getInventory():containsRecursive(self.with) then
         return false
     end
-    return Action.withinReach(self.character, self.object, Action.REACH)
+    return Action.withinReach(self.character, self.object)
 end
 
 function Action:waitToStart()
@@ -187,7 +187,7 @@ end
 -- character is at the object, which NetTimedAction doesn't.
 function Action:complete()
     if not EnhancedIrrigation.onSquare(self.object)
-            or (isServer() and not Action.withinReach(self.character, self.object, Action.REACH)) then
+            or (isServer() and not Action.withinReach(self.character, self.object)) then
         return false
     end
     return FEATURES[self.feature].perform(self.character, self.job, self.object, self.with)

@@ -10,16 +10,16 @@ EnhancedIrrigation.Parts = Parts
 
 -- A part's condition new, its ceiling while it carries no lower one; and the item modData key of a
 -- lower ceiling.
-Parts.CONDITION = 100
+local CONDITION = 100
 Parts.CEILING_KEY = "EnhancedIrrigation_ceiling"
 
 function Parts.ceilingOf(item)
-    return item:getModData()[Parts.CEILING_KEY] or Parts.CONDITION
+    return item:getModData()[Parts.CEILING_KEY] or CONDITION
 end
 
 --- Gives `item` the ceiling `ceiling`, which travels with it.
 function Parts.setCeiling(item, ceiling)
-    item:getModData()[Parts.CEILING_KEY] = ceiling < Parts.CONDITION and ceiling or nil
+    item:getModData()[Parts.CEILING_KEY] = ceiling < CONDITION and ceiling or nil
 end
 
 --- For a craft recipe's OnCreate: makes the item `craftRecipeData` created at `ceiling`, its

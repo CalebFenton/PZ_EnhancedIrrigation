@@ -12,9 +12,9 @@ function Timers.isStartHour(hour)
     return type(hour) == "number" and hour >= 0 and hour <= 23 and hour == math.floor(hour)
 end
 
---- The hour of the day, 0 up to 24, at the world hour `worldHour` (EnhancedIrrigation.now). The
---- world's age doesn't start at midnight, so it is read off the clock now.
-function Timers.hourOfDay(worldHour)
+-- The hour of the day, 0 up to 24, at the world hour `worldHour` (EnhancedIrrigation.now). The
+-- world's age doesn't start at midnight, so it is read off the clock now.
+local function hourOfDay(worldHour)
     local back = EnhancedIrrigation.now() - worldHour
     return (getGameTime():getTimeOfDay() - back) % 24
 end
@@ -28,7 +28,7 @@ function Timers.openHours(from, to, start, minutes)
     end
     local length = minutes / 60
     -- The last opening at or before `from`, which may still be open then.
-    local opens = from - (Timers.hourOfDay(from) - start) % 24
+    local opens = from - (hourOfDay(from) - start) % 24
     while opens < to do
         local a, b = math.max(from, opens), math.min(to, opens + length)
         if b > a then
@@ -44,7 +44,7 @@ function Timers.isOpenAt(hour, start, minutes)
     if not (minutes and minutes > 0 and start) then
         return false
     end
-    return (Timers.hourOfDay(hour) - start) % 24 < minutes / 60
+    return (hourOfDay(hour) - start) % 24 < minutes / 60
 end
 
 --- The hour of the day `hour` as the panel and the menus show it.

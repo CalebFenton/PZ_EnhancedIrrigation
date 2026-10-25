@@ -28,7 +28,7 @@ end
 
 -- Vanilla items that teach the mod's recipes when researched, by full type: what a player who
 -- handles one could work out from it. A vanilla item's script can't be edited in place, so the
--- recipes are added to its ResearchableRecipes as the mod loads (Recipes.addResearch).
+-- recipes are added to its ResearchableRecipes as the mod loads (addResearch).
 Recipes.RESEARCH = {
     -- A potter who studies a jar sees how to throw a porous one.
     ["Base.ClayJar"] = { "EnhancedIrrigation_ShapeFilterCrock", "EnhancedIrrigation_FireFilterCrock",
@@ -41,7 +41,7 @@ Recipes.RESEARCH = {
 --- Adds RESEARCH to the vanilla items' scripts through their own parser (Item.DoParam), which keeps
 --- only recipes that need learning, as a script's own list does. Each side reads its own scripts,
 --- and loads them before its Lua, so this runs as the file loads.
-function Recipes.addResearch()
+local function addResearch()
     for fullType, names in pairs(Recipes.RESEARCH) do
         local item = scripts:getItem(fullType)
         if item then
@@ -50,7 +50,7 @@ function Recipes.addResearch()
     end
 end
 
-Recipes.addResearch()
+addResearch()
 
 -- The packet field of sendSyncPlayerFields that sends the known recipes (SyncPlayerFieldsPacket).
 local SYNC_RECIPES = 1
@@ -86,7 +86,7 @@ end
 ---@param character IsoGameCharacter
 ---@param perk PerkFactory.Perk?
 ---@param level integer?
-function Recipes.autoLearn(character, perk, level)
+local function autoLearn(character, perk, level)
     local taught = false
     for _, recipe in ipairs(AUTO_LEARN) do
         recipe:checkAutoLearnAnySkills(character)
@@ -117,7 +117,7 @@ end
 --- its own copy's levels.
 function Recipes.catchUp(character)
     local before = knownCount(character)
-    Recipes.autoLearn(character)
+    autoLearn(character)
     if isServer() and knownCount(character) ~= before then
         sendSyncPlayerFields(character, SYNC_RECIPES)
     end
@@ -133,11 +133,11 @@ end
 -- local player enters the world (IsoWorld.init), here OnCreatePlayer, which on a multiplayer client
 -- also asks the server to catch up.
 Events.LevelPerk.Add(function(character, perk, level)
-    Recipes.autoLearn(character, perk, level)
+    autoLearn(character, perk, level)
 end)
 Events.OnCreatePlayer.Add(function(playerNum)
     local character = getSpecificPlayer(playerNum)
-    Recipes.autoLearn(character)
+    autoLearn(character)
     if isClient() then
         sendClientCommand(character, Recipes.COMMAND_MODULE, Recipes.CATCH_UP, {})
     end

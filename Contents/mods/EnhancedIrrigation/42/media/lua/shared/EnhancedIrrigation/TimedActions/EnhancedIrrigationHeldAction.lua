@@ -50,7 +50,7 @@ end
 -- Whether the character still stands at the target: what isValid() checks, which the server never
 -- calls, so the authority asks this itself before it opens and before each run.
 function Action:atTarget()
-    return EnhancedIrrigationAction.withinReach(self.character, self:target(), EnhancedIrrigationAction.REACH)
+    return EnhancedIrrigationAction.withinReach(self.character, self:target())
 end
 
 -- Holds the target's record for this action, unless another action holds it. Returns whether this

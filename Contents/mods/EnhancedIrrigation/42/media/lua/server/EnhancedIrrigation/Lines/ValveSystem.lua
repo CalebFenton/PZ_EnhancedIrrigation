@@ -34,11 +34,6 @@ local TapSystem, Timers = EnhancedIrrigation.TapSystem, EnhancedIrrigation.Timer
 -- The records of the taps with a valve, found again each ten minutes, and added to as one is fitted.
 local valved = {}
 
---- Runs the valve of `record` from now on each game minute.
-function ValveSystem.track(record)
-    valved[record] = true
-end
-
 -- The hours of each stretch of the world hours [from, to], in order, that the valve of `record` at
 -- the tap `tap` held the tap open and, for a timer, had power for.
 local function openHours(record, tap, from, to)
@@ -108,7 +103,7 @@ end
 function ValveSystem.fit(record, item)
     record.valve = { item = item:getFullType(), lastHour = EnhancedIrrigation.now() }
     record.valveOpen = nil
-    ValveSystem.track(record)
+    valved[record] = true
 end
 
 --- Takes the valve off the tap of `record`, after running what it held open up to now. Returns it
