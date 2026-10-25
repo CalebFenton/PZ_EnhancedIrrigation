@@ -4,8 +4,9 @@
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/UI/Needs"
+local Materials = require "cf_commonlib/Materials"
+local Needs = require "cf_commonlib/Needs"
+local JobOptions = require "cf_commonlib/JobOptions"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -14,7 +15,7 @@ require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Lines"
-require "EnhancedIrrigation/UI/JobOptions"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 -- Registers its menu first, so a raised barrel lists its stand's options above its plumbing.
 require "EnhancedIrrigation/UI/StandMenu"
 
@@ -22,10 +23,9 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkMenu = {}
 EnhancedIrrigation.LinkMenu = LinkMenu
 
-local Needs, Tanks, Links = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
+local Tanks, Links = EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 local LinkJobs, Pipes, Fixtures = EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes, EnhancedIrrigation.Fixtures
 local Treatment, Pumps, Lines = EnhancedIrrigation.Treatment, EnhancedIrrigation.Pumps, EnhancedIrrigation.Lines
-local JobOptions = EnhancedIrrigation.JobOptions
 
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
@@ -96,8 +96,8 @@ end
 function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
     local here = EnhancedIrrigation.squareOf(object)
     local name = getText(spec.nameKey)
-    local tools = EnhancedIrrigation.Materials.needs(character, LinkJobs.PLUMB_TOOLS)
-    if EnhancedIrrigation.firstUnmet(tools) then
+    local tools = Materials.needs(character, LinkJobs.PLUMB_TOOLS)
+    if Materials.firstUnmet(tools) then
         Needs.show(context:addOption(name), tools)
         return
     end
@@ -121,8 +121,8 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
             local pipes = Needs.addSubMenu(submenu, entry.label)
             for _, material in ipairs(materials) do
                 local with = Links.encode(entry.at, material)
-                JobOptions.add(pipes, playerNum, character, "link", getItemNameFromFullType(Pipes.MATERIALS[material].item),
-                    spec.job, object, with)
+                JobOptions.add(pipes, playerNum, EnhancedIrrigationAction, "link", spec.job, object, with,
+                    getItemNameFromFullType(Pipes.MATERIALS[material].item))
             end
         end
     end
@@ -141,8 +141,8 @@ function LinkMenu.addUnplumbOptions(context, playerNum, character, object)
     for _, link in ipairs(links) do
         local there = Links.otherEnd(link, here)
         local with = Links.encode(there)
-        JobOptions.add(submenu, playerNum, character, "link", LinkMenu.linkLabel(here, there), LinkJobs.UNPLUMB,
-            object, with)
+        JobOptions.add(submenu, playerNum, EnhancedIrrigationAction, "link", LinkJobs.UNPLUMB, object, with,
+            LinkMenu.linkLabel(here, there))
     end
 end
 

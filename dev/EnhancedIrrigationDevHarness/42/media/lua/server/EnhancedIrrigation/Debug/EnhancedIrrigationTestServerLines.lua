@@ -1,6 +1,7 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+local Jobs = require "cf_commonlib/Jobs"
 
 -- Development only, not published. The authority's half of the line tests and of the line and
 -- crop fixtures: line tiles and crops placed the way the authority places them, line jobs
@@ -130,9 +131,10 @@ handler("lines.flow", function(player, args)
     return reply
 end)
 
--- Runs the line job `args.job` with `args.with` at x, y, z through the authority's own perform (what
--- the action's complete() calls): on the square's floor for Lay, else on the line tile. Answers
--- whether it was `done` and `args.tiles` after, so a test sees the server refuse on its own.
+-- Runs the line job `args.job` with `args.with` at x, y, z through the authority's own Jobs.perform
+-- on the line site (what the action's complete() calls): on the square's floor for Lay, else on the
+-- line tile. Answers whether it was `done` and `args.tiles` after, so a test sees the server refuse
+-- on its own.
 handler("lines.perform", function(player, args)
     local square = Fixtures.squareAt(args)
     local object
@@ -144,7 +146,7 @@ handler("lines.perform", function(player, args)
     if not object then
         return nil, "the server's object for " .. tostring(args.job) .. " at " .. args.x .. "," .. args.y
     end
-    local done = EI.LineSystem.perform(player, args.job, object, args.with)
+    local done = Jobs.perform(EI.LineJobs, EI.LineSystem.site, player, args.job, object, args.with)
     local reply = readTiles(args.tiles or { { x = args.x, y = args.y, z = args.z } })
     reply.done = done == true
     return reply

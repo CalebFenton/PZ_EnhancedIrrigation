@@ -8,7 +8,8 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/GlobalObjects"
+local GlobalObjects = require "cf_commonlib/GlobalObjects"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 
@@ -88,7 +89,7 @@ end
 
 --- The unit on `square`, or nil. Takes a nil square.
 function Treatment.unitOn(square)
-    return EnhancedIrrigation.findObjectOn(square, Treatment.isUnit)
+    return Squares.findObjectOn(square, Treatment.isUnit)
 end
 
 --- Whether water runs between `tank` and `unit` through the unit's `role` end: into its head from
@@ -132,6 +133,6 @@ function Treatment.canPlaceBoiler(params)
 end
 
 -- A unit's basin is its own container, which every side holds, so a summary needs nothing added.
-EnhancedIrrigation.GlobalObjects.addAccessors(Treatment, function() end)
+GlobalObjects.addAccessors(Treatment, function() end)
 
 return Treatment

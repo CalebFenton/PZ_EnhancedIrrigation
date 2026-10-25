@@ -11,6 +11,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/ObjectSystem"
+local Tiles = require "cf_commonlib/Tiles"
 require "EnhancedIrrigation/Lines/LineSystem"
 require "EnhancedIrrigation/Pumps/PumpHouse"
 
@@ -211,7 +212,7 @@ end
 function PumpObject:show()
     local pump = self:getIsoObject()
     if pump and self:isHouse() then
-        EnhancedIrrigation.ObjectSystem.showOverlays(pump, isTimerOverlay, self.timer and { Sprites.HOUSE_TIMER } or {})
+        Tiles.showOverlays(pump, isTimerOverlay, self.timer and { Sprites.HOUSE_TIMER } or {})
     end
 end
 

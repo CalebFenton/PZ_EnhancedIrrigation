@@ -4,18 +4,6 @@
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
---- The first object on `square` for which `matches(object)` is true, or nil. Takes a nil square.
-function EnhancedIrrigation.findObjectOn(square, matches)
-    local objects = square and square:getObjects()
-    for i = 0, (objects and objects:size() or 0) - 1 do
-        local object = objects:get(i)
-        if matches(object) then
-            return object
-        end
-    end
-    return nil
-end
-
 --- The key of the square x, y, z in a table, and how a job's `with` names a square: a string, which
 --- a multiplayer action's arguments can carry.
 function EnhancedIrrigation.squareKey(x, y, z)
@@ -50,56 +38,23 @@ function EnhancedIrrigation.loadedAround(x, y, z)
     return true
 end
 
---- Whether two values are the same, tables by what they hold, at any depth. Summaries compare
---- so, to send only what changed.
-function EnhancedIrrigation.sameValue(a, b)
-    if type(a) ~= "table" or type(b) ~= "table" then
-        return a == b
-    end
-    for key, value in pairs(a) do
-        if not EnhancedIrrigation.sameValue(value, b[key]) then
-            return false
-        end
-    end
-    for key in pairs(b) do
-        if a[key] == nil then
-            return false
-        end
-    end
-    return true
-end
-
 --- The world's clock in game hours, which every elapsed time in the mod is measured on, so a pass
 --- comes out the same at any game speed or tick rate.
 function EnhancedIrrigation.now()
     return getGameTime():getWorldAgeHours()
 end
 
--- A pass longer than this (a save loaded after the clock jumped) counts as this long. Line records
--- run while unloaded, so it is long enough for drying and frost to catch up; tanks settle sooner.
+-- A pass longer than this (a save loaded after the clock jumped) counts as this long
+-- (Clock.hoursSince). Line records run while unloaded, so it is long enough for drying and frost to
+-- catch up; tanks settle sooner.
 EnhancedIrrigation.LONGEST_PASS = 24 * 7
 
---- The game hours since `holder.lastHour`, at most LONGEST_PASS, and none the first time; stamps
---- `holder.lastHour` with now, so the next pass counts from here.
-function EnhancedIrrigation.hoursSince(holder)
-    local now = EnhancedIrrigation.now()
-    local hours = math.min(EnhancedIrrigation.LONGEST_PASS, now - (holder.lastHour or now))
-    holder.lastHour = now
-    return hours
-end
-
---- Whether `object` is still in the world, rather than a copy left behind by a removal or a
---- chunk reload.
-function EnhancedIrrigation.onSquare(object)
-    return object ~= nil and object:getObjectIndex() ~= -1
-end
-
---- The game entity script whose SpriteConfig names the tile `spriteName`, or nil: what an object
---- on that tile is, found as vanilla's MORainCollectorBarrel finds it.
-function EnhancedIrrigation.tileEntity(spriteName)
-    local info = SpriteConfigManager.getObjectInfoFromSprite(spriteName)
-    return info and info:getScript():getParent()
-end
+--- The refusals every job module gives (Jobs.define): `unknown`, of a job no row has or a `with`
+--- no menu offers, which only a client that made one up asks for; `short`, while a need is unmet.
+EnhancedIrrigation.JOB_REFUSALS = {
+    unknown = "Tooltip_EnhancedIrrigation_UnknownJob",
+    short = "Tooltip_EnhancedIrrigation_Short",
+}
 
 --- The name of `isoObject`'s entity script ("RainCollectorRound"), or nil for a plain object.
 function EnhancedIrrigation.entityName(isoObject)

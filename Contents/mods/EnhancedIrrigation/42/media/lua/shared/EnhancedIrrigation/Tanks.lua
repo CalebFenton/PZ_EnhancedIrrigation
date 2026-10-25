@@ -3,6 +3,7 @@
 -- level is the floor it stands on, plus one on a stand.
 
 require "EnhancedIrrigation/Utilities"
+local Squares = require "cf_commonlib/Squares"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Tanks = {}
@@ -36,7 +37,7 @@ end
 
 --- The tank on `square`, or nil. Takes a nil square.
 function Tanks.tankOn(square)
-    return EnhancedIrrigation.findObjectOn(square, Tanks.isTank)
+    return Squares.findObjectOn(square, Tanks.isTank)
 end
 
 --- The tank on the loaded square x, y, z, or nil when there is none or the square isn't loaded.

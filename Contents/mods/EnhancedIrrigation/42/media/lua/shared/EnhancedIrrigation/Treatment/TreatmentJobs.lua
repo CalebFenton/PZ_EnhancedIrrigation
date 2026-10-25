@@ -3,8 +3,9 @@
 -- is vanilla's (ISBBQMenu).
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Items = require "cf_commonlib/Items"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Treatment/Treatment"
 
@@ -12,7 +13,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentJobs = {}
 EnhancedIrrigation.TreatmentJobs = TreatmentJobs
 
-local Jobs = EnhancedIrrigation.Jobs
+local UNKNOWN = EnhancedIrrigation.JOB_REFUSALS.unknown
 local Treatment = EnhancedIrrigation.Treatment
 
 TreatmentJobs.POUR_IN = "PourIn"
@@ -35,7 +36,7 @@ local CLEAN_TOOLS = { ItemTag.TAKE_DIRT, ItemTag.MASONS_TROWEL }
 -- The tool `character` cleans a filter with, or nil to work by hand.
 local function cleaningTool(character)
     for _, tag in ipairs(CLEAN_TOOLS) do
-        local tool = EnhancedIrrigation.Materials.workingTool(character, tag)
+        local tool = Items.workingTool(character, tag)
         if tool then
             return tool
         end
@@ -78,7 +79,7 @@ end
 -- crock counts while it stands in its bucket.
 local function kindBlocker(unit, job)
     local spec = Treatment.specOf(unit)
-    return not (spec and spec.kind == KIND_OF_JOB[job] and Treatment.isUnit(unit)) and Jobs.UNKNOWN or nil
+    return not (spec and spec.kind == KIND_OF_JOB[job] and Treatment.isUnit(unit)) and UNKNOWN or nil
 end
 
 -- Patch Drum's torch, which it holds and draws on.
@@ -93,7 +94,7 @@ TreatmentJobs.JOBS = {
         equip = function(character, unit, item) return item end,
         blocker = function(character, unit, item)
             if not Treatment.isUnit(unit) then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             local fluid = Jobs.carries(character, item) and item:getFluidContainer()
             if not fluid or fluid:isEmpty() then
@@ -120,7 +121,7 @@ TreatmentJobs.JOBS = {
             return character and cleaningTool(character) and CLEAN_TOOL_MINUTES
                 or CLEAN_MINUTES
         end,
-        position = "Mid", heavy = true, sound = "Shoveling",
+        position = "Mid", metabolics = Metabolics.HeavyWork, sound = "Shoveling",
         equip = function(character) return cleaningTool(character) end,
         blocker = function(character, unit)
             local blocker = kindBlocker(unit, TreatmentJobs.CLEAN_FILTER)
@@ -158,7 +159,7 @@ TreatmentJobs.JOBS = {
     [TreatmentJobs.PATCH_DRUM] = {
         minutes = PATCH_MINUTES,
         anim = "BlowTorch", position = "Mid", sound = "BlowTorch",
-        equip = EnhancedIrrigation.Materials.holdsDrainable(WELDING_TORCH),
+        equip = Materials.holdsDrainable(WELDING_TORCH),
         blocker = function(character, unit)
             local blocker = kindBlocker(unit, TreatmentJobs.PATCH_DRUM)
             if blocker then
@@ -166,13 +167,13 @@ TreatmentJobs.JOBS = {
             end
             local summary = Treatment.currentSummary(unit)
             if not summary then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             return EnhancedIrrigation.Parts.mendBlocker(summary.condition, summary.ceiling, Treatment.PATCH_LOSS,
                 "Tooltip_EnhancedIrrigation_DrumWornOut", "Tooltip_EnhancedIrrigation_DrumSound")
         end,
         materials = {
-            { skill = "MetalWelding", level = 2 },
+            { perk = "MetalWelding", need = 2 },
             { tool = "WELDING_MASK", item = "Base.WeldingMask" },
             { item = "Base.SmallSheetMetal", need = 1 },
             WELDING_TORCH,
@@ -181,6 +182,6 @@ TreatmentJobs.JOBS = {
     },
 }
 
-Jobs.define(TreatmentJobs)
+Jobs.define(TreatmentJobs, EnhancedIrrigation.JOB_REFUSALS)
 
 return TreatmentJobs

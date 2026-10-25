@@ -9,6 +9,7 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Power"
+local GeneratorReach = require "cf_commonlib/GeneratorReach"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local HousePower = {}
@@ -23,14 +24,6 @@ local function isBank(generator)
     return RE ~= nil and RE.PowerBank ~= nil and RE.PowerBank.isBank(generator)
 end
 
--- Whether a generator at gx, gy, gz powers the square x, y, z, as IsoGenerator.isPoweringSquare
--- reckons it, with the save's reach: the generator class's own copy is read only when one is made.
-local function reaches(gx, gy, gz, x, y, z)
-    local range = SandboxVars.GeneratorTileRange
-    local dx, dy = gx - x, gy - y
-    return math.abs(gz - z) <= SandboxVars.GeneratorVerticalPowerRange and dx * dx + dy * dy <= range * range
-end
-
 -- The running vanilla generator on `square`, or nil.
 local function runningGenerator(square)
     local generator = square and square:getGenerator()
@@ -38,24 +31,20 @@ local function runningGenerator(square)
 end
 
 -- The nearest running vanilla generator whose reach covers the record's square, among the loaded
--- squares, or nil.
+-- squares, or nil. A generator reaches as far as it is reached (GeneratorReach.covers measures
+-- both ways alike), so the search walks the record's own reach.
 local function nearestGenerator(record)
-    local range, vertical = SandboxVars.GeneratorTileRange, SandboxVars.GeneratorVerticalPowerRange
-    local cell = getCell()
     local best, bestDistance = nil, nil
-    for z = record.z - vertical, record.z + vertical do
-        for dx = -range, range do
-            for dy = -range, range do
-                local distance = dx * dx + dy * dy
-                if distance <= range * range and (not bestDistance or distance < bestDistance) then
-                    local generator = runningGenerator(cell:getGridSquare(record.x + dx, record.y + dy, z))
-                    if generator then
-                        best, bestDistance = generator, distance
-                    end
-                end
+    GeneratorReach.eachSquare(record.x, record.y, record.z, function(square)
+        local dx, dy = square:getX() - record.x, square:getY() - record.y
+        local distance = dx * dx + dy * dy
+        if not bestDistance or distance < bestDistance then
+            local generator = runningGenerator(square)
+            if generator then
+                best, bestDistance = generator, distance
             end
         end
-    end
+    end)
     return best
 end
 
@@ -96,7 +85,8 @@ local function payerOf(record)
             generator = runningGenerator(square)
         end
         record.owedFuel = nil
-        if generator and reaches(record.payer.x, record.payer.y, record.payer.z, record.x, record.y, record.z) then
+        local payer = record.payer
+        if generator and GeneratorReach.covers(payer.x, payer.y, payer.z, record.x, record.y, record.z) then
             record.payerFuel = generator:getFuel()
             return { generator = generator }
         end

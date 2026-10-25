@@ -2,7 +2,8 @@
 -- Pump House that runs. A pump holds no container and nothing unsaved, so its copies need nothing
 -- set up.
 
-require "EnhancedIrrigation/ClientObjects"
+local ClientObjects = require "cf_commonlib/ClientObjects"
+require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/SquareSounds"
 
@@ -13,13 +14,15 @@ EnhancedIrrigation.PumpClient = PumpClient
 
 local function nothingToAdopt() end
 
-EnhancedIrrigation.ClientObjects.define({
+ClientObjects.define({
+    prefix = "EnhancedIrrigation_",
     name = "Pump",
     owner = Pumps,
     isObject = Pumps.isPump,
     sprites = Pumps.SPRITES,
     adoptCopy = nothingToAdopt,
     adoptContainer = nothingToAdopt,
+    loadPriority = EnhancedIrrigation.Sprites.LOAD_PRIORITY,
 })
 
 -- The running Pump House's loop (Sounds.txt).

@@ -1,7 +1,8 @@
 -- The right-click options of Tank Stands: Set Barrel on Stand on an empty stand and Take Barrel
 -- Down on a raised barrel, each greyed out saying why when StandJobs would refuse it.
 
-require "EnhancedIrrigation/UI/JobOptions"
+local JobOptions = require "cf_commonlib/JobOptions"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/Stands/Stands"
 require "EnhancedIrrigation/Stands/StandJobs"
 
@@ -10,7 +11,6 @@ local StandMenu = {}
 EnhancedIrrigation.StandMenu = StandMenu
 
 local Stands, StandJobs = EnhancedIrrigation.Stands, EnhancedIrrigation.StandJobs
-local JobOptions = EnhancedIrrigation.JobOptions
 
 local function isStandOrRaised(object)
     return Stands.isStand(object) or Stands.isRaised(object)
@@ -22,11 +22,11 @@ JobOptions.onWorldMenu(isStandOrRaised, function(context, playerNum, character, 
         for _, entry in ipairs(Stands.barrelsCarried(character)) do
             table.insert(barrels, entry.item)
         end
-        JobOptions.addEach(context, playerNum, character, "stand", getText("ContextMenu_EnhancedIrrigation_SetBarrel"),
-            StandJobs.SET_BARREL, object, barrels)
+        JobOptions.addEach(context, playerNum, EnhancedIrrigationAction, "stand", StandJobs.SET_BARREL, object, barrels,
+            getText("ContextMenu_EnhancedIrrigation_SetBarrel"))
     else
-        JobOptions.add(context, playerNum, character, "stand", getText("ContextMenu_EnhancedIrrigation_TakeBarrelDown"),
-            StandJobs.TAKE_DOWN, object)
+        JobOptions.add(context, playerNum, EnhancedIrrigationAction, "stand", StandJobs.TAKE_DOWN, object, nil,
+            getText("ContextMenu_EnhancedIrrigation_TakeBarrelDown"))
     end
 end)
 

@@ -5,18 +5,19 @@ require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
-require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/JobOptions"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+local Needs = require "cf_commonlib/Needs"
+local JobOptions = require "cf_commonlib/JobOptions"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceMenu = {}
 EnhancedIrrigation.ApplianceMenu = ApplianceMenu
 
-local Needs, Appliances, ApplianceJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Appliances, EnhancedIrrigation.ApplianceJobs
+local Appliances, ApplianceJobs = EnhancedIrrigation.Appliances, EnhancedIrrigation.ApplianceJobs
 
 -- Whether `option` is one of vanilla's washer switches.
 local function isSwitch(option)
-    local handler = EnhancedIrrigation.JobOptions.handlerOf(option)
+    local handler = JobOptions.handlerOf(option)
     return handler == ISWorldObjectContextMenu.onToggleClothingWasher
         or handler == ISWorldObjectContextMenu.onToggleComboWasherDryer
 end
@@ -34,12 +35,12 @@ local function refuseSwitches(context, menu)
     end
 end
 
-EnhancedIrrigation.JobOptions.onWorldMenu(Appliances.hasPumpTile, function(context, playerNum, character, appliance)
+JobOptions.onWorldMenu(Appliances.hasPumpTile, function(context, playerNum, character, appliance)
     if Appliances.refusesSwitchOn(appliance) then
         refuseSwitches(context, context)
     end
-    EnhancedIrrigation.JobOptions.add(context, playerNum, character, "appliance",
-        getText("ContextMenu_EnhancedIrrigation_SalvagePump"), ApplianceJobs.SALVAGE_PUMP, appliance)
+    JobOptions.add(context, playerNum, EnhancedIrrigationAction, "appliance", ApplianceJobs.SALVAGE_PUMP, appliance,
+        nil, getText("ContextMenu_EnhancedIrrigation_SalvagePump"))
 end)
 
 return ApplianceMenu

@@ -16,6 +16,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+local Clock = require "cf_commonlib/Clock"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Taps"
 require "EnhancedIrrigation/Power"
@@ -78,7 +79,7 @@ function ValveSystem.update(record)
         return
     end
     local now = EnhancedIrrigation.now()
-    local from = now - EnhancedIrrigation.hoursSince(valve)
+    local from = now - Clock.hoursSince(valve, EnhancedIrrigation.LONGEST_PASS)
     if not record.holder then
         for _, hours in ipairs(openHours(record, tap, from, now)) do
             if hours > 0 and TapSystem.run(tap, hours) then

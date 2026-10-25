@@ -4,7 +4,7 @@
 
 Get running water back after the taps run dry, with what a Kentucky farm had in 1993: a rain barrel up on a log stand, pipe laid down the garden rows, sinks plumbed to a tank, a sand filter or a wood-fired boiler for drinking water, and a pump on the well. You start with one raised barrel and a line you hold open, bed by bed. Every length of pipe is one you scavenged or fired, every pump seal wears through, and nothing in it knows whether it rained.
 
-**Build 42.21 or newer.** Single player and multiplayer. Fine to add to a save in progress.
+**Build 42.21 or newer.** Single player and multiplayer. Fine to add to a save in progress. Requires **cf_commonlib**.
 
 **[The player's guide](docs/player-guide.md)** explains every system: how high a tank has to stand, sizing a line, keeping a filter alive, what a pump lifts, and where to look.
 

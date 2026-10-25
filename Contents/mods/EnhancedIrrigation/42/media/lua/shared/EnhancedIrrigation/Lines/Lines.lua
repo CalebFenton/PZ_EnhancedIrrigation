@@ -6,7 +6,8 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/GlobalObjects"
+local GlobalObjects = require "cf_commonlib/GlobalObjects"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Links/Links"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -100,7 +101,7 @@ end
 
 --- The line tile on `square`, or nil. Takes a nil square.
 function Lines.lineOn(square)
-    return EnhancedIrrigation.findObjectOn(square, Lines.isLine)
+    return Squares.findObjectOn(square, Lines.isLine)
 end
 
 function Lines.lineAt(x, y, z)
@@ -258,6 +259,6 @@ function Lines.wetterKey(a, b)
 end
 
 -- A line tile has no containers, so a summary needs nothing added on read.
-EnhancedIrrigation.GlobalObjects.addAccessors(Lines, function() end)
+GlobalObjects.addAccessors(Lines, function() end)
 
 return Lines

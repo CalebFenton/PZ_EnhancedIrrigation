@@ -4,8 +4,8 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Items = require "cf_commonlib/Items"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
@@ -19,20 +19,18 @@ local Appliances, ApplianceJobs = EnhancedIrrigation.Appliances, EnhancedIrrigat
 
 -- What each job does at `appliance`.
 local DO = {
-    [ApplianceJobs.SALVAGE_PUMP] = function(character, appliance)
+    [ApplianceJobs.SALVAGE_PUMP] = function(character, record, row, appliance)
         local pump = instanceItem(EnhancedIrrigation.Pumps.APPLIANCE_PUMP)
         local least, most = ApplianceJobs.SALVAGED_CONDITION[1], ApplianceJobs.SALVAGED_CONDITION[2]
         pump:setCondition(ZombRand(least, most + 1))
         Appliances.strip(appliance)
-        EnhancedIrrigation.Materials.giveItems(character, pump)
-        EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.Valves.WATER_VALVE)
+        Items.giveItems(character, pump)
+        Items.giveItems(character, EnhancedIrrigation.Valves.WATER_VALVE)
+        return true
     end,
 }
 
---- Does `job` at `appliance` for `character` on the authority (Jobs.perform). Returns whether it was
---- done.
-function ApplianceSystem.perform(character, job, appliance, with)
-    return EnhancedIrrigation.Jobs.perform(ApplianceJobs, DO, character, job, appliance, with)
-end
+--- The authority's side of the appliance jobs (a site of Jobs.perform).
+ApplianceSystem.site = Jobs.targetSite(DO)
 
 return ApplianceSystem

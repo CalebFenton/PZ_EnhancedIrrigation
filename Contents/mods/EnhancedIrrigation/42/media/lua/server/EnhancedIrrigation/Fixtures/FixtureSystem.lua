@@ -6,6 +6,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -167,7 +168,7 @@ local function convertPending()
     local waiting = {}
     for _, entry in ipairs(pending) do
         entry.tries = entry.tries + 1
-        if EnhancedIrrigation.onSquare(entry.fixture) and not FixtureSystem.convert(entry.fixture)
+        if Squares.onSquare(entry.fixture) and not FixtureSystem.convert(entry.fixture)
                 and entry.tries < TRIES then
             table.insert(waiting, entry)
         end

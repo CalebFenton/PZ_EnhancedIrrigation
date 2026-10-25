@@ -1,6 +1,7 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+local Squares = require "cf_commonlib/Squares"
 
 -- Development only, not published. Pumping for set hours runs the authority's own sums
 -- (PumpSystem.run, a Pump House's ten-minute pass) in one call, so the clock doesn't decide them.
@@ -38,7 +39,7 @@ local function stateAt(player, args)
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
     local wellSquare = args.well and Fixtures.squareAt(args.well)
-    local well = wellSquare and EI.findObjectOn(wellSquare, function(object)
+    local well = wellSquare and Squares.findObjectOn(wellSquare, function(object)
         return EI.entityName(object) == "Well"
     end)
     state.wellLitres = well and well:getFluidContainer() and well:getFluidContainer():getAmount() or nil

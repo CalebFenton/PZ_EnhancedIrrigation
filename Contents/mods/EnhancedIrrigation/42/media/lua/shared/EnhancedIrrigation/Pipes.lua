@@ -2,7 +2,7 @@
 -- material; threaded iron and soft lead need only the pipe wrench.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
+local Items = require "cf_commonlib/Items"
 require "EnhancedIrrigation/Sprites"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -49,7 +49,7 @@ Pipes.MATERIALS = {
     },
 }
 
---- The materials list (EnhancedIrrigation.Materials) of `lengths` lengths of `material`'s pipe,
+--- The materials list (cf_commonlib's Materials) of `lengths` lengths of `material`'s pipe,
 --- each with its joint, after the materials of `first` (a list, left as it is), if given.
 function Pipes.materials(material, lengths, first)
     local spec = Pipes.MATERIALS[material]
@@ -92,7 +92,7 @@ function Pipes.giveBack(character, material, lengths, conditions)
         if condition then
             item:setCondition(math.min(condition, item:getConditionMax()))
         end
-        EnhancedIrrigation.Materials.giveItems(character, item)
+        Items.giveItems(character, item)
     end
 end
 

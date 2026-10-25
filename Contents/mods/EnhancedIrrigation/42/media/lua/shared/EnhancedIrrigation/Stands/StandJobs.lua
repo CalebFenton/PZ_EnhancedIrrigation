@@ -2,14 +2,13 @@
 -- by StandSystem. Set Barrel's `with` is the barrel moveable set on it.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Jobs"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Stands/Stands"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local StandJobs = {}
 EnhancedIrrigation.StandJobs = StandJobs
 
-local Jobs = EnhancedIrrigation.Jobs
 local Stands = EnhancedIrrigation.Stands
 
 StandJobs.SET_BARREL = "SetBarrel"
@@ -19,7 +18,7 @@ StandJobs.TAKE_DOWN = "TakeBarrelDown"
 -- of stand, so both jobs are heavy work at chest height.
 StandJobs.JOBS = {
     [StandJobs.SET_BARREL] = {
-        minutes = 5, position = "Mid", heavy = true,
+        minutes = 5, position = "Mid", metabolics = Metabolics.HeavyWork,
         blocker = function(character, object, barrel)
             if not Stands.isStand(object) then
                 return "Tooltip_EnhancedIrrigation_NotAStand"
@@ -31,7 +30,7 @@ StandJobs.JOBS = {
         end,
     },
     [StandJobs.TAKE_DOWN] = {
-        minutes = 5, position = "Mid", heavy = true,
+        minutes = 5, position = "Mid", metabolics = Metabolics.HeavyWork,
         blocker = function(character, object)
             if not Stands.isRaised(object) then
                 return "Tooltip_EnhancedIrrigation_NoBarrelOnStand"
@@ -42,6 +41,6 @@ StandJobs.JOBS = {
     },
 }
 
-Jobs.define(StandJobs)
+Jobs.define(StandJobs, EnhancedIrrigation.JOB_REFUSALS)
 
 return StandJobs

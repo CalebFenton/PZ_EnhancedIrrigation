@@ -3,15 +3,16 @@
 
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
+local Materials = require "cf_commonlib/Materials"
+local Needs = require "cf_commonlib/Needs"
+local JobOptions = require "cf_commonlib/JobOptions"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/UI/ValveUI"
-require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/JobOptions"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationWaterAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -21,8 +22,6 @@ EnhancedIrrigation.LineMenu = LineMenu
 local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
 local Pipes = EnhancedIrrigation.Pipes
-local Needs, JobOptions = EnhancedIrrigation.Needs, EnhancedIrrigation.JobOptions
-local Materials = EnhancedIrrigation.Materials
 local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
 
 -- What a tile is ------------------------------------------------------------------------------------
@@ -53,8 +52,8 @@ end
 
 -- Options -------------------------------------------------------------------------------------------
 
-local function addJob(menu, playerNum, character, nameKey, job, object, with)
-    return JobOptions.add(menu, playerNum, character, "line", getText(nameKey), job, object, with)
+local function addJob(menu, playerNum, nameKey, job, object, with)
+    return JobOptions.add(menu, playerNum, EnhancedIrrigationAction, "line", job, object, with, getText(nameKey))
 end
 
 -- The Lawn Sprinkler carried in the best condition, or nil.
@@ -72,11 +71,11 @@ end
 
 local function addSprinkler(menu, playerNum, character, line, state)
     if state.sprinkler then
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeSprinkler", LineJobs.TAKE_SPRINKLER, line)
+        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeSprinkler", LineJobs.TAKE_SPRINKLER, line)
         return
     end
     local sprinkler = bestSprinkler(character)
-    local option = addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_SetSprinkler",
+    local option = addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_SetSprinkler",
         LineJobs.SET_SPRINKLER, line, sprinkler)
     option.itemForTexture = sprinkler
 end
@@ -84,7 +83,7 @@ end
 -- Drill Holes uses the first tool carried that gets into the pipe (LineJobs.holeTool), which its
 -- needs name; one that punches warns that it may split brittle pipe.
 local function addDrill(menu, playerNum, character, line, state)
-    local option = addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_DrillHoles", LineJobs.DRILL, line)
+    local option = addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_DrillHoles", LineJobs.DRILL, line)
     local tool = LineJobs.holeTool(character, state.material)
     if tool and option.toolTip and LineJobs.mayCrack(tool, state.material) then
         option.toolTip.description = option.toolTip.description .. " " .. getText("Tooltip_EnhancedIrrigation_MayCrack")
@@ -109,11 +108,11 @@ local function addValve(menu, playerNum, character, line, state)
         local windUp = Valves.kindOf(state.valve.item) == "windup"
         local name = windUp and "ContextMenu_EnhancedIrrigation_WindValve" or "ContextMenu_EnhancedIrrigation_SetTimer"
         menu:addOption(getText(name), character, LineMenu.openValve, line)
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_OFF_VALVE, line)
+        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_OFF_VALVE, line)
         return
     end
-    JobOptions.addEach(menu, playerNum, character, "line", getText("ContextMenu_EnhancedIrrigation_FitValve"),
-        LineJobs.FIT_VALVE, line, JobOptions.firstOfEach(character, Valves.ORDER))
+    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "line", LineJobs.FIT_VALVE, line,
+        JobOptions.firstOfEach(character, Valves.ORDER), getText("ContextMenu_EnhancedIrrigation_FitValve"))
 end
 
 local function addLineOptions(context, playerNum, character, line, state)
@@ -125,17 +124,17 @@ local function addLineOptions(context, playerNum, character, line, state)
         Needs.refuse(water, LineJobs.refusal(character, LineJobs.WATER, line))
         addValve(menu, playerNum, character, line, state)
     else
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_FitTap", LineJobs.TAP, line)
+        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_FitTap", LineJobs.TAP, line)
     end
     if not state.holed then
         addDrill(menu, playerNum, character, line, state)
     end
     if state.cracked then
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_PatchCrack", LineJobs.PATCH, line)
+        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_PatchCrack", LineJobs.PATCH, line)
     end
-    addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_DrainLine", LineJobs.DRAIN, line)
+    addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_DrainLine", LineJobs.DRAIN, line)
     addSprinkler(menu, playerNum, character, line, state)
-    addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeUpPipe", LineJobs.TAKE_UP, line)
+    addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeUpPipe", LineJobs.TAKE_UP, line)
 end
 
 -- The cursor lives with the server's Lua, which loads after this file, so it's looked up here.

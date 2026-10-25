@@ -3,8 +3,9 @@
 -- only a blocker, as Pump has in PumpJobs.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Items = require "cf_commonlib/Items"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
@@ -17,11 +18,9 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local LineJobs = {}
 EnhancedIrrigation.LineJobs = LineJobs
 
-local Jobs = EnhancedIrrigation.Jobs
 local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 local Pipes = EnhancedIrrigation.Pipes
-local Materials = EnhancedIrrigation.Materials
 local Pumps, Sprinklers, Valves = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers, EnhancedIrrigation.Valves
 local Taps = EnhancedIrrigation.Taps
 
@@ -83,7 +82,7 @@ local function holeToolAt(character, object)
     end
     local first = tool.materials[1]
     if first.tool then
-        return tool, Materials.workingTool(character, ItemTag[first.tool])
+        return tool, Items.workingTool(character, ItemTag[first.tool])
     end
     return tool, character:getInventory():getFirstTypeRecurse(first.item)
 end
@@ -327,7 +326,7 @@ LineJobs.JOBS = {
         blocker = atValve("windup", function(character, object, state, with)
             local minutes = Valves.decodeWind(with)
             if not minutes then
-                return Jobs.UNKNOWN
+                return EnhancedIrrigation.JOB_REFUSALS.unknown
             end
             if minutes == 0 then
                 return nil
@@ -342,11 +341,11 @@ LineJobs.JOBS = {
     [LineJobs.SET_TIMER] = {
         minutes = VALVE_MINUTES, position = "Mid",
         blocker = atValve("timer", function(character, object, state, with)
-            return not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil
+            return not Valves.decodeTimer(with) and EnhancedIrrigation.JOB_REFUSALS.unknown or nil
         end),
     },
 }
 
-Jobs.define(LineJobs)
+Jobs.define(LineJobs, EnhancedIrrigation.JOB_REFUSALS)
 
 return LineJobs

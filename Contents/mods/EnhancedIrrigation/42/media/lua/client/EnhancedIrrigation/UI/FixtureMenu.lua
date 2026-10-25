@@ -11,8 +11,8 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Appliances/Appliances"
-require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/JobOptions"
+local Needs = require "cf_commonlib/Needs"
+local JobOptions = require "cf_commonlib/JobOptions"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
@@ -20,7 +20,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local FixtureMenu = {}
 EnhancedIrrigation.FixtureMenu = FixtureMenu
 
-local Needs, Tanks, Links = EnhancedIrrigation.Needs, EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
+local Tanks, Links = EnhancedIrrigation.Tanks, EnhancedIrrigation.Links
 local LinkJobs, Fixtures, LinkMenu = EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Fixtures, EnhancedIrrigation.LinkMenu
 
 -- Vanilla's Plumb ----------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ ISWorldObjectContextMenu.onPlumbItem = FixtureMenu.onPlumbItem
 -- Takes vanilla's Plumb out of `context`: on a plumbed fixture under a barrel it would plumb again.
 local function removeVanillaPlumb(context)
     for _, option in ipairs(context.options) do
-        if EnhancedIrrigation.JobOptions.handlerOf(option) == ISWorldObjectContextMenu.onPlumbItem then
+        if JobOptions.handlerOf(option) == ISWorldObjectContextMenu.onPlumbItem then
             context:removeOptionByName(option.name)
             return
         end
@@ -93,7 +93,7 @@ local function addLinkOptions(context, playerNum, character, fixture)
     })
 end
 
-EnhancedIrrigation.JobOptions.onWorldMenu(Fixtures.isFixture, function(context, playerNum, character, fixture, worldobjects)
+JobOptions.onWorldMenu(Fixtures.isFixture, function(context, playerNum, character, fixture, worldobjects)
     if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
         removeVanillaPlumb(context)
     end

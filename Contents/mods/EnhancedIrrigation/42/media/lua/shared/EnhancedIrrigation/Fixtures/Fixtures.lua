@@ -7,6 +7,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
+local Squares = require "cf_commonlib/Squares"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Fixtures = {}
@@ -30,7 +31,7 @@ end
 
 --- The fixture on `square`, or nil. Takes a nil square.
 function Fixtures.fixtureOn(square)
-    return EnhancedIrrigation.findObjectOn(square, Fixtures.isFixture)
+    return Squares.findObjectOn(square, Fixtures.isFixture)
 end
 
 --- The fixture on the loaded square x, y, z, or nil.

@@ -4,8 +4,8 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Items = require "cf_commonlib/Items"
+local LibObjectSystem = require "cf_commonlib/ObjectSystem"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Pumps/Pumps"
@@ -48,7 +48,7 @@ function PumpSystem.onCreate(params)
     local pump = params.thumpable
     PumpSystem.System.instance:loadIsoObject(pump)
     local record = Pumps.recordOf(pump)
-    local seal = record and EnhancedIrrigation.ObjectSystem.consumedItem(params,
+    local seal = record and Items.firstConsumed(params.craftRecipeData,
         function(item) return Pumps.sealLitres(item:getFullType()) ~= nil end)
     if seal then
         record:fitSeal(seal:getFullType())
@@ -59,59 +59,59 @@ end
 
 -- Jobs -----------------------------------------------------------------------------------------------
 
--- What each job does at `pump`, whose record PumpSystem.perform brought up to now.
+-- What each job does on the record of `pump`, brought up to now (ObjectSystem.jobSite).
 local DO = {
-    [PumpJobs.REPLACE_SEAL] = function(character, pump, item)
-        Pumps.recordOf(pump):fitSeal(item:getFullType())
+    [PumpJobs.REPLACE_SEAL] = function(character, record, row, pump, item)
+        record:fitSeal(item:getFullType())
+        return true
     end,
-    [PumpJobs.FIT_PUMP] = function(character, pump, item)
-        EnhancedIrrigation.Materials.takeItem(character, item)
-        Pumps.recordOf(pump):fitPart(item)
+    [PumpJobs.FIT_PUMP] = function(character, record, row, pump, item)
+        Items.takeItem(character, item)
+        record:fitPart(item)
+        return true
     end,
-    [PumpJobs.TAKE_OUT_PUMP] = function(character, pump)
-        EnhancedIrrigation.Materials.giveItems(character, Pumps.recordOf(pump):takeOutPart())
+    [PumpJobs.TAKE_OUT_PUMP] = function(character, record)
+        Items.giveItems(character, record:takeOutPart())
+        return true
     end,
     -- The time before it was switched on did nothing, so it counts from now.
-    [PumpJobs.TURN_ON] = function(character, pump)
-        local record = Pumps.recordOf(pump)
+    [PumpJobs.TURN_ON] = function(character, record, row, pump)
         record.on = true
         record.lastHour = EnhancedIrrigation.now()
         EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
     end,
-    [PumpJobs.TURN_OFF] = function(character, pump)
-        local record = Pumps.recordOf(pump)
+    [PumpJobs.TURN_OFF] = function(character, record, row, pump)
         record.on = nil
         EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
     end,
-    [PumpJobs.REPAIR_PUMP] = function(character, pump)
-        Pumps.recordOf(pump):repairPart()
+    [PumpJobs.REPAIR_PUMP] = function(character, record)
+        record:repairPart()
+        return true
     end,
     -- The timer's setting starts at nothing: it never opens until set.
-    [PumpJobs.FIT_TIMER] = function(character, pump, item)
-        EnhancedIrrigation.Materials.takeItem(character, item)
-        local record = Pumps.recordOf(pump)
+    [PumpJobs.FIT_TIMER] = function(character, record, row, pump, item)
+        Items.takeItem(character, item)
         record.timer = { item = item:getFullType() }
         EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
     end,
-    [PumpJobs.TAKE_OFF_TIMER] = function(character, pump)
-        local record = Pumps.recordOf(pump)
-        EnhancedIrrigation.Materials.giveItems(character, instanceItem(record.timer.item))
+    [PumpJobs.TAKE_OFF_TIMER] = function(character, record, row, pump)
+        Items.giveItems(character, instanceItem(record.timer.item))
         record.timer = nil
         EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
     end,
-    [PumpJobs.SET_TIMER] = function(character, pump, with)
-        local record = Pumps.recordOf(pump)
+    [PumpJobs.SET_TIMER] = function(character, record, row, pump, with)
         record.timer.start, record.timer.minutes = EnhancedIrrigation.Valves.decodeTimer(with)
         EnhancedIrrigation.PumpHouse.settle(record, pump)
+        return true
     end,
 }
 
---- Does `job` at `pump` with `with` for `character` on the authority (ObjectSystem.perform).
---- Returns whether it was done.
-function PumpSystem.perform(character, job, pump, with)
-    local record = Pumps.recordOf(pump)
-    return record ~= nil and EnhancedIrrigation.ObjectSystem.perform(PumpJobs, DO, character, job, pump, with, record)
-end
+--- The authority's side of the pump jobs (a site of Jobs.perform).
+PumpSystem.site = LibObjectSystem.jobSite(Pumps, DO)
 
 -- Pumping --------------------------------------------------------------------------------------------
 
@@ -144,7 +144,7 @@ end
 function PumpSystem.run(character, pump, hours)
     local record = Pumps.recordOf(pump)
     if not record then
-        return EnhancedIrrigation.Jobs.UNKNOWN
+        return EnhancedIrrigation.JOB_REFUSALS.unknown
     end
     record:catchUp()
     local into, source = PumpWater.handDeliveryOf(pump)

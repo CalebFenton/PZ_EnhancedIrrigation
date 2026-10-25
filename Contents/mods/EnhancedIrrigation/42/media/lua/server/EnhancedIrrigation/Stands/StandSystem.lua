@@ -6,9 +6,10 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
+local Items = require "cf_commonlib/Items"
+local Tiles = require "cf_commonlib/Tiles"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Stands/Stands"
 require "EnhancedIrrigation/Stands/StandJobs"
 
@@ -38,30 +39,29 @@ end
 function StandSystem.barrelItem(spec, square)
     local item = instanceItem(spec.item)
     local fresh = IsoThumpable.new(getCell(), square, spec.barrel, false, nil)
-    GameEntityFactory.CreateIsoObjectEntity(fresh, EnhancedIrrigation.tileEntity(spec.barrel), true)
+    GameEntityFactory.CreateIsoObjectEntity(fresh, Tiles.tileEntity(spec.barrel), true)
     GameEntityFactory.TransferComponents(fresh, item)
     return item
 end
 
 -- What each job does at the stand `object`; Set Barrel's `with` is the barrel.
 local DO = {
-    [StandJobs.SET_BARREL] = function(character, stand, barrel)
+    [StandJobs.SET_BARREL] = function(character, record, row, stand, barrel)
         local spec = Stands.barrelSpec(barrel)
-        EnhancedIrrigation.Materials.takeItem(character, barrel)
+        Items.takeItem(character, barrel)
         replace(stand, spec.entity, spec.sprite)
+        return true
     end,
-    [StandJobs.TAKE_DOWN] = function(character, raised)
+    [StandJobs.TAKE_DOWN] = function(character, record, row, raised)
         local spec = Stands.raisedSpec(raised)
         local item = StandSystem.barrelItem(spec, raised:getSquare())
         replace(raised, Stands.STAND_ENTITY, Sprites.TANK_STAND)
-        EnhancedIrrigation.Materials.giveItems(character, item)
+        Items.giveItems(character, item)
+        return true
     end,
 }
 
---- Does `job` at `object` for `character` on the authority (Jobs.perform). Returns whether
---- it was done.
-function StandSystem.perform(character, job, object, with)
-    return EnhancedIrrigation.Jobs.perform(StandJobs, DO, character, job, object, with)
-end
+--- The authority's side of the Tank Stand jobs (a site of Jobs.perform).
+StandSystem.site = Jobs.targetSite(DO)
 
 return StandSystem

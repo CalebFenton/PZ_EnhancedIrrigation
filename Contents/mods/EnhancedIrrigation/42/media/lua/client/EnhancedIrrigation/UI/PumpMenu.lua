@@ -11,20 +11,20 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Valves"
-require "EnhancedIrrigation/UI/Needs"
+local Needs = require "cf_commonlib/Needs"
+local JobOptions = require "cf_commonlib/JobOptions"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/ValveUI"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
-require "EnhancedIrrigation/UI/JobOptions"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpMenu = {}
 EnhancedIrrigation.PumpMenu = PumpMenu
 
-local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
+local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
 local Valves, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveUI
-local JobOptions = EnhancedIrrigation.JobOptions
 local Tanks, Lines, PumpWater = EnhancedIrrigation.Tanks, EnhancedIrrigation.Lines, EnhancedIrrigation.PumpWater
 
 -- The menu's name for `source` (PumpWater.sourceOf): the well, the tank's container ("Rain
@@ -90,8 +90,8 @@ function PumpMenu.describe(pump, summary)
     return table.concat(words, ", ")
 end
 
-local function addJob(menu, playerNum, character, nameKey, job, pump, with)
-    return JobOptions.add(menu, playerNum, character, "pump", getText(nameKey), job, pump, with)
+local function addJob(menu, playerNum, nameKey, job, pump, with)
+    return JobOptions.add(menu, playerNum, EnhancedIrrigationAction, "pump", job, pump, with, getText(nameKey))
 end
 
 -- The full type of each seal, in Pumps.SEALS' order.
@@ -101,8 +101,8 @@ for _, seal in ipairs(Pumps.SEALS) do
 end
 
 local function addReplaceSeal(menu, playerNum, character, pump)
-    JobOptions.addEach(menu, playerNum, character, "pump", getText("ContextMenu_EnhancedIrrigation_ReplaceSeal"),
-        PumpJobs.REPLACE_SEAL, pump, JobOptions.firstOfEach(character, SEAL_TYPES))
+    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "pump", PumpJobs.REPLACE_SEAL, pump,
+        JobOptions.firstOfEach(character, SEAL_TYPES), getText("ContextMenu_EnhancedIrrigation_ReplaceSeal"))
 end
 
 -- The pump parts in the inventory, bags included, each one, as each is as worn as it is.
@@ -124,8 +124,8 @@ local function partName(item)
 end
 
 local function addFitPump(menu, playerNum, character, pump)
-    JobOptions.addEach(menu, playerNum, character, "pump", getText("ContextMenu_EnhancedIrrigation_FitPump"),
-        PumpJobs.FIT_PUMP, pump, partsCarried(character), partName)
+    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "pump", PumpJobs.FIT_PUMP, pump,
+        partsCarried(character), getText("ContextMenu_EnhancedIrrigation_FitPump"), partName)
 end
 
 local function addHandOptions(menu, playerNum, character, pump)
@@ -149,28 +149,28 @@ end
 local function addTimer(menu, playerNum, character, pump, summary)
     if summary and summary.timer then
         menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetTimer"), character, PumpMenu.openTimer, pump)
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffTimer", PumpJobs.TAKE_OFF_TIMER, pump)
+        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeOffTimer", PumpJobs.TAKE_OFF_TIMER, pump)
         return
     end
     local carried = JobOptions.firstOfEach(character, Valves.ORDER, function(fullType)
         return Valves.ITEMS[fullType].house
     end)
-    JobOptions.addEach(menu, playerNum, character, "pump", getText("ContextMenu_EnhancedIrrigation_FitTimer"),
-        PumpJobs.FIT_TIMER, pump, carried)
+    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "pump", PumpJobs.FIT_TIMER, pump, carried,
+        getText("ContextMenu_EnhancedIrrigation_FitTimer"))
 end
 
 local function addHouseOptions(menu, playerNum, character, pump, summary)
     if summary and summary.part then
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOutPump", PumpJobs.TAKE_OUT_PUMP, pump)
+        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeOutPump", PumpJobs.TAKE_OUT_PUMP, pump)
     else
         addFitPump(menu, playerNum, character, pump)
     end
     if summary and summary.on then
-        addJob(menu, playerNum, character, "ContextMenu_Turn_Off", PumpJobs.TURN_OFF, pump)
+        addJob(menu, playerNum, "ContextMenu_Turn_Off", PumpJobs.TURN_OFF, pump)
     else
-        addJob(menu, playerNum, character, "ContextMenu_Turn_On", PumpJobs.TURN_ON, pump)
+        addJob(menu, playerNum, "ContextMenu_Turn_On", PumpJobs.TURN_ON, pump)
     end
-    addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_RepairPump", PumpJobs.REPAIR_PUMP, pump)
+    addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_RepairPump", PumpJobs.REPAIR_PUMP, pump)
     addTimer(menu, playerNum, character, pump, summary)
 end
 

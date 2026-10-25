@@ -8,18 +8,18 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
-require "EnhancedIrrigation/UI/Needs"
-require "EnhancedIrrigation/UI/JobOptions"
+local Needs = require "cf_commonlib/Needs"
+local JobOptions = require "cf_commonlib/JobOptions"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/UI/LinkMenu"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentMenu = {}
 EnhancedIrrigation.TreatmentMenu = TreatmentMenu
 
-local Needs, Links, LinkJobs = EnhancedIrrigation.Needs, EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
+local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Treatment, TreatmentJobs, LinkMenu = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs,
     EnhancedIrrigation.LinkMenu
-local JobOptions = EnhancedIrrigation.JobOptions
 
 -- Each kind's words for its state, from its summary and the unit, as a list of texts.
 local KIND_WORDS = {
@@ -87,8 +87,8 @@ local function containersCarried(character)
 end
 
 local function addPourIn(menu, playerNum, character, unit)
-    JobOptions.addEach(menu, playerNum, character, "treatment", getText("ContextMenu_EnhancedIrrigation_PourIn"),
-        TreatmentJobs.POUR_IN, unit, containersCarried(character))
+    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "treatment", TreatmentJobs.POUR_IN, unit,
+        containersCarried(character), getText("ContextMenu_EnhancedIrrigation_PourIn"))
 end
 
 local function addPlumbing(menu, playerNum, character, unit)
@@ -106,8 +106,7 @@ end
 -- The submenu for `unit`: for a fireplace, the one vanilla's fire menu, which the game fills before
 -- this event, made under the name it gives the fireplace (ISBBQMenu, getTileName); else a new one.
 local function unitMenu(context, unit)
-    local option = unit:isFireInteractionObject() and context:getOptionFromName(unit:getTileName())
-    local submenu = option and option.subOption and context:getSubMenu(option.subOption)
+    local submenu = unit:isFireInteractionObject() and Needs.subMenuOf(context, unit:getTileName())
     return submenu or Needs.addSubMenu(context, LinkMenu.objectName(unit))
 end
 
@@ -120,7 +119,7 @@ JobOptions.onWorldMenu(Treatment.isUnit, function(context, playerNum, character,
     end
     addPourIn(menu, playerNum, character, unit)
     for _, entry in ipairs(TreatmentJobs.KIND_JOBS[spec.kind]) do
-        JobOptions.add(menu, playerNum, character, "treatment", getText(entry.nameKey), entry.job, unit)
+        JobOptions.add(menu, playerNum, EnhancedIrrigationAction, "treatment", entry.job, unit, nil, getText(entry.nameKey))
     end
     if spec.plumbed then
         addPlumbing(menu, playerNum, character, unit)

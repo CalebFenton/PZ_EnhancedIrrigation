@@ -2,7 +2,7 @@
 -- running at each tap whose valve runs it. A line tile is a plain object with nothing unsaved and
 -- no container, so the copies need no setting up.
 
-require "EnhancedIrrigation/ClientObjects"
+local ClientObjects = require "cf_commonlib/ClientObjects"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Taps"
@@ -15,13 +15,15 @@ EnhancedIrrigation.LineClient = LineClient
 
 local function nothingToAdopt() end
 
-EnhancedIrrigation.ClientObjects.define({
+ClientObjects.define({
+    prefix = "EnhancedIrrigation_",
     name = "Line",
     owner = Lines,
     isObject = Lines.isLine,
     sprites = EnhancedIrrigation.Sprites.pipeNames(),
     adoptCopy = nothingToAdopt,
     adoptContainer = nothingToAdopt,
+    loadPriority = EnhancedIrrigation.Sprites.LOAD_PRIORITY,
 })
 
 --- Whether this client plays the running water of the valve on the tap at x, y, z.

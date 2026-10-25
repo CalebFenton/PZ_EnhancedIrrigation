@@ -1,6 +1,7 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+local Jobs = require "cf_commonlib/Jobs"
 
 -- Development only, not published. Test handlers for fixtures placed, read, plumbed and run on the
 -- authority. Only registers handlers, so a --stay rerun loads it again.
@@ -111,14 +112,15 @@ handler("fixtures.plumb", function(_, args)
 end)
 
 -- Runs the plumbing job `args.job` with `args.with` at the fixture at x, y, z through the
--- authority's own perform (what the action's complete() calls). Answers whether it was done and
--- the fixture's state after, so a test sees the server refuse what its menu would have greyed out.
+-- authority's own Jobs.perform on the link site (what the action's complete() calls). Answers
+-- whether it was done and the fixture's state after, so a test sees the server refuse what its menu
+-- would have greyed out.
 handler("fixtures.perform", function(player, args)
     local fixture = fixtureAt(args)
     if not fixture then
         return nil, "the server's fixture at " .. tostring(args.x) .. "," .. tostring(args.y)
     end
-    local done = EI.LinkSystem.perform(player, args.job, fixture, args.with)
+    local done = Jobs.perform(EI.LinkJobs, EI.LinkSystem.site, player, args.job, fixture, args.with)
     local state = stateAt(args)
     state.done = done == true
     return state

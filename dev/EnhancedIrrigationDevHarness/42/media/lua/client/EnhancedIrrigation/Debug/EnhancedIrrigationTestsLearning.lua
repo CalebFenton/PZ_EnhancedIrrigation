@@ -1,5 +1,6 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Recipes"
+local RecipeLearning = require "cf_commonlib/RecipeLearning"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "TimedActions/ISReadABook"
 require "ISUI/ISInventoryPaneContextMenu"
@@ -127,8 +128,8 @@ test("irrigation_learning_researching_a_metal_drum_teaches_the_boilers", {
 -- For each perk and level the recipes' AutoLearn skills name, a character who knows none of them
 -- levels that perk up to that level, every other at 0, and then knows exactly the recipes whose
 -- AutoLearn it meets, on both sides: vanilla's AutoLearn teaches Plumb to Tank, a craftRecipe, and
--- the mod's LevelPerk hook the builds, since vanilla's skips build recipes. Catches a recipe taught
--- a level early or never, or taught on one side only.
+-- cf_commonlib's LevelPerk hook (RecipeLearning) the builds, since vanilla's skips build recipes.
+-- Catches a recipe taught a level early or never, or taught on one side only.
 test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
     timeoutSeconds = 135,
     run = function(self)
@@ -158,8 +159,8 @@ test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
 })
 
 -- A character who reached the highest AutoLearn level before the mod was added joins a server: the
--- client asks the server to catch up as it enters the world (Recipes.lua's OnCreatePlayer), and the
--- server, which runs no check of its own on a join, teaches what that level earns and tells the
+-- client asks the server to catch up as it enters the world (RecipeLearning's OnCreatePlayer), and
+-- the server, which runs no check of its own on a join, teaches what that level earns and tells the
 -- client. Catches a joining character left without recipes the server then refuses to use.
 test("irrigation_learning_joining_server_catches_up_earned_recipes", {
     mpOnly = "single player has one copy of the character, which IsoWorld.init's own check covers",
@@ -169,7 +170,9 @@ test("irrigation_learning_joining_server_catches_up_earned_recipes", {
         self.highest = highest
         T.knowRecipes(self, RECIPES, false)
         T.setLevelsQuietly(self, T.autoLearnLevelsWith(rows, highest.perk, highest.level), RECIPES)
-        T.step(function() sendClientCommand(T.player(), Recipes.COMMAND_MODULE, Recipes.CATCH_UP, {}) end)
+        T.step(function()
+            sendClientCommand(T.player(), RecipeLearning.COMMAND_MODULE, RecipeLearning.CATCH_UP, {})
+        end)
         T.waitForKnown(self, RECIPES, T.autoLearnedAt(RECIPES, highest.perk, highest.level))
     end,
     validate = function(self)

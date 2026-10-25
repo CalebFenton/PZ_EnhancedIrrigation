@@ -4,7 +4,8 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
+local Items = require "cf_commonlib/Items"
+local LibObjectSystem = require "cf_commonlib/ObjectSystem"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/ObjectSystem"
@@ -54,7 +55,7 @@ function TreatmentSystem.onCreate(params)
     end
     TreatmentSystem.System.instance:loadIsoObject(unit)
     local record = Treatment.recordOf(unit)
-    local bucket = record and record:spec().kind == "crock" and EnhancedIrrigation.ObjectSystem.consumedItem(params,
+    local bucket = record and record:spec().kind == "crock" and Items.firstConsumed(params.craftRecipeData,
         function(item) return item:hasTag(ItemTag.BUCKET) end)
     if bucket then
         record.bucket = bucket:getFullType()
@@ -64,43 +65,43 @@ end
 
 -- Jobs -----------------------------------------------------------------------------------------------
 
--- What each job does at `unit`, whose record TreatmentSystem.perform brought up to now.
+-- What each job does on the record of `unit`, brought up to now (ObjectSystem.jobSite).
 local DO = {
     -- The container keeps what the head has no room for.
-    [TreatmentJobs.POUR_IN] = function(character, unit, item)
-        Treatment.recordOf(unit):takeFrom(item:getFluidContainer(), math.huge)
+    [TreatmentJobs.POUR_IN] = function(character, record, row, unit, item)
+        record:takeFrom(item:getFluidContainer(), math.huge)
         item:syncItemFields()
+        return true
     end,
-    [TreatmentJobs.CLEAN_FILTER] = function(character, unit)
-        Treatment.recordOf(unit):clean()
+    [TreatmentJobs.CLEAN_FILTER] = function(character, record)
+        record:clean()
+        return true
     end,
-    [TreatmentJobs.SCRUB_CROCK] = function(character, unit)
-        Treatment.recordOf(unit):scrub()
+    [TreatmentJobs.SCRUB_CROCK] = function(character, record)
+        record:scrub()
+        return true
     end,
     -- The bucket comes back holding the basin's water as it is; the crock, unless frost split it.
     -- Removing the unit removes its record (SGlobalObjectSystem.OnObjectAboutToBeRemoved).
-    [TreatmentJobs.TAKE_DOWN_CROCK] = function(character, unit)
-        local record = Treatment.recordOf(unit)
+    [TreatmentJobs.TAKE_DOWN_CROCK] = function(character, record, row, unit)
         local bucket = instanceItem(record.bucket or Treatment.CROCK_BUCKET)
         local basin = unit:getFluidContainer()
         FluidContainer.Transfer(basin, bucket:getFluidContainer(), basin:getAmount())
         local cracked = record.cracked
         unit:getSquare():transmitRemoveItemFromSquare(unit)
-        EnhancedIrrigation.Materials.giveItems(character, bucket)
+        Items.giveItems(character, bucket)
         if not cracked then
-            EnhancedIrrigation.Materials.giveItems(character, Treatment.CROCK_ITEM)
+            Items.giveItems(character, Treatment.CROCK_ITEM)
         end
+        return true
     end,
-    [TreatmentJobs.PATCH_DRUM] = function(character, unit)
-        Treatment.recordOf(unit):patch()
+    [TreatmentJobs.PATCH_DRUM] = function(character, record)
+        record:patch()
+        return true
     end,
 }
 
---- Does `job` at `unit` with `with` for `character` on the authority (ObjectSystem.perform).
---- Returns whether it was done.
-function TreatmentSystem.perform(character, job, unit, with)
-    local record = Treatment.recordOf(unit)
-    return record ~= nil and EnhancedIrrigation.ObjectSystem.perform(TreatmentJobs, DO, character, job, unit, with, record)
-end
+--- The authority's side of the treatment jobs (a site of Jobs.perform).
+TreatmentSystem.site = LibObjectSystem.jobSite(Treatment, DO)
 
 return TreatmentSystem

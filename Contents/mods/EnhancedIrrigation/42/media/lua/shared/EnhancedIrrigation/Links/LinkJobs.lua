@@ -5,8 +5,8 @@
 -- buried pipe stays.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -19,7 +19,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
 EnhancedIrrigation.LinkJobs = LinkJobs
 
-local Jobs = EnhancedIrrigation.Jobs
+local UNKNOWN = EnhancedIrrigation.JOB_REFUSALS.unknown
 local Links, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.Pipes, EnhancedIrrigation.Tanks
 local Lines = EnhancedIrrigation.Lines
 local Fixtures, Treatment = EnhancedIrrigation.Fixtures, EnhancedIrrigation.Treatment
@@ -41,7 +41,7 @@ LinkJobs.RECIPE = "EnhancedIrrigation_PlumbToTank"
 -- What Plumb takes before the pipe, which the menu checks before it lists the tanks in reach.
 LinkJobs.PLUMB_TOOLS = { Pipes.WRENCH, { recipe = LinkJobs.RECIPE } }
 
-local holdWrench = EnhancedIrrigation.Materials.holds(Pipes.WRENCH)
+local holdWrench = Materials.holds(Pipes.WRENCH)
 
 -- The tiles of pipe from `tank` to the square `with` names, 0 when it names none.
 local function runTiles(tank, with)
@@ -89,7 +89,7 @@ local PLUMBED = {
 function LinkJobs.fixtureBlocker(fixture, with)
     local here, other = endsOf(fixture, with)
     if not (here and Fixtures.isFixture(fixture)) then
-        return Jobs.UNKNOWN
+        return UNKNOWN
     end
     local tank = Tanks.tankAt(other.x, other.y, other.z)
     if not tank then
@@ -117,7 +117,7 @@ function LinkJobs.unitBlocker(unit, with, role)
     local here, other = endsOf(unit, with)
     local spec = Treatment.specOf(unit)
     if not (here and spec and spec.plumbed and Treatment.isUnit(unit) and WRONG_LEVEL[role]) then
-        return Jobs.UNKNOWN
+        return UNKNOWN
     end
     local tank = Tanks.tankAt(other.x, other.y, other.z)
     if not tank then
@@ -143,7 +143,7 @@ end
 function LinkJobs.pumpBlocker(pump, with)
     local here, other = endsOf(pump, with)
     if not (here and Pumps.isPump(pump)) then
-        return Jobs.UNKNOWN
+        return UNKNOWN
     end
     local spec = Pumps.liftingSpec(pump)
     if not spec then
@@ -197,7 +197,7 @@ local function plumbJobFor(endsBlocker, tooFarKey)
             if Links.distance(here, other) > Links.MAX_TILES then
                 return tooFarKey or "Tooltip_EnhancedIrrigation_OutOfReach"
             end
-            return not LinkJobs.pipeFor(object, with) and Jobs.UNKNOWN or nil
+            return not LinkJobs.pipeFor(object, with) and UNKNOWN or nil
         end,
         materials = plumbMaterials,
     }
@@ -233,7 +233,7 @@ LinkJobs.JOBS = {
         minutes = Links.BASE_MINUTES, position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
         blocker = function(character, fixture, with)
             if not Fixtures.plumbingKeepsTaint() then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             local blocker, here, other = LinkJobs.fixtureBlocker(fixture, with)
             if blocker then
@@ -256,6 +256,6 @@ LinkJobs.JOBS = {
     },
 }
 
-Jobs.define(LinkJobs)
+Jobs.define(LinkJobs, EnhancedIrrigation.JOB_REFUSALS)
 
 return LinkJobs

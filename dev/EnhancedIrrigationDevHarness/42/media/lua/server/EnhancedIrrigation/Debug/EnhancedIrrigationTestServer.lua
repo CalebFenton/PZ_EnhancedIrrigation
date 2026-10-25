@@ -2,6 +2,8 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 require "PZHarness/ServerChecks"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
+local Squares = require "cf_commonlib/Squares"
+local Jobs = require "cf_commonlib/Jobs"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua; it returns
 -- what the other handler files share. Server Lua loads after shared, so the EnhancedIrrigation
@@ -74,7 +76,7 @@ end
 --- Removes the placed thing (Server.isPlaced) at x, y, z the way the game removes an object.
 function Server.removeAt(x, y, z)
     local square = getSquare(x, y, z)
-    local object = square and EI.findObjectOn(square, Server.isPlaced)
+    local object = square and Squares.findObjectOn(square, Server.isPlaced)
     if object then
         square:transmitRemoveItemFromSquare(object)
     end
@@ -160,7 +162,7 @@ function Server.stateAt(args)
     if not square then
         return { loaded = false, found = false }
     end
-    local object = EI.findObjectOn(square, Server.isPlaced)
+    local object = Squares.findObjectOn(square, Server.isPlaced)
     local state = object and describe(object) or { found = false }
     state.loaded = true
     state.links = #EI.Links.linksAt({ x = args.x, y = args.y, z = args.z })
@@ -263,16 +265,17 @@ end)
 
 -- Jobs ----------------------------------------------------------------------------------------------
 
--- The system whose perform does each action feature's jobs; the line jobs have lines.perform.
+-- The system whose site does each action feature's jobs; the line jobs have lines.perform.
 local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "TreatmentSystem", pump = "PumpSystem" }
 
 -- Runs the job `args.job` of the action feature `args.feature` at the object at x, y, z through the
--- authority's own perform (what the action's complete() calls), with `args.with`, or with the first
--- barrel moveable carried when `args.barrel`. Answers whether it was done and the object's state
--- after, so a test sees the server refuse what its menu would have greyed out.
+-- authority's own Jobs.perform on the feature's site (what the action's complete() calls), with
+-- `args.with`, or with the first barrel moveable carried when `args.barrel`. Answers whether it was
+-- done and the object's state after, so a test sees the server refuse what its menu would have
+-- greyed out.
 handler("jobs.perform", function(player, args)
     local square = Fixtures.squareAt(args)
-    local object = square and EI.findObjectOn(square, Server.isPlaced)
+    local object = square and Squares.findObjectOn(square, Server.isPlaced)
     if not object then
         return nil, "the server's object at " .. tostring(args.x) .. "," .. tostring(args.y)
     end
@@ -281,7 +284,8 @@ handler("jobs.perform", function(player, args)
         local carried = EI.Stands.barrelsCarried(player)[1]
         with = carried and carried.item
     end
-    local done = EI[SYSTEMS[args.feature]].perform(player, args.job, object, with)
+    local done = Jobs.perform(EnhancedIrrigationAction.jobsOf(args.feature), EI[SYSTEMS[args.feature]].site, player,
+        args.job, object, with)
     local state = Server.stateAt(args)
     state.done = done == true
     return state

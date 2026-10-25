@@ -2,7 +2,7 @@
 -- for the --art and --promo staging and the QA scenario on the client and the test server's
 -- handlers alike; neither side can load the other's files.
 
-require "EnhancedIrrigation/Utilities"
+local Tiles = require "cf_commonlib/Tiles"
 
 local Build = {}
 
@@ -14,7 +14,7 @@ Build.FULL = math.huge
 --- water (tainted when `tainted`), without its OnCreate and unsent to the clients. Returns it, or
 --- nil and what is missing.
 function Build.tile(square, sprite, litres, tainted)
-    local script = EnhancedIrrigation.tileEntity(sprite)
+    local script = Tiles.tileEntity(sprite)
     if not script then
         return nil, "the entity of the tile " .. tostring(sprite)
     end

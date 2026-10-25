@@ -3,16 +3,16 @@
 -- the water inlet valve beside it, and leaves the appliance where it stands, stripped.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Jobs = require "cf_commonlib/Jobs"
+require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Appliances/Appliances"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceJobs = {}
 EnhancedIrrigation.ApplianceJobs = ApplianceJobs
 
-local Jobs, Materials = EnhancedIrrigation.Jobs, EnhancedIrrigation.Materials
-local Appliances = EnhancedIrrigation.Appliances
+local Appliances, Pumps = EnhancedIrrigation.Appliances, EnhancedIrrigation.Pumps
 
 ApplianceJobs.SALVAGE_PUMP = "SalvagePump"
 
@@ -28,22 +28,22 @@ ApplianceJobs.SALVAGED_CONDITION = { 60, 100 }
 ApplianceJobs.JOBS = {
     [ApplianceJobs.SALVAGE_PUMP] = {
         minutes = SALVAGE_MINUTES, position = "Low", sound = "Screwdriver",
-        equip = Materials.holds(Materials.SCREWDRIVER),
+        equip = Materials.holds(Pumps.SCREWDRIVER),
         blocker = function(character, appliance)
             if not Appliances.hasPumpTile(appliance) then
-                return Jobs.UNKNOWN
+                return EnhancedIrrigation.JOB_REFUSALS.unknown
             end
             return Appliances.isStripped(appliance) and "Tooltip_EnhancedIrrigation_PumpSalvaged" or nil
         end,
         materials = {
             { recipe = ApplianceJobs.RECIPE },
-            { skill = "Electricity", level = 2 },
-            Materials.SCREWDRIVER,
+            { perk = "Electricity", need = 2 },
+            Pumps.SCREWDRIVER,
             { tool = "PLIERS", item = "Base.Pliers" },
         },
     },
 }
 
-Jobs.define(ApplianceJobs)
+Jobs.define(ApplianceJobs, EnhancedIrrigation.JOB_REFUSALS)
 
 return ApplianceJobs

@@ -2,8 +2,8 @@
 -- carried, or a timer's setting (Valves.decodeTimer).
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Parts"
@@ -14,7 +14,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpJobs = {}
 EnhancedIrrigation.PumpJobs = PumpJobs
 
-local Jobs = EnhancedIrrigation.Jobs
+local UNKNOWN = EnhancedIrrigation.JOB_REFUSALS.unknown
 local Pumps = EnhancedIrrigation.Pumps
 local Valves = EnhancedIrrigation.Valves
 
@@ -54,13 +54,13 @@ end
 local function fittedBlocker(pump)
     local summary = houseSummary(pump)
     if not summary then
-        return Jobs.UNKNOWN
+        return UNKNOWN
     end
     return not summary.part and "Tooltip_EnhancedIrrigation_NoPumpFitted" or nil, summary
 end
 
-local SCREWDRIVER = EnhancedIrrigation.Materials.SCREWDRIVER
-local screwdriver = EnhancedIrrigation.Materials.holds(SCREWDRIVER)
+local SCREWDRIVER = Pumps.SCREWDRIVER
+local screwdriver = Materials.holds(SCREWDRIVER)
 
 local function isPart(item)
     return Pumps.partSpec(item:getFullType()) ~= nil
@@ -98,7 +98,7 @@ PumpJobs.JOBS = {
         blocker = function(character, pump, item)
             local spec = Pumps.specOf(pump)
             if not (spec and spec.kind == "hand") then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             if not Jobs.carries(character, item, isSeal) then
                 return "Tooltip_EnhancedIrrigation_NoSeal"
@@ -121,7 +121,7 @@ PumpJobs.JOBS = {
         blocker = function(character, pump, item)
             local summary = houseSummary(pump)
             if not summary then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             if summary.part then
                 return "Tooltip_EnhancedIrrigation_PumpFitted"
@@ -145,7 +145,7 @@ PumpJobs.JOBS = {
                 return blocker
             end
             if summary.on then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             if summary.burntOut then
                 return "Tooltip_EnhancedIrrigation_PumpBurntOut"
@@ -157,7 +157,7 @@ PumpJobs.JOBS = {
         minutes = SWITCH_MINUTES, position = "Mid",
         blocker = function(character, pump)
             local summary = houseSummary(pump)
-            return not (summary and summary.on) and Jobs.UNKNOWN or nil
+            return not (summary and summary.on) and UNKNOWN or nil
         end,
     },
     -- The burnt windings and the shaft seal made good from scrap, as Patch Drum mends a boiler: each
@@ -173,7 +173,7 @@ PumpJobs.JOBS = {
                 "Tooltip_EnhancedIrrigation_PumpTooRepaired", "Tooltip_EnhancedIrrigation_PumpSound")
         end,
         materials = {
-            { skill = "Electricity", level = 2 },
+            { perk = "Electricity", need = 2 },
             SCREWDRIVER,
             { item = "Base.ElectronicsScrap", need = 1 },
             { item = "Base.TirePiece", need = 1 },
@@ -185,7 +185,7 @@ PumpJobs.JOBS = {
         blocker = function(character, pump, item)
             local summary = houseSummary(pump)
             if not summary then
-                return Jobs.UNKNOWN
+                return UNKNOWN
             end
             if summary.timer then
                 return "Tooltip_EnhancedIrrigation_HasTimer"
@@ -209,11 +209,11 @@ PumpJobs.JOBS = {
             if not (summary and summary.timer) then
                 return "Tooltip_EnhancedIrrigation_NoTimerHere"
             end
-            return not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil
+            return not Valves.decodeTimer(with) and UNKNOWN or nil
         end,
     },
 }
 
-Jobs.define(PumpJobs)
+Jobs.define(PumpJobs, EnhancedIrrigation.JOB_REFUSALS)
 
 return PumpJobs

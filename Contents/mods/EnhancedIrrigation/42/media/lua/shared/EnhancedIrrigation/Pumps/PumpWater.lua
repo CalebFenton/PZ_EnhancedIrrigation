@@ -5,7 +5,6 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
-require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -166,7 +165,7 @@ end
 function PumpWater.handDeliveryOf(pump)
     local spec, summary = Pumps.specOf(pump), Pumps.currentSummary(pump)
     if not (spec and spec.kind == "hand" and summary) then
-        return nil, EnhancedIrrigation.Jobs.UNKNOWN
+        return nil, EnhancedIrrigation.JOB_REFUSALS.unknown
     end
     if summary.wornOut then
         return nil, "Tooltip_EnhancedIrrigation_PumpWornOut"

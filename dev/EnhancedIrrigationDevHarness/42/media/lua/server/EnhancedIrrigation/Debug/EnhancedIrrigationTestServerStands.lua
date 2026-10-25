@@ -1,5 +1,6 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/ServerFixtures"
+local Items = require "cf_commonlib/Items"
 
 -- Development only, not published. Test handlers for the barrel moveables the authority gives,
 -- finds and takes. Only registers handlers, so a --stay rerun loads it again.
@@ -78,7 +79,7 @@ end)
 handler("stands.dropBarrels", function(player)
     local carried = player:getInventory():getAllEvalRecurse(isBarrelItem)
     for i = carried:size() - 1, 0, -1 do
-        EI.Materials.takeItem(player, carried:get(i))
+        Items.takeItem(player, carried:get(i))
     end
     return {}
 end)

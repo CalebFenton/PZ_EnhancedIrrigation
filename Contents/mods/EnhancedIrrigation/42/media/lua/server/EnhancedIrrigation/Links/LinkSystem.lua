@@ -13,8 +13,9 @@ if isClient() then return end
 
 require "Map/SGlobalObjectSystem"
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Jobs = require "cf_commonlib/Jobs"
+local Clock = require "cf_commonlib/Clock"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -28,7 +29,7 @@ EnhancedIrrigation.LinkSystem = LinkSystem
 
 local Links, LinkJobs, Pipes, Tanks = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes,
     EnhancedIrrigation.Tanks
-local Materials, FixtureSystem = EnhancedIrrigation.Materials, EnhancedIrrigation.FixtureSystem
+local FixtureSystem = EnhancedIrrigation.FixtureSystem
 
 -- What the system saves with the world (its modData keys): `links`, the list; `lastHour`, when
 -- water last moved, so a pass moves what the time since allows however often the event fires.
@@ -95,10 +96,11 @@ end
 
 -- Lays the pipe a job's `with` names from `object` to the square it names, as a link of `role`.
 local function layPipe(role)
-    return function(character, object, with, materials)
+    return function(character, record, row, object, with, materials)
         local material, lengths = LinkJobs.pipeFor(object, with)
         LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(object), Links.decode(with), material, lengths,
             Materials.conditions(character, materials), role)
+        return true
     end
 end
 
@@ -106,21 +108,23 @@ end
 local DO = {
     [LinkJobs.PLUMB] = layPipe(nil),
     -- The tank the fixture's pipe runs to, as LinkJobs.fixtureBlocker found it before the job.
-    [LinkJobs.PLUMB_FIXTURE] = function(character, fixture, with, materials)
+    [LinkJobs.PLUMB_FIXTURE] = function(character, record, row, fixture, with, materials)
         local material, lengths = LinkJobs.pipeFor(fixture, with)
         local other = Links.decode(with)
         FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), material, lengths,
             Materials.conditions(character, materials))
+        return true
     end,
-    [LinkJobs.PLUMB_ABOVE] = function(character, fixture, with)
+    [LinkJobs.PLUMB_ABOVE] = function(character, record, row, fixture, with)
         local other = Links.decode(with)
         FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), nil, 0, nil)
+        return true
     end,
     [LinkJobs.PLUMB_INLET] = layPipe("inlet"),
     [LinkJobs.PLUMB_OUTLET] = layPipe("outlet"),
     [LinkJobs.PLUMB_PUMP] = layPipe("pump"),
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
-    [LinkJobs.UNPLUMB] = function(character, object, with)
+    [LinkJobs.UNPLUMB] = function(character, record, row, object, with)
         local link = Links.find(EnhancedIrrigation.squareOf(object), Links.decode(with))
         LinkSystem.instance:removeLink(link)
         if link.kind then
@@ -129,15 +133,13 @@ local DO = {
         if link.fixture then
             FixtureSystem.giveBackReserve(link)
         end
+        return true
     end,
 }
 
---- Does `job` at `object` (a tank, a fixture, a unit, a pump, or for Unplumb the floor of a bare
---- end) toward the square `with` names for `character` on the authority (Jobs.perform). Returns
---- whether it was done.
-function LinkSystem.perform(character, job, object, with)
-    return EnhancedIrrigation.Jobs.perform(LinkJobs, DO, character, job, object, with)
-end
+--- The authority's side of the link jobs (a site of Jobs.perform), at `object` (a tank, a fixture,
+--- a unit, a pump, or for Unplumb the floor of a bare end) toward the square `with` names.
+LinkSystem.site = Jobs.targetSite(DO)
 
 -- Flow ------------------------------------------------------------------------------------------
 
@@ -201,7 +203,7 @@ end
 
 local function everyTenMinutes()
     local self = LinkSystem.instance
-    local hours = EnhancedIrrigation.hoursSince(self)
+    local hours = Clock.hoursSince(self, EnhancedIrrigation.LONGEST_PASS)
     if hours > 0 then
         self:pass(hours)
     end

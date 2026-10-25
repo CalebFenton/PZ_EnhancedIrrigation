@@ -1,7 +1,6 @@
 if isClient() then return end
 
-require "Items/Distributions"
-require "Items/ProceduralDistributions"
+local Loot = require "cf_commonlib/Loot"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Valves"
@@ -12,7 +11,6 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local Distributions = {}
 EnhancedIrrigation.Distributions = Distributions
 
-local procLists = ProceduralDistributions.list
 local Pumps, Sprinklers, Valves = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers, EnhancedIrrigation.Valves
 
 Distributions.PAMPHLET = "EnhancedIrrigation.CisternsForKentucky"
@@ -102,44 +100,18 @@ Distributions.LOOT = {
     { item = Valves.WATER_VALVE, option = "PartsLoot", lists = { { "PlumbingSupplies", 0.5 } } },
 }
 
--- Items lists are flat name, weight pairs.
-local function removeItem(items, fullType)
-    for i = #items - 1, 1, -2 do
-        if items[i] == fullType then
-            table.remove(items, i + 1)
-            table.remove(items, i)
-        end
-    end
-end
-
---- Puts each item of LOOT into each of its lists at its weight times its option, replacing what an
---- earlier call put there. At 0 it leaves the item out altogether, since a zero weight could still
---- spawn through the zombie density bonus. ItemPickerJava reads the Lua tables only when it parses
---- them, so ItemPickerJava.Parse() has to run afterwards.
+--- Puts each item of LOOT into each of its lists at its weight times its option (Loot.place). The
+--- save's options are read only once loaded, so Loot runs this then (Loot.register).
 function Distributions.apply()
     for _, loot in ipairs(Distributions.LOOT) do
-        local multiplier = SandboxVars.EnhancedIrrigation[loot.option]
+        local entries = {}
         for _, entry in ipairs(loot.lists) do
-            local list = procLists[entry[1]]
-            if list and list.items then
-                removeItem(list.items, loot.item)
-                if multiplier > 0 then
-                    table.insert(list.items, loot.item)
-                    table.insert(list.items, entry[2] * multiplier)
-                end
-            else
-                print("EnhancedIrrigation: no loot list " .. entry[1] .. " for " .. loot.item .. ", skipped")
-            end
+            table.insert(entries, { entry[2], "proc:" .. entry[1] })
         end
+        Loot.place("EnhancedIrrigation", loot.item, entries, SandboxVars.EnhancedIrrigation[loot.option])
     end
 end
 
--- The save's sandbox options aren't loaded yet when this file runs, nor during the distribution
--- merge events: IsoWorld.init fires those, then loads the options, then parses the tables, and
--- only then fires OnInitGlobalModData.
-Events.OnInitGlobalModData.Add(function()
-    Distributions.apply()
-    ItemPickerJava.Parse()
-end)
+Loot.register(Distributions.apply)
 
 return Distributions

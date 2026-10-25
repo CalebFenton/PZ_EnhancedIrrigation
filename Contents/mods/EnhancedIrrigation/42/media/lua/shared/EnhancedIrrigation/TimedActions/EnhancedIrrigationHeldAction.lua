@@ -1,5 +1,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "EnhancedIrrigation/Utilities"
+local Squares = require "cf_commonlib/Squares"
+local Clock = require "cf_commonlib/Clock"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 -- An action with no end of its own, modelled on vanilla's open-ended ISAddWaterToTrough: the
@@ -36,7 +38,7 @@ end
 
 -- Runs it for the world time since the last run (`lastHour`, set once it opens). Authority only.
 function Action:run()
-    local hours = EnhancedIrrigation.hoursSince(self)
+    local hours = Clock.hoursSince(self, EnhancedIrrigation.LONGEST_PASS)
     if self.finished then
         return
     end
@@ -50,7 +52,7 @@ end
 -- Whether the character still stands at the target: what isValid() checks, which the server never
 -- calls, so the authority asks this itself before it opens and before each run.
 function Action:atTarget()
-    return EnhancedIrrigationAction.withinReach(self.character, self:target())
+    return Squares.withinReach(self.character, self:target(), EnhancedIrrigationAction.REACH)
 end
 
 -- Holds the target's record for this action, unless another action holds it. Returns whether this
@@ -95,7 +97,7 @@ end
 
 function Action:isValid()
     local target = self:target()
-    return EnhancedIrrigation.onSquare(target) and self:isTarget(target) and self:atTarget()
+    return Squares.onSquare(target) and self:isTarget(target) and self:atTarget()
 end
 
 function Action:waitToStart()

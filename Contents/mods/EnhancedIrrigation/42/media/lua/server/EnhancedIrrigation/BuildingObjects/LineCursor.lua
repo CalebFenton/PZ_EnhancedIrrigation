@@ -7,8 +7,8 @@
 require "BuildingObjects/ISBuildingObject"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
+local Materials = require "cf_commonlib/Materials"
+local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -67,8 +67,8 @@ function LineCursor:refusal(square)
         return "Tooltip_EnhancedIrrigation_CantLayHere"
     end
     local blocker = LineJobs.layBlocker(square, function(px, py, pz) return self:isPending(px, py, pz) end)
-    local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.layMaterials(self.material, self:pendingCount() + 1))
-    return EnhancedIrrigation.Jobs.refusalOf(blocker, needs)
+    local needs = Materials.needs(self.character, Pipes.layMaterials(self.material, self:pendingCount() + 1))
+    return Jobs.refusalOf(blocker, needs, EnhancedIrrigation.JOB_REFUSALS.short)
 end
 
 -- The line tiles this side knows, which a tile laid or taken up anywhere changes.

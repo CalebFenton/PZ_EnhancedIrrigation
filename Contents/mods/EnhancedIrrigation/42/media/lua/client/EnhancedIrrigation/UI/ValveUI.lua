@@ -8,10 +8,9 @@
 require "ISUI/ISPanelJoypad"
 require "ISUI/ISButton"
 require "ISUI/Fireplace/ISKnob"
-require "TimedActions/ISBaseTimedAction"
-require "TimedActions/ISTimedActionQueue"
-require "luautils"
 require "EnhancedIrrigation/Utilities"
+local Squares = require "cf_commonlib/Squares"
+local OpenAction = require "cf_commonlib/OpenAction"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
@@ -109,7 +108,7 @@ end
 function ValveUI:update()
     ISPanelJoypad.update(self)
     local object, job = self.spec.object, self.spec.job
-    local now = EnhancedIrrigation.onSquare(object) and self.makeSpec()
+    local now = Squares.onSquare(object) and self.makeSpec()
     if not (now and now.job == job) or self.character:DistTo(object:getX(), object:getY()) > REACH then
         self:destroy()
         return
@@ -226,40 +225,10 @@ function ValveUI.open(character, makeSpec)
     return panel
 end
 
--- Opens the panel once the character stands at its object, as vanilla opens an oven's knobs
--- (ISWorldObjectContextMenu.onStoveSetting, ISOvenUITimedAction): a timed action of no length,
--- this client's alone, as it changes nothing.
-local OpenAction = ISBaseTimedAction:derive("EnhancedIrrigationValveUIAction")
-
-function OpenAction:isValid()
-    return EnhancedIrrigation.onSquare(self.object)
-end
-
-function OpenAction:update()
-    self.character:faceThisObject(self.object)
-end
-
-function OpenAction:start()
-end
-
-function OpenAction:perform()
-    ISBaseTimedAction.perform(self)
-    ValveUI.open(self.character, self.makeSpec)
-end
-
-function OpenAction:new(character, object, makeSpec)
-    local o = ISBaseTimedAction.new(self, character)
-    o.object, o.makeSpec = object, makeSpec
-    o.maxTime = 0
-    return o
-end
-
 --- Walks `character` over to `object`, then opens the panel `makeSpec()` describes there
 --- (ValveUI.open), read then, so a valve taken off meanwhile opens nothing (it answers nil).
 function ValveUI.walkAndOpen(character, object, makeSpec)
-    if luautils.walkAdj(character, object:getSquare()) then
-        ISTimedActionQueue.add(OpenAction:new(character, object, makeSpec))
-    end
+    OpenAction.queue(character, object, function(opener) ValveUI.open(opener, makeSpec) end)
 end
 
 return ValveUI

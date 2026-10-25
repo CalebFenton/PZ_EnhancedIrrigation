@@ -6,7 +6,8 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/GlobalObjects"
+local GlobalObjects = require "cf_commonlib/GlobalObjects"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
@@ -19,6 +20,10 @@ EnhancedIrrigation.Pumps = Pumps
 local Tanks, Links, Lines = EnhancedIrrigation.Tanks, EnhancedIrrigation.Links, EnhancedIrrigation.Lines
 
 Pumps.SYSTEM_NAME = "enhanced_irrigation_pump"
+
+-- The tool (a material) every job that opens a pump's casing works with, a salvage from an
+-- appliance's too.
+Pumps.SCREWDRIVER = { tool = "SCREWDRIVER", item = "Base.Screwdriver" }
 
 -- Every pump's tile, for load hooks.
 Pumps.SPRITES = { EnhancedIrrigation.Sprites.WOODEN_HAND_PUMP, EnhancedIrrigation.Sprites.IRON_HAND_PUMP,
@@ -139,7 +144,7 @@ end
 
 --- The pump on `square`, or nil. Takes a nil square.
 function Pumps.pumpOn(square)
-    return EnhancedIrrigation.findObjectOn(square, Pumps.isPump)
+    return Squares.findObjectOn(square, Pumps.isPump)
 end
 
 --- The pump on the loaded square x, y, z, or nil.
@@ -180,6 +185,6 @@ function Pumps.perHour(spec)
 end
 
 -- A pump holds no water of its own, so a summary needs nothing added.
-EnhancedIrrigation.GlobalObjects.addAccessors(Pumps, function() end)
+GlobalObjects.addAccessors(Pumps, function() end)
 
 return Pumps

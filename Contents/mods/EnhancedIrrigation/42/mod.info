@@ -9,3 +9,4 @@ modversion=0.1.0
 pack=enhanced_irrigation
 tiledef=enhanced_irrigation 6143
 versionMin=42.21
+require=\cf_commonlib

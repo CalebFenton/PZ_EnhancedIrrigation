@@ -22,7 +22,7 @@
 - When a change alters how a mechanic plays or where something spawns, update `docs/player-guide.md` in the same commit. It gives exact figures where players plan around them (costs, reach, times, levels) and rounded ones for rates. It leaves recipes' ingredients to the build menu and the crafting window, and says what kind of place has a thing and how rare it is, never every list it spawns in.
 - `README.md` is the Workshop page: after changing it, run `dev/workshop-txt.sh`, which writes `workshop.txt`'s description from it; the static check fails while the two differ.
 - When a change has something only a person playing can check (how it sounds, whether zombies come, how the work feels, how the art reads, a vanilla path no test drives), add it to `docs/playtest.md` in the same commit, saying how to set it up and what passes. Name those entries in your report rather than calling the change done untested.
-- `shared/EnhancedIrrigation/GlobalObjects.lua`, `client/EnhancedIrrigation/ClientObjects.lua` and `client/EnhancedIrrigation/UI/Needs.lua` are copies of Renewable Energy's; change both mods or neither.
+- What Enhanced Irrigation shares with Renewable Energy lives in the library mod cf_commonlib (`../cf_commonlib`, which `mod.info` requires): the Global Object System plumbing (`GlobalObjects`, `ClientObjects`, `ObjectSystem`), jobs, materials and their menus (`Jobs`, `Materials`, `JobAction`, `JobOptions`, `Needs`, `OpenAction`), items, tiles, squares, the clock, generator reach, loot and recipe learning. Use it through `require "cf_commonlib/<Module>"`; change it there, for both mods, never with a copy here.
 - Don't add `CLAUDE.md` files; the `AGENTS.md` files hold the agent instructions.
 
 ## Read when needed

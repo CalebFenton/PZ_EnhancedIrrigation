@@ -5,7 +5,9 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Materials"
+local Materials = require "cf_commonlib/Materials"
+local Items = require "cf_commonlib/Items"
+local LibObjectSystem = require "cf_commonlib/ObjectSystem"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -23,7 +25,6 @@ EnhancedIrrigation.LineSystem = LineSystem
 local Sprites = EnhancedIrrigation.Sprites
 local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
-local Materials = EnhancedIrrigation.Materials
 local Pipes = EnhancedIrrigation.Pipes
 local Parts, Sprinklers = EnhancedIrrigation.Parts, EnhancedIrrigation.Sprinklers
 local Valves, ValveSystem = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveSystem
@@ -123,33 +124,34 @@ local function takeSprinkler(record)
     return item
 end
 
--- What each job does at `object`: the floor for Lay, else a line tile, whose record
--- LineSystem.perform brought up to now.
+-- What each job does: Lay at the floor, with no record yet; every other at a line tile, on its
+-- record brought up to now (ObjectSystem.jobSite).
 local DO = {
-    [LineJobs.LAY] = function(character, floor, kind, materials)
+    [LineJobs.LAY] = function(character, record, row, floor, kind, materials)
         LineSystem.place(floor:getSquare(), kind, { conditions = Materials.conditions(character, materials) })
+        return true
     end,
-    [LineJobs.DRILL] = function(character, object)
-        local record = Lines.recordOf(object)
+    [LineJobs.DRILL] = function(character, record)
         record.holed = true
         if LineJobs.mayCrack(LineJobs.holeTool(character, record.material), record.material)
                 and ZombRandFloat(0, 1) < Lines.PUNCH_CRACK_CHANCE then
             record.cracked = true
         end
+        return true
     end,
-    [LineJobs.TAP] = function(character, object, with, materials)
-        local record = Lines.recordOf(object)
+    [LineJobs.TAP] = function(character, record, row, object, with, materials)
         record.tap = true
         record.tapMaterial = record.material
         record.tapConditions = Materials.conditions(character, materials)
+        return true
     end,
-    [LineJobs.PATCH] = function(character, object)
-        Lines.recordOf(object).cracked = false
+    [LineJobs.PATCH] = function(character, record)
+        record.cracked = false
+        return true
     end,
     -- The water runs out over the ground where the line is opened, wetting it, not into a bed's
     -- roots, so it adds no soak.
-    [LineJobs.DRAIN] = function(character, object)
-        local record = Lines.recordOf(object)
+    [LineJobs.DRAIN] = function(character, record)
         for _, tile in ipairs(Lines.component(record.x, record.y, record.z)) do
             local other = tile.state
             if other ~= record then
@@ -160,11 +162,11 @@ local DO = {
         end
         record.full = false
         record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
+        return true
     end,
     -- Each item comes back as it went in. A length still cracked is scrap. The tap's length, its
     -- valve and the sprinkler come back with their tile.
-    [LineJobs.TAKE_UP] = function(character, object)
-        local record = Lines.recordOf(object)
+    [LineJobs.TAKE_UP] = function(character, record, row, object)
         if not record.cracked then
             Pipes.giveBack(character, record.material, 1, record.conditions)
         end
@@ -172,41 +174,56 @@ local DO = {
             Pipes.giveBack(character, record.tapMaterial, 1, record.tapConditions)
         end
         if record.valve then
-            Materials.giveItems(character, ValveSystem.takeOff(record))
+            Items.giveItems(character, ValveSystem.takeOff(record))
         end
         if record.sprinkler then
-            Materials.giveItems(character, takeSprinkler(record))
+            Items.giveItems(character, takeSprinkler(record))
         end
         LineSystem.remove(object)
+        return true
     end,
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
-    [LineJobs.SET_SPRINKLER] = function(character, object, item)
-        Materials.takeItem(character, item)
-        Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Parts.ceilingOf(item) }
+    [LineJobs.SET_SPRINKLER] = function(character, record, row, object, item)
+        Items.takeItem(character, item)
+        record.sprinkler = { condition = item:getCondition(), ceiling = Parts.ceilingOf(item) }
+        return true
     end,
-    [LineJobs.TAKE_SPRINKLER] = function(character, object)
-        Materials.giveItems(character, takeSprinkler(Lines.recordOf(object)))
+    [LineJobs.TAKE_SPRINKLER] = function(character, record)
+        Items.giveItems(character, takeSprinkler(record))
+        return true
     end,
-    [LineJobs.FIT_VALVE] = function(character, object, item)
-        Materials.takeItem(character, item)
-        ValveSystem.fit(Lines.recordOf(object), item)
+    [LineJobs.FIT_VALVE] = function(character, record, row, object, item)
+        Items.takeItem(character, item)
+        ValveSystem.fit(record, item)
+        return true
     end,
-    [LineJobs.TAKE_OFF_VALVE] = function(character, object)
-        Materials.giveItems(character, ValveSystem.takeOff(Lines.recordOf(object)))
+    [LineJobs.TAKE_OFF_VALVE] = function(character, record)
+        Items.giveItems(character, ValveSystem.takeOff(record))
+        return true
     end,
-    [LineJobs.WIND_VALVE] = function(character, object, with)
-        ValveSystem.wind(Lines.recordOf(object), Valves.decodeWind(with))
+    [LineJobs.WIND_VALVE] = function(character, record, row, object, with)
+        ValveSystem.wind(record, Valves.decodeWind(with))
+        return true
     end,
-    [LineJobs.SET_TIMER] = function(character, object, with)
-        ValveSystem.setTimer(Lines.recordOf(object), Valves.decodeTimer(with))
+    [LineJobs.SET_TIMER] = function(character, record, row, object, with)
+        ValveSystem.setTimer(record, Valves.decodeTimer(with))
+        return true
     end,
 }
 
---- Does `job` at `object` with `with` for `character` on the authority (ObjectSystem.perform); Lay
---- makes the tile's record. Returns whether it was done.
-function LineSystem.perform(character, job, object, with)
-    local record = job ~= LineJobs.LAY and Lines.recordOf(object) or nil
-    return EnhancedIrrigation.ObjectSystem.perform(LineJobs, DO, character, job, object, with, record)
-end
+local tileSite = LibObjectSystem.jobSite(Lines, DO)
+
+--- The authority's side of the line jobs (a site of Jobs.perform): Lay works at the floor, where no
+--- record is yet, and makes the tile's; every other job works on the record of the tile.
+LineSystem.site = {
+    open = tileSite.open,
+    act = function(character, job, record, row, object, with, materials)
+        if job == LineJobs.LAY then
+            return DO[job](character, nil, row, object, with, materials)
+        end
+        return tileSite.act(character, job, record, row, object, with, materials)
+    end,
+    tell = tileSite.tell,
+}
 
 return LineSystem
