@@ -117,13 +117,16 @@ end
 
 -- The build menu -------------------------------------------------------------------------------------
 
---- Queues building `entity` (a full name) from the build menu at the tile handle `handle` (T.build,
---- each input the first of `prefer` it takes), the tile removed when the test ends (tanks.track),
---- and waits for this client's copy of the tile `sprite`. Returns the built tile's handle, or nil.
-function T.buildTile(self, entity, handle, sprite, prefer)
-    local built = T.at(handle, { square = handle.square, sprite = sprite })
+--- Queues building `entity` (a full name) from the build menu on a T.buildSite (T.build, each
+--- input the first of `prefer` it takes), the tile removed when the test ends (tanks.track), and
+--- waits for this client's copy of the tile `sprite`. Returns the built tile's handle, or nil.
+function T.buildTile(self, entity, sprite, prefer)
+    local square = T.buildSite(self)
+    if not square then return nil end
+    local handle = T.where(square)
+    local built = T.at(handle, { square = square, sprite = sprite })
     T.server(self, "tanks.track", T.at(handle))
-    if not T.build(self, entity, handle.square, prefer, function() return T.copyOf(built) ~= nil end,
+    if not T.build(self, entity, square, prefer, function() return T.copyOf(built) ~= nil end,
         "this client's copy of the built " .. entity) then
         return nil
     end

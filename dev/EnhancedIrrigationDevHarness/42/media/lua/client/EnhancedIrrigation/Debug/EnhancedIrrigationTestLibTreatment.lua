@@ -31,12 +31,12 @@ function T.placeUnit(self, handle, entity, opts)
     return unit
 end
 
---- Queues building the unit `entity` from the build menu at `handle` (T.buildTile, each input the
---- first of `prefer` it takes), a read of its state once its record is made into self.reads.built,
---- a wait for this client's summary, and the names of its menu into self.names.built. Returns its
---- handle, with `spec`, or nil.
-function T.buildUnit(self, entity, handle, prefer)
-    local unit = T.buildTile(self, "Base." .. entity, handle, T.TREATMENT_SPRITES[entity], prefer)
+--- Queues building the unit `entity` from the build menu (T.buildTile, each input the first of
+--- `prefer` it takes), a read of its state once its record is made into self.reads.built, a wait
+--- for this client's summary, and the names of its menu into self.names.built. Returns its handle,
+--- with `spec`, or nil.
+function T.buildUnit(self, entity, prefer)
+    local unit = T.buildTile(self, "Base." .. entity, T.TREATMENT_SPRITES[entity], prefer)
     if not unit then return nil end
     unit.spec = Treatment.ENTITIES[entity]
     T.readUnitUntil(self, unit, "built", function(state) return state.record ~= nil end)

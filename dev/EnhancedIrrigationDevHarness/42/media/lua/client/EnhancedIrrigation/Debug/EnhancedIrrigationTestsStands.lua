@@ -39,9 +39,7 @@ end
 T.test("irrigation_stands_stand_built_from_build_menu", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-        if not spots then return end
-        self.stand = T.buildTile(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.TANK_STAND)
+        self.stand = T.buildTile(self, "Base." .. Stands.STAND_ENTITY, Sprites.TANK_STAND)
         if not self.stand then return end
         T.read(self, "tanks.read", T.at(self.stand), "built")
     end,

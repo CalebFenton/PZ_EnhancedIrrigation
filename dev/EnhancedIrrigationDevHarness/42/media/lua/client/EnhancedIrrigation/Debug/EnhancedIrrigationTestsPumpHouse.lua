@@ -41,9 +41,7 @@ for _, case in ipairs({ { entity = T.WOOD, name = "wood" }, { entity = T.METAL, 
     T.test("irrigation_pump_house_" .. case.name .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
-            local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-            if not spots then return end
-            self.house = T.buildTile(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity])
+            self.house = T.buildTile(self, "Base." .. case.entity, T.PUMP_SPRITES[case.entity])
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
             T.waitForPumpSummary(self, self.house, function() return true end, "this client's summary of the built house")

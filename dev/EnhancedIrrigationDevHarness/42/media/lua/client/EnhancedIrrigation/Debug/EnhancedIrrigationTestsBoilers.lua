@@ -19,24 +19,6 @@ local setFire, FUEL, expectLine, expectBasin = T.setFire, T.FUEL, T.expectLine, 
 
 local STONE, WELDED = "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded"
 
--- The squares round a boiler's that Treatment.wallNear reads, its own first: those around it and,
--- for their east and south edges, the row and column beyond.
-local CLEAR = { { 0, 0 } }
-for dx = -1, 2 do
-    for dy = -1, 2 do
-        if dx ~= 0 or dy ~= 0 then
-            table.insert(CLEAR, { dx, dy })
-        end
-    end
-end
-
--- The handle of a bare outdoor square with nothing on the squares around it to put a wall near it,
--- or nil.
-local function clearSpot(self)
-    local spots = T.layout(self, CLEAR, { bare = true })
-    return spots and spots[1]
-end
-
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
 -- on both sides, with its record at once. Its menu holds vanilla's Add Fuel and Light beside its
 -- own line, which reads the empty drum cold and sound. Catches a recipe the build menu can't build,
@@ -45,9 +27,7 @@ for _, entity in ipairs({ STONE, WELDED }) do
     T.test("irrigation_treatment_boiler_" .. (entity == STONE and "stone" or "welded") .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
-            local spot = clearSpot(self)
-            if not spot then return end
-            self.unit = T.buildUnit(self, entity, spot)
+            self.unit = T.buildUnit(self, entity)
             if not self.unit then return end
             T.step(function()
                 local copy = T.copyOf(self.unit)
@@ -73,7 +53,9 @@ end
 T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
     instant = true,
     run = function(self)
-        local clear = clearSpot(self)
+        -- Clear of walls as far as Treatment.wallNear reads.
+        local site = T.buildSite(self)
+        local clear = site and T.where(site)
         local indoors = clear and T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not indoors then return end
         self.placed = {}

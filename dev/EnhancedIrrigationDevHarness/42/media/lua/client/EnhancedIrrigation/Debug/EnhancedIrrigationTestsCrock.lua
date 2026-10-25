@@ -59,9 +59,7 @@ T.test("irrigation_treatment_crock_fired_in_a_kiln", {
 T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-        if not spots then return end
-        self.unit = T.buildUnit(self, CROCK, spots[1], { FORGED_BUCKET })
+        self.unit = T.buildUnit(self, CROCK, { FORGED_BUCKET })
         if not self.unit then return end
         self.litres = 6
         fillBasin(self, self.unit, self.litres)

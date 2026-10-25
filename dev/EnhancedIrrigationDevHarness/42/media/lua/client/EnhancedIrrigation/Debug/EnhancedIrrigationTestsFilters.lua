@@ -29,9 +29,7 @@ for _, entity in ipairs({ BARREL_FILTER, BRICK }) do
     T.test("irrigation_treatment_filter_" .. (entity == BARREL_FILTER and "barrel" or "brick") .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
-            local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-            if not spots then return end
-            T.buildUnit(self, entity, spots[1])
+            T.buildUnit(self, entity)
         end,
         validate = function(self)
             T.expectBuiltUnit(self, entity)

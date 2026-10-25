@@ -60,9 +60,7 @@ for _, case in ipairs({ { entity = T.WOODEN, name = "wooden", seal = T.LEATHER }
     T.test("irrigation_pumps_" .. case.name .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
-            local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-            if not spots then return end
-            self.pump = T.buildTile(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity], { case.seal })
+            self.pump = T.buildTile(self, "Base." .. case.entity, T.PUMP_SPRITES[case.entity], { case.seal })
             if not self.pump then return end
             T.readPumpUntil(self, self.pump, "built", function(state) return state.record ~= nil end)
             T.count(self, "left", { case.seal, DIRTY_LEATHER })
