@@ -125,8 +125,8 @@ local function tire(character, hours)
     end
 end
 
--- The draw of the line the hand pump of `record` drives from `source` (PumpWater.sourceOf): what the
--- line asks, as far as the seal and body last, which it wears by what it lifted.
+-- The draw of the line the hand pump of `record` drives from `source` (PumpWater.sourceOf): what
+-- the line asks, as far as the seal and body last, which it wears by what it lifted.
 local function handDraw(record, source)
     return function(litres)
         local moved = PumpWater.draw(source, nil, record:canLift(litres))

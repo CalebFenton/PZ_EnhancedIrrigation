@@ -110,8 +110,8 @@ function PumpObject:repairPart()
     self.partCondition = self.partCeiling
 end
 
---- Finds again where the hose drinks, while the pump's square is loaded (PumpWater.intakeFor), keeping
---- the one it had while that square is unloaded or still water.
+--- Finds again where the hose drinks, while the pump's square is loaded (PumpWater.intakeFor),
+--- keeping the one it had while that square is unloaded or still water.
 function PumpObject:findIntake()
     if not getCell():getGridSquare(self.x, self.y, self.z) then
         return
