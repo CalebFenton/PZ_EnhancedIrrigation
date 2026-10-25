@@ -13,6 +13,7 @@ require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
+require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Lines/ValveSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
@@ -25,6 +26,7 @@ local LineJobs = EnhancedIrrigation.LineJobs
 local Materials = EnhancedIrrigation.Materials
 local Pipes = EnhancedIrrigation.Pipes
 local Parts, Sprinklers = EnhancedIrrigation.Parts, EnhancedIrrigation.Sprinklers
+local Valves, ValveSystem = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveSystem
 
 LineSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Line",
@@ -170,33 +172,33 @@ local DO = {
             Pipes.giveBack(character, record.tapMaterial, 1, record.tapConditions)
         end
         if record.valve then
-            EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(record))
+            Materials.giveItems(character, ValveSystem.takeOff(record))
         end
         if record.sprinkler then
-            EnhancedIrrigation.Materials.giveItems(character, takeSprinkler(record))
+            Materials.giveItems(character, takeSprinkler(record))
         end
         LineSystem.remove(object)
     end,
     -- The sprinkler carried goes on as it is: its condition and the ceiling its item carries.
     [LineJobs.SET_SPRINKLER] = function(character, object, item)
-        EnhancedIrrigation.Materials.takeItem(character, item)
+        Materials.takeItem(character, item)
         Lines.recordOf(object).sprinkler = { condition = item:getCondition(), ceiling = Parts.ceilingOf(item) }
     end,
     [LineJobs.TAKE_SPRINKLER] = function(character, object)
-        EnhancedIrrigation.Materials.giveItems(character, takeSprinkler(Lines.recordOf(object)))
+        Materials.giveItems(character, takeSprinkler(Lines.recordOf(object)))
     end,
     [LineJobs.FIT_VALVE] = function(character, object, item)
-        EnhancedIrrigation.Materials.takeItem(character, item)
-        EnhancedIrrigation.ValveSystem.fit(Lines.recordOf(object), item)
+        Materials.takeItem(character, item)
+        ValveSystem.fit(Lines.recordOf(object), item)
     end,
     [LineJobs.TAKE_VALVE] = function(character, object)
-        EnhancedIrrigation.Materials.giveItems(character, EnhancedIrrigation.ValveSystem.takeOff(Lines.recordOf(object)))
+        Materials.giveItems(character, ValveSystem.takeOff(Lines.recordOf(object)))
     end,
     [LineJobs.WIND_VALVE] = function(character, object, with)
-        EnhancedIrrigation.ValveSystem.wind(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeWind(with))
+        ValveSystem.wind(Lines.recordOf(object), Valves.decodeWind(with))
     end,
     [LineJobs.SET_VALVE_TIMER] = function(character, object, with)
-        EnhancedIrrigation.ValveSystem.setTimer(Lines.recordOf(object), EnhancedIrrigation.Valves.decodeTimer(with))
+        ValveSystem.setTimer(Lines.recordOf(object), Valves.decodeTimer(with))
     end,
 }
 

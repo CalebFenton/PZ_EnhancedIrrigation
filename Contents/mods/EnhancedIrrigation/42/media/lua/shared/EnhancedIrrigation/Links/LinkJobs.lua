@@ -41,7 +41,7 @@ LinkJobs.RECIPE = "EnhancedIrrigation_PlumbToTank"
 -- What Plumb takes before the pipe, which the menu checks before it lists the tanks in reach.
 LinkJobs.PLUMB_TOOLS = { Pipes.WRENCH, { recipe = LinkJobs.RECIPE } }
 
-local pipeWrench = EnhancedIrrigation.Materials.holds(Pipes.WRENCH)
+local holdWrench = EnhancedIrrigation.Materials.holds(Pipes.WRENCH)
 
 -- The tiles of pipe from `tank` to the square `with` names, 0 when it names none.
 local function runTiles(tank, with)
@@ -188,7 +188,7 @@ end
 local function plumbJobFor(blocker)
     return {
         minutes = function(object, with) return Links.minutesFor(runTiles(object, with)) end,
-        position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
+        position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
         blocker = function(character, object, with)
             local refusal, here, other = blocker(object, with)
             if refusal then
@@ -230,7 +230,7 @@ LinkJobs.JOBS = {
     [LinkJobs.PLUMB_FIXTURE] = plumbJobFor(LinkJobs.fixtureBlocker),
     -- The pipe of vanilla's plumbing runs up through the ceiling; like vanilla's it takes none.
     [LinkJobs.PLUMB_ABOVE] = {
-        minutes = Links.BASE_MINUTES, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
+        minutes = Links.BASE_MINUTES, position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
         blocker = function(character, fixture, with)
             if not Fixtures.plumbingKeepsTaint() then
                 return Jobs.UNKNOWN
@@ -247,7 +247,7 @@ LinkJobs.JOBS = {
     [LinkJobs.PLUMB_OUTLET] = unitPlumbJob("outlet"),
     [LinkJobs.PLUMB_PUMP] = plumbJobFor(LinkJobs.pumpBlocker),
     [LinkJobs.UNPLUMB] = {
-        minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = pipeWrench,
+        minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
         blocker = function(character, object, with)
             local here, other = endsOf(object, with)
             return not (here and Links.find(here, other)) and "Tooltip_EnhancedIrrigation_NotPlumbed" or nil

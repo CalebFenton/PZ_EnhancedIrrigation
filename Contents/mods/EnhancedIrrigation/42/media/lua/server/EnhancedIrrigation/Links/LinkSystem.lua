@@ -82,9 +82,9 @@ function LinkSystem:removeLink(link)
         if entry == link then
             table.remove(self.links, i)
             self:sendLinks()
-            local _, line = Links.ends(link)
+            local _, into = Links.ends(link)
             if link.pump then
-                EnhancedIrrigation.LineSystem.showRunning(line.x, line.y, line.z, false)
+                EnhancedIrrigation.LineSystem.showRunning(into.x, into.y, into.z, false)
             end
             return
         end
