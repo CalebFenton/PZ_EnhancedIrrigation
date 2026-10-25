@@ -84,7 +84,7 @@ function LinkSystem:removeLink(link)
             self:sendLinks()
             local _, into = Links.ends(link)
             if link.pump then
-                EnhancedIrrigation.LineSystem.showRunning(into.x, into.y, into.z, false)
+                EnhancedIrrigation.LineSystem.setRunning(into.x, into.y, into.z, false)
             end
             return
         end

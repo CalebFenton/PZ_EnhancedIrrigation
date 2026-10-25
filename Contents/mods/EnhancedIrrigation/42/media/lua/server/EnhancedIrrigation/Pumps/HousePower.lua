@@ -61,7 +61,7 @@ end
 
 -- The generator's fuel an hour of `part` running burns.
 local function fuelPerHour(part)
-    return part.draw * SandboxVars.GeneratorFuelConsumption
+    return part.fuel * SandboxVars.GeneratorFuelConsumption
 end
 
 -- Fuel below which a generator counts as empty: the bill for the hours its fuel lasted is a float

@@ -140,7 +140,7 @@ end
 --- The summary of the tile at x, y, z as this side knows it: on the authority built from its
 --- record, as currentSummary builds it; on a multiplayer client the one it has. Nil where there is
 --- no line tile. Read only.
-function Lines.summaryAt(x, y, z)
+function Lines.currentSummaryAt(x, y, z)
     local record = Lines.recordAt(x, y, z)
     if record then
         return record:buildSummary()

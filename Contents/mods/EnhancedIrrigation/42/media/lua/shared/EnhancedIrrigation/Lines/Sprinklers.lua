@@ -59,9 +59,9 @@ end
 
 --- The state of those `stateAt(x, y, z)` gives that keeps what sprinklers left on the square x, y,
 --- z off the line, and the square's key in its `field` (a record's sprinklerSoak, a summary's
---- sprinklerSoil); nil when none does. A square has one holder (LineObject:addSprinklerSoak),
+--- sprinklerSoil); nil when none does. A square has one keeper (LineObject:addSprinklerSoak),
 --- sought as far along either axis, as a sprinkler's rectangle may lie either way.
-function Sprinklers.holderOf(x, y, z, stateAt, field)
+function Sprinklers.keeperOf(x, y, z, stateAt, field)
     for dx = -Sprinklers.ALONG, Sprinklers.ALONG do
         for dy = -Sprinklers.ALONG, Sprinklers.ALONG do
             local state = (dx ~= 0 or dy ~= 0) and stateAt(x - dx, y - dy, z)
@@ -79,9 +79,9 @@ end
 --- the wetter of the line tile's on that square and of the soak a sprinkler left on it, which
 --- rots the roots for as long as it lasts, whether or not a sprinkler waters the square now.
 function Sprinklers.soilKeyAt(x, y, z)
-    local own = Lines.summaryAt(x, y, z)
-    local holder, key = Sprinklers.holderOf(x, y, z, Lines.summaryAt, "sprinklerSoil")
-    return Lines.wetterKey(own and own.soil, holder and holder.sprinklerSoil[key])
+    local own = Lines.currentSummaryAt(x, y, z)
+    local keeper, key = Sprinklers.keeperOf(x, y, z, Lines.currentSummaryAt, "sprinklerSoil")
+    return Lines.wetterKey(own and own.soil, keeper and keeper.sprinklerSoil[key])
 end
 
 --- OnCreate of Make Pipe Sprinkler (Recipes.txt).

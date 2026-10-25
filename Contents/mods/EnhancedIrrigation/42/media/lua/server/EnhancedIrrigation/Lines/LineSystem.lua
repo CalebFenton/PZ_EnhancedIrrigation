@@ -58,7 +58,7 @@ end
 --- tells their clients: a pumped line is held while its pump runs, as a tap is while someone holds
 --- it. The pump says so again on each pass, so a tile laid on since, or a line split, is right by
 --- the next one.
-function LineSystem.showRunning(x, y, z, running)
+function LineSystem.setRunning(x, y, z, running)
     for _, tile in ipairs(Lines.component(x, y, z)) do
         tile.state.running = running or nil
         tile.state:sendSummary()
@@ -68,7 +68,7 @@ end
 -- A line split by a tile taken away is no longer known to run, each part until its pump says so.
 local function forgetRunningAround(x, y, z)
     for _, step in ipairs(Lines.STEPS) do
-        LineSystem.showRunning(x + step.dx, y + step.dy, z, false)
+        LineSystem.setRunning(x + step.dx, y + step.dy, z, false)
     end
 end
 

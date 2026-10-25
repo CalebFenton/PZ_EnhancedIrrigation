@@ -85,7 +85,7 @@ PumpJobs.JOBS = {
             if summary and summary.heldBy and summary.heldBy ~= character:getUsername() then
                 return "Tooltip_EnhancedIrrigation_PumpInUse"
             end
-            local into, refusal = EnhancedIrrigation.PumpWater.flowOf(pump)
+            local into, refusal = EnhancedIrrigation.PumpWater.handDeliveryOf(pump)
             if not into then
                 return refusal
             end

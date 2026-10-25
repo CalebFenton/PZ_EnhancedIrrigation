@@ -221,7 +221,7 @@ function PumpObject:afterChange()
     self:sendSummary()
     local b = Links.farEnd(self, "pump")
     if b then
-        EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, self:isRunning())
+        EnhancedIrrigation.LineSystem.setRunning(b.x, b.y, b.z, self:isRunning())
     end
 end
 

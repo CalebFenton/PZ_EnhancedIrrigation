@@ -822,7 +822,7 @@ end
 
 --- The generator fuel `part` burns in `hours`.
 function T.pumpBurns(part, hours)
-    return Pumps.PARTS[part].draw * SandboxVars.GeneratorFuelConsumption * hours
+    return Pumps.PARTS[part].fuel * SandboxVars.GeneratorFuelConsumption * hours
 end
 
 -- Treatment units ---------------------------------------------------------------------------------

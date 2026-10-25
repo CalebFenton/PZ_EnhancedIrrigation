@@ -36,7 +36,7 @@ function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
     local b = self:isValidIsoObject(isoObject) and Links.farEnd(EnhancedIrrigation.squareOf(isoObject), "pump")
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
     if b then
-        EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, false)
+        EnhancedIrrigation.LineSystem.setRunning(b.x, b.y, b.z, false)
     end
 end
 
@@ -147,7 +147,7 @@ function PumpSystem.run(character, pump, hours)
         return EnhancedIrrigation.Jobs.UNKNOWN
     end
     record:catchUp()
-    local into, source = PumpWater.flowOf(pump)
+    local into, source = PumpWater.handDeliveryOf(pump)
     if not into then
         return source
     end

@@ -52,14 +52,14 @@ Pumps.APPLIANCE_PUMP = "EnhancedIrrigation.AppliancePump"
 Pumps.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
 
 -- The pump parts a Pump House takes, by full type: `lift`, `rate`, `push` and `noise` as ENTITIES';
--- `wearPerHour`, the condition an hour of running takes; `draw`, the generator fuel an hour of
+-- `wearPerHour`, the condition an hour of running takes; `fuel`, the generator fuel an hour of
 -- running burns in vanilla's own units, before the GeneratorFuelConsumption option (IsoGenerator):
 -- a washer's for the pump out of one. A washer's pump is made for a drum's few minutes of draining,
 -- so it lifts little and burns out soon; a utility pump is made to run.
 Pumps.PARTS = {
-    [Pumps.APPLIANCE_PUMP] = { lift = 1, rate = 6, push = 2, wearPerHour = 1, draw = 0.09,
+    [Pumps.APPLIANCE_PUMP] = { lift = 1, rate = 6, push = 2, wearPerHour = 1, fuel = 0.09,
         noise = { radius = 10, volume = 10 } },
-    [Pumps.UTILITY_PUMP] = { lift = 2, rate = 20, push = 3, wearPerHour = 0.5, draw = 0.2,
+    [Pumps.UTILITY_PUMP] = { lift = 2, rate = 20, push = 3, wearPerHour = 0.5, fuel = 0.2,
         noise = { radius = 20, volume = 20 } },
 }
 

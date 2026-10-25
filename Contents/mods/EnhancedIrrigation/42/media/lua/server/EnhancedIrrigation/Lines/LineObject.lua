@@ -88,13 +88,13 @@ end
 --- record already keeping it, so overlapping sprinklers share one soak there that rots and dries
 --- once, else on this one. Returns the record it went on.
 function LineObject:addSprinklerSoak(x, y, points)
-    local holder, key = Sprinklers.holderOf(x, y, self.z, Lines.recordAt, "sprinklerSoak")
-    if not holder then
-        holder, key = self, Sprinklers.offsetKey(x - self.x, y - self.y)
+    local keeper, key = Sprinklers.keeperOf(x, y, self.z, Lines.recordAt, "sprinklerSoak")
+    if not keeper then
+        keeper, key = self, Sprinklers.offsetKey(x - self.x, y - self.y)
         self.sprinklerSoak = self.sprinklerSoak or {}
     end
-    holder.sprinklerSoak[key] = math.min(Lines.SOAK_MAX, (holder.sprinklerSoak[key] or 0) + points)
-    return holder
+    keeper.sprinklerSoak[key] = math.min(Lines.SOAK_MAX, (keeper.sprinklerSoak[key] or 0) + points)
+    return keeper
 end
 
 -- The hours of `hours` the soak stays above `level` while it dries at `perHour` from `soak`.

@@ -163,7 +163,7 @@ end
 --- What the hand pump `pump` would lift into, as this side sees it (PumpWater.deliveryOf), unless
 --- its body or seal is worn out. Returns the tank or line tile and the source, or nil and the
 --- Tooltip key of why it lifts nothing.
-function PumpWater.flowOf(pump)
+function PumpWater.handDeliveryOf(pump)
     local spec, summary = Pumps.specOf(pump), Pumps.currentSummary(pump)
     if not (spec and spec.kind == "hand" and summary) then
         return nil, EnhancedIrrigation.Jobs.UNKNOWN

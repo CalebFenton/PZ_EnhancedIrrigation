@@ -201,7 +201,7 @@ function PumpHouse.bankDraw(object)
     if not (part and (record.on or timerOpen(record, EnhancedIrrigation.now()))) then
         return nil
     end
-    return "IGUI_EnhancedIrrigation_PumpHouseLoad", part.draw
+    return "IGUI_EnhancedIrrigation_PumpHouseLoad", part.fuel
 end
 
 -- Renewable Energy's server files have all loaded by the world's start, whatever the mod order.

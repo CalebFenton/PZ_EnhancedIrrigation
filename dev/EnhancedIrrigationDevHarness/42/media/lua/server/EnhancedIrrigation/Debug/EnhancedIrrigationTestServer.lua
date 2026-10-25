@@ -134,7 +134,7 @@ end
 -- What the square `at` holds: its crop's `water` and `health` (nil without one), whether a line
 -- tile lies on it (`line`), and its soil's `soak`: that tile's, or off the line what every line
 -- record in a sprinkler's reach keeps of it, added up, so a soak kept twice reads twice. Not
--- Sprinklers.holderOf, which stops at the first holder and so would hide a second.
+-- Sprinklers.keeperOf, which stops at the first keeper and so would hide a second.
 local function readSquare(at)
     local EI = mod()
     local reply = { x = at.x, y = at.y, z = at.z, soak = 0 }

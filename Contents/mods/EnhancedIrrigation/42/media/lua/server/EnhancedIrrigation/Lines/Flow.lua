@@ -3,7 +3,7 @@
 -- tap open; a pumped line from its pump while that runs, which alone pushes hard enough to work a
 -- sprinkler.
 --
--- A source is { push, perHour, pumped, holds, draw(litres) }: the head it gives every outlet (as
+-- A source is { push, perHour, pumped, hasWater, draw(litres) }: the head it gives every outlet (as
 -- storeys of a tank's), the most litres an hour it gives (none for a tank, which gives what its
 -- outlets ask), whether a pump drives it, whether it holds water, and the draw that takes up to
 -- `litres` from it and answers the litres it gave.
@@ -29,7 +29,7 @@ local Plants = EnhancedIrrigation.Plants
 function Flow.fromTank(tank, z)
     return {
         push = math.sqrt(Tanks.levelOf(tank) - z),
-        holds = Tanks.litres(tank) > 0,
+        hasWater = Tanks.litres(tank) > 0,
         draw = function(litres) return Tanks.take(tank, litres) end,
     }
 end
@@ -38,7 +38,9 @@ end
 --- push and rate of `spec`, and `draw(litres)`, which lifts what the line asks and returns the
 --- litres lifted.
 function Flow.fromPump(spec, draw)
-    return { push = spec.push, perHour = EnhancedIrrigation.Pumps.perHour(spec), pumped = true, holds = true, draw = draw }
+    return {
+        push = spec.push, perHour = EnhancedIrrigation.Pumps.perHour(spec), pumped = true, hasWater = true, draw = draw,
+    }
 end
 
 -- Litres an hour out of the tile `record` from `source`: what its holes give its square, what a
@@ -112,7 +114,7 @@ function Flow.run(record, source, hours)
     local demand = given(source, asked) * math.max(0, hours)
     local drawn = demand > 0 and source.draw(demand) or 0
     -- A line that takes nothing still fills: water stands in it to the last joint.
-    local filled = drawn > 0 or (demand == 0 and hours > 0 and source.holds)
+    local filled = drawn > 0 or (demand == 0 and hours > 0 and source.hasWater)
     local touched = {}
     if drawn > 0 then
         local share = drawn / (asked * hours)

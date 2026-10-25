@@ -361,7 +361,7 @@ T.test("irrigation_pump_house_power_tells_a_bank_what_it_draws", {
         local draws = self.reads.draws.draws
         for i, what in ipairs({ "the switched-on house", "the house in its timer's window" }) do
             expect(draws[i].kind == "IGUI_EnhancedIrrigation_PumpHouseLoad", what .. " reports the load " .. tostring(draws[i].kind))
-            expectNear(what .. "'s draw", draws[i].fuel or 0, Pumps.PARTS[UTILITY].draw, 0.0001)
+            expectNear(what .. "'s draw", draws[i].fuel or 0, Pumps.PARTS[UTILITY].fuel, 0.0001)
         end
         expect(draws[3].kind == nil, "a house a generator pays for also bills the bank")
         expect(draws[4].kind == nil, "a house off with its timer unset bills the bank")
