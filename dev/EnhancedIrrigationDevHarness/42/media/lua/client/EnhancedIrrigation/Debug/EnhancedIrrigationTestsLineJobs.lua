@@ -15,9 +15,6 @@ local expectOffered, expectRefused = T.expectOffered, T.expectRefused
 local Sprites, Pipes, Lines = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pipes, EnhancedIrrigation.Lines
 local LineJobs, LineMenu = EnhancedIrrigation.LineJobs, EnhancedIrrigation.LineMenu
 
-local POINTS = 0.05
-local TANK_LITRES = 100
-
 -- Helpers -------------------------------------------------------------------------------------------
 
 -- Queues the server's view of `handles` into self.reads[label].tiles, once `done(tiles)` holds or
@@ -34,7 +31,7 @@ end
 -- Holes ---------------------------------------------------------------------------------------------
 
 -- Notes in self.drills[label] how many Drill Holes options the line tile at `handle` offers, and
--- uses the option as useJob does.
+-- uses the option as T.useLineJob does.
 local function useDrill(self, handle, label, choose)
     self.drills = self.drills or {}
     T.useOption(self, function() return T.lineObject(handle) end, label, function(context)
@@ -126,10 +123,10 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
         local tooltip = self.menu.nail.tooltip
         expect(tooltip:find(getText("Tooltip_EnhancedIrrigation_MayCrack"), 1, true) ~= nil,
             "the tooltip doesn't warn the nail may split plastic: " .. tooltip)
-        local left = self.counts.left["Base.Nails"] or 0
+        local left = T.counted(self, "Base.Nails")
         expect(left == self.nails - self.need, "drilling left " .. left .. " of " .. self.nails .. " nails, not "
             .. (self.nails - self.need))
-        expect(self.counts.left["Base.Hammer"] == 1, "drilling took the hammer")
+        expect(T.counted(self, "Base.Hammer") == 1, "drilling took the hammer")
     end,
 })
 
@@ -151,7 +148,7 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
             { type = Pipes.MATERIALS.lead.item } })
         T.goNextTo(self, tile.square)
         T.useLineJob(self, tile, LineJobs.TAP, "under a well", false)
-        T.placeTank(self, west, "ground", TANK_LITRES)
+        T.placeTank(self, west, "ground", T.TANK_LITRES)
         T.useLineJob(self, tile, LineJobs.TAP, "beside a ground barrel", false)
         T.placeTank(self, east, "raised", 0)
         T.useLineJob(self, tile, LineJobs.TAP, "beside a raised barrel", true)
@@ -169,9 +166,9 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
             .. tostring(record.tapMaterial) .. " pipe, not the lead tile's own")
         expect(T.hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
         local iron, lead = Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item
-        expect(self.counts.left[lead] == 0, "the tap took no lead pipe")
-        expect(self.counts.left[iron] == 1, "the tap on lead pipe took iron pipe")
-        expect(self.counts.left["Base.PipeWrench"] == 1, "the tap took the pipe wrench")
+        expect(T.counted(self, lead) == 0, "the tap took no lead pipe")
+        expect(T.counted(self, iron) == 1, "the tap on lead pipe took iron pipe")
+        expect(T.counted(self, "Base.PipeWrench") == 1, "the tap took the pipe wrench")
     end,
 })
 
@@ -261,7 +258,7 @@ T.test("irrigation_lines_drain_from_the_middle", {
         local shapes = { Sprites.EAST, Sprites.EAST + Sprites.WEST, Sprites.WEST }
         for i, tile in ipairs(self.reads.drained.tiles) do
             expect(not tile.record.full, "tile " .. i .. " is still full")
-            expectNear("tile " .. i .. "'s soak", tile.record.soak, 0, POINTS)
+            expectNear("tile " .. i .. "'s soak", tile.record.soak, 0, T.POINTS)
             local wet = i == 2
             expect(tile.record.wet == wet, "the server shows tile " .. i .. (wet and " dry" or " wet"))
             expect(T.lineSprite(self.tiles[i]) == Sprites.pipe("lead", wet, shapes[i]),

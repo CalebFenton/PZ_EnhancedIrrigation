@@ -20,42 +20,15 @@ local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
 
-local WOODEN, IRON = "EnhancedIrrigation_WoodenHandPump", "EnhancedIrrigation_IronHandPump"
-local LEATHER, PLUNGER = "Base.LeatherStrips", "Base.Plunger"
+local PLUNGER = "Base.Plunger"
 -- What vanilla's Leather Strips leave once used (their ReplaceOnUse), which a seal must not.
 local DIRTY_LEATHER = "Base.LeatherStripsDirty"
--- A raised barrel's water: vanilla's round rain barrel's.
-local BARREL_LITRES = 600
 -- The clock's speed while the handle is worked, so the tank fills in a moment.
 local PUMP_SPEED = 100
--- How often, in real milliseconds, the multiplayer server runs a worked pump in these tests: a
--- frame or two, where the mod's second would be most of a test's time.
-local RUN_MS = 20
--- An hour's minutes, as the record's sums take them.
-local MINUTE = 1 / 60
+-- A hand pump placed with a leather seal.
+local SEALED = { fields = { seal = T.LEATHER } }
 
 -- Pumps -------------------------------------------------------------------------------------------------
-
--- Queues the server's view of the pump, with `extra` args (tank, well), into self.reads[label].
-local function read(self, pump, label, extra)
-    T.read(self, "pumps.state", T.at(pump, extra), label)
-end
-
-local function readUntil(self, pump, label, done)
-    T.readUntil(self, "pumps.state", T.at(pump), label, done)
-end
-
--- Queues working the pump for each of `hours` on the server, with `fields` set first and the
--- `tank`'s state, into self.reads[label] ({ before, steps }).
-local function run(self, pump, label, hours, fields, tank)
-    T.read(self, "pumps.run", T.at(pump, { hours = hours, fields = fields, tank = tank and T.at(tank) }), label)
-end
-
-local function pumpOption(context)
-    return T.findOption(context, context, function(option)
-        return option.onSelect == EnhancedIrrigationPumpAction.queue
-    end)
-end
 
 -- How near this client's endurance comes to what the server set, a frame or two of rest later.
 local ENDURANCE_SLACK = 0.01
@@ -77,20 +50,13 @@ local function setEndurance(self, value)
     end, "this client's copy of the endurance set")
 end
 
--- Makes the multiplayer server run Pump actions started from now every RUN_MS, and the clock run at
--- PUMP_SPEED, until the test ends.
-local function quickRuns(self)
-    T.setMultiplier(self, PUMP_SPEED)
-    T.server(self, "pumps.runEvery", { ms = RUN_MS })
-end
-
 -- Building ----------------------------------------------------------------------------------------------
 
 -- The build menu builds each pump from its recipe on a bare square, with its record at once, the
 -- seal the build took fitted new: this client's menu reads it, the body new, nothing to draw and no
 -- outlet. The seal goes in whole, leather leaving no dirty strips. Catches a recipe the build menu
 -- can't build, a pump without its record or with the wrong seal, or a seal handed back used.
-for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { entity = IRON, name = "iron", seal = "Base.TirePiece" } }) do
+for _, case in ipairs({ { entity = T.WOODEN, name = "wooden", seal = T.LEATHER }, { entity = T.IRON, name = "iron", seal = "Base.TirePiece" } }) do
     T.test("irrigation_pumps_" .. case.name .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
@@ -98,7 +64,7 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
             if not spots then return end
             self.pump = T.buildFromMenu(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity], { case.seal })
             if not self.pump then return end
-            readUntil(self, self.pump, "built", function(state) return state.record ~= nil end)
+            T.readPumpUntil(self, self.pump, "built", function(state) return state.record ~= nil end)
             T.count(self, "left", { case.seal, DIRTY_LEATHER })
             T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == case.seal end,
                 "this client's summary of the built pump")
@@ -112,9 +78,8 @@ for _, case in ipairs({ { entity = WOODEN, name = "wooden", seal = LEATHER }, { 
             expect(record.seal == case.seal and record.sealWear == 0, "the built pump's seal is "
                 .. tostring(record.seal) .. " worn " .. tostring(record.sealWear) .. ", not a new " .. case.seal)
             expect(record.condition == Pumps.BODY_CONDITION, "the built pump's condition is " .. tostring(record.condition))
-            local left = self.counts.left
             for _, fullType in ipairs({ case.seal, DIRTY_LEATHER }) do
-                expect(left[fullType] == 0, "building left " .. tostring(left[fullType]) .. " " .. fullType)
+                expect(T.counted(self, fullType) == 0, "building left " .. T.counted(self, fullType) .. " " .. fullType)
             end
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoWaterToDraw"))
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Seal", 100))
@@ -140,19 +105,18 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = T.placePump(self, spots[1], WOODEN, { fields = { seal = LEATHER } })
+        self.pump = T.placePump(self, spots[1], T.WOODEN, SEALED)
         self.well = T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
+        self.tank = T.placeTank(self, spots[3], "raisedLidded", T.BARREL_LITRES - ROOM)
+        T.givePlumbing(self, 1)
         T.useMenu(self, self.pump, "outlet", T.job("link", LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
-        readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
+        T.readPumpUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Links.roleAt(T.at(self.pump), "pump") ~= nil end, "this client's copy of the outlet")
         -- Full, as rest can't add to it before the work starts.
         self.endurance = 1
         setEndurance(self, self.endurance)
-        read(self, self.pump, "before", { well = T.at(self.well) })
-        quickRuns(self)
+        T.readPump(self, self.pump, "before", { well = T.at(self.well) })
+        T.quickRuns(self, "EnhancedIrrigationPumpAction", PUMP_SPEED)
         -- The least this client's endurance falls to as the work goes on: standing still gives it
         -- back at the raised speed as soon as the work stops.
         T.step(function()
@@ -163,19 +127,19 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         end)
         -- The worked pump holds the queue until it stops itself; one that never stops would run the
         -- test out of time.
-        T.useMenu(self, self.pump, "pump", pumpOption, true)
-        read(self, self.pump, "after", { tank = T.at(self.tank), well = T.at(self.well) })
+        T.useMenu(self, self.pump, "pump", T.running(EnhancedIrrigationPumpAction.queue), true)
+        T.readPump(self, self.pump, "after", { tank = T.at(self.tank), well = T.at(self.well) })
         T.waitFor(self, function()
             local copy = T.copyOf(self.tank)
-            return copy ~= nil and copy:getFluidContainer():getAmount() > BARREL_LITRES - T.LITRES
+            return copy ~= nil and copy:getFluidContainer():getAmount() > T.BARREL_LITRES - T.LITRES
         end, "this client's copy of the full barrel")
-        T.useOption(self, function() return T.copyOf(self.pump) end, "full", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "full", T.running(EnhancedIrrigationPumpAction.queue), false)
     end,
     validate = function(self)
         T.expectOffered(self, "outlet")
         T.expectOffered(self, "pump")
         local before, after = self.reads.before, self.reads.after
-        expectNear("the barrel's water", after.tank.litres, BARREL_LITRES, T.LITRES)
+        expectNear("the barrel's water", after.tank.litres, T.BARREL_LITRES, T.LITRES)
         expect(not after.tank.tainted, "the well's water came out tainted")
         expect(before.wellLitres ~= nil and after.wellLitres == before.wellLitres, "the well's own container went from "
             .. tostring(before.wellLitres) .. " to " .. tostring(after.wellLitres))
@@ -189,7 +153,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
 })
 
 -- Endurance the character is left with past the Exhausted mark: less than a minute's work.
-local LAST_ENDURANCE = Pumps.ENDURANCE_PER_HOUR * MINUTE / 2
+local LAST_ENDURANCE = Pumps.ENDURANCE_PER_HOUR * T.MINUTE / 2
 
 -- The handle worked by a character nearly exhausted stops once they are, with the tank far from
 -- full; an exhausted character's Pump is greyed out saying so. Standing still gives endurance back
@@ -200,41 +164,23 @@ T.test("irrigation_pumps_stop_when_the_character_is_exhausted", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.pump, self.tank)
+        self.pump, self.tank = T.plumbedPump(self, spots, T.IRON, SEALED)
         setEndurance(self, Pumps.EXHAUSTED + LAST_ENDURANCE)
-        quickRuns(self)
-        T.useMenu(self, self.pump, "pump", pumpOption, true)
-        read(self, self.pump, "after", { tank = T.at(self.tank) })
+        T.quickRuns(self, "EnhancedIrrigationPumpAction", PUMP_SPEED)
+        T.useMenu(self, self.pump, "pump", T.running(EnhancedIrrigationPumpAction.queue), true)
+        T.readPump(self, self.pump, "after", { tank = T.at(self.tank) })
         setEndurance(self, Pumps.EXHAUSTED / 2)
-        T.useOption(self, function() return T.copyOf(self.pump) end, "tired", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "tired", T.running(EnhancedIrrigationPumpAction.queue), false)
     end,
     validate = function(self)
         T.expectOffered(self, "pump")
         local after = self.reads.after
         expect(after.endurance <= Pumps.EXHAUSTED, "the pump stopped with the endurance at " .. after.endurance)
-        expect(after.tank.litres > 0 and after.tank.litres < BARREL_LITRES / 2, "the exhausted character lifted "
+        expect(after.tank.litres > 0 and after.tank.litres < T.BARREL_LITRES / 2, "the exhausted character lifted "
             .. after.tank.litres .. " L")
         T.expectRefused(self, "tired", "Tooltip_EnhancedIrrigation_Exhausted")
     end,
 })
-
--- The stand-in for another player who holds a pump in these tests.
-local OTHER = "EnhancedIrrigationTestOther"
-
--- Queues working the pump for a character whose client doesn't check that it may: the action's
--- isValid always passes, so only the authority's own check can stop it.
-local function pumpUnchecked(self, pump)
-    T.step(function()
-        local copy = T.copyOf(pump)
-        if not T.need(self, copy, "this client's copy of the pump") then return end
-        local action = EnhancedIrrigationPumpAction:new(T.player(), copy)
-        action.isValid = function() return true end
-        ISTimedActionQueue.add(action)
-    end)
-end
 
 -- Another player holding the pump greys this character's Pump out saying someone is at it, and the
 -- authority refuses an unchecked one, lifting nothing; once their silent hold lapses, this
@@ -247,20 +193,17 @@ T.test("irrigation_pumps_one_worker_per_pump", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
-        T.linkPump(self, self.pump, self.tank)
-        T.read(self, "pumps.hold", T.at(self.pump, { as = OTHER }), "other")
-        T.waitForPumpSummary(self, self.pump, function(summary) return summary.heldBy == OTHER end,
+        self.pump, self.tank = T.plumbedPump(self, spots, T.IRON, SEALED, { litres = T.BARREL_LITRES - ROOM })
+        T.read(self, "holds.hold", T.at(self.pump, { feature = "pump", as = T.OTHER }), "other")
+        T.waitForPumpSummary(self, self.pump, function(summary) return summary.heldBy == T.OTHER end,
             "this client's summary of the pump another player holds")
         T.goNextTo(self, self.pump.square)
-        T.useOption(self, function() return T.copyOf(self.pump) end, "while held", pumpOption, false)
-        pumpUnchecked(self, self.pump)
-        read(self, self.pump, "refused", { tank = T.at(self.tank) })
+        T.useOption(self, function() return T.copyOf(self.pump) end, "while held", T.running(EnhancedIrrigationPumpAction.queue), false)
+        T.queueUnchecked(self, EnhancedIrrigationPumpAction, function() return T.copyOf(self.pump) end, "the pump")
+        T.readPump(self, self.pump, "refused", { tank = T.at(self.tank) })
         -- The other player's action has been silent too long.
-        T.server(self, "pumps.lapseHold", T.at(self.pump))
-        quickRuns(self)
+        T.server(self, "holds.lapse", T.at(self.pump, { feature = "pump" }))
+        T.quickRuns(self, "EnhancedIrrigationPumpAction", PUMP_SPEED)
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.heldBy == nil end,
             "this client's summary of the pump, freed")
         T.step(function()
@@ -272,18 +215,18 @@ T.test("irrigation_pumps_one_worker_per_pump", {
             end)
         end)
         -- The worked pump holds the queue until it stops itself at the full tank.
-        T.useMenu(self, self.pump, "freed", pumpOption, true)
-        read(self, self.pump, "let go", { tank = T.at(self.tank) })
+        T.useMenu(self, self.pump, "freed", T.running(EnhancedIrrigationPumpAction.queue), true)
+        T.readPump(self, self.pump, "let go", { tank = T.at(self.tank) })
     end,
     validate = function(self)
         expect(self.reads.other.held, "the other player couldn't hold the free pump")
         T.expectRefused(self, "while held", "Tooltip_EnhancedIrrigation_PumpInUse")
         expectNear("the tank's water while another player held the pump", self.reads.refused.tank.litres,
-            BARREL_LITRES - ROOM, T.LITRES)
+            T.BARREL_LITRES - ROOM, T.LITRES)
         T.expectOffered(self, "freed")
         expect(self.heldByMe, "the pump wasn't held for this character while it ran")
         local after = self.reads["let go"]
-        expectNear("the tank once this character's work stopped", after.tank.litres, BARREL_LITRES, T.LITRES)
+        expectNear("the tank once this character's work stopped", after.tank.litres, T.BARREL_LITRES, T.LITRES)
         expect(after.summary.heldBy == nil, "the pump is still held by " .. tostring(after.summary.heldBy)
             .. " after this character's work stopped")
     end,
@@ -303,7 +246,7 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
+        self.pump = T.placePump(self, spots[1], T.IRON, SEALED)
         self.source = T.placeTank(self, spots[2], "ground", SOURCE_LITRES, true)
         self.tank = T.placeTank(self, spots[3], "lidded")
         T.linkPump(self, self.pump, self.tank)
@@ -312,7 +255,7 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         T.step(function()
             self.sourceName = T.copyOf(self.source):getFluidContainer():getTranslatedContainerName()
         end)
-        run(self, self.pump, "ran", { MINUTE, 1 }, nil, self.tank)
+        T.runPump(self, self.pump, "ran", { T.MINUTE, 1 }, { tank = self.tank })
     end,
     validate = function(self)
         T.expectWord(self, "source", self.sourceName)
@@ -339,19 +282,18 @@ T.test("irrigation_pumps_river_intake_gives_tainted_water", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { -2, 0 } }, { bare = true })
         if not spots then return end
         self.river = spots[3]
-        T.read(self, "pumps.water", T.at(self.river), "water")
+        T.placeTile(self, self.river.square, "blends_natural_02_0")
         T.waitFor(self, function()
             return getSquare(self.river.x, self.river.y, self.river.z):getProperties():has(IsoFlagType.water)
         end, "this client's copy of the river square")
-        self.pump = T.placePump(self, spots[1], IRON, { fields = { seal = LEATHER } })
+        self.pump = T.placePump(self, spots[1], T.IRON, SEALED)
         self.tank = T.placeTank(self, spots[2], "lidded")
         T.linkPump(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "river")
-        run(self, self.pump, "ran", { MINUTE }, nil, self.tank)
+        T.runPump(self, self.pump, "ran", { T.MINUTE }, { tank = self.tank })
     end,
     validate = function(self)
-        expect(self.reads.water.water, "the server's square isn't water")
         T.expectWord(self, "river", getText("IGUI_EnhancedIrrigation_SourceRiver"))
         local step = self.reads.ran.steps[1]
         local intake = step.record.intake
@@ -372,21 +314,20 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 }, { 1, 1 } }, { bare = true })
         if not spots then return end
-        self.wooden = T.placePump(self, spots[1], WOODEN, { fields = { seal = LEATHER } })
-        self.iron = T.placePump(self, spots[2], IRON, { fields = { seal = LEATHER } })
+        self.wooden = T.placePump(self, spots[1], T.WOODEN, SEALED)
+        self.iron = T.placePump(self, spots[2], T.IRON, SEALED)
         self.tank = T.placeTank(self, spots[3], "raisedAbove")
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
+        T.givePlumbing(self, 2)
         T.useMenu(self, self.wooden, "wooden", function(context)
             return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option) return option.name == LinkMenu.tankLabel(T.at(self.wooden), T.at(self.tank)) end)
         end, false)
-        T.read(self, "tanks.perform", T.at(self.wooden, { feature = "link", job = LinkJobs.PLUMB_PUMP,
+        T.read(self, "jobs.perform", T.at(self.wooden, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
         T.useMenu(self, self.iron, "iron", T.job("link", LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
-        readUntil(self, self.iron, "plumbed", function(state) return state.outlet end)
+        T.readPumpUntil(self, self.iron, "plumbed", function(state) return state.outlet end)
     end,
     validate = function(self)
-        T.expectRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.ENTITIES[WOODEN].lift])
+        T.expectRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.ENTITIES[T.WOODEN].lift])
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed the wooden pump two storeys up")
         T.expectOffered(self, "iron")
@@ -426,20 +367,18 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         local rows = T.row(self, 4)
         if not rows then return end
         local untapped, tapped = { rows[1][1], rows[1][2] }, rows[1][4]
-        self.untapped = untapped
         tapped.fields = T.tapped()
         T.placeLine(self, { untapped[1], untapped[2], tapped }, "iron")
-        self.pump = T.placePump(self, spots[1], WOODEN, { fields = { seal = LEATHER } })
+        self.pump = T.placePump(self, spots[1], T.WOODEN, SEALED)
         T.placeTank(self, spots[2], "well")
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 4 } })
+        T.givePlumbing(self, 4)
         T.useMenu(self, self.pump, "tapped", function(context)
             return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option) return option.name == LinkMenu.lineLabel(T.at(self.pump), T.at(tapped)) end)
         end, false)
-        T.read(self, "tanks.perform", T.at(self.pump, { feature = "link", job = LinkJobs.PLUMB_PUMP,
+        T.read(self, "jobs.perform", T.at(self.pump, { feature = "link", job = LinkJobs.PLUMB_PUMP,
             with = Links.encode(T.at(tapped), "iron") }), "forced")
         T.useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
-        readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
+        T.readPumpUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Links.roleAt(T.at(self.pump), "pump") ~= nil end, "this client's copy of the outlet")
         T.readMenu(self, self.pump, "plumbed")
         T.step(function()
@@ -450,9 +389,7 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
             return T.findNamed(context, context, self.unplumbLabel)
         end, false)
         T.goNextTo(self, untapped[2].square)
-        T.useOption(self, function() return T.lineObject(untapped[2]) end, "fit tap", function(context)
-            return T.jobOption(context, "line", LineJobs.TAP)
-        end, false)
+        T.useLineJob(self, untapped[2], LineJobs.TAP, "fit tap", false)
     end,
     validate = function(self)
         T.expectRefused(self, "tapped", "Tooltip_EnhancedIrrigation_LineHasTap")
@@ -465,27 +402,6 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
     end,
 })
 
--- Half an hour's work, the time the pumped-line tests run their pumps for.
-local HALF_HOUR = 0.5
-
--- Queues the wooden pump at `spots[1]` over a well at `spots[2]`, its outlet plumbed to the first of
--- two holed line tiles in a row with dry crops on them. Returns the pump and the tiles.
-local function pumpedLine(self, spots, fields)
-    local rows = T.row(self, 2)
-    if not rows then return nil end
-    local tiles = rows[1]
-    for _, tile in ipairs(tiles) do
-        tile.fields = { holed = true }
-    end
-    T.placeLine(self, tiles, "iron")
-    T.plant(self, tiles[1], 0)
-    T.plant(self, tiles[2], 0)
-    local pump = T.placePump(self, spots[1], WOODEN)
-    T.placeTank(self, spots[2], "well")
-    T.linkPump(self, pump, tiles[1], fields)
-    return pump, tiles
-end
-
 -- Half an hour's work at a wooden pump feeding a line of two holed tiles pushes each hole's water
 -- out at the pump's push, filling each crop by that, and wears the seal and the body by only what
 -- the holes took. Worked from its menu, the line shows as running on this client while the
@@ -495,12 +411,13 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
     instant = true,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true })
-        if not spots then return end
-        self.pump, self.tiles = pumpedLine(self, spots, { seal = LEATHER })
-        if not self.pump then return end
-        T.read(self, "pumps.run", T.at(self.pump, { hours = { HALF_HOUR }, squares = T.tiles(self.tiles) }), "half")
+        local rows = spots and T.row(self, 2)
+        if not rows then return end
+        self.tiles = rows[1]
+        self.pump = T.pumpedLine(self, self.tiles, spots, T.WOODEN, SEALED)
+        T.runPump(self, self.pump, "half", { T.HALF_HOUR }, { squares = self.tiles })
         setEndurance(self, Pumps.EXHAUSTED + LAST_ENDURANCE)
-        quickRuns(self)
+        T.quickRuns(self, "EnhancedIrrigationPumpAction", PUMP_SPEED)
         T.step(function()
             T.onTick(self, function()
                 local summary = T.lineSummary(self.tiles[2])
@@ -508,7 +425,7 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
             end)
         end)
         -- The worked pump holds the queue until the character is exhausted.
-        T.useMenu(self, self.pump, "pump", pumpOption, true)
+        T.useMenu(self, self.pump, "pump", T.running(EnhancedIrrigationPumpAction.queue), true)
         T.waitForLines(self, self.tiles, "this client's copy of the line, stopped", function(summary)
             return not summary.running
         end)
@@ -516,15 +433,15 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
     validate = function(self)
         local half = self.reads.half
         local before, after = half.before, half.steps[1]
-        local push = Pumps.ENTITIES[WOODEN].push
-        local each = Lines.HOLE_RATE * push * HALF_HOUR
+        local push = Pumps.ENTITIES[T.WOODEN].push
+        local each = Lines.HOLE_RATE * push * T.HALF_HOUR
         for i = 1, 2 do
             expectNear("crop " .. i .. "'s water", after.squares[i].water - before.squares[i].water,
                 each * Lines.POINTS_PER_LITRE, 0.05)
         end
         expectNear("the seal's wear", after.record.sealWear - before.record.sealWear, 2 * each, T.LITRES)
         expectNear("the pump's wear", before.record.condition - after.record.condition,
-            2 * each / Pumps.ENTITIES[WOODEN].wearLitres, 0.0001)
+            2 * each / Pumps.ENTITIES[T.WOODEN].wearLitres, 0.0001)
         T.expectOffered(self, "pump")
         expect(self.sawRunning, "this client never saw the line run while the pump was worked")
     end,
@@ -546,26 +463,24 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = T.placePump(self, spots[1], IRON)
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "lidded")
-        T.linkPump(self, self.pump, self.tank, { seal = PLUNGER, sealWear = Pumps.sealLitres(PLUNGER) - SEAL_LEFT })
-        run(self, self.pump, "worn", { MINUTE }, nil, self.tank)
+        self.pump, self.tank = T.plumbedPump(self, spots, T.IRON,
+            { fields = { seal = PLUNGER, sealWear = Pumps.sealLitres(PLUNGER) - SEAL_LEFT } }, { tank = "lidded" })
+        T.runPump(self, self.pump, "worn", { T.MINUTE }, { tank = self.tank })
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.sealWorn end, "this client's summary of the worn seal")
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "worn")
-        T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
-        T.give(self, "seals", { { type = "Base.Screwdriver" }, { type = LEATHER }, { type = PLUNGER } })
+        T.useOption(self, function() return T.copyOf(self.pump) end, "pump", T.running(EnhancedIrrigationPumpAction.queue), false)
+        T.give(self, "seals", { { type = "Base.Screwdriver" }, { type = T.LEATHER }, { type = PLUNGER } })
         T.step(function() self.leather, self.plunger = self.items.seals[2], self.items.seals[3] end)
         T.useMenu(self, self.pump, "leather", function(context)
             return T.jobOption(context, "pump", PumpJobs.REPLACE_SEAL, self.leather)
         end, true)
-        readUntil(self, self.pump, "leathered", function(state) return state.record.seal == LEATHER end)
+        T.readPumpUntil(self, self.pump, "leathered", function(state) return state.record.seal == T.LEATHER end)
         T.useMenu(self, self.pump, "plunger", function(context)
             return T.jobOption(context, "pump", PumpJobs.REPLACE_SEAL, self.plunger)
         end, true)
-        readUntil(self, self.pump, "replaced", function(state) return state.record.seal == PLUNGER end)
-        T.count(self, "left", { LEATHER, DIRTY_LEATHER, PLUNGER, "Base.Screwdriver" })
+        T.readPumpUntil(self, self.pump, "replaced", function(state) return state.record.seal == PLUNGER end)
+        T.count(self, "left", { T.LEATHER, DIRTY_LEATHER, PLUNGER, "Base.Screwdriver" })
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == PLUNGER and not summary.sealWorn end,
             "this client's summary of the new seal")
         T.readMenu(self, self.pump, "new")
@@ -579,15 +494,14 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         T.expectOffered(self, "leather")
         T.expectOffered(self, "plunger")
         local leathered, replaced = self.reads.leathered.record, self.reads.replaced.record
-        expect(leathered.seal == LEATHER and leathered.sealWear == 0, "the leather went in as "
+        expect(leathered.seal == T.LEATHER and leathered.sealWear == 0, "the leather went in as "
             .. tostring(leathered.seal) .. " worn " .. tostring(leathered.sealWear))
         expect(replaced.seal == PLUNGER and replaced.sealWear == 0, "the plunger went in as "
             .. tostring(replaced.seal) .. " worn " .. tostring(replaced.sealWear))
-        local left = self.counts.left
-        for _, fullType in ipairs({ LEATHER, DIRTY_LEATHER, PLUNGER }) do
-            expect(left[fullType] == 0, "Replace Seal left " .. tostring(left[fullType]) .. " " .. fullType)
+        for _, fullType in ipairs({ T.LEATHER, DIRTY_LEATHER, PLUNGER }) do
+            expect(T.counted(self, fullType) == 0, "Replace Seal left " .. T.counted(self, fullType) .. " " .. fullType)
         end
-        expect(left["Base.Screwdriver"] == 1, "Replace Seal took the screwdriver")
+        expect(T.counted(self, "Base.Screwdriver") == 1, "Replace Seal took the screwdriver")
         T.expectWord(self, "new", getText("IGUI_EnhancedIrrigation_Seal", 100))
     end,
 })
@@ -605,15 +519,12 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
         if not spots then return end
-        self.pump = T.placePump(self, spots[1], WOODEN)
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.pump, self.tank, { seal = LEATHER, condition = BODY_LEFT })
-        run(self, self.pump, "worn", { 1 }, nil, self.tank)
+        self.pump, self.tank = T.plumbedPump(self, spots, T.WOODEN, { fields = { seal = T.LEATHER, condition = BODY_LEFT } })
+        T.runPump(self, self.pump, "worn", { 1 }, { tank = self.tank })
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.wornOut end, "this client's summary of the worn pump")
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, self.pump, "worn")
-        T.useOption(self, function() return T.copyOf(self.pump) end, "pump", pumpOption, false)
+        T.useOption(self, function() return T.copyOf(self.pump) end, "pump", T.running(EnhancedIrrigationPumpAction.queue), false)
         T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
         -- The cursor lists what it can smash on the square it hovers, once the character sees it.
         T.waitFor(self, function()
@@ -629,7 +540,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         end, "the Destroy cursor offering the pump")
         T.step(function() self.cursor:create(self.pump.x, self.pump.y, self.pump.z) end)
         T.waitFor(self, function() return T.copyOf(self.pump) == nil end, "this client to lose the smashed pump")
-        read(self, self.pump, "smashed")
+        T.readPump(self, self.pump, "smashed")
     end,
     validate = function(self)
         local worn = self.reads.worn.steps[1]

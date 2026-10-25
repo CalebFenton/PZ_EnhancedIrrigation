@@ -6,50 +6,22 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 -- sees. Only registers handlers, so a --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
+local EI = EnhancedIrrigation
 
-local function mod()
-    return EnhancedIrrigation
-end
+local unitAt, recordAt, stateAt = Server.treatmentUnitAt, Server.treatmentRecordAt, Server.treatmentStateAt
 
-local recordAt, stateAt = Server.treatmentRecordAt, Server.treatmentStateAt
-
--- Places the unit as the build menu builds it, its record made as its OnCreate makes it (a boiler's
--- fireplace too), on a floor laid for it if the square has none (a unit on the storey above).
--- Removed, with its links, record and floor, when the test ends.
+-- Places the unit as Server.placeEntity does (a boiler's OnCreate makes its fireplace), on a floor
+-- laid for it if the square has none (a unit on the storey above). Answers its state.
 handler("treatment.place", function(_, args, defer)
-    local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
+    local square, missing = Server.squareFor(args, defer, true)
     if not square then
-        return nil, "a square for " .. tostring(args.sprite)
-    end
-    if not square:getFloor() then
-        local floor = square:addFloor("carpentry_02_58")
-        defer(function()
-            if floor:getObjectIndex() ~= -1 then
-                square:transmitRemoveItemFromSquare(floor)
-            end
-            getCell():checkHaveRoof(args.x, args.y)
-        end)
-    end
-    local built, missing = Server.build(square, args.sprite, nil, nil, true)
-    if not built then
         return nil, missing
     end
-    Server.removeWhenDone(args, defer)
-    defer(function()
-        local record = recordAt(args)
-        if record then
-            mod().TreatmentSystem.System.instance:removeLuaObject(record)
-        end
-    end)
-    local created = mod().TreatmentSystem.onCreate({ thumpable = built })
-    local unit = created and created.object or built
-    unit:transmitCompleteItemToClients()
-    local record = recordAt(args)
+    local record
+    record, missing = Server.placeEntity(square, args, defer, EI.TreatmentSystem, recordAt)
     if not record then
-        return nil, "the unit's record after its OnCreate"
+        return nil, missing
     end
-    Server.setFields(record, args.fields, 0)
-    record:sendSummary()
     return stateAt(args)
 end)
 
@@ -84,39 +56,31 @@ handler("treatment.update", function(_, args)
         return nil, "the record of the unit at " .. args.x .. "," .. args.y
     end
     Server.setFields(record, nil, args.hoursAgo)
-    local reply = { now = mod().now(), before = stateAt(args) }
+    local reply = { now = EI.now(), before = stateAt(args) }
     record:update()
     reply.after = stateAt(args)
     return reply
 end)
 
--- Drops every link with an end on x, y, z without giving its pipe back: for an end that can't be
--- reached to unplumb, such as one on a square no chunk has loaded.
-handler("treatment.unlink", function(_, args)
-    Server.unlinkAt(args.x, args.y, args.z)
-    return {}
-end)
-
--- Fills the first carried item of `args.type`, emptied first, with `args.litres` of `args.fluid` (a
--- FluidType name), and sends it to the client.
-handler("treatment.fillCarried", function(player, args)
-    local item = player:getInventory():getFirstTypeRecurse(args.type)
-    local fluid = item and item:getFluidContainer()
-    if not fluid then
-        return nil, "a carried " .. args.type .. " with a fluid container"
+-- Sets the fire of the boiler at x, y, z as vanilla's Add Fuel, Light and Put Out leave it:
+-- `args.fuel` minutes of fuel if given, then lit or put out as `args.lit` says, told to the
+-- clients as vanilla tells them (IsoFireplace's STATE change). Then runs the record's ten-minute
+-- pass, which notes the fire, as one does within ten minutes of a player's lighting it. Answers
+-- the state.
+handler("treatment.fire", function(_, args)
+    local unit, record = unitAt(args), recordAt(args)
+    if not (unit and record and instanceof(unit, "IsoFireplace")) then
+        return nil, "the boiler at " .. args.x .. "," .. args.y
     end
-    fluid:Empty()
-    fluid:addFluid(FluidType[args.fluid], args.litres)
-    item:syncItemFields()
-    return { litres = fluid:getAmount(), tainted = fluid:isTainted() }
-end)
-
--- What the first carried item of `args.type` holds.
-handler("treatment.carried", function(player, args)
-    local item = player:getInventory():getFirstTypeRecurse(args.type)
-    local fluid = item and item:getFluidContainer()
-    if not fluid then
-        return nil, "a carried " .. args.type .. " with a fluid container"
+    if args.fuel then
+        unit:setFuelAmount(args.fuel)
     end
-    return { litres = fluid:getAmount(), tainted = fluid:isTainted() }
+    if args.lit then
+        unit:turnOn()
+    else
+        unit:extinguish()
+    end
+    unit:sendObjectChange(IsoObjectChange.STATE)
+    record:update()
+    return stateAt(args)
 end)

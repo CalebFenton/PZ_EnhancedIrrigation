@@ -53,9 +53,7 @@ T.test("irrigation_plant_info_names_the_soil", {
             tile.fields = { soak = soaks[i] }
         end
         T.placeLine(self, self.tiles, "plastic")
-        for _, tile in ipairs(self.tiles) do
-            T.plant(self, tile, Lines.PLANT_FULL / 2)
-        end
+        T.plant(self, self.tiles, Lines.PLANT_FULL / 2)
         T.goNextTo(self, self.tiles[3].square)
         T.setPerk(self, Perks.Farming, PlantInfo.FARMING_LEVEL - 1)
         T.step(function()
@@ -109,9 +107,7 @@ T.test("irrigation_plant_info_soil_word_agrees_with_the_roots", {
         logged.fields = { soak = Lines.WATERLOGGED + 0.4 }
         dry.fields = { soak = Lines.DAMP - 0.4 }
         T.placeLine(self, self.tiles, "plastic")
-        for _, tile in ipairs(self.tiles) do
-            T.plant(self, tile, Lines.PLANT_FULL / 2)
-        end
+        T.plant(self, self.tiles, Lines.PLANT_FULL / 2)
         T.step(function()
             if not soilKeys(self, self.tiles) then return end
             self.drySprite = T.lineSprite(dry)

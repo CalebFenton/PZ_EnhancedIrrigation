@@ -13,14 +13,11 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 
-local WOOD, METAL = "EnhancedIrrigation_PumpHouseWood", "EnhancedIrrigation_PumpHouseMetal"
 local APPLIANCE, UTILITY = Pumps.APPLIANCE_PUMP, Pumps.UTILITY_PUMP
--- A raised barrel's water: vanilla's round rain barrel's.
-local BARREL_LITRES = 600
 -- How near a generator's fuel comes to the bill: Java keeps it as a float.
-local FUEL = 0.0005
+local FUEL_TOLERANCE = 0.0005
 
-local fitted, update, readUntil = T.pumpHouseFitted, T.updatePumpHouse, T.readPumpHouseUntil
+local fitted, update, readUntil = T.pumpHouseFitted, T.updatePumpHouse, T.readPumpUntil
 local lifts = T.pumpLifts
 
 -- The generator fuel `part` burns in `hours`.
@@ -72,12 +69,9 @@ T.test("irrigation_pump_house_power_refuses_the_grid_in_the_open", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true,
             accept = function(squares) return not besideRoom(squares[1]) end })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE))
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
-        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "forced")
+        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "forced")
         update(self, self.house, "hour", { hoursAgo = 1, fields = { on = true }, tank = self.tank })
     end,
     validate = function(self)
@@ -112,10 +106,7 @@ T.test("irrigation_pump_house_power_runs_on_the_grid_beside_a_room", {
         spots[3] = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots[3] then return end
         spots[3] = spots[3][1]
-        self.house = T.placePump(self, spots[1], METAL, fitted(APPLIANCE))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.METAL, fitted(APPLIANCE))
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         T.waitForPumpSummary(self, self.house, function(summary) return summary.running end, "this client's summary of the running house")
@@ -162,10 +153,7 @@ T.test("irrigation_pump_house_power_runs_on_a_generator_and_burns_its_fuel", {
         if not spots then return end
         self.generator = spots[4]
         T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
-        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(UTILITY))
         T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), true)
@@ -176,11 +164,11 @@ T.test("irrigation_pump_house_power_runs_on_a_generator_and_burns_its_fuel", {
         T.expectOffered(self, "on")
         local hours = self.reads.hours
         expectNear("the generator's fuel after the hours", hours.after.generator.fuel,
-            hours.before.generator.fuel - burns(UTILITY, GENERATOR_HOURS), FUEL)
+            hours.before.generator.fuel - burns(UTILITY, GENERATOR_HOURS), FUEL_TOLERANCE)
         local payer = hours.after.record.payer
         expect(payer and payer.x == self.generator.x and payer.y == self.generator.y, "the house's payer is "
             .. (payer and payer.x .. "," .. payer.y or "nothing"))
-        expectNear("the barrel after the hours", hours.after.tank.litres, BARREL_LITRES, T.LITRES)
+        expectNear("the barrel after the hours", hours.after.tank.litres, T.BARREL_LITRES, T.LITRES)
         expect(hours.after.summary.running, "the house stopped at the full barrel")
         expectNear("the part after the hours", hours.before.record.partCondition - hours.after.record.partCondition,
             Pumps.PARTS[UTILITY].wearPerHour * GENERATOR_HOURS, 0.001)
@@ -207,12 +195,12 @@ T.test("irrigation_pump_house_power_pays_its_debt_switched_off", {
         self.generator = spots[2]
         self.payer = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
         T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
-        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
+        self.house = T.placePump(self, spots[1], T.WOOD, fitted(UTILITY))
         T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
         update(self, self.house, "away", { hoursAgo = 1, generator = self.generator,
             fields = { on = true, payer = T.at(self.payer), payerFuel = PAYER_FUEL } })
-        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
+        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
         readUntil(self, self.house, "owing", function(state) return not state.record.on end)
         T.read(self, "pumpHouse.generator", T.at(self.payer, { fuel = PAYER_FUEL }), "payer")
         update(self, self.house, "paid", { generator = self.payer })
@@ -220,14 +208,14 @@ T.test("irrigation_pump_house_power_pays_its_debt_switched_off", {
     validate = function(self)
         local away = self.reads.away
         expectNear("the fuel the house owes its away payer", (away.after.record.owedFuel or 0)
-            - (away.before.record.owedFuel or 0), burns(UTILITY, 1), FUEL)
-        expectNear("the fuel of the generator in reach", away.after.generator.fuel, away.before.generator.fuel, FUEL)
+            - (away.before.record.owedFuel or 0), burns(UTILITY, 1), FUEL_TOLERANCE)
+        expectNear("the fuel of the generator in reach", away.after.generator.fuel, away.before.generator.fuel, FUEL_TOLERANCE)
         local owing = self.reads.owing.record
         expect(self.reads.off.done and not owing.on, "Turn Off left the house switched on")
         -- From the payer's fuel as set down: the house's next pass, its own or the test's, pays.
         local paid = self.reads.paid.after
         expectNear("the payer's fuel once the debt is paid", paid.generator.fuel,
-            self.reads.payer.fuel - (owing.owedFuel or 0), FUEL)
+            self.reads.payer.fuel - (owing.owedFuel or 0), FUEL_TOLERANCE)
         expect(paid.record.owedFuel == nil, "the house still owes " .. tostring(paid.record.owedFuel))
     end,
 })
@@ -247,10 +235,7 @@ T.test("irrigation_pump_house_power_stops_when_its_generator_is_spent", {
         if not spots then return end
         self.generator = spots[4]
         T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = burns(APPLIANCE, FUEL_HOURS) }))
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE, { on = true }))
         update(self, self.house, "spent", { hoursAgo = 2 * FUEL_HOURS, tank = self.tank, generator = self.generator })
         T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
         T.readMenu(self, self.house, "spent")
@@ -282,10 +267,8 @@ T.test("irrigation_pump_house_power_runs_a_storey_up", {
         self.generator = spots[4]
         T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = 5 }))
         local above = { x = spots[1].x, y = spots[1].y, z = spots[1].z + 1 }
-        self.house = T.placePump(self, above, WOOD, fitted(APPLIANCE, { on = true }))
-        T.placeTank(self, spots[2], "wellAbove")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, { above, spots[2], spots[3] }, T.WOOD,
+            fitted(APPLIANCE, { on = true }), { source = "wellAbove" })
         update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
     end,
     validate = function(self)
@@ -314,10 +297,7 @@ T.test("irrigation_pump_house_power_grid_runs_a_gap_until_the_shutoff", {
         T.setSandbox(self, "TimeSinceApo", A_MONTH_IN)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], METAL, fitted(APPLIANCE, { on = true }))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.METAL, fitted(APPLIANCE, { on = true }))
         update(self, self.house, "lit", {})
         T.read(self, "pumpHouse.shutoff", {}, "shutoff")
         T.step(function()
@@ -352,7 +332,7 @@ T.test("irrigation_pump_house_power_tells_a_bank_what_it_draws", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(UTILITY))
+        self.house = T.placePump(self, spots[1], T.WOOD, fitted(UTILITY))
         local timer = EnhancedIrrigation.Valves.TIMER
         T.read(self, "pumpHouse.bankDraw", T.at(self.house, { cases = {
             { on = true },

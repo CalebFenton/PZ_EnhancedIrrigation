@@ -16,7 +16,6 @@ local Links, LinkJobs, Treatment = EnhancedIrrigation.Links, EnhancedIrrigation.
 local TreatmentJobs = EnhancedIrrigation.TreatmentJobs
 local placeUnit, readUntil, run, waitForServer = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitServer
 local setFire, FUEL, expectLine, expectBasin = T.setFire, T.FUEL, T.expectLine, T.expectBasin
-local SPRITES = T.TREATMENT_SPRITES
 
 local STONE, WELDED = "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded"
 
@@ -48,10 +47,6 @@ local function placeable(entity, square)
     return build:isValid(square)
 end
 
-local function running(handler)
-    return function(context) return T.optionRunning(context, handler) end
-end
-
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
 -- on both sides, with its record at once. Its menu holds vanilla's Add Fuel and Light beside its
 -- own line, which reads the empty drum cold and sound. Catches a recipe the build menu can't build,
@@ -62,25 +57,17 @@ for _, entity in ipairs({ STONE, WELDED }) do
         run = function(self)
             local spot = clearSpot(self)
             if not spot then return end
-            self.unit = T.buildFromMenu(self, "Base." .. entity, spot, SPRITES[entity])
+            self.unit = T.buildUnit(self, entity, spot)
             if not self.unit then return end
-            self.unit.spec = Treatment.ENTITIES[entity]
-            readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-            T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
-                "this client's summary of the built boiler")
-            T.readMenu(self, self.unit, "built")
             T.step(function()
                 local copy = T.copyOf(self.unit)
                 self.clientFire = copy ~= nil and instanceof(copy, "IsoFireplace")
             end)
         end,
         validate = function(self)
-            local built = self.reads.built
-            expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
-            expect(built.fireplace, "the built boiler isn't a vanilla fireplace on the server")
+            T.expectBuiltUnit(self, entity)
+            expect(self.reads.built.fireplace, "the built boiler isn't a vanilla fireplace on the server")
             expect(self.clientFire, "this client's copy of the boiler isn't a vanilla fireplace")
-            expect(built.record and built.record.head == 0, "the built boiler has no record, or water in its head")
-            expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the built boiler's basin isn't empty and locked")
             expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, self.unit.spec.head))
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Cold"))
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
@@ -107,7 +94,8 @@ T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
             end
         end)
         local east = { x = clear.x + 1, y = clear.y, z = clear.z }
-        T.server(self, "treatment.wall", T.at(east, { sprite = T.WALL_WEST }))
+        -- T.placeTile places at once in single player, so after the clear square is read.
+        T.step(function() T.placeTile(self, getSquare(east.x, east.y, east.z), T.WALL_WEST) end)
         T.waitFor(self, function()
             return getSquare(east.x, east.y, east.z):getProperties():has(IsoFlagType.collideW)
         end, "this client's copy of the wall")
@@ -136,7 +124,7 @@ local function fuelled(self)
     if not spots then return false end
     self.unit = placeUnit(self, spots[1], STONE)
     T.give(self, "fire", { { type = "Base.TissueBox" }, { type = "Base.Splinters" }, { type = "Base.Lighter" } })
-    T.useMenu(self, self.unit, "add fuel", running(ISCampingMenu.onAddFuel), true)
+    T.useMenu(self, self.unit, "add fuel", T.running(ISCampingMenu.onAddFuel), true)
     readUntil(self, self.unit, "fuelled", function(state) return (state.fuel or 0) > 0 end)
     return true
 end
@@ -161,10 +149,10 @@ T.test("irrigation_treatment_boiler_vanilla_fuels_it_and_draws_its_flames", {
     instant = true,
     run = function(self)
         if not fuelled(self) then return end
-        T.useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), false)
-        setFire(self, self.unit, "lit", true, FUEL)
+        T.useMenu(self, self.unit, "light", T.running(ISCampingMenu.onLightFromLiterature), false)
+        setFire(self, self.unit, true, FUEL)
         burning(self)
-        T.useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), false)
+        T.useMenu(self, self.unit, "put out", T.running(ISBBQMenu.onExtinguish), false)
     end,
     validate = function(self)
         T.expectOffered(self, "add fuel")
@@ -185,10 +173,10 @@ T.test("irrigation_treatment_boiler_vanilla_lights_and_puts_it_out", {
     instant = true,
     run = function(self)
         if not fuelled(self) then return end
-        T.useMenu(self, self.unit, "light", running(ISCampingMenu.onLightFromLiterature), true)
+        T.useMenu(self, self.unit, "light", T.running(ISCampingMenu.onLightFromLiterature), true)
         readUntil(self, self.unit, "lit", function(state) return state.lit end)
         burning(self)
-        T.useMenu(self, self.unit, "put out", running(ISBBQMenu.onExtinguish), true)
+        T.useMenu(self, self.unit, "put out", T.running(ISBBQMenu.onExtinguish), true)
         readUntil(self, self.unit, "out", function(state) return not state.lit end)
     end,
     validate = function(self)
@@ -218,7 +206,7 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
         -- the fire is lit so that it never burns dry.
         self.head = self.unit.spec.rate * 4
         run(self, self.unit, "raw", {}, { head = self.head, headTainted = true })
-        setFire(self, self.unit, "lit", true, FUEL)
+        setFire(self, self.unit, true, FUEL)
         T.readMenu(self, self.unit, "heating")
         -- Each run starts the drum at the heat the steps before left it, which a ten-minute pass in
         -- between would have moved on a little.
@@ -226,7 +214,7 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
         run(self, self.unit, "hot", { 1 })
         waitForServer(self, self.unit, "hot", "hot")
         T.readMenu(self, self.unit, "hot")
-        setFire(self, self.unit, "out", false)
+        setFire(self, self.unit, false)
         run(self, self.unit, "cooling", { 1, 1 }, { hotHours = Treatment.HEAT_MAX_HOURS })
         waitForServer(self, self.unit, "cooling", "hot")
         T.readMenu(self, self.unit, "cooled")
@@ -267,34 +255,27 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         self.unit = placeUnit(self, spots[1], WELDED)
-        setFire(self, self.unit, "lit", true, FUEL)
+        setFire(self, self.unit, true, FUEL)
         run(self, self.unit, "scorched", { 1 })
         -- Burnt dry to less than an hour's wear with water in it, then put out at once, as the fire's
         -- minutes until the pour would wear it on dry; lit again once the water is in.
         T.step(function()
             local condition = self.reads.scorched.steps[1].record.condition
             run(self, self.unit, "burnt", { (condition - Treatment.WEAR_WET / 2) / Treatment.WEAR_DRY })
-            setFire(self, self.unit, "doused", false)
+            setFire(self, self.unit, false)
         end)
         T.give(self, "carried", { { type = "Base.Bucket" } })
-        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
-        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - T.LITRES end,
-            "this client's copy of the filled bucket")
-        T.useMenu(self, self.unit, "pour", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
-        end, true)
+        T.fillCarried(self, "Base.Bucket", "Water", 5)
+        local function bucket() return self.items.carried[1] end
+        T.useMenu(self, self.unit, "pour", T.job("treatment", TreatmentJobs.POUR_IN, bucket), true)
         readUntil(self, self.unit, "poured", function(state) return state.record and state.record.head > 0 end)
-        setFire(self, self.unit, "relit", true, FUEL)
+        setFire(self, self.unit, true, FUEL)
         run(self, self.unit, "holed", { 1 })
         waitForServer(self, self.unit, "holed", "burntThrough")
         T.readMenu(self, self.unit, "burnt")
-        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = 5 })
-        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - T.LITRES end,
-            "this client's copy of the refilled bucket")
-        T.useMenu(self, self.unit, "holed pour", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
-        end, false)
-        setFire(self, self.unit, "out", false)
+        T.fillCarried(self, "Base.Bucket", "Water", 5)
+        T.useMenu(self, self.unit, "holed pour", T.job("treatment", TreatmentJobs.POUR_IN, bucket), false)
+        setFire(self, self.unit, false)
         run(self, self.unit, "cooled", { 2 })
         T.setPerk(self, Perks.MetalWelding, 2)
         T.give(self, "kit", { { type = "Base.WeldingMask" }, { type = "Base.SmallSheetMetal" }, { type = "Base.BlowTorch" },
@@ -342,14 +323,13 @@ T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
         self.unit = placeUnit(self, spots[1], STONE)
         self.tank = T.placeTank(self, spots[2], "lidded", self.raw, true)
         self.clean = T.placeTank(self, spots[3], "lidded")
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = 2 } })
+        T.givePlumbing(self, 2)
         T.useMenu(self, self.unit, "inlet", T.job("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "inlet plumbed", function(state) return state.inlet end)
         T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
             T.job("link", LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.clean), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
-        setFire(self, self.unit, "lit", true, FUEL)
+        setFire(self, self.unit, true, FUEL)
         -- From a cold drum, which a ten-minute pass since the fire was lit would have warmed a little.
         T.read(self, "treatment.run", T.at(self.unit, { hours = { 1, 1 }, fields = { hotHours = 0 }, tank = T.at(self.tank),
             into = T.at(self.clean) }), "hours")

@@ -6,7 +6,7 @@ require "EnhancedIrrigation/UI/StandMenu"
 -- The Tank Stand: building it from the build menu, setting a barrel on it, the raised barrel through
 -- the vanilla lid, and taking the barrel down. Each job goes through the build menu or the
 -- right-click menu and its timed action; what the menu greys out, the server is also asked to do
--- directly (tanks.perform), to show it refuses on its own.
+-- directly (jobs.perform), to show it refuses on its own.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
@@ -95,7 +95,7 @@ T.test("irrigation_stands_set_barrel_refused_without_an_empty_barrel", {
         -- A barrel vanilla would never let the character pick up: one holding water.
         T.server(self, "stands.giveBarrel", { barrel = BARREL, litres = 20 })
         T.useOption(self, function() return T.copyOf(self.stand) end, "full barrel", T.job("stand", StandJobs.SET_BARREL), false)
-        T.read(self, "tanks.perform", T.at(self.stand, { feature = "stand", job = StandJobs.SET_BARREL, barrel = true }),
+        T.read(self, "jobs.perform", T.at(self.stand, { feature = "stand", job = StandJobs.SET_BARREL, barrel = true }),
             "forced")
     end,
     validate = function(self)
@@ -150,7 +150,7 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
         T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), false)
         T.batch(function()
-            T.read(self, "tanks.perform", T.at(self.tank, { feature = "stand", job = StandJobs.TAKE_DOWN }), "forced")
+            T.read(self, "jobs.perform", T.at(self.tank, { feature = "stand", job = StandJobs.TAKE_DOWN }), "forced")
             T.count(self, "left", { BARREL_HELD })
         end)
     end,

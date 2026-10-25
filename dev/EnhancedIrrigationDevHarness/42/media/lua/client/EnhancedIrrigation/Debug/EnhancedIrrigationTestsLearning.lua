@@ -294,10 +294,7 @@ test("irrigation_learning_joining_server_catches_up_earned_recipes", {
         self.highest = highest
         T.knowRecipes(self, RECIPES, false)
         T.server(self, "learning.setLevels", { levels = levelsWith(rows, highest.perk, highest.level), names = RECIPES })
-        T.step(function()
-            local Recipes = EnhancedIrrigation.Recipes
-            sendClientCommand(T.player(), Recipes.COMMAND_MODULE, Recipes.CATCH_UP, {})
-        end)
+        T.step(function() sendClientCommand(T.player(), Recipes.COMMAND_MODULE, Recipes.CATCH_UP, {}) end)
         awaitKnown(self, earnedAt(highest.perk, highest.level))
     end,
     validate = function(self)

@@ -16,34 +16,25 @@ local Links, LinkJobs, Treatment = EnhancedIrrigation.Links, EnhancedIrrigation.
 local TreatmentJobs, LinkMenu = EnhancedIrrigation.TreatmentJobs, EnhancedIrrigation.LinkMenu
 local placeUnit, readUntil, run, waitForCopy = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitCopy
 local waitForServer, fillBasin, expectLine, expectBasin = T.waitForUnitServer, T.fillBasin, T.expectLine, T.expectBasin
-local clientBasin, SPRITES = T.clientBasin, T.TREATMENT_SPRITES
+local clientBasin = T.clientBasin
 
-local BARREL, BRICK = "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter"
+local BARREL_FILTER, BRICK = "EnhancedIrrigation_BarrelFilter", "EnhancedIrrigation_BrickFilter"
 
 -- Building ----------------------------------------------------------------------------------------------
 
 -- The build menu builds each filter from its recipe on a bare square, with its record at once:
 -- this client's menu reads its state. Catches a recipe the build menu can't build, or a filter
 -- without its record.
-for _, entity in ipairs({ BARREL, BRICK }) do
-    T.test("irrigation_treatment_filter_" .. (entity == BARREL and "barrel" or "brick") .. "_built_from_build_menu", {
+for _, entity in ipairs({ BARREL_FILTER, BRICK }) do
+    T.test("irrigation_treatment_filter_" .. (entity == BARREL_FILTER and "barrel" or "brick") .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
-            self.unit = T.buildFromMenu(self, "Base." .. entity, spots[1], SPRITES[entity])
-            if not self.unit then return end
-            self.unit.spec = Treatment.ENTITIES[entity]
-            readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-            T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
-                "this client's summary of the built filter")
-            T.readMenu(self, self.unit, "built")
+            T.buildUnit(self, entity, spots[1])
         end,
         validate = function(self)
-            local built = self.reads.built
-            expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
-            expect(built.record and built.record.head == 0, "the built filter has no record, or water in its head")
-            expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the built filter's basin isn't empty and locked")
+            T.expectBuiltUnit(self, entity)
             expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Ripening", Treatment.RIPE_HOURS))
         end,
     })
@@ -60,45 +51,36 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        local head = Treatment.ENTITIES[BARREL].head
+        local head = Treatment.ENTITIES[BARREL_FILTER].head
         self.room = 5
-        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = head - self.room } })
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER, { fields = { head = head - self.room } })
         T.give(self, "carried", { { type = "Base.Bucket" }, { type = "Base.PetrolCan" } })
-        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 10 })
-        T.server(self, "treatment.fillCarried", { type = "Base.PetrolCan", fluid = "Petrol", litres = 5 })
-        T.waitFor(self, function()
-            local bucket, can = self.items.carried[1], self.items.carried[2]
-            return bucket:getFluidContainer():getAmount() > 10 - T.LITRES and can:getFluidContainer():getAmount() > 5 - T.LITRES
-        end, "this client's copies of the filled bucket and can")
-        T.step(function() self.bucket, self.can = self.items.carried[1], self.items.carried[2] end)
-        T.useMenu(self, self.unit, "petrol", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.can)
-        end, false)
-        T.useMenu(self, self.unit, "pour", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.bucket)
-        end, true)
+        T.fillCarried(self, "Base.Bucket", "TaintedWater", 10)
+        T.fillCarried(self, "Base.PetrolCan", "Petrol", 5)
+        local function bucket() return self.items.carried[1] end
+        local function can() return self.items.carried[2] end
+        T.useMenu(self, self.unit, "petrol", T.job("treatment", TreatmentJobs.POUR_IN, can), false)
+        T.useMenu(self, self.unit, "pour", T.job("treatment", TreatmentJobs.POUR_IN, bucket), true)
         readUntil(self, self.unit, "poured", function(state)
             return state.record and state.record.head + state.basin.litres > head - T.LITRES
         end)
-        T.read(self, "treatment.carried", { type = "Base.Bucket" }, "bucket")
+        T.read(self, "items.carried", { type = "Base.Bucket" }, "bucket")
         T.waitFor(self, function()
             local summary = Treatment.summaryOf(T.copyOf(self.unit))
             return summary ~= nil and summary.head > head - 1
         end, "this client's summary of the full head")
-        T.useMenu(self, self.unit, "full", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.bucket)
-        end, false)
+        T.useMenu(self, self.unit, "full", T.job("treatment", TreatmentJobs.POUR_IN, bucket), false)
         run(self, self.unit, "hour", { 1 })
     end,
     validate = function(self)
-        local head = Treatment.ENTITIES[BARREL].head
+        local head = Treatment.ENTITIES[BARREL_FILTER].head
         T.expectRefused(self, "petrol", "Tooltip_EnhancedIrrigation_OnlyWater")
         T.expectOffered(self, "pour")
         local poured = self.reads.poured
         expectNear("the head and basin after pouring", poured.record.head + poured.basin.litres, head, T.LITRES)
         local hour = self.reads.hour
-        expectBasin("the hour's water", hour.steps[1], hour.before.basin.litres + Treatment.ENTITIES[BARREL].rate, true)
-        local bucket = self.reads.bucket
+        expectBasin("the hour's water", hour.steps[1], hour.before.basin.litres + Treatment.ENTITIES[BARREL_FILTER].rate, true)
+        local bucket = self.reads.bucket.items[1]
         expectNear("the bucket's water left", bucket.litres, 10 - self.room, T.LITRES)
         expect(bucket.tainted, "the bucket's water left is clean")
         T.expectRefused(self, "full", "Tooltip_EnhancedIrrigation_HeadFull")
@@ -114,7 +96,7 @@ T.test("irrigation_treatment_filter_unripe_passes_tainted_water", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.unit = placeUnit(self, spots[1], BARREL)
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER)
         self.hours = 2
         run(self, self.unit, "run", { self.hours }, { head = 20, headTainted = true, ripeHours = 0 })
         local litres = self.unit.spec.rate * self.hours
@@ -164,8 +146,8 @@ T.test("irrigation_treatment_filter_dry_spell_kills_the_layer", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
-        self.short = placeUnit(self, spots[1], BARREL)
-        self.dead = placeUnit(self, spots[2], BARREL)
+        self.short = placeUnit(self, spots[1], BARREL_FILTER)
+        self.dead = placeUnit(self, spots[2], BARREL_FILTER)
         run(self, self.short, "short", { Treatment.DRY_DEATH_HOURS - 1 }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
         run(self, self.short, "short fed", { 1 }, { head = 10, headTainted = true })
         run(self, self.dead, "dry", { Treatment.DRY_DEATH_HOURS }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
@@ -192,8 +174,8 @@ T.test("irrigation_treatment_filter_hard_freeze_kills_the_layer", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
-        self.wet = placeUnit(self, spots[1], BARREL)
-        self.dry = placeUnit(self, spots[2], BARREL)
+        self.wet = placeUnit(self, spots[1], BARREL_FILTER)
+        self.dry = placeUnit(self, spots[2], BARREL_FILTER)
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.wet, "wet", { 1 }, { head = 20, ripeHours = Treatment.RIPE_HOURS })
         run(self, self.dry, "dry", { 1 }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
@@ -224,7 +206,7 @@ T.test("irrigation_treatment_filter_clogged_trickles_until_cleaned", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.unit = placeUnit(self, spots[1], BARREL)
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER)
         local spec = self.unit.spec
         run(self, self.unit, "clogged", { 1 }, { head = 20, headTainted = true, ripeHours = Treatment.RIPE_HOURS,
             passed = spec.clogLitres })
@@ -265,10 +247,9 @@ T.test("irrigation_treatment_filter_inlet_fills_the_head_from_a_tank", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
         if not spots then return end
-        self.unit = placeUnit(self, spots[1], BARREL)
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER)
         self.tank = T.placeTank(self, spots[2], "lidded", 100, true)
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
+        T.givePlumbing(self, 1)
         T.useMenu(self, self.unit, "inlet", T.job("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.inlet end)
         run(self, self.unit, "hour", { 1 }, nil, self.tank)
@@ -277,7 +258,7 @@ T.test("irrigation_treatment_filter_inlet_fills_the_head_from_a_tank", {
     validate = function(self)
         T.expectOffered(self, "inlet")
         expect(self.reads.plumbed.inlet, "the server didn't plumb the inlet")
-        expect(self.counts.left["Base.MetalPipe"] == 0, "plumbing the inlet left the iron pipe")
+        expect(T.counted(self, "Base.MetalPipe") == 0, "plumbing the inlet left the iron pipe")
         local spec = self.unit.spec
         local before, after = self.reads.hour.before, self.reads.hour.steps[1]
         expectNear("the head after an hour", after.record.head, spec.head - spec.rate, T.LITRES)
@@ -293,17 +274,16 @@ T.test("irrigation_treatment_filter_inlet_refuses_a_lower_tank", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
-        self.unit = placeUnit(self, spots[1], BARREL, { up = 1 })
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER, { up = 1 })
         self.tank = T.placeTank(self, spots[2], "ground", 100)
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
+        T.givePlumbing(self, 1)
         T.useOption(self, function() return T.copyOf(self.unit) end, "lower tank", function(context)
             local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.tank))
             return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbInlet", function(option)
                 return option.name == label
             end)
         end, false)
-        T.read(self, "tanks.perform", T.at(self.unit, { feature = "link", job = LinkJobs.PLUMB_INLET,
+        T.read(self, "jobs.perform", T.at(self.unit, { feature = "link", job = LinkJobs.PLUMB_INLET,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
     end,
     validate = function(self)
@@ -322,12 +302,11 @@ T.test("irrigation_treatment_filter_outlet_fills_a_tank_no_higher", {
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 }, { 0, 2 } }, { bare = true })
         if not spots then return end
         self.litres = 30
-        self.unit = placeUnit(self, spots[1], BARREL)
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER)
         fillBasin(self, self.unit, self.litres)
         self.tank = T.placeTank(self, spots[2], "lidded")
         self.high = T.placeTank(self, spots[3], "raised")
-        T.knowRecipes(self, { LinkJobs.RECIPE }, true)
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
+        T.givePlumbing(self, 1)
         T.useMenu(self, self.unit, "higher tank", function(context)
             local label = LinkMenu.tankLabel(T.at(self.unit), T.at(self.high))
             return T.inSubmenu(context, "ContextMenu_EnhancedIrrigation_PlumbOutlet", function(option)
@@ -361,8 +340,8 @@ T.test("irrigation_treatment_filter_inlet_keeps_the_film_through_an_absence", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
         if not spots then return end
-        local spec = Treatment.ENTITIES[BARREL]
-        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = spec.head, headTainted = true,
+        local spec = Treatment.ENTITIES[BARREL_FILTER]
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER, { fields = { head = spec.head, headTainted = true,
             ripeHours = Treatment.RIPE_HOURS } })
         self.raw = T.placeTank(self, spots[2], "lidded", 300, true)
         self.clean = T.placeTank(self, spots[3], "lidded")
@@ -403,8 +382,8 @@ T.test("irrigation_treatment_filter_outlet_drains_through_an_absence", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
         if not spots then return end
-        local spec = Treatment.ENTITIES[BARREL]
-        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = spec.head, ripeHours = Treatment.RIPE_HOURS } })
+        local spec = Treatment.ENTITIES[BARREL_FILTER]
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER, { fields = { head = spec.head, ripeHours = Treatment.RIPE_HOURS } })
         self.raw = T.placeTank(self, spots[2], "lidded", 100)
         self.clean = T.placeTank(self, spots[3], "lidded")
         T.server(self, "links.make", T.at(self.unit, { to = T.at(self.raw), kind = "iron", lengths = 1, role = "inlet" }))
@@ -438,11 +417,11 @@ for _, role in ipairs({ "inlet", "outlet" }) do
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
             self.gap, self.head = 5, 40
-            self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = self.head, ripeHours = Treatment.RIPE_HOURS } })
+            self.unit = placeUnit(self, spots[1], BARREL_FILTER, { fields = { head = self.head, ripeHours = Treatment.RIPE_HOURS } })
             local far = { x = self.unit.x + 3000, y = self.unit.y, z = self.unit.z }
             T.server(self, "links.make", T.at(self.unit, { to = far, kind = "iron", lengths = 1, role = role }))
             T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap, tank = far }), "waiting")
-            T.server(self, "treatment.unlink", far)
+            T.server(self, "links.unlink", far)
             T.read(self, "treatment.update", T.at(self.unit), "back")
         end,
         validate = function(self)
@@ -472,7 +451,7 @@ T.test("irrigation_treatment_filter_record_catches_up_after_its_chunk_reloads", 
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         self.gap = 5
-        self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = 40, ripeHours = Treatment.RIPE_HOURS } })
+        self.unit = placeUnit(self, spots[1], BARREL_FILTER, { fields = { head = 40, ripeHours = Treatment.RIPE_HOURS } })
         T.reload(self, T.at(self.unit), function()
             T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap }), "away")
         end)
@@ -491,4 +470,4 @@ T.test("irrigation_treatment_filter_record_catches_up_after_its_chunk_reloads", 
 })
 
 T.vanillaBasinTest({ name = "irrigation_treatment_filter_vanilla_menu_drinks_fills_and_empties_the_basin",
-    entity = BARREL, litres = 20, tainted = true, inBucket = 0 })
+    entity = BARREL_FILTER, litres = 20, tainted = true, inBucket = 0 })

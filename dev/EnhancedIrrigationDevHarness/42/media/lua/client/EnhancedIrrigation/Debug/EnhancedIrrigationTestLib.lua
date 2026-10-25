@@ -2,6 +2,8 @@ require "PZHarness/TestLib"
 require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Links/Links"
+require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Tanks"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,
@@ -15,15 +17,30 @@ EnhancedIrrigationTest = EnhancedIrrigationTest or setmetatable({}, { __index = 
 local T = EnhancedIrrigationTest
 
 local Lines = EnhancedIrrigation.Lines
+local Links = EnhancedIrrigation.Links
 local Tanks = EnhancedIrrigation.Tanks
 local Sprites = EnhancedIrrigation.Sprites
 
 -- How long this client may take to show what the server changed.
 local SYNC_MS = 5000
--- How near this client's copy of a tank's water must come to what the server put in it.
-local COPY_LITRES = 0.01
 -- How near the litres a test reads of a tank, basin or fixture must come to its sums.
 T.LITRES = 0.05
+-- How near this client's copy of a tank's water must come to what the server put in it, and the
+-- litres of a small flow (a few minutes out of a hole, a tank of a few drops) to their sums, where
+-- T.LITRES would pass a tank left as it was.
+T.FINE_LITRES = 0.01
+-- How near a crop's water, as a handler reads it in the same call as its sums, must come to them.
+T.POINTS = 0.05
+-- A crop's water as read, give or take vanilla's own ten-minute drying (SFarmingSystem.checkWater)
+-- landing between placing the crop and reading it.
+T.CROP_POINTS = 0.25
+-- A tank that holds far more than a test's hours draw from it.
+T.TANK_LITRES = 100
+-- A raised barrel's water: vanilla's round rain barrel's.
+T.BARREL_LITRES = 600
+-- An hour's minute, and half an hour, as the records' sums take them.
+T.MINUTE = 1 / 60
+T.HALF_HOUR = 0.5
 -- Vanilla's house wall on a square's west edge.
 T.WALL_WEST = "walls_exterior_house_01_0"
 
@@ -170,9 +187,17 @@ function T.useMenu(self, handle, label, find, choose)
 end
 
 --- A `find` for T.useOption: the option queuing `job` of the action feature `feature`, with `with`
---- if given (T.jobOption).
+--- if given (T.jobOption): an item or other value, or a function giving it when the menu is read,
+--- for an item a step before gives.
 function T.job(feature, job, with)
-    return function(context) return T.jobOption(context, feature, job, with) end
+    return function(context)
+        return T.jobOption(context, feature, job, type(with) == "function" and with() or with)
+    end
+end
+
+--- A `find` for T.useOption: the option that runs `handler` (T.optionRunning).
+function T.running(handler)
+    return function(context) return T.optionRunning(context, handler) end
 end
 
 --- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
@@ -601,7 +626,7 @@ function T.placeTank(self, handle, kind, litres, tainted)
         local square = getSquare(tank.x, tank.y, tank.z)
         local copy = T.objectWithSprite(square, tank.sprite)
         tank.square = square
-        return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < COPY_LITRES)
+        return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < T.FINE_LITRES)
     end, "this client's copy of the " .. kind)
     return tank
 end
@@ -632,12 +657,101 @@ function T.hasOverlay(names, name)
     return false
 end
 
---- Queues a sown crop on `handle` at `water` water points, and a wait for this client's copy.
-function T.plant(self, handle, water)
-    T.server(self, "lines.plant", T.at(handle, { water = water }))
+--- Queues a sown crop on each of `handles` at `water` water points, and a wait for this client's
+--- copies.
+function T.plant(self, handles, water)
+    T.server(self, "lines.plant", { tiles = T.tiles(handles), water = water })
     T.waitFor(self, function()
-        return CFarmingSystem.instance:getLuaObjectOnSquare(getSquare(handle.x, handle.y, handle.z)) ~= nil
-    end, "this client's copy of the crop")
+        for _, handle in ipairs(handles) do
+            if not CFarmingSystem.instance:getLuaObjectOnSquare(getSquare(handle.x, handle.y, handle.z)) then
+                return false
+            end
+        end
+        return true
+    end, "this client's copies of the crops")
+end
+
+-- Items --------------------------------------------------------------------------------------------
+
+--- Queues filling the first carried `fullType`, emptied first, with `litres` of `fluid` (a
+--- FluidType name) on the server, as much as it holds, and a wait for this client's copy to hold
+--- that.
+function T.fillCarried(self, fullType, fluid, litres)
+    T.server(self, "items.fill", { type = fullType, fluid = fluid, litres = litres })
+    T.waitFor(self, function()
+        local item = T.player():getInventory():getFirstTypeRecurse(fullType)
+        local container = item and item:getFluidContainer()
+        return container ~= nil
+            and math.abs(container:getAmount() - math.min(litres, container:getCapacity())) < T.LITRES
+    end, "this client's copy of the filled " .. fullType)
+end
+
+--- Queues giving the character what plumbing takes: the knowledge (LinkJobs.RECIPE), a pipe
+--- wrench and `pipes` iron pipe, in self.items.tools.
+function T.givePlumbing(self, pipes)
+    T.knowRecipes(self, { EnhancedIrrigation.LinkJobs.RECIPE }, true)
+    T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = pipes } })
+end
+
+-- Links and fixtures --------------------------------------------------------------------------------
+
+--- The links with an end on `handle` this client's own copy of the list holds, with the field
+--- `role` (as a fixture's link has `fixture`) if given. Reads clientSystem, which the server's
+--- commands set in single player too, since Links.linksAt reads the server's list there.
+function T.clientLinks(handle, role)
+    local at, found = T.at(handle), {}
+    for _, link in ipairs(Links.clientSystem.links) do
+        if Links.otherEnd(link, at) and (role == nil or link[role]) then
+            table.insert(found, link)
+        end
+    end
+    return found
+end
+
+--- Queues placing the fixture tile `sprite` at `handle` (fixtures.place, with `extra`'s args:
+--- washer, combo, plumbed, buffer) and a wait for this client's copy, with the buffer's litres if
+--- given. Returns its handle.
+function T.placeFixture(self, handle, sprite, extra)
+    local fixture = { x = handle.x, y = handle.y, z = handle.z, sprite = sprite, square = handle.square }
+    local args = T.at(fixture, extra)
+    args.sprite = sprite
+    T.server(self, "fixtures.place", args)
+    local litres = extra and extra.buffer and extra.buffer.litres
+    T.waitFor(self, function()
+        local copy = T.copyOf(fixture)
+        local buffer = copy and copy:getFluidContainer()
+        return copy ~= nil and (not litres
+            or (buffer ~= nil and math.abs(buffer:getAmount() - math.min(litres, buffer:getCapacity())) < T.LITRES))
+    end, "this client's copy of the " .. sprite)
+    return fixture
+end
+
+-- Held actions --------------------------------------------------------------------------------------
+
+-- Who holds a tap or a pump in the one-person tests, standing in for another player (holds.hold).
+T.OTHER = "EnhancedIrrigationTestOther"
+-- How often, in real milliseconds, the multiplayer server runs a held action in these tests: a
+-- frame or two, where the mod's second would be most of a test's time.
+T.RUN_MS = 20
+
+--- Queues the clock at `speed` and the multiplayer server running every held action of the class
+--- named `action` started from now each T.RUN_MS, until the test ends.
+function T.quickRuns(self, action, speed)
+    T.setMultiplier(self, speed)
+    T.server(self, "holds.runEvery", { action = action, ms = T.RUN_MS })
+end
+
+--- Queues the held action `Action` at `getCopy()`, this client's copy of `what` it works on, for a
+--- character whose client doesn't check that it may: its isValid always passes, so only the
+--- authority's own check can stop it.
+function T.queueUnchecked(self, Action, getCopy, what)
+    T.step(function()
+        local copy = T.need(self, getCopy(), "this client's copy of " .. what)
+        if not copy then return end
+        local action = Action:new(T.player(), copy)
+        action.isValid = function() return true end
+        ISTimedActionQueue.add(action)
+    end)
 end
 
 return T

@@ -10,12 +10,10 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 local handler = PZHarness.serverHandler
 
-local function mod()
-    return EnhancedIrrigation
-end
+local EI = EnhancedIrrigation
 
 local function fixtureAt(args)
-    return mod().Fixtures.fixtureAt(args.x, args.y, args.z)
+    return EI.Fixtures.fixtureAt(args.x, args.y, args.z)
 end
 
 --- The fixture as plain values: what vanilla's menus and actions read off it, its buffer and what
@@ -30,7 +28,7 @@ local function describe(fixture)
         tainted = fixture:isTaintedWater(),
         hasWater = fixture:hasWater(),
         external = fixture:getUsesExternalWaterSource(),
-        linked = mod().Links.roleAt({ x = fixture:getX(), y = fixture:getY(), z = fixture:getZ() }, "fixture") ~= nil,
+        linked = EI.Links.roleAt({ x = fixture:getX(), y = fixture:getY(), z = fixture:getZ() }, "fixture") ~= nil,
     }
 end
 
@@ -45,7 +43,7 @@ local function stateAt(args)
 end
 
 local function removeFixtureAt(x, y, z)
-    local fixture = mod().Fixtures.fixtureAt(x, y, z)
+    local fixture = EI.Fixtures.fixtureAt(x, y, z)
     if fixture then
         fixture:getSquare():transmitRemoveItemFromSquare(fixture)
     end
@@ -84,7 +82,7 @@ handler("fixtures.place", function(_, args, defer)
         fixture:sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = true })
     end
     if args.buffer then
-        local buffer = mod().FixtureSystem.ensureBuffer(fixture)
+        local buffer = EI.FixtureSystem.ensureBuffer(fixture)
         if buffer:getAmount() > 0 then
             buffer:removeFluid(buffer:getAmount(), false)
         end
@@ -104,11 +102,11 @@ end)
 -- lengths of `args.kind` pipe, or none as vanilla's Plumb does, without the job.
 handler("fixtures.plumb", function(_, args)
     local fixture = fixtureAt(args)
-    local tank = mod().Tanks.tankAt(args.tank.x, args.tank.y, args.tank.z)
+    local tank = EI.Tanks.tankAt(args.tank.x, args.tank.y, args.tank.z)
     if not (fixture and tank) then
         return nil, "the fixture and its tank on the server"
     end
-    mod().FixtureSystem.plumb(fixture, tank, args.kind, args.lengths or 0, nil)
+    EI.FixtureSystem.plumb(fixture, tank, args.kind, args.lengths or 0, nil)
     return stateAt(args)
 end)
 
@@ -120,7 +118,7 @@ handler("fixtures.perform", function(player, args)
     if not fixture then
         return nil, "the server's fixture at " .. tostring(args.x) .. "," .. tostring(args.y)
     end
-    local done = mod().LinkSystem.perform(player, args.job, fixture, args.with)
+    local done = EI.LinkSystem.perform(player, args.job, fixture, args.with)
     local state = stateAt(args)
     state.done = done == true
     return state
@@ -139,7 +137,7 @@ handler("fixtures.refill", function(_, args)
     fixture:sync()
     local reply = { drawn = stateAt(args), passes = {} }
     for _, hours in ipairs(args.passes) do
-        mod().LinkSystem.instance:pass(hours)
+        EI.LinkSystem.instance:pass(hours)
         table.insert(reply.passes, stateAt(args))
     end
     return reply
@@ -152,5 +150,5 @@ handler("fixtures.convert", function(_, args)
     if not fixture then
         return nil, "the fixture on the server"
     end
-    return { finished = mod().FixtureSystem.convert(fixture) }
+    return { finished = EI.FixtureSystem.convert(fixture) }
 end)

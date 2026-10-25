@@ -6,15 +6,12 @@ require "PZHarness/ServerFixtures"
 
 local handler = PZHarness.serverHandler
 
-local function mod()
-    return EnhancedIrrigation
-end
+local EI = EnhancedIrrigation
 
 -- Gives the character the barrel moveable of the vanilla tile `args.barrel` as the mod's Take
 -- Barrel Down makes it, holding `args.litres` of water: a barrel vanilla would never let the
 -- character pick up.
 handler("stands.giveBarrel", function(player, args)
-    local EI = mod()
     local spec
     for _, entry in ipairs(EI.Stands.BARRELS) do
         if entry.barrel == args.barrel then
@@ -32,7 +29,7 @@ handler("stands.giveBarrel", function(player, args)
 end)
 
 local function isBarrelItem(item)
-    return mod().Stands.barrelSpec(item) ~= nil
+    return EI.Stands.barrelSpec(item) ~= nil
 end
 
 local function describeBarrel(item)
@@ -81,7 +78,7 @@ end)
 handler("stands.dropBarrels", function(player)
     local carried = player:getInventory():getAllEvalRecurse(isBarrelItem)
     for i = carried:size() - 1, 0, -1 do
-        mod().Materials.takeItem(player, carried:get(i))
+        EI.Materials.takeItem(player, carried:get(i))
     end
     return {}
 end)

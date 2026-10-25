@@ -11,8 +11,6 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Sprites, Lines, Frost = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.Frost
 
-local POINTS = 0.05
-local TANK_LITRES = 100
 -- How long the root rot test's soil stays waterlogged as it dries; the test ages it twice that.
 local LOGGED_HOURS = 6
 
@@ -43,10 +41,10 @@ T.test("irrigation_time_soak_dries", {
         local function after(days, rate)
             return math.max(0, self.start - days * rate)
         end
-        expectNear("the outdoor soak after half a day", half[1].record.soak, after(0.5, Lines.SOAK_DRY_OUT), POINTS)
-        expectNear("the indoor soak after half a day", half[2].record.soak, after(0.5, Lines.SOAK_DRY_IN), POINTS)
-        expectNear("the outdoor soak after a day", day[1].record.soak, after(1, Lines.SOAK_DRY_OUT), POINTS)
-        expectNear("the indoor soak after a day", day[2].record.soak, after(1, Lines.SOAK_DRY_IN), POINTS)
+        expectNear("the outdoor soak after half a day", half[1].record.soak, after(0.5, Lines.SOAK_DRY_OUT), T.POINTS)
+        expectNear("the indoor soak after half a day", half[2].record.soak, after(0.5, Lines.SOAK_DRY_IN), T.POINTS)
+        expectNear("the outdoor soak after a day", day[1].record.soak, after(1, Lines.SOAK_DRY_OUT), T.POINTS)
+        expectNear("the indoor soak after a day", day[2].record.soak, after(1, Lines.SOAK_DRY_IN), T.POINTS)
         expect(not day[1].record.wet, "the dry tile is still wet")
         expect(day[1].sprite == Sprites.pipe("plastic", false, 0), "the server still shows the dried tile wet")
     end,
@@ -63,17 +61,17 @@ T.test("irrigation_time_waterlogged_roots_rot", {
         self.dryPerHour = Lines.SOAK_DRY_IN / 24
         logged.fields = { soak = Lines.WATERLOGGED + LOGGED_HOURS * self.dryPerHour }
         T.placeLine(self, self.tiles, "iron")
-        T.plant(self, logged, Lines.PLANT_FULL / 2)
+        T.plant(self, { logged }, Lines.PLANT_FULL / 2)
         T.read(self, "lines.age", { tiles = T.tiles(self.tiles), hours = 2 * LOGGED_HOURS }, "aged")
     end,
     validate = function(self)
         local before, after = self.reads.aged.before, self.reads.aged.tiles
         expectNear("the soak, dried past the threshold", after[1].record.soak,
-            before[1].record.soak - 2 * LOGGED_HOURS * self.dryPerHour, POINTS)
+            before[1].record.soak - 2 * LOGGED_HOURS * self.dryPerHour, T.POINTS)
         -- From where the soak stood when read, not where it was placed.
         local logged = math.max(0, (before[1].record.soak - Lines.WATERLOGGED) / self.dryPerHour)
         expectNear("the health the crop whose soil dried through the threshold lost",
-            before[1].plant.health - after[1].plant.health, logged * Lines.ROOT_ROT_PER_HOUR, POINTS)
+            before[1].plant.health - after[1].plant.health, logged * Lines.ROOT_ROT_PER_HOUR, T.POINTS)
     end,
 })
 
@@ -92,7 +90,7 @@ T.test("irrigation_time_frost_cracks_full_lines", {
         -- it before.
         mild.fields = T.tapped({ full = false })
         -- Beside the line, not over it: a floor above would roof it.
-        T.placeTank(self, beside, "raised", TANK_LITRES)
+        T.placeTank(self, beside, "raised", T.TANK_LITRES)
         T.placeLine(self, { full, empty, mild }, "clay")
         T.batch(function()
             T.server(self, "lines.temperature", { celsius = Frost.HARD_FREEZE_CELSIUS - 1 })
@@ -133,7 +131,7 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
         local tile, beside = rows[1][1], rows[1][2]
         self.tile = tile
         -- Beside the tile, not over it: a floor above would roof it.
-        T.placeTank(self, beside, "raised", TANK_LITRES)
+        T.placeTank(self, beside, "raised", T.TANK_LITRES)
         tile.fields = T.tapped({ holed = true })
         T.placeLine(self, { tile }, "iron")
         T.flow(self, tile, 1, { tile }, "watered")
@@ -162,7 +160,7 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
             .. tostring(watered.full) .. ", soak " .. tostring(left.record.soak))
         expect(left.sprite == nil, "the server kept the tile's chunk loaded")
         expectNear("the soak after the hours away", away.record.soak,
-            left.record.soak - self.hours * self.dryPerHour, POINTS)
+            left.record.soak - self.hours * self.dryPerHour, T.POINTS)
         expect(away.record.cracked, "the full pipe came through the hard freeze whole")
         expect(back.record.cracked and not back.record.wet, "the server's record, loaded again: cracked "
             .. tostring(back.record.cracked) .. ", wet " .. tostring(back.record.wet))

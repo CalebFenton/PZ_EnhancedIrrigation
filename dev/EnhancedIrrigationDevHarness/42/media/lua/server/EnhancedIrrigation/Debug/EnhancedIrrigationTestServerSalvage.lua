@@ -6,9 +6,7 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 local handler = PZHarness.serverHandler
 
-local function mod()
-    return EnhancedIrrigation
-end
+local EI = EnhancedIrrigation
 
 -- The appliance drawn as `args.sprite` at x, y, z: whether it runs and whether its pump is gone;
 -- nothing without one.
@@ -19,7 +17,7 @@ handler("appliances.state", function(_, args)
         return {}
     end
     local switched = instanceof(appliance, "IsoCombinationWasherDryer") or instanceof(appliance, "IsoClothingWasher")
-    return { activated = switched and appliance:isActivated() or false, stripped = mod().Appliances.isStripped(appliance) }
+    return { activated = switched and appliance:isActivated() or false, stripped = EI.Appliances.isStripped(appliance) }
 end)
 
 -- Runs vanilla's switch of the washer or washer-dryer drawn as `args.sprite` at x, y, z on the

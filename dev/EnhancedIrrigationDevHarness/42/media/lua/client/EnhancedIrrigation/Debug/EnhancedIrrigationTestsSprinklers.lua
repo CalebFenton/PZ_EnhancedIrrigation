@@ -6,7 +6,6 @@ require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Parts"
-require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/PlantInfo"
 
 -- Lines run for set hours on the server by what runs them there (pumps.run, lines.age and
@@ -18,10 +17,6 @@ local Sprites, Lines, LineJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.
 local Pumps, Sprinklers, PlantInfo = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers, EnhancedIrrigation.PlantInfo
 local Parts = EnhancedIrrigation.Parts
 
-local POINTS = 0.05
-local IRON = "EnhancedIrrigation_IronHandPump"
-local LEATHER = "Base.LeatherStrips"
-local MINUTE = 1 / 60
 -- A sprinkler as a new one goes on.
 local NEW = { condition = 100, ceiling = 100 }
 -- How many squares a sprinkler waters.
@@ -31,30 +26,10 @@ local WATERLOGGED = "IGUI_EnhancedIrrigation_Waterlogged"
 
 -- Helpers -------------------------------------------------------------------------------------------
 
---- Queues placing the iron hand pump at `handle`, fitted with leather, a well beside it at `well`,
---- and its outlet plumbed to the line tile `into`; waits for this client's copies. Returns the
---- pump's handle.
-local function pumpInto(self, handle, well, into)
-    local pump = T.placePump(self, handle, IRON)
-    T.placeTank(self, well, "well")
-    T.linkPump(self, pump, into, { seal = LEATHER })
-    return pump
-end
+-- What the tests' iron hand pump is placed with: a leather seal.
+local SEALED = { fields = { seal = T.LEATHER } }
 
---- Queues a crop at no water on each of `handles`, and a wait for this client's copies.
-local function plantAll(self, handles)
-    T.server(self, "lines.plant", { tiles = T.tiles(handles), water = 0 })
-    T.waitFor(self, function()
-        for _, handle in ipairs(handles) do
-            if not CFarmingSystem.instance:getLuaObjectOnSquare(getSquare(handle.x, handle.y, handle.z)) then
-                return false
-            end
-        end
-        return true
-    end, "this client's copies of the crops")
-end
-
--- Each square's change from `before` to `after` (the handlers' squares): water and soak.
+-- Each square's change from `before` to `after` (the handlers' squares): water, soak and health.
 local function changes(before, after)
     local list = {}
     for i, square in ipairs(after) do
@@ -114,7 +89,7 @@ local ROT_HOURS = 2
 T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
     instant = true,
     run = function(self)
-        if not T.need(self, Pumps.ENTITIES[IRON].rate * 60 > Sprinklers.RATE,
+        if not T.need(self, Pumps.ENTITIES[T.IRON].rate * 60 > Sprinklers.RATE,
             "an iron hand pump that lifts more than a sprinkler asks") then return end
         local squares = T.layout(self, NORTH_SOUTH, { joined = true })
         if not squares then return end
@@ -123,13 +98,10 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
         local north, middle, south = squares[indexOf(0, -1)], squares[indexOf(0, 0)], squares[indexOf(0, 1)]
         middle.fields = { sprinkler = NEW }
         T.placeLine(self, { north, middle, south }, "iron")
-        self.pump = pumpInto(self, spots[1], spots[2], north)
-        plantAll(self, squares)
-        local args = T.at(self.pump, { squares = T.tiles(squares) })
-        args.hours = { MINUTE }
-        T.read(self, "pumps.run", args, "minute")
-        local soak = T.at(self.pump, { squares = T.tiles(squares), hours = { SOAK_HOURS } })
-        T.read(self, "pumps.run", soak, "soaked")
+        self.pump = T.plumbedPump(self, spots, T.IRON, SEALED, { into = north })
+        T.plant(self, squares, 0)
+        T.runPump(self, self.pump, "minute", { T.MINUTE }, { squares = squares })
+        T.runPump(self, self.pump, "soaked", { SOAK_HOURS }, { squares = squares })
         self.offLine, self.past = squares[indexOf(1, 0)], squares[indexOf(Sprinklers.ALONG, 0)]
         T.waitFor(self, function()
             local plant = CFarmingSystem.instance:getLuaObjectOnSquare(self.offLine.square)
@@ -144,25 +116,25 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
     end,
     validate = function(self)
         local minute = self.reads.minute
-        local each = sprayed(Sprinklers.RATE, MINUTE)
+        local each = sprayed(Sprinklers.RATE, T.MINUTE)
         for i, change in ipairs(changes(minute.before.squares, minute.steps[1].squares)) do
             local offset = NORTH_SOUTH[i][1] .. "," .. NORTH_SOUTH[i][2]
-            expectNear("the crop at " .. offset .. " after a minute", change.water, i <= INSIDE and each or 0, POINTS)
+            expectNear("the crop at " .. offset .. " after a minute", change.water, i <= INSIDE and each or 0, T.POINTS)
         end
         expectNear("the seal's wear after a minute", minute.steps[1].record.sealWear - minute.before.record.sealWear,
-            Sprinklers.RATE * MINUTE, T.LITRES)
+            Sprinklers.RATE * T.MINUTE, T.LITRES)
         local soaked = self.reads.soaked
         for i, square in ipairs(soaked.steps[1].squares) do
             local offset = NORTH_SOUTH[i][1] .. "," .. NORTH_SOUTH[i][2]
             local inside = i <= INSIDE
-            expectNear("the crop at " .. offset .. " left on", square.water, inside and Lines.PLANT_FULL or 0, POINTS)
-            expectNear("the soak at " .. offset .. " left on", square.soak, inside and Lines.SOAK_MAX or 0, POINTS)
+            expectNear("the crop at " .. offset .. " left on", square.water, inside and Lines.PLANT_FULL or 0, T.POINTS)
+            expectNear("the soak at " .. offset .. " left on", square.soak, inside and Lines.SOAK_MAX or 0, T.POINTS)
         end
         expect(self.pastKey == nil, "the plant info names the soil past the rectangle " .. tostring(self.pastKey))
         local rotted = self.reads.rotted
         local change = changes(rotted.squares.before, rotted.squares.after)[1]
-        expectNear("the health of the waterlogged crop off the line", change.health, -Lines.ROOT_ROT_PER_HOUR * ROT_HOURS, POINTS)
-        expectNear("the soak off the line after it was left", change.soak, -Lines.SOAK_DRY_OUT / 24 * ROT_HOURS, POINTS)
+        expectNear("the health of the waterlogged crop off the line", change.health, -Lines.ROOT_ROT_PER_HOUR * ROT_HOURS, T.POINTS)
+        expectNear("the soak off the line after it was left", change.soak, -Lines.SOAK_DRY_OUT / 24 * ROT_HOURS, T.POINTS)
     end,
 })
 
@@ -182,20 +154,20 @@ T.test("irrigation_sprinklers_overlapping_keep_one_soak", {
         line[2].fields = { sprinkler = NEW }
         line[4].fields = { sprinkler = NEW }
         T.placeLine(self, line, "iron")
-        self.pump = pumpInto(self, spots[1], spots[2], line[1])
+        self.pump = T.plumbedPump(self, spots, T.IRON, SEALED, { into = line[1] })
         -- Full already, so all each sprinkler throws on it soaks the soil.
-        T.plant(self, crop, Lines.PLANT_FULL)
-        T.server(self, "pumps.run", T.at(self.pump, { hours = { SOAK_HOURS } }))
+        T.plant(self, { crop }, Lines.PLANT_FULL)
+        T.runPump(self, self.pump, "soaked", { SOAK_HOURS })
         T.read(self, "lines.age", { tiles = { T.at(line[2]), T.at(line[4]) }, hours = ROT_HOURS,
             squares = { T.at(crop) } }, "rotted")
     end,
     validate = function(self)
         local rotted = self.reads.rotted
-        expectNear("the shared square's soak", rotted.squares.before[1].soak, Lines.SOAK_MAX, POINTS)
+        expectNear("the shared square's soak", rotted.squares.before[1].soak, Lines.SOAK_MAX, T.POINTS)
         local change = changes(rotted.squares.before, rotted.squares.after)[1]
         expectNear("the health of the waterlogged crop both water", change.health, -Lines.ROOT_ROT_PER_HOUR * ROT_HOURS,
-            POINTS)
-        expectNear("the shared square's soak after it was left", change.soak, -Lines.SOAK_DRY_OUT / 24 * ROT_HOURS, POINTS)
+            T.POINTS)
+        expectNear("the shared square's soak after it was left", change.soak, -Lines.SOAK_DRY_OUT / 24 * ROT_HOURS, T.POINTS)
     end,
 })
 
@@ -215,17 +187,17 @@ T.test("irrigation_sprinklers_do_nothing_on_a_tapped_line", {
         middle.fields = { sprinkler = NEW }
         T.placeLine(self, { tap, middle, squares[3] }, "iron")
         local crops = { tap, squares[4], squares[5], squares[6], squares[7] }
-        plantAll(self, crops)
+        T.plant(self, crops, 0)
         T.read(self, "lines.flow", T.at(tap, { hours = 1, squares = T.tiles(crops) }), "hour")
     end,
     validate = function(self)
         local hour = self.reads.hour
         expect(hour.stopped == nil, "the tap stopped: " .. tostring(hour.stopped))
         local changed = changes(hour.squares.before, hour.squares.after)
-        expectNear("the crop on the holed tap tile", changed[1].water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, POINTS)
+        expectNear("the crop on the holed tap tile", changed[1].water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, T.POINTS)
         for i = 2, #changed do
-            expectNear("crop " .. i .. " by the sprinkler", changed[i].water, 0, POINTS)
-            expectNear("the soak under crop " .. i .. " by the sprinkler", changed[i].soak, 0, POINTS)
+            expectNear("crop " .. i .. " by the sprinkler", changed[i].water, 0, T.POINTS)
+            expectNear("the soak under crop " .. i .. " by the sprinkler", changed[i].soak, 0, T.POINTS)
         end
         expectNear("the barrel's water drawn", hour.drawn, Lines.HOLE_RATE, T.LITRES)
     end,
@@ -319,13 +291,13 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
             squares[6]
         middle.fields = { sprinkler = NEW }
         T.placeLine(self, { north, middle, south }, "iron")
-        self.pump = pumpInto(self, spots[1], spots[2], north)
+        self.pump = T.plumbedPump(self, spots, T.IRON, SEALED, { into = north })
         -- The full crop's soil takes all it is thrown and the dry one none; points halfway between
         -- waterlogging the one and filling the other.
-        T.plant(self, crop, Lines.PLANT_FULL)
-        T.plant(self, mirror, 0)
+        T.plant(self, { crop }, Lines.PLANT_FULL)
+        T.plant(self, { mirror }, 0)
         local hours = (Lines.WATERLOGGED + Lines.PLANT_FULL) / 2 / sprayed(Sprinklers.RATE, 1)
-        T.server(self, "pumps.run", T.at(self.pump, { hours = { hours } }))
+        T.runPump(self, self.pump, "soaked", { hours })
         T.waitFor(self, function() return soilKey(crop) == WATERLOGGED end,
             "this client's plant info naming the crop waterlogged")
         T.step(function() self.mirrored = soilKey(mirror) end)

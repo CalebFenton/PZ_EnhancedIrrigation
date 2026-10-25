@@ -12,7 +12,7 @@ local expect, expectNear = T.expect, T.expectNear
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
 local placeUnit, readUntil, run, waitForCopy = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitCopy
 local waitForServer, fillBasin, expectLine, expectBasin = T.waitForUnitServer, T.fillBasin, T.expectLine, T.expectBasin
-local clientBasin, SPRITES = T.clientBasin, T.TREATMENT_SPRITES
+local clientBasin = T.clientBasin
 
 local CROCK = "EnhancedIrrigation_FilterCrock"
 
@@ -27,11 +27,7 @@ T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
     instant = true,
     run = function(self)
         T.craft(self, "EnhancedIrrigation_ShapeFilterCrock", "Base.Clay", { UNFIRED, "Base.Clay", "Base.Charcoal" }, { bench = { "Base.Pottery_Wheel", "crafted_01_65" }, prefer = { "Base.WaterBottle", "Base.Charcoal" }, ready = function()
-            T.server(self, "treatment.fillCarried", { type = "Base.WaterBottle", fluid = "Water", litres = 1 })
-            T.waitFor(self, function()
-                local bottle = T.player():getInventory():getFirstTypeRecurse("Base.WaterBottle")
-                return bottle ~= nil and math.abs(bottle:getFluidContainer():getAmount() - 1) < T.LITRES
-            end, "this client's copy of the filled bottle")
+            T.fillCarried(self, "Base.WaterBottle", "Water", 1)
         end })
     end,
     validate = function(self)
@@ -65,25 +61,17 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.unit = T.buildFromMenu(self, "Base." .. CROCK, spots[1], SPRITES[CROCK], { FORGED_BUCKET })
+        self.unit = T.buildUnit(self, CROCK, spots[1], { FORGED_BUCKET })
         if not self.unit then return end
-        self.unit.spec = Treatment.ENTITIES[CROCK]
-        readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
-        T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
-            "this client's summary of the crock")
-        T.readMenu(self, self.unit, "built")
         self.litres = 6
         fillBasin(self, self.unit, self.litres)
         T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "taken", { Treatment.CROCK_ITEM, FORGED_BUCKET })
-        T.read(self, "treatment.carried", { type = FORGED_BUCKET }, "bucket")
+        T.read(self, "items.carried", { type = FORGED_BUCKET }, "bucket")
     end,
     validate = function(self)
-        local built = self.reads.built
-        expect(built.entity == CROCK, "the build menu built " .. tostring(built.entity))
-        expect(built.record and built.record.head == 0, "the crock has no record, or water in its head")
-        expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the crock's basin isn't empty and locked")
+        T.expectBuiltUnit(self, CROCK)
         expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, Treatment.ENTITIES[CROCK].head))
         T.expectOffered(self, "take down")
         local taken = self.reads.taken
@@ -92,7 +80,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         expect(back[Treatment.CROCK_ITEM] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_ITEM]) .. " crocks")
         expect(back[FORGED_BUCKET] == 1, "Take Down gave back " .. tostring(back[FORGED_BUCKET])
             .. " forged buckets, the crock's record naming " .. tostring(self.reads.built.record.bucket))
-        local bucket = self.reads.bucket
+        local bucket = self.reads.bucket.items[1]
         expectNear("the bucket's water", bucket.litres, self.litres, T.LITRES)
         expect(not bucket.tainted, "the bucket came back tainted")
     end,
@@ -109,17 +97,14 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         if not spots then return end
         self.unit = placeUnit(self, spots[1], CROCK)
         T.give(self, "carried", { { type = "Base.Bucket" } })
-        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 10 })
-        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 10 - T.LITRES end,
-            "this client's copy of the filled bucket")
+        T.fillCarried(self, "Base.Bucket", "TaintedWater", 10)
         T.useMenu(self, self.unit, "scrub", T.job("treatment", TreatmentJobs.SCRUB_CROCK), false)
-        T.useMenu(self, self.unit, "pour", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
-        end, true)
+        T.useMenu(self, self.unit, "pour", T.job("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
+            true)
         readUntil(self, self.unit, "poured", function(state)
             return state.record and state.record.head + state.basin.litres > self.unit.spec.head - T.LITRES
         end)
-        T.read(self, "treatment.carried", { type = "Base.Bucket" }, "bucket")
+        T.read(self, "items.carried", { type = "Base.Bucket" }, "bucket")
         self.hours = 12
         run(self, self.unit, "run", { self.hours })
         -- The server's answer decides what this client's copy must come to show.
@@ -138,7 +123,7 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         T.expectOffered(self, "pour")
         local poured = self.reads.poured
         expectNear("the head and basin after pouring", poured.record.head + poured.basin.litres, spec.head, T.LITRES)
-        expectNear("the bucket's water left", self.reads.bucket.litres, 10 - spec.head, T.LITRES)
+        expectNear("the bucket's water left", self.reads.bucket.items[1].litres, 10 - spec.head, T.LITRES)
         local before, after = self.reads.run.before, self.reads.run.steps[1]
         local litres = spec.rate * self.hours
         expectBasin("the server", after, before.basin.litres + litres, false)
@@ -201,12 +186,9 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         T.readMenu(self, self.wet, "cracked")
         T.readMenu(self, self.dry, "dry")
         T.give(self, "carried", { { type = "Base.Bucket" } })
-        T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "TaintedWater", litres = 5 })
-        T.waitFor(self, function() return self.items.carried[1]:getFluidContainer():getAmount() > 5 - T.LITRES end,
-            "this client's copy of the filled bucket")
-        T.useMenu(self, self.wet, "pour", function(context)
-            return T.jobOption(context, "treatment", TreatmentJobs.POUR_IN, self.items.carried[1])
-        end, false)
+        T.fillCarried(self, "Base.Bucket", "TaintedWater", 5)
+        T.useMenu(self, self.wet, "pour", T.job("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
+            false)
     end,
     validate = function(self)
         local wet = self.reads.wet
@@ -235,7 +217,7 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
         T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "back", { Treatment.CROCK_ITEM, Treatment.CROCK_BUCKET })
-        T.read(self, "treatment.carried", { type = Treatment.CROCK_BUCKET }, "bucket")
+        T.read(self, "items.carried", { type = Treatment.CROCK_BUCKET }, "bucket")
     end,
     validate = function(self)
         local frozen = self.reads.frozen.steps[1]
@@ -249,7 +231,7 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
             .. " crocks from a cracked one")
         expect(back[Treatment.CROCK_BUCKET] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_BUCKET])
             .. " plain buckets")
-        expectNear("the cracked crock's bucket", self.reads.bucket.litres, self.litres, T.LITRES)
+        expectNear("the cracked crock's bucket", self.reads.bucket.items[1].litres, self.litres, T.LITRES)
     end,
 })
 

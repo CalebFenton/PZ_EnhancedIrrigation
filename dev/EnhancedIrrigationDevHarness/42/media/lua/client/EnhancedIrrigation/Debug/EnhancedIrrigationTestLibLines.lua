@@ -62,6 +62,13 @@ function T.placeLine(self, handles, material, fields)
     T.waitForLines(self, handles, "this client's copy of the placed line")
 end
 
+--- Queues laying a line tile of `material` on each of `handles`, holed unless its handle has
+--- `fields` of its own (T.placeLine), and a dry crop on each.
+function T.holedLine(self, handles, material)
+    T.placeLine(self, handles, material, { holed = true })
+    T.plant(self, handles, 0)
+end
+
 --- Queues the server's view of `handles` into self.reads[label].tiles: a list in the handles'
 --- order, each { record, sprite, overlays, plant }.
 function T.readLines(self, handles, label)
@@ -101,6 +108,12 @@ end
 --- Queues T.useOption on this client's copy of the line tile at `handle` for the line job `job`.
 function T.useLineJob(self, handle, job, label, choose)
     T.useOption(self, function() return T.lineObject(handle) end, label, T.job("line", job), choose)
+end
+
+--- Queues T.useOption on this client's copy of the tap tile at `handle` for Water from Tank.
+function T.useWater(self, handle, label, choose)
+    T.useOption(self, function() return T.lineObject(handle) end, label, T.running(EnhancedIrrigationWaterAction.queue),
+        choose)
 end
 
 return T

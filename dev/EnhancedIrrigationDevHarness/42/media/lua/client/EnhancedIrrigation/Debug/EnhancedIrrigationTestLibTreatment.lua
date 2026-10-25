@@ -31,6 +31,31 @@ function T.placeUnit(self, handle, entity, opts)
     return unit
 end
 
+--- Queues building the unit `entity` from the build menu at `handle` (T.buildFromMenu, each input
+--- the first of `prefer` it takes), a read of its state once its record is made into
+--- self.reads.built, a wait for this client's summary, and the names of its menu into
+--- self.names.built. Returns its handle, with `spec`, or nil.
+function T.buildUnit(self, entity, handle, prefer)
+    local unit = T.buildFromMenu(self, "Base." .. entity, handle, T.TREATMENT_SPRITES[entity], prefer)
+    if not unit then return nil end
+    unit.spec = Treatment.ENTITIES[entity]
+    T.readUnitUntil(self, unit, "built", function(state) return state.record ~= nil end)
+    T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(unit)) ~= nil end,
+        "this client's summary of the built " .. entity)
+    T.readMenu(self, unit, "built")
+    return unit
+end
+
+--- Expects what T.buildUnit read: the unit `entity`, with its record, nothing in its head and its
+--- basin empty and locked.
+function T.expectBuiltUnit(self, entity)
+    local built = self.reads.built
+    T.expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
+    T.expect(built.record and built.record.head == 0, "the built " .. entity .. " has no record, or water in its head")
+    T.expect(built.basin and built.basin.litres == 0 and built.basin.locked,
+        "the built " .. entity .. "'s basin isn't empty and locked")
+end
+
 function T.readUnitUntil(self, unit, label, done, tank)
     T.readUntil(self, "treatment.state", T.at(unit, { tank = tank and T.at(tank) }), label, done)
 end
@@ -66,8 +91,8 @@ end
 
 -- Queues the boiler's fire set on the authority (treatment.fire: `fuel` minutes if given, lit or
 -- not) and a wait for this client's copy to show it, as vanilla's own fire actions leave it.
-function T.setFire(self, unit, label, lit, fuel)
-    T.read(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }), label)
+function T.setFire(self, unit, lit, fuel)
+    T.server(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }))
     T.waitFor(self, function()
         local copy = T.copyOf(unit)
         return copy ~= nil and copy:isLit() == lit
@@ -89,11 +114,11 @@ function T.fillBasin(self, unit, litres, tainted)
     elseif spec.kind == "boiler" then
         -- A cold drum passes nothing until it is hot.
         hours = hours + Treatment.HOT_HOURS
-        T.setFire(self, unit, "filled lit", true, T.FUEL)
+        T.setFire(self, unit, true, T.FUEL)
     end
     T.runUnit(self, unit, "filled", { hours }, fields)
     if spec.kind == "boiler" then
-        T.setFire(self, unit, "filled out", false)
+        T.setFire(self, unit, false)
     end
     T.waitForUnitCopy(self, unit, litres, nil, "this client's copy of the filled basin")
 end
@@ -134,14 +159,10 @@ function T.vanillaBasinTest(case)
             T.fillBasin(self, self.unit, case.litres, case.tainted)
             T.give(self, "items", { { type = "Base.Bucket" }, { type = "Base.WaterBottle" } })
             -- Full, so vanilla's Fill lists only the bucket.
-            T.server(self, "treatment.fillCarried", { type = "Base.WaterBottle", fluid = "Water", litres = 10 })
+            T.fillCarried(self, "Base.WaterBottle", "Water", 10)
             if case.inBucket > 0 then
-                T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = case.inBucket })
+                T.fillCarried(self, "Base.Bucket", "Water", case.inBucket)
             end
-            T.waitFor(self, function()
-                return self.items.items[2]:getFluidContainer():isFull()
-                    and math.abs(self.items.items[1]:getFluidContainer():getAmount() - case.inBucket) < T.LITRES
-            end, "this client's copies of the filled bottle and bucket")
             T.goNextTo(self, spots[1].square)
             T.step(function()
                 local copy = T.copyOf(self.unit)
@@ -159,7 +180,7 @@ function T.vanillaBasinTest(case)
                 context:hideAndChildren()
             end)
             T.readUnitUntil(self, self.unit, "drawn", function(state) return state.basin.litres < case.litres - 1 end)
-            T.read(self, "treatment.carried", { type = "Base.Bucket" }, "bucket")
+            T.read(self, "items.carried", { type = "Base.Bucket" }, "bucket")
         end,
         validate = function(self)
             T.expect(self.drink, "the menu offers no Drink")
@@ -169,7 +190,7 @@ function T.vanillaBasinTest(case)
             T.expect(self.fill, "the menu offers no Fill for the bucket")
             T.expect(self.empty, "the menu offers no Empty")
             T.expect(not self.pour, "the menu offers vanilla's pour into the basin")
-            local bucket = self.reads.bucket
+            local bucket = self.reads.bucket.items[1]
             T.expect(bucket.litres > case.inBucket + 1, "Fill took nothing from the basin")
             T.expectNear("the basin and bucket", self.reads.drawn.basin.litres + bucket.litres, case.litres + case.inBucket,
                 T.LITRES)

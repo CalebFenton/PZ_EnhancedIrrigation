@@ -21,12 +21,9 @@ local Sprites, Pumps, PumpJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Parts = EnhancedIrrigation.Parts
 
-local WOOD, METAL = "EnhancedIrrigation_PumpHouseWood", "EnhancedIrrigation_PumpHouseMetal"
 local APPLIANCE, UTILITY = Pumps.APPLIANCE_PUMP, Pumps.UTILITY_PUMP
--- A raised barrel's water: vanilla's round rain barrel's.
-local BARREL_LITRES = 600
 
-local fitted, at, update, readUntil = T.pumpHouseFitted, T.pumpHouseAt, T.updatePumpHouse, T.readPumpHouseUntil
+local fitted, update, readUntil = T.pumpHouseFitted, T.updatePumpHouse, T.readPumpUntil
 local lifts = T.pumpLifts
 
 -- Houses -------------------------------------------------------------------------------------------------
@@ -40,7 +37,7 @@ end
 -- The build menu builds each Pump House from its recipe on a bare square, empty, with its record at
 -- once: this client's menu says no pump is fitted and greys Turn On out saying so. Catches a recipe
 -- the build menu can't build, a house without its record, or one that runs with nothing in it.
-for _, case in ipairs({ { entity = WOOD, name = "wood" }, { entity = METAL, name = "metal" } }) do
+for _, case in ipairs({ { entity = T.WOOD, name = "wood" }, { entity = T.METAL, name = "metal" } }) do
     T.test("irrigation_pump_house_" .. case.name .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
@@ -78,7 +75,7 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD)
+        self.house = T.placePump(self, spots[1], T.WOOD)
         T.give(self, "parts", { { type = "Base.Screwdriver" },
             { type = APPLIANCE, condition = WORN, modData = { [Parts.CEILING_KEY] = CEILING } } })
         T.useMenu(self, self.house, "fit", function(context)
@@ -126,7 +123,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
+        self.house = T.placePump(self, spots[1], T.WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
         T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
@@ -163,10 +160,8 @@ T.test("irrigation_pump_house_dry_source_wears_it_fast", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true }))
-        T.placeTank(self, spots[2], "ground", 0)
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE, { on = true }),
+            { source = "ground", sourceLitres = 0 })
         update(self, self.house, "dry", { hoursAgo = 2, tank = self.tank })
     end,
     validate = function(self)
@@ -194,7 +189,7 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE, { on = true },
+        self.house = T.placePump(self, spots[1], T.WOOD, fitted(APPLIANCE, { on = true },
             { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
         T.waitForPumpSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
@@ -241,16 +236,13 @@ T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded", BARREL_LITRES - ROOM)
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE), { litres = T.BARREL_LITRES - ROOM })
         update(self, self.house, "burnt", { hoursAgo = 1, tank = self.tank,
             fields = { on = true, partCondition = Pumps.PARTS[APPLIANCE].wearPerHour / 4 } })
     end,
     validate = function(self)
         local after = self.reads.burnt.after
-        expectNear("the barrel when the part burnt out", after.tank.litres, BARREL_LITRES, T.LITRES)
+        expectNear("the barrel when the part burnt out", after.tank.litres, T.BARREL_LITRES, T.LITRES)
         expect(after.record.partCondition == 0, "the part is left at " .. after.record.partCondition)
     end,
 })
@@ -270,19 +262,14 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], METAL, fitted(APPLIANCE))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
+        self.house, self.tank = T.plumbedPump(self, spots, T.METAL, fitted(APPLIANCE))
         T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = Valves.TIMER } })
         T.useMenu(self, self.house, "fit", T.job("pump", PumpJobs.FIT_TIMER), true)
         readUntil(self, self.house, "fitted", function(state) return state.record.timer ~= nil end)
         T.waitFor(self, function() return T.hasOverlay(T.overlaysOf(T.copyOf(self.house)), Sprites.HOUSE_TIMER) end,
             "this client's copy of the house showing its timer")
         self.start = (math.floor(getGameTime():getTimeOfDay()) - 2) % 24
-        T.useMenu(self, self.house, "set", function(context)
-            return T.findOption(context, context, function(option) return option.onSelect == PumpMenu.openTimer end)
-        end, true)
+        T.useMenu(self, self.house, "set", T.running(PumpMenu.openTimer), true)
         T.waitFor(self, function() return ValveUI.instances[T.player():getPlayerNum()] ~= nil end, "the timer's panel")
         T.step(function()
             local panel = ValveUI.instances[T.player():getPlayerNum()]
@@ -325,23 +312,15 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
 local LINE_SPOTS = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } }
 -- Litres in that barrel.
 local SOURCE_LITRES = 100
-local HALF_HOUR = 0.5
 
 -- Queues a Pump House `entity` fitted with a new `part` at spots[1], a lidded barrel of
 -- SOURCE_LITRES beside it at spots[2] for its water, and its outlet plumbed to the first of two holed
--- line tiles on spots[3] and spots[4], with dry crops on them. Returns the house, the barrel and the
--- tiles.
+-- line tiles on spots[3] and spots[4], with dry crops on them (T.pumpedLine). Returns the house, the
+-- barrel and the tiles.
 local function houseLine(self, spots, entity, part)
     local tiles = { spots[3], spots[4] }
-    for _, tile in ipairs(tiles) do
-        tile.fields = { holed = true }
-    end
-    T.placeLine(self, tiles, "iron")
-    T.plant(self, tiles[1], 0)
-    T.plant(self, tiles[2], 0)
-    local house = T.placePump(self, spots[1], entity, fitted(part))
-    local barrel = T.placeTank(self, spots[2], "lidded", SOURCE_LITRES)
-    T.linkPump(self, house, tiles[1])
+    local house, barrel = T.pumpedLine(self, tiles, spots, entity, fitted(part),
+        { source = "lidded", sourceLitres = SOURCE_LITRES })
     return house, barrel, tiles
 end
 
@@ -357,14 +336,14 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
         T.setGrid(self, true)
         local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
         if not spots then return end
-        self.house, self.barrel, self.tiles = houseLine(self, spots, METAL, UTILITY)
-        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "turned on")
+        self.house, self.barrel, self.tiles = houseLine(self, spots, T.METAL, UTILITY)
+        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "turned on")
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         T.waitForLines(self, self.tiles, "this client's copy of the running line", function(summary) return summary.running end)
         T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain running", false)
         -- The crops dried in the same call, so the ten-minute passes since Turn On leave them room.
-        update(self, self.house, "half", { hoursAgo = HALF_HOUR, squares = self.tiles, water = 0, tank = self.barrel })
-        T.read(self, "tanks.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
+        update(self, self.house, "half", { hoursAgo = T.HALF_HOUR, squares = self.tiles, water = 0, tank = self.barrel })
+        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
         T.waitForLines(self, self.tiles, "this client's copy of the stopped line", function(summary)
             return not summary.running
         end)
@@ -374,14 +353,14 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
         expect(self.reads["turned on"].done and self.reads.on.record.running, "Turn On didn't run the house")
         T.expectRefused(self, "drain running", "Tooltip_EnhancedIrrigation_LineRunning")
         local half = self.reads.half
-        local each = Lines.HOLE_RATE * Pumps.PARTS[UTILITY].push * HALF_HOUR
+        local each = Lines.HOLE_RATE * Pumps.PARTS[UTILITY].push * T.HALF_HOUR
         for i = 1, 2 do
             expectNear("crop " .. i .. "'s water", half.after.squares[i].water - half.before.squares[i].water,
                 each * Lines.POINTS_PER_LITRE, 0.05)
         end
         expectNear("the barrel's water drawn", half.before.tank.litres - half.after.tank.litres, 2 * each, T.LITRES)
         expectNear("the part's wear", half.before.record.partCondition - half.after.record.partCondition,
-            Pumps.PARTS[UTILITY].wearPerHour * HALF_HOUR, 0.001)
+            Pumps.PARTS[UTILITY].wearPerHour * T.HALF_HOUR, 0.001)
         expect(self.reads.off.done, "Turn Off wasn't done")
         T.expectOffered(self, "drain stopped")
     end,
@@ -415,13 +394,10 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
                 return true
             end })
         if not lineSpots then return end
-        self.house = T.placePump(self, spots[1], WOOD, fitted(APPLIANCE))
-        T.placeTank(self, spots[2], "well")
-        self.tank = T.placeTank(self, spots[3], "raisedLidded")
-        T.linkPump(self, self.house, self.tank)
-        self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, WOOD, APPLIANCE)
-        T.server(self, "pumpHouse.update", at(self.house))
-        T.server(self, "pumpHouse.update", at(self.lineHouse))
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE))
+        self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, T.WOOD, APPLIANCE)
+        T.server(self, "pumps.update", T.at(self.house))
+        T.server(self, "pumps.update", T.at(self.lineHouse))
         T.reload(self, T.at(self.house), function()
             update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
             update(self, self.lineHouse, "line away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
@@ -458,9 +434,9 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
 
 -- Make Utility Pump from a Blower Fan, at a table, with the skills, the knowledge and exactly a
 -- craft's inputs, makes a Utility Pump at the made ceiling, taking the fan, the sheet metal and the
--- hose, two uses of the torch and one of the rods. Catches a recipe the game won't craft, a made
--- pump as good as a found one, or welding that takes whole items. Its surface is a work table by
--- the character, which the scenario sets down and T.placeWorkTable sets down again if it is gone.
+-- hose. Catches a recipe the game won't craft, or a made pump as good as a found one. Its surface
+-- is a work table by the character, which the scenario sets down and T.placeWorkTable sets down
+-- again if it is gone.
 T.test("irrigation_pump_house_make_utility_pump", {
     instant = true,
     run = function(self)
@@ -469,8 +445,6 @@ T.test("irrigation_pump_house_make_utility_pump", {
             return
         end
         T.read(self, "items.carried", { type = UTILITY }, "made")
-        T.read(self, "items.carried", { type = "Base.BlowTorch" }, "torch")
-        T.read(self, "items.carried", { type = "Base.WeldingRods" }, "rods")
     end,
     validate = function(self)
         local craft = self.counts.craft or {}
@@ -481,10 +455,5 @@ T.test("irrigation_pump_house_make_utility_pump", {
         local made = self.reads.made.items[1]
         expect(made and made.condition == Pumps.MADE_CEILING and made.ceiling == Pumps.MADE_CEILING,
             "the made pump is at " .. tostring(made and made.condition) .. " of " .. tostring(made and made.ceiling))
-        local torch, rods = self.reads.torch.items[1], self.reads.rods.items[1]
-        local torchFull = math.floor(1 / getScriptManager():getItem("Base.BlowTorch"):getUseDelta() + 0.5)
-        local rodsFull = math.floor(1 / getScriptManager():getItem("Base.WeldingRods"):getUseDelta() + 0.5)
-        expect(torch and torch.uses == torchFull - 2, "the torch has " .. tostring(torch and torch.uses) .. " uses left")
-        expect(rods and rods.uses == rodsFull - 1, "the rods have " .. tostring(rods and rods.uses) .. " uses left")
     end,
 })

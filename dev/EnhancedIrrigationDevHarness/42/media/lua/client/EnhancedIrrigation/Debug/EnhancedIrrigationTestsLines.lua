@@ -13,13 +13,8 @@ local expect, expectNear, expectOffered = T.expect, T.expectNear, T.expectOffere
 local Sprites, Lines = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines
 local LineJobs, Tanks = EnhancedIrrigation.LineJobs, EnhancedIrrigation.Tanks
 
--- A crop's water as read, give or take vanilla's own ten-minute drying (SFarmingSystem.checkWater)
--- landing between placing the crop and reading it.
-local CROP_POINTS = 0.25
 -- The door frame of vanilla's house wall on a square's west edge (T.WALL_WEST).
 local DOOR_FRAME_WEST = "walls_exterior_house_01_10"
-local TANK_LITRES = 100
-local IRON_PUMP = "EnhancedIrrigation_IronHandPump"
 
 -- Laying -------------------------------------------------------------------------------------------
 
@@ -87,7 +82,7 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
             expect(read.sprite == want, "the server shows tile " .. i .. " as " .. tostring(read.sprite) .. ", not " .. want)
             expect(T.lineSprite(tile) == want, "this client shows tile " .. i .. " as " .. tostring(T.lineSprite(tile)))
         end
-        expect(self.counts.left["Base.MetalPipe"] == 0, "laying left " .. tostring(self.counts.left["Base.MetalPipe"]) .. " iron pipe")
+        expect(T.counted(self, "Base.MetalPipe") == 0, "laying left " .. T.counted(self, "Base.MetalPipe") .. " iron pipe")
     end,
 })
 
@@ -126,7 +121,7 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         expect(self.valid, "the cursor refused a tile beside a tank")
         expect(self.items.joint[1]:getCurrentUses() == self.usesBefore - 1,
             "the joint used " .. (self.usesBefore - self.items.joint[1]:getCurrentUses()) .. " uses of glue, not 1")
-        expect(self.counts.left["Base.Pipe"] == 0, "laying left the plastic pipe")
+        expect(T.counted(self, "Base.Pipe") == 0, "laying left the plastic pipe")
         expect(T.lineSummary(self.tile).material == "plastic", "the tile isn't plastic")
     end,
 })
@@ -216,7 +211,7 @@ T.test("irrigation_lines_first_tile_beside_a_pump", {
         local pump, beside, far = spots[1], spots[2], spots[3]
         T.trackLines(self, { beside, far })
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
-        T.placePump(self, pump, IRON_PUMP)
+        T.placePump(self, pump, T.IRON)
         T.goNextTo(self, beside.square)
         T.step(function()
             if not T.need(self, #Tanks.tanksReaching(beside.x, beside.y, beside.z) == 0
@@ -250,7 +245,7 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
         T.trackLines(self, tiles)
         tiles[1].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
-        T.placePump(self, spots[1], IRON_PUMP)
+        T.placePump(self, spots[1], T.IRON)
         T.linkPump(self, spots[1], tiles[3])
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tiles[2].square)
@@ -279,7 +274,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         local tiles = rows[1]
         T.trackLines(self, tiles)
         T.placeLine(self, { tiles[2] }, "iron")
-        T.placePump(self, spots[1], IRON_PUMP)
+        T.placePump(self, spots[1], T.IRON)
         T.linkPump(self, spots[1], tiles[2])
         T.goNextTo(self, tiles[2].square)
         T.useLineJob(self, tiles[2], LineJobs.TAKE_UP, "take up", true)
@@ -331,12 +326,11 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
             self.behindWall = cursor:refusal(behind.square)
             self.throughDoorway = cursor:refusal(doorway.square)
         end)
-        T.placeTank(self, doorway, "above", TANK_LITRES)
+        T.placeTank(self, doorway, "above", T.TANK_LITRES)
         behind.fields = { holed = true }
         doorway.fields = T.tapped()
         T.placeLine(self, { behind, doorway }, "iron")
-        T.plant(self, behind, 0)
-        T.plant(self, inside, 0)
+        T.plant(self, { behind, inside }, 0)
         T.flow(self, doorway, 1, self.tiles, "hour")
     end,
     validate = function(self)
@@ -353,7 +347,7 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
                 .. tostring(T.shapeOf(tile.sprite)) .. ", not " .. wanted[i])
         end
         -- The tank stands a storey over the line: one storey of head.
-        expectNear("the crop inside's water", hour.tiles[2].plant.water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, CROP_POINTS)
-        expectNear("the crop behind the wall's water", hour.tiles[1].plant.water, 0, CROP_POINTS)
+        expectNear("the crop inside's water", hour.tiles[2].plant.water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, T.CROP_POINTS)
+        expectNear("the crop behind the wall's water", hour.tiles[1].plant.water, 0, T.CROP_POINTS)
     end,
 })

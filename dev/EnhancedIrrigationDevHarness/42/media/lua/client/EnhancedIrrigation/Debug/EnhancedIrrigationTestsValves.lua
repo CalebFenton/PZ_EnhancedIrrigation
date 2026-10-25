@@ -14,30 +14,23 @@ local expect, expectNear = T.expect, T.expectNear
 local Sprites, Lines, LineJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Valves, LineMenu, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.LineMenu, EnhancedIrrigation.ValveUI
 
-local LITRES = 0.01
--- A crop's water as read, give or take vanilla's own ten-minute drying landing meanwhile.
-local CROP_POINTS = 0.25
-local TANK_LITRES = 100
 -- A holed tile's plant points a minute from a tank one storey up (Lines.HOLE_RATE, push 1).
 local POINTS_A_MINUTE = Lines.HOLE_RATE * Lines.POINTS_PER_LITRE / 60
 
 -- A tapped line ------------------------------------------------------------------------------------
 
---- Queues a raised barrel holding TANK_LITRES, the holed tap tile beside it and a second holed
---- tile past that, a dry crop on each, and the character beside the tap. Returns { tap, far, tank,
---- crops }, or nil when there is no room. `opts` as T.row's.
+--- Queues a raised barrel holding T.TANK_LITRES, the holed tap tile beside it and a second holed
+--- tile past that, a dry crop on each (T.holedLine), and the character beside the tap. Returns
+--- { tap, tank, crops }, or nil when there is no room. `opts` as T.row's.
 local function tappedLine(self, opts)
     local rows = T.row(self, 3, opts)
     if not rows then return nil end
     local beside, tap, far = rows[1][1], rows[1][2], rows[1][3]
-    local tank = T.placeTank(self, beside, "raised", TANK_LITRES)
+    local tank = T.placeTank(self, beside, "raised", T.TANK_LITRES)
     tap.fields = T.tapped({ holed = true })
-    far.fields = { holed = true }
-    T.placeLine(self, { tap, far }, "plastic")
-    T.plant(self, tap, 0)
-    T.plant(self, far, 0)
+    T.holedLine(self, { tap, far }, "plastic")
     T.goNextTo(self, tap.square)
-    return { tap = tap, far = far, tank = tank, crops = { tap, far } }
+    return { tap = tap, tank = tank, crops = { tap, far } }
 end
 
 --- Queues putting the valve `item` on the line's tap as Fit Valve leaves it.
@@ -52,9 +45,7 @@ end
 --- character over and opens it there, then `set(panel)` and its button, as a player sets it and
 --- clicks.
 local function setFromPanel(self, line, label, set)
-    T.useOption(self, function() return T.lineObject(line.tap) end, label, function(context)
-        return T.findOption(context, context, function(option) return option.onSelect == LineMenu.openValve end)
-    end, true)
+    T.useOption(self, function() return T.lineObject(line.tap) end, label, T.running(LineMenu.openValve), true)
     T.waitFor(self, function() return ValveUI.instances[T.player():getPlayerNum()] ~= nil end, "the valve's panel")
     T.step(function()
         local panel = ValveUI.instances[T.player():getPlayerNum()]
@@ -74,10 +65,10 @@ end
 --- tank down by what they took.
 local function expectWatered(read, minutes, what)
     for i, water in ipairs(read.crops) do
-        expectNear(what .. ": crop " .. i .. "'s water", water, POINTS_A_MINUTE * minutes, CROP_POINTS)
+        expectNear(what .. ": crop " .. i .. "'s water", water, POINTS_A_MINUTE * minutes, T.CROP_POINTS)
     end
     expectNear(what .. ": the tank's water", read.litres,
-        TANK_LITRES - #read.crops * Lines.HOLE_RATE * minutes / 60, LITRES)
+        T.TANK_LITRES - #read.crops * Lines.HOLE_RATE * minutes / 60, T.FINE_LITRES)
 end
 
 -- Fitting and taking off ---------------------------------------------------------------------------
@@ -92,16 +83,13 @@ T.test("irrigation_valves_fit_and_take_off", {
         local line = tappedLine(self)
         if not line then return end
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
-        local function tap() return T.lineObject(line.tap) end
-        local function fit(context) return T.jobOption(context, "line", LineJobs.FIT_VALVE) end
-        T.useOption(self, tap, "none", fit, false)
+        T.useLineJob(self, line.tap, LineJobs.FIT_VALVE, "none", false)
         T.give(self, "valve", { { type = Valves.WIND_UP } })
-        T.useOption(self, tap, "fit", fit, true)
+        T.useLineJob(self, line.tap, LineJobs.FIT_VALVE, "fit", true)
         T.readUntil(self, "valves.read", T.at(line.tap), "fitted", function(reply) return reply.valve.item ~= nil end)
         T.readLines(self, { line.tap }, "shown")
         T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedFitted")
-        T.useOption(self, tap, "takeOff", function(context) return T.jobOption(context, "line", LineJobs.TAKE_OFF_VALVE) end,
-            true)
+        T.useLineJob(self, line.tap, LineJobs.TAKE_OFF_VALVE, "takeOff", true)
         T.readUntil(self, "valves.read", T.at(line.tap), "off", function(reply) return reply.valve.item == nil end)
         T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedOff")
     end,
@@ -127,9 +115,7 @@ T.test("irrigation_valves_take_up_gives_the_valve_back", {
         local line = tappedLine(self)
         if not line then return end
         placeValve(self, line, Valves.TIMER)
-        T.useOption(self, function() return T.lineObject(line.tap) end, "takeUp", function(context)
-            return T.jobOption(context, "line", LineJobs.TAKE_UP)
-        end, true)
+        T.useLineJob(self, line.tap, LineJobs.TAKE_UP, "takeUp", true)
         T.waitFor(self, function() return T.lineObject(line.tap) == nil end, "this client to see the tap taken up")
         T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
     end,
@@ -156,9 +142,7 @@ T.test("irrigation_valves_wind_up_runs_its_minutes_and_shuts", {
         T.waitForLines(self, { line.tap }, "this client's copy of the tap running", function(summary)
             return summary.valveOpen
         end)
-        T.useOption(self, function() return T.lineObject(line.tap) end, "water", function(context)
-            return T.findOption(context, context, function(option) return option.onSelect == EnhancedIrrigationWaterAction.queue end)
-        end, false)
+        T.useWater(self, line.tap, "water", false)
         age(self, line, 1, "ran")
         T.waitForLines(self, { line.tap }, "this client's copy of the tap shut", function(summary)
             return not summary.valveOpen and summary.valve and summary.valve.untilHour == nil
