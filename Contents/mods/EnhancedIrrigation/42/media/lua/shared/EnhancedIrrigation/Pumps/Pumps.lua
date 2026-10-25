@@ -175,12 +175,6 @@ function Pumps.linesInReach(pump)
     return found
 end
 
---- The level a pump lifts to for `into`, its outlet's tank or line tile: the tank's, or the floor
---- the line lies on.
-function Pumps.levelOf(into)
-    return Tanks.isTank(into) and Tanks.levelOf(into) or into:getZ()
-end
-
 --- The litres an hour a pump lifting by `spec` (a row of UNITS or PARTS) moves while it has water.
 function Pumps.perHour(spec)
     return spec.rate * 60

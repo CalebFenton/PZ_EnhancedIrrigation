@@ -141,7 +141,7 @@ function PumpWater.deliveryOf(pump, spec, intake)
         return nil, "Tooltip_EnhancedIrrigation_OutletGone"
     end
     -- A barrel set on a stand at the far end since it was plumbed may stand out of its reach.
-    if not Pumps.lifts(spec, Pumps.levelOf(into), pump:getZ()) then
+    if not Pumps.lifts(spec, Tanks.levelOf(into), pump:getZ()) then
         return nil, Pumps.LIFT_KEYS[spec.lift]
     end
     if Lines.isLine(into) then

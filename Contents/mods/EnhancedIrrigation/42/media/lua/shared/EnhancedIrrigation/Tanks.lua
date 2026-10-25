@@ -32,8 +32,11 @@ function Tanks.isTank(isoObject)
     return specOf(isoObject) ~= nil and isoObject:getFluidContainer() ~= nil
 end
 
-function Tanks.levelOf(tank)
-    return tank:getZ() + (specOf(tank).raised and 1 or 0)
+--- The level `object`'s water stands at: its floor, plus one for a tank on a stand. Anything else
+--- that holds or carries water, a treatment unit or a line tile, stands on its floor.
+function Tanks.levelOf(object)
+    local spec = specOf(object)
+    return object:getZ() + (spec and spec.raised and 1 or 0)
 end
 
 --- The tank on `square`, or nil. Takes a nil square.

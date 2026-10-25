@@ -163,7 +163,7 @@ function LinkJobs.pumpBlocker(pump, with)
     if taken then
         return taken
     end
-    if not Pumps.lifts(spec, Pumps.levelOf(into), here.z) then
+    if not Pumps.lifts(spec, Tanks.levelOf(into), here.z) then
         return Pumps.LIFT_KEYS[spec.lift]
     end
     return nil, here, other
