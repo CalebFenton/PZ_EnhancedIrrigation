@@ -93,19 +93,12 @@ local function addLinkOptions(context, playerNum, character, fixture)
     })
 end
 
-function FixtureMenu.onFill(playerNum, context, worldobjects, test)
-    local character = getSpecificPlayer(playerNum)
-    if not character or character:getVehicle() then return end
-    local fixture = Needs.findClicked(worldobjects, Fixtures.isFixture)
-    if not fixture then return end
-    if test then return ISWorldObjectContextMenu.setTest() end
+EnhancedIrrigation.JobOptions.onWorldMenu(Fixtures.isFixture, function(context, playerNum, character, fixture, worldobjects)
     if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
         removeVanillaPlumb(context)
     end
     addWasherSwitch(context, playerNum, worldobjects, fixture)
     addLinkOptions(context, playerNum, character, fixture)
-end
-
-Events.OnFillWorldObjectContextMenu.Add(FixtureMenu.onFill)
+end)
 
 return FixtureMenu

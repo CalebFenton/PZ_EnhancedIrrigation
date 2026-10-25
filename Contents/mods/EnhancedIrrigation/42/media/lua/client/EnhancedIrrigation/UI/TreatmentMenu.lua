@@ -111,12 +111,7 @@ local function unitMenu(context, unit)
     return submenu or Needs.addSubMenu(context, LinkMenu.objectName(unit))
 end
 
-function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
-    local character = getSpecificPlayer(playerNum)
-    if not character or character:getVehicle() then return end
-    local unit = Needs.findClicked(worldobjects, Treatment.isUnit)
-    if not unit then return end
-    if test then return ISWorldObjectContextMenu.setTest() end
+JobOptions.onWorldMenu(Treatment.isUnit, function(context, playerNum, character, unit)
     local spec = Treatment.specOf(unit)
     local menu = unitMenu(context, unit)
     local summary = Treatment.currentSummary(unit)
@@ -130,8 +125,6 @@ function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
     if spec.plumbed then
         addPlumbing(menu, playerNum, character, unit)
     end
-end
-
-Events.OnFillWorldObjectContextMenu.Add(TreatmentMenu.onFill)
+end)
 
 return TreatmentMenu

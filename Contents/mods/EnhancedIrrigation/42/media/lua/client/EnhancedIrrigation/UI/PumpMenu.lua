@@ -174,12 +174,7 @@ local function addHouseOptions(menu, playerNum, character, pump, summary)
     addTimer(menu, playerNum, character, pump, summary)
 end
 
-function PumpMenu.onFill(playerNum, context, worldobjects, test)
-    local character = getSpecificPlayer(playerNum)
-    if not character or character:getVehicle() then return end
-    local pump = Needs.findClicked(worldobjects, Pumps.isPump)
-    if not pump then return end
-    if test then return ISWorldObjectContextMenu.setTest() end
+JobOptions.onWorldMenu(Pumps.isPump, function(context, playerNum, character, pump)
     local menu = Needs.addSubMenu(context, LinkMenu.objectName(pump))
     local summary = Pumps.currentSummary(pump)
     if summary then
@@ -198,8 +193,6 @@ function PumpMenu.onFill(playerNum, context, worldobjects, test)
         lines = true,
     })
     LinkMenu.addUnplumbOptions(menu, playerNum, character, pump)
-end
-
-Events.OnFillWorldObjectContextMenu.Add(PumpMenu.onFill)
+end)
 
 return PumpMenu

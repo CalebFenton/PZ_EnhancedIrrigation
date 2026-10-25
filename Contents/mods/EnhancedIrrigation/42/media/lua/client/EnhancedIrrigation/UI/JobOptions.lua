@@ -1,7 +1,8 @@
 -- The right-click option of a job (EnhancedIrrigationAction), greyed out as its job module would
--- refuse it, so the menu, the action's start() and the authority can't disagree; and how the menus
--- read an option of vanilla's.
+-- refuse it, so the menu, the action's start() and the authority can't disagree; the world menu's
+-- hook for an object's options; and how the menus read an option of vanilla's.
 
+require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/UI/Needs"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
@@ -47,6 +48,20 @@ function JobOptions.firstOfEach(character, fullTypes, keep)
         end
     end
     return found
+end
+
+--- Fills the world's right-click menu for the first clicked object `isObject(object)` accepts:
+--- `fill(context, playerNum, character, object, worldobjects)`. Nothing for a character in a
+--- vehicle; the game's test pass only learns there is something.
+function JobOptions.onWorldMenu(isObject, fill)
+    Events.OnFillWorldObjectContextMenu.Add(function(playerNum, context, worldobjects, test)
+        local character = getSpecificPlayer(playerNum)
+        if not character or character:getVehicle() then return end
+        local object = Needs.findClicked(worldobjects, isObject)
+        if not object then return end
+        if test then return ISWorldObjectContextMenu.setTest() end
+        fill(context, playerNum, character, object, worldobjects)
+    end)
 end
 
 --- The function choosing `option` calls, as the menus find vanilla's own options: a get-up option

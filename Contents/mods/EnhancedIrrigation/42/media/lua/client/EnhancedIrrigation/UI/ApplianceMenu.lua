@@ -34,19 +34,12 @@ local function refuseSwitches(context, menu)
     end
 end
 
-function ApplianceMenu.onFill(playerNum, context, worldobjects, test)
-    local character = getSpecificPlayer(playerNum)
-    if not character or character:getVehicle() then return end
-    local appliance = Needs.findClicked(worldobjects, Appliances.hasPumpTile)
-    if not appliance then return end
-    if test then return ISWorldObjectContextMenu.setTest() end
+EnhancedIrrigation.JobOptions.onWorldMenu(Appliances.hasPumpTile, function(context, playerNum, character, appliance)
     if Appliances.refusesSwitchOn(appliance) then
         refuseSwitches(context, context)
     end
     EnhancedIrrigation.JobOptions.add(context, playerNum, character, "appliance",
         getText("ContextMenu_EnhancedIrrigation_SalvagePump"), ApplianceJobs.SALVAGE_PUMP, appliance)
-end
-
-Events.OnFillWorldObjectContextMenu.Add(ApplianceMenu.onFill)
+end)
 
 return ApplianceMenu
