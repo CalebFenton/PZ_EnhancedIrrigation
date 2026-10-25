@@ -1,4 +1,5 @@
-require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
+require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLibLines"
+require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLibPumps"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Lines/Lines"

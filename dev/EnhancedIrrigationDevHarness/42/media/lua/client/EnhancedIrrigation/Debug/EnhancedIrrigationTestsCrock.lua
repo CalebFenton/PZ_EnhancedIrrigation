@@ -1,4 +1,4 @@
-require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
+require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLibTreatment"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/Frost"

@@ -3,13 +3,13 @@ require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Tanks"
-require "EnhancedIrrigation/Pumps/Pumps"
-require "EnhancedIrrigation/Treatment/Treatment"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,
 -- menu helpers and fixtures the mod's tests share. Fixtures are placed by server handlers the way
 -- the authority places them, and each waits for this client's copy. A tile handle is { x, y, z,
--- square }. A fixture only one test file uses is that file's own.
+-- square }. The line, pump and treatment helpers extend it in EnhancedIrrigationTestLibLines,
+-- TestLibPumps and TestLibTreatment, for the files that require them. A fixture only one test file
+-- uses is that file's own.
 
 EnhancedIrrigationTest = EnhancedIrrigationTest or setmetatable({}, { __index = PZHarness.Test })
 local T = EnhancedIrrigationTest
@@ -17,8 +17,6 @@ local T = EnhancedIrrigationTest
 local Lines = EnhancedIrrigation.Lines
 local Tanks = EnhancedIrrigation.Tanks
 local Sprites = EnhancedIrrigation.Sprites
-local Pumps = EnhancedIrrigation.Pumps
-local Treatment = EnhancedIrrigation.Treatment
 
 -- How long this client may take to show what the server changed.
 local SYNC_MS = 5000
@@ -43,10 +41,10 @@ function T.waitFor(self, condition, what, ms)
     T.step(function() T.need(self, held, what) end)
 end
 
---- Queues a wait until it is light where the character stands. The game refuses a craft or build
---- in the dark (CraftRecipeData.canPerform), and the light lags the clock the previous test put
---- back by some frames, as T.craftTest's own wait allows for.
-function T.waitForLight(self)
+-- Queues a wait until it is light where the character stands. The game refuses a craft or build
+-- in the dark (CraftRecipeData.canPerform), and the light lags the clock the previous test put
+-- back by some frames, as T.craftTest's own wait allows for.
+local function waitForLight(self)
     T.waitFor(self, function() return not T.player():tooDarkToRead() end, "light where the character stands")
 end
 
@@ -193,11 +191,6 @@ function T.inSubmenu(context, nameKey, matches)
     return sub and T.findOption(context, sub, matches) or nil
 end
 
---- Queues T.useOption on this client's copy of the line tile at `handle` for the line job `job`.
-function T.useLineJob(self, handle, job, label, choose)
-    T.useOption(self, function() return T.lineObject(handle) end, label, T.job("line", job), choose)
-end
-
 --- Queues the names of every option in the world menu of this client's copy of `handle`
 --- (T.copyOf) into self.names[label].
 function T.readMenu(self, handle, label)
@@ -226,6 +219,15 @@ function T.expectWord(self, label, word, want)
         end
     end
     T.expect(found == (want ~= false), label .. ": the menu " .. (found and "lists " or "doesn't list ") .. word)
+end
+
+-- Expects (`want`, or not) a line of the menu T.readMenu read as `label` to contain `text`.
+function T.expectLine(self, label, text, want)
+    local found = false
+    for _, name in ipairs(self.names and self.names[label] or {}) do
+        found = found or name:find(text, 1, true) ~= nil
+    end
+    T.expect(found == (want ~= false), label .. ": the menu " .. (found and "says " or "doesn't say ") .. text)
 end
 
 --- Expects the option T.useOption noted as `label` offered.
@@ -304,7 +306,7 @@ function T.craft(self, name, from, counted, opts)
     if opts.ready then
         opts.ready(self)
     end
-    T.waitForLight(self)
+    waitForLight(self)
     T.step(function()
         local item = T.need(self, T.player():getInventory():getFirstTypeRecurse(from), "a " .. from .. " to craft from")
         if not item then return end
@@ -372,7 +374,7 @@ function T.buildFromMenu(self, entity, handle, sprite, prefer)
     -- Stands first: the character's current square follows a teleport only on its next update, and
     -- the cursor walks a character it can't see beside the site (luautils.walkAdjSquares).
     T.goNextTo(self, handle.square)
-    T.waitForLight(self)
+    waitForLight(self)
     T.step(function()
         local player = T.player()
         local build = ISBuildIsoEntity:new(player, info, 1, ISInventoryPaneContextMenu.getContainers(player))
@@ -561,96 +563,6 @@ function T.expectReloaded(self, what)
     T.expect((self.chunkLoads or 0) > 0, "the " .. what .. "'s chunk came back without LoadChunk, from a cache")
 end
 
--- Line tiles ----------------------------------------------------------------------------------------
-
---- This client's copy of the line tile at `handle`, or nil.
-function T.lineObject(handle)
-    return Lines.lineAt(handle.x, handle.y, handle.z)
-end
-
---- This client's summary of the line tile at `handle`, or nil.
-function T.lineSummary(handle)
-    local line = T.lineObject(handle)
-    return line and Lines.summaryOf(line) or nil
-end
-
---- The name of this client's sprite of the line tile at `handle`, or nil.
-function T.lineSprite(handle)
-    local line = T.lineObject(handle)
-    return line and line:getSprite():getName() or nil
-end
-
---- The saved fields of a tapped tile: { tap = true } with `extra`'s fields.
-function T.tapped(extra)
-    local fields = { tap = true }
-    for key, value in pairs(extra or {}) do
-        fields[key] = value
-    end
-    return fields
-end
-
---- Queues a wait until this client has the line tile at every one of `handles` with its summary,
---- and `check(summary, handle)`, if given, holds for each.
-function T.waitForLines(self, handles, what, check)
-    T.waitFor(self, function()
-        for _, handle in ipairs(handles) do
-            local summary = T.lineSummary(handle)
-            if not summary or (check and not check(summary, handle)) then
-                return false
-            end
-        end
-        return true
-    end, what)
-end
-
---- Queues laying a line tile of `material` on each of `handles` as the authority lays one, each
---- with its handle's `fields` (saved fields) set, and a wait for this client's copies.
-function T.placeLine(self, handles, material, fields)
-    local tiles = T.tiles(handles)
-    for i, handle in ipairs(handles) do
-        tiles[i].material = handle.material or material
-        tiles[i].fields = handle.fields or fields
-    end
-    T.server(self, "lines.place", { tiles = tiles })
-    T.waitForLines(self, handles, "this client's copy of the placed line")
-end
-
---- Queues the server's view of `handles` into self.reads[label].tiles: a list in the handles'
---- order, each { record, sprite, overlays, plant }.
-function T.readLines(self, handles, label)
-    T.read(self, "lines.read", { tiles = T.tiles(handles) }, label)
-end
-
---- Queues running the line tapped at `tap` for `hours` on the server as the tap runs it; the reply,
---- the litres `drawn` (nil when no tank fed it), why the water stops, `stopped`, if it does, and
---- `handles`' tiles, lands in self.reads[label].
-function T.flow(self, tap, hours, handles, label)
-    T.read(self, "lines.flow", T.at(tap, { hours = hours, tiles = T.tiles(handles) }), label)
-end
-
---- Queues taking away, when the test ends, any line tile on `handles`, such as those its jobs lay.
-function T.trackLines(self, handles)
-    T.server(self, "lines.track", { tiles = T.tiles(handles) })
-end
-
---- The shape (Sprites.pipe) a pipe tile's name draws, or nil for any other name.
-function T.shapeOf(spriteName)
-    local material, _, shape = Sprites.pipeOf(spriteName)
-    return material and shape or nil
-end
-
---- The Lay Line cursor for `material`, started as its menu option starts it unless `started`, and
---- put away when the test ends. Called in a step.
-function T.layCursor(self, material, started)
-    local playerNum = T.player():getPlayerNum()
-    if not started then
-        EnhancedIrrigation.LineCursor.start(playerNum, material)
-    end
-    local cursor = getCell():getDrag(playerNum)
-    T.defer(self, function() getCell():setDrag(nil, playerNum) end)
-    return cursor
-end
-
 -- Tanks and crops -----------------------------------------------------------------------------------
 
 -- What T.placeTank places, by kind: the tile, and how many floors above the given square it goes.
@@ -726,283 +638,6 @@ function T.plant(self, handle, water)
     T.waitFor(self, function()
         return CFarmingSystem.instance:getLuaObjectOnSquare(getSquare(handle.x, handle.y, handle.z)) ~= nil
     end, "this client's copy of the crop")
-end
-
--- Pumps ---------------------------------------------------------------------------------------------
-
--- The tile of each pump entity: the hand pumps and the Pump Houses.
-T.PUMP_SPRITES = {
-    EnhancedIrrigation_WoodenHandPump = Sprites.WOODEN_HAND_PUMP,
-    EnhancedIrrigation_IronHandPump = Sprites.IRON_HAND_PUMP,
-    EnhancedIrrigation_PumpHouseWood = Sprites.PUMP_HOUSE_WOOD,
-    EnhancedIrrigation_PumpHouseMetal = Sprites.PUMP_HOUSE_METAL,
-}
-
---- This client's summary of the pump at `handle`, or nil.
-function T.pumpSummary(handle)
-    local copy = T.copyOf(handle)
-    return copy and Pumps.summaryOf(copy)
-end
-
---- Queues a wait until this client's summary of the pump at `handle` satisfies `holds(summary)`.
-function T.waitForPumpSummary(self, handle, holds, what)
-    T.waitFor(self, function()
-        local summary = T.pumpSummary(handle)
-        return summary ~= nil and holds(summary)
-    end, what)
-end
-
---- Queues placing the pump `entity` (a T.PUMP_SPRITES key) at `handle`, with `with.part` fitted
---- as Fit Pump fits it ({ type, condition, ceiling, fraction }) and `with.fields` on its record, if
---- given, and a wait for this client's copy and its summary. Returns its handle, with `spec`
---- (Pumps.ENTITIES, nil for a Pump House).
-function T.placePump(self, handle, entity, with)
-    local pump = { x = handle.x, y = handle.y, z = handle.z, sprite = T.PUMP_SPRITES[entity],
-        spec = Pumps.ENTITIES[entity], square = handle.square }
-    T.server(self, "pumps.place", T.at(pump, { sprite = pump.sprite, part = with and with.part,
-        fields = with and with.fields }))
-    T.waitFor(self, function() return T.pumpSummary(pump) ~= nil end, "this client's copy of the " .. entity)
-    return pump
-end
-
---- Queues plumbing the outlet of the pump at `pump` to the tank or line tile at `tank` on the
---- server, with `fields` set on its record, and a wait for this client to know of the link and,
---- when `fields.seal` is given, for its summary to have that seal.
-function T.linkPump(self, pump, tank, fields)
-    T.server(self, "pumps.link", T.at(pump, { tank = T.at(tank), fields = fields }))
-    T.waitFor(self, function()
-        if EnhancedIrrigation.Links.roleAt(T.at(pump), "pump") == nil then
-            return false
-        end
-        local summary = fields and fields.seal and T.pumpSummary(pump)
-        return not (fields and fields.seal) or (summary and summary.seal == fields.seal)
-    end, "this client's copy of the pump's outlet")
-end
-
--- Pump Houses ---------------------------------------------------------------------------------------
-
---- What a house is placed with: `part` (a full type) fitted as Fit Pump fits it, from an item new but
---- for what `item` gives ({ condition, ceiling, fraction } of a point past its condition), then
---- `fields` set on its record.
-function T.pumpHouseFitted(part, fields, item)
-    local fitting = { type = part }
-    for key, value in pairs(item or {}) do
-        fitting[key] = value
-    end
-    return { part = fitting, fields = fields }
-end
-
---- The args of a server handler at the house, with the tank, generator and crop squares to read.
-function T.pumpHouseAt(house, extra)
-    return T.at(house, {
-        tank = extra and extra.tank and T.at(extra.tank) or nil,
-        generator = extra and extra.generator and T.at(extra.generator) or nil,
-        squares = extra and extra.squares and T.tiles(extra.squares) or nil,
-        water = extra and extra.water,
-        hoursAgo = extra and extra.hoursAgo,
-        fields = extra and extra.fields,
-    })
-end
-
---- Queues the house's ten-minute pass on the server, `extra.hoursAgo` hours after its last, with
---- `extra.fields` set first and the crops on `extra.squares` set to `extra.water`, into
---- self.reads[label] ({ now, before, after }).
-function T.updatePumpHouse(self, house, label, extra)
-    T.read(self, "pumpHouse.update", T.pumpHouseAt(house, extra), label)
-end
-
-function T.readPumpHouseUntil(self, house, label, done)
-    T.readUntil(self, "pumpHouse.state", T.pumpHouseAt(house), label, done)
-end
-
---- The litres `part` lifts in `hours`.
-function T.pumpLifts(part, hours)
-    return Pumps.perHour(Pumps.PARTS[part]) * hours
-end
-
---- The generator fuel `part` burns in `hours`.
-function T.pumpBurns(part, hours)
-    return Pumps.PARTS[part].fuel * SandboxVars.GeneratorFuelConsumption * hours
-end
-
--- Treatment units ---------------------------------------------------------------------------------
-
--- The tile of each treatment unit entity: the sand filters, the Filter Crock and the Boilers.
-T.TREATMENT_SPRITES = { EnhancedIrrigation_BarrelFilter = Sprites.BARREL_FILTER,
-    EnhancedIrrigation_BrickFilter = Sprites.BRICK_FILTER, EnhancedIrrigation_FilterCrock = Sprites.FILTER_CROCK,
-    EnhancedIrrigation_BoilerStone = Sprites.BOILER_STONE, EnhancedIrrigation_BoilerWelded = Sprites.BOILER_WELDED }
-
---- Queues placing the unit `entity` at `handle` (up `opts.up` storeys), with `opts.fields` on its
---- record, and a wait for this client's copy and its summary. Returns its handle, with `spec`.
-function T.placeUnit(self, handle, entity, opts)
-    opts = opts or {}
-    local up = opts.up or 0
-    local unit = { x = handle.x, y = handle.y, z = handle.z + up, sprite = T.TREATMENT_SPRITES[entity],
-        spec = Treatment.ENTITIES[entity], square = up == 0 and handle.square or nil }
-    T.server(self, "treatment.place", T.at(unit, { sprite = unit.sprite, fields = opts.fields }))
-    T.waitFor(self, function()
-        unit.square = getSquare(unit.x, unit.y, unit.z)
-        local copy = T.copyOf(unit)
-        return copy ~= nil and Treatment.summaryOf(copy) ~= nil
-    end, "this client's copy of the " .. entity)
-    return unit
-end
-
-function T.readUnitUntil(self, unit, label, done, tank)
-    T.readUntil(self, "treatment.state", T.at(unit, { tank = tank and T.at(tank) }), label, done)
-end
-
--- Queues `fields` set on the unit's record and a run of each of `hours`, with the tank's state if
--- given, into self.reads[label] ({ before, steps }).
-function T.runUnit(self, unit, label, hours, fields, tank)
-    T.read(self, "treatment.run", T.at(unit, { hours = hours, fields = fields, tank = tank and T.at(tank) }), label)
-end
-
--- Queues a wait until this client's copy of the unit holds `litres` in its basin, if given, and its
--- summary satisfies `holds(summary)`, if given.
-function T.waitForUnitCopy(self, unit, litres, holds, what)
-    T.waitFor(self, function()
-        local copy = T.copyOf(unit)
-        local summary = copy and Treatment.summaryOf(copy)
-        return summary ~= nil and (not litres or math.abs(copy:getFluidContainer():getAmount() - litres) < T.LITRES)
-            and (not holds or holds(summary))
-    end, what)
-end
-
--- Queues a wait until this client's summary of the unit agrees on `key` with the server's in
--- self.reads[label] (a state, an update's `after` or a run's last step), so a menu read after it
--- shows what the server answered.
-function T.waitForUnitServer(self, unit, label, key)
-    T.waitFor(self, function()
-        local read = self.reads and self.reads[label]
-        local state = read and (read.after or read.steps and read.steps[#read.steps] or read)
-        local summary = Treatment.summaryOf(T.copyOf(unit))
-        return state ~= nil and state.summary ~= nil and summary ~= nil and summary[key] == state.summary[key]
-    end, "this client's summary of " .. label)
-end
-
--- Queues the boiler's fire set on the authority (treatment.fire: `fuel` minutes if given, lit or
--- not) and a wait for this client's copy to show it, as vanilla's own fire actions leave it.
-function T.setFire(self, unit, label, lit, fuel)
-    T.read(self, "treatment.fire", T.at(unit, { lit = lit, fuel = fuel }), label)
-    T.waitFor(self, function()
-        local copy = T.copyOf(unit)
-        return copy ~= nil and copy:isLit() == lit
-    end, "this client's copy of the boiler " .. (lit and "lit" or "out"))
-end
-
--- Fuel for the tests' fires, in minutes: longer than any test runs one.
-T.FUEL = 600
-
--- Queues `litres` of raw water, tainted if `tainted`, set in the unit's head and treated into its
--- basin by the hours its rate takes (self.reads.filled), a boiler lit for them and put out after,
--- then a wait for this client's copy of the basin. A sand filter's film is grown for clean water
--- and new for tainted, so its basin holds the water as it was.
-function T.fillBasin(self, unit, litres, tainted)
-    local spec = unit.spec
-    local fields, hours = { head = litres, headTainted = tainted == true }, litres / spec.rate
-    if spec.kind == "sand" then
-        fields.ripeHours = tainted and 0 or Treatment.RIPE_HOURS
-    elseif spec.kind == "boiler" then
-        -- A cold drum passes nothing until it is hot.
-        hours = hours + Treatment.HOT_HOURS
-        T.setFire(self, unit, "filled lit", true, T.FUEL)
-    end
-    T.runUnit(self, unit, "filled", { hours }, fields)
-    if spec.kind == "boiler" then
-        T.setFire(self, unit, "filled out", false)
-    end
-    T.waitForUnitCopy(self, unit, litres, nil, "this client's copy of the filled basin")
-end
-
--- Expects (`want`, or not) a line of the menu T.readMenu read as `label` to contain `text`.
-function T.expectLine(self, label, text, want)
-    local found = false
-    for _, name in ipairs(self.names and self.names[label] or {}) do
-        found = found or name:find(text, 1, true) ~= nil
-    end
-    T.expect(found == (want ~= false), label .. ": the menu " .. (found and "says " or "doesn't say ") .. text)
-end
-
-function T.expectBasin(who, state, litres, tainted)
-    if not T.expect(state and state.basin, who .. ": no unit") then return end
-    T.expectNear(who .. ": the basin's water", state.basin.litres, litres, T.LITRES)
-    if litres > 0 then
-        T.expect(state.basin.tainted == tainted, who .. ": the basin's water is " .. (state.basin.tainted and "tainted" or "clean"))
-    end
-end
-
--- This client's copy's basin as the state T.expectBasin reads.
-function T.clientBasin(unit)
-    local copy = T.copyOf(unit)
-    local basin = copy and copy:getFluidContainer()
-    return basin and { basin = { litres = basin:getAmount(), tainted = basin:isTainted() } } or nil
-end
-
--- The basin offers vanilla's Drink, Fill and Empty, but no pour into it, though the character
--- carries water; a bucket filled from it holds its water as it was. A Barrel Filter's basin holds
--- tainted water, and Drink warns of it; a crock's or a boiler's, clean, and Drink doesn't; the
--- boiler is a vanilla fireplace, whose fire menu stands beside the fluid menu. Catches a basin
--- vanilla can't reach, one it can pour into past the sand, the clay or the fire, or a taint lost or
--- made up. The crock's bucket holds no more than the one carried, so that one starts part full: a
--- Fill that empties its source ends in an invalid action on a multiplayer client, which clears the
--- queue.
---
--- `case`: the test's `name`, the unit's `entity`, the `litres` its basin is filled with and whether
--- they are `tainted`, and the litres already `inBucket`.
-function T.vanillaBasinTest(case)
-    T.test(case.name, {
-        instant = true,
-        run = function(self)
-            local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-            if not spots then return end
-            self.unit = T.placeUnit(self, spots[1], case.entity)
-            T.fillBasin(self, self.unit, case.litres, case.tainted)
-            T.give(self, "items", { { type = "Base.Bucket" }, { type = "Base.WaterBottle" } })
-            -- Full, so vanilla's Fill lists only the bucket.
-            T.server(self, "treatment.fillCarried", { type = "Base.WaterBottle", fluid = "Water", litres = 10 })
-            if case.inBucket > 0 then
-                T.server(self, "treatment.fillCarried", { type = "Base.Bucket", fluid = "Water", litres = case.inBucket })
-            end
-            T.waitFor(self, function()
-                return self.items.items[2]:getFluidContainer():isFull()
-                    and math.abs(self.items.items[1]:getFluidContainer():getAmount() - case.inBucket) < T.LITRES
-            end, "this client's copies of the filled bottle and bucket")
-            T.goNextTo(self, spots[1].square)
-            T.step(function()
-                local copy = T.copyOf(self.unit)
-                local context = T.need(self, copy and T.worldMenu(copy), "a world menu for the unit")
-                if not context then return end
-                local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
-                local fill = T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
-                self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
-                self.fill = T.offered(fill)
-                self.empty = T.offered(T.optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
-                self.pour = T.findNamed(context, context, getText("ContextMenu_AddFluidFromItem")) ~= nil
-                if fill then
-                    T.choose(fill)
-                end
-                context:hideAndChildren()
-            end)
-            T.readUnitUntil(self, self.unit, "drawn", function(state) return state.basin.litres < case.litres - 1 end)
-            T.read(self, "treatment.carried", { type = "Base.Bucket" }, "bucket")
-        end,
-        validate = function(self)
-            T.expect(self.drink, "the menu offers no Drink")
-            local warns = self.drinkTooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil
-            T.expect(warns == case.tainted, "Drink's tooltip " .. (warns and "warns" or "doesn't warn")
-                .. " of tainted water: " .. self.drinkTooltip)
-            T.expect(self.fill, "the menu offers no Fill for the bucket")
-            T.expect(self.empty, "the menu offers no Empty")
-            T.expect(not self.pour, "the menu offers vanilla's pour into the basin")
-            local bucket = self.reads.bucket
-            T.expect(bucket.litres > case.inBucket + 1, "Fill took nothing from the basin")
-            T.expectNear("the basin and bucket", self.reads.drawn.basin.litres + bucket.litres, case.litres + case.inBucket,
-                T.LITRES)
-            T.expect(bucket.tainted == case.tainted, "the bucket filled from the basin holds "
-                .. (bucket.tainted and "tainted" or "clean") .. " water")
-        end,
-    })
 end
 
 return T

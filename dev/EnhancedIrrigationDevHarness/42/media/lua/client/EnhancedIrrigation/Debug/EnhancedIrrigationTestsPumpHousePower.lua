@@ -1,4 +1,4 @@
-require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
+require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLibPumps"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Power"
@@ -21,7 +21,12 @@ local BARREL_LITRES = 600
 local FUEL = 0.0005
 
 local fitted, update, readUntil = T.pumpHouseFitted, T.updatePumpHouse, T.readPumpHouseUntil
-local lifts, burns = T.pumpLifts, T.pumpBurns
+local lifts = T.pumpLifts
+
+-- The generator fuel `part` burns in `hours`.
+local function burns(part, hours)
+    return Pumps.PARTS[part].fuel * SandboxVars.GeneratorFuelConsumption * hours
+end
 
 -- Houses -------------------------------------------------------------------------------------------------
 
