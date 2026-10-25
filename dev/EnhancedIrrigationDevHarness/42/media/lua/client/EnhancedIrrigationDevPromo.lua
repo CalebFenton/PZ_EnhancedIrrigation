@@ -17,6 +17,7 @@ require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 local Stage = require "EnhancedIrrigationDevStage"
+local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Harness = require "PZHarness/Stage"
 local Capture = require "PZHarness/Capture"
 
@@ -29,7 +30,6 @@ local MARK = "EIPromo"
 local NOON = 12
 -- Late enough for the sky to have gone dark in any season, so that the boilers' fires read.
 local NIGHT = 23
-local VANILLA_WELL = "camping_01_16"
 local GENERATOR = "Base.Generator"
 
 -- Every item the mod defines, then the vanilla pipe it lays and the wrench that works it, in the
@@ -92,7 +92,6 @@ local HOMESTEAD = {
 local HOMESTEAD_SOAK = 20
 local HOMESTEAD_RUN_HOURS = 0.25
 local CROP_STAGE = { Tomato = 5, Cabbages = 5, Carrots = 5, Broccoli = 4 }
-local CROP_WATER = 100
 
 -- The hand pumps either side of a well, and a Pump House beside it, its outlet plumbed to a raised
 -- barrel, powered by a generator behind it. The character stands off to the left, in front of
@@ -137,9 +136,7 @@ local FILTERS = {
     player = { 1, 3 },
     scout = { 5, 3 },
 }
--- Fuel enough that a fire burns at its full light radius through the shot, and water in each
--- drum, which a dry one burns through.
-local BOILER_FUEL = 48 * 60
+-- Water in each drum, which a dry one burns through.
 local BOILER_HEAD = 200
 -- Raw water waiting in each filter, as one in use holds.
 local FILTER_HEAD = { [Sprites.BARREL_FILTER] = 30, [Sprites.BRICK_FILTER] = 120, [Sprites.FILTER_CROCK] = 6 }
@@ -197,14 +194,9 @@ end
 -- The tile `sprite` built at `position` of `lot` as the build menu builds it, `full` of water if
 -- asked.
 local function build(lot, position, sprite, full)
-    local object, missing = Stage.build(at(lot, position), sprite)
+    local object, missing = Build.tile(at(lot, position), sprite, full and Build.FULL)
     if not object then
         report(missing)
-        return nil
-    end
-    local fluid = full and object:getFluidContainer()
-    if fluid then
-        fluid:addFluid(FluidType.Water, fluid:getCapacity() - fluid:getAmount())
     end
     return object
 end
@@ -214,7 +206,7 @@ local function placeTile(lot, position, sprite)
 end
 
 local function plant(lot, x, y, seed)
-    local missing = Stage.plant(Stage.lotSquare(lot, x, y), seed, CROP_STAGE[seed], CROP_WATER)
+    local missing = Stage.plant(Stage.lotSquare(lot, x, y), seed, CROP_STAGE[seed], Stage.WATERED)
     if missing then
         report(missing)
     end
@@ -249,25 +241,9 @@ local function placePump(lot, position, sprite)
     return pump, record
 end
 
-local function recalc(lot)
-    for x = -1, lot.w do
-        for y = -1, lot.h do
-            local square = Stage.lotSquare(lot, x, y)
-            if square then
-                square:RecalcAllWithNeighbours(true)
-            end
-        end
-    end
-end
-
-local function clear(lot)
-    Harness.removeTrees(lot.x, lot.y, lot.z)
-    Stage.clearLot(lot, lot.w, lot.h, MARGIN)
-end
-
-local function buildHomestead()
-    local lot, spec = lots.homestead, HOMESTEAD
-    clear(lot)
+local function buildHomestead(lot)
+    local spec = lot.spec
+    Stage.clearForShots(lot, MARGIN)
     local tank = build(lot, spec.tank, spec.tank.sprite, true)
     local second = build(lot, spec.second, spec.second.sprite, true)
     if tank and second then
@@ -291,13 +267,13 @@ local function buildHomestead()
     if not tap or stopped then
         report("water from the homestead's tap: " .. tostring(stopped))
     end
-    recalc(lot)
+    Stage.recalcLot(lot)
 end
 
-local function buildPumps()
-    local lot, spec = lots.pumps, PUMPS
-    clear(lot)
-    placeTile(lot, spec.well, VANILLA_WELL)
+local function buildPumps(lot)
+    local spec = lot.spec
+    Stage.clearForShots(lot, MARGIN)
+    placeTile(lot, spec.well, Stage.VANILLA_WELL)
     placePump(lot, spec.wooden, Sprites.WOODEN_HAND_PUMP)
     placePump(lot, spec.iron, Sprites.IRON_HAND_PUMP)
     local barrel = build(lot, spec.barrel, Sprites.RAISED_BARREL)
@@ -314,13 +290,13 @@ local function buildPumps()
         plumb(house:getSquare(), barrel:getSquare(), "pump")
         record:afterChange()
     end
-    recalc(lot)
+    Stage.recalcLot(lot)
 end
 
-local function buildSprinklers()
-    local lot, spec = lots.sprinklers, SPRINKLERS
-    clear(lot)
-    placeTile(lot, spec.well, VANILLA_WELL)
+local function buildSprinklers(lot)
+    local spec = lot.spec
+    Stage.clearForShots(lot, MARGIN)
+    placeTile(lot, spec.well, Stage.VANILLA_WELL)
     local pump = placePump(lot, spec.pump, Sprites.IRON_HAND_PUMP)
     local LineSystem = EI.LineSystem
     local isSprinkler = {}
@@ -330,7 +306,7 @@ local function buildSprinklers()
     for x = spec.line.from, spec.line.to do
         LineSystem.place(Stage.lotSquare(lot, x, spec.line.y), spec.material, {
             soak = SPRINKLER_SOAK,
-            sprinkler = isSprinkler[x] and { condition = 100, ceiling = 100 } or nil,
+            sprinkler = isSprinkler[x] and Stage.newSprinkler() or nil,
         })
     end
     for _, bed in ipairs(spec.beds) do
@@ -345,14 +321,13 @@ local function buildSprinklers()
             report("water from the sprinklers' pump: " .. tostring(stopped))
         end
     end
-    recalc(lot)
+    Stage.recalcLot(lot)
 end
 
 -- As a built unit is once its OnCreate has run: a boiler a fireplace carrying its entity.
-local function buildFilters()
-    local lot = lots.filters
-    clear(lot)
-    for _, unit in ipairs(FILTERS.units) do
+local function buildFilters(lot)
+    Stage.clearForShots(lot, MARGIN)
+    for _, unit in ipairs(lot.spec.units) do
         local built = build(lot, unit, unit.sprite)
         local created = built and EI.TreatmentSystem.onCreate({ thumpable = built })
         local object = created and created.object or built
@@ -360,7 +335,7 @@ local function buildFilters()
         if record then
             record.head = unit.lit and BOILER_HEAD or FILTER_HEAD[unit.sprite]
             if unit.lit then
-                object:setFuelAmount(BOILER_FUEL)
+                object:setFuelAmount(Stage.BOILER_FUEL)
                 object:turnOn()
                 record:update()
             end
@@ -369,7 +344,7 @@ local function buildFilters()
             report("record for the unit " .. unit.sprite)
         end
     end
-    recalc(lot)
+    Stage.recalcLot(lot)
 end
 
 -- The lots each group needs, and what builds each lot, in the order they are looked for.
@@ -400,13 +375,8 @@ local function goTo(squares, stepsOut)
 end
 
 local function goToLot(name, stepsOut)
-    local lot, spec = lots[name], nil
-    for _, entry in ipairs(LOTS) do
-        if entry.name == name then
-            spec = entry.spec
-        end
-    end
-    goTo({ at(lot, spec.scout), at(lot, spec.player) }, stepsOut)
+    local lot = lots[name]
+    goTo({ at(lot, lot.spec.scout), at(lot, lot.spec.player) }, stepsOut)
 end
 
 local function addWorld()
@@ -443,26 +413,6 @@ end
 local function homesteadTap()
     local lot = lots.homestead
     return EI.Lines.lineAt(lot.x + HOMESTEAD.tap[1], lot.y + HOMESTEAD.tap[2], lot.z)
-end
-
--- The panel LineMenu opens for the valve on the tap tile `line` (LineMenu's valvePanel).
-local function valvePanel(line)
-    local state = EI.Lines.stateOf(line)
-    local valve = state and state.valve
-    if not valve then
-        return nil
-    end
-    local windUp = EI.Valves.kindOf(valve.item) == "windup"
-    return {
-        title = getItemNameFromFullType(valve.item),
-        object = line,
-        feature = "line",
-        job = windUp and EI.LineJobs.WIND_VALVE or EI.LineJobs.SET_TIMER,
-        okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_Set",
-        timer = not windUp,
-        start = valve.start,
-        minutes = windUp and EI.Valves.minutesLeft(valve) or valve.minutes,
-    }
 end
 
 -- The tap's world menu with its Garden Line submenu and, while the character carries a valve of
@@ -519,9 +469,13 @@ local function addMenu()
         near = function()
             return homesteadTap():getSquare()
         end,
+        -- The panel LineMenu opens for the Timer Valve fitted above.
         open = function()
             local tap = homesteadTap()
-            return EI.ValveUI.open(getPlayer(), function() return valvePanel(tap) end)
+            return EI.ValveUI.open(getPlayer(), function()
+                local state = EI.Lines.stateOf(tap)
+                return EI.ValveUI.specOf(state and state.valve, tap, "line", EI.LineJobs.SET_TIMER)
+            end)
         end,
         close = function(panel)
             panel:destroy()
@@ -580,6 +534,7 @@ local function prepare(chosen)
                 return "open soil or grass " .. entry.spec.w .. "x" .. entry.spec.h .. " for the " .. entry.name
                     .. " within " .. Harness.SEARCH_RADIUS .. " squares"
             end
+            lot.spec = entry.spec
             lots[entry.name] = lot
             table.insert(found, lot)
             table.insert(origins, Stage.lotSquare(lot, 0, 0))
@@ -593,7 +548,7 @@ local function prepare(chosen)
     run:add(function()
         for _, entry in ipairs(LOTS) do
             if needs[entry.name] then
-                entry.build()
+                entry.build(lots[entry.name])
             end
         end
         return Capture.DRAW_FRAMES

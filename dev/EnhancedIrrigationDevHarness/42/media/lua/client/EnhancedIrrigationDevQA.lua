@@ -9,6 +9,8 @@ require "EnhancedIrrigation/Stands/Stands"
 require "EnhancedIrrigation/Lines/LineJobs"
 require "EnhancedIrrigation/Valves"
 local Stage = require "EnhancedIrrigationDevStage"
+local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
+local Harness = require "PZHarness/Stage"
 
 local QA = {}
 
@@ -41,8 +43,8 @@ local DECK_FLOOR = { sprite = "carpentry_02_58", nSprite = 1 }
 -- In build order, each beside one built: the landing is at the stairs' x, a square north of them.
 local DECK = { { x = 1, y = 4 }, { x = 0, y = 3 }, { x = 1, y = 3 } }
 
--- Water points of a crop just watered, and of one gone dry.
-local WATERED, DRY = 100, 15
+-- Water points of a crop gone dry.
+local DRY = 15
 -- A crop stage still growing, short of harvest.
 local GROWING = 4
 -- The column of the beds' tanks, whose crops run east of them.
@@ -97,32 +99,11 @@ local READING = { { "EnhancedIrrigation.CisternsForKentucky", 1 }, { "Base.Water
 -- One of each valve, to fit to the lines' taps.
 local VALVES = { { Valves.WIND_UP, 1 }, { Valves.TIMER, 1 }, { Valves.SPRINKLER_TIMER, 1 } }
 
--- The mod's build-menu recipes, which PZHarness.Test.learnRecipes doesn't teach: it teaches only
--- craftRecipes.
-local function buildRecipes()
-    local recipes, prefix = {}, PZHarness.testSettings.recipePrefix
-    local buildable = getScriptManager():getAllBuildableRecipes()
-    for i = 0, buildable:size() - 1 do
-        if PZHarness.startsWith(buildable:get(i):getName(), prefix) then
-            table.insert(recipes, buildable:get(i))
-        end
-    end
-    return recipes
-end
-
-local function recipeNames(recipes)
-    local names = {}
-    for _, recipe in ipairs(recipes) do
-        table.insert(names, recipe:getName())
-    end
-    return names
-end
-
--- What the build-menu recipes use up; their tools are among TOOLS.
-local function standMaterials(recipes)
+-- What the build-menu recipes `names` use up; their tools are among TOOLS.
+local function standMaterials(names)
     local materials = {}
-    for _, recipe in ipairs(recipes) do
-        local inputs = recipe:getInputs()
+    for _, name in ipairs(names) do
+        local inputs = getScriptManager():getCraftRecipe(name):getInputs()
         for i = 0, inputs:size() - 1 do
             local input = inputs:get(i)
             local item = input:getResourceType() == ResourceType.Item and not input:isKeep()
@@ -142,7 +123,7 @@ local function itemsFor(fullType, uses)
 end
 
 -- The item groups, in order, each a list of { type, count, fluid }.
-local function itemGroups(recipes)
+local function itemGroups(buildRecipes)
     local pipes, joints = {}, {}
     for _, pipe in ipairs(PIPES) do
         table.insert(pipes, { pipe[1], pipe[2] * LENGTHS })
@@ -150,7 +131,7 @@ local function itemGroups(recipes)
     for _, joint in ipairs(JOINTS) do
         table.insert(joints, { joint, itemsFor(joint, LENGTHS) })
     end
-    return { pipes, joints, TOOLS, standMaterials(recipes), READING, VALVES }
+    return { pipes, joints, TOOLS, standMaterials(buildRecipes), READING, VALVES }
 end
 
 local function isKnown(fullType)
@@ -233,13 +214,9 @@ local function placeTank(lot, x, y, sprite, up, full)
     if not square then
         return "a square for " .. sprite .. " at " .. (lot.x + x) .. "," .. (lot.y + y) .. "," .. (lot.z + (up or 0))
     end
-    local object, missing = Stage.build(square, sprite)
-    if not object then
+    local built, missing = Build.tile(square, sprite, full and Build.FULL)
+    if not built then
         return missing
-    end
-    local fluid = full and object:getFluidContainer()
-    if fluid then
-        fluid:addFluid(FluidType.Water, fluid:getCapacity() - fluid:getAmount())
     end
     square:RecalcAllWithNeighbours(true)
 end
@@ -256,7 +233,7 @@ local function placeBeds(player, lot)
             return missing
         end
         for i = 1, BED_CROPS do
-            local water = i <= bed.dry and DRY or WATERED
+            local water = i <= bed.dry and DRY or Stage.WATERED
             missing = Stage.plant(Stage.lotSquare(lot, TANK_X + i, bed.y), bed.seed, GROWING, water)
             if missing then
                 return missing
@@ -271,7 +248,7 @@ local function placeBeds(player, lot)
     end
 end
 
-local function setUpCharacter(player, recipes)
+local function setUpCharacter(player, buildRecipes)
     player:setGodMod(true)
     player:setInvisible(true)
     player:setUnlimitedCarry(true)
@@ -282,7 +259,8 @@ local function setUpCharacter(player, recipes)
     end
     PZHarness.Fixtures.setPerkLevels(player, levels)
     PZHarness.Test.learnRecipes(player)
-    PZHarness.Fixtures.learnRecipes(player, recipeNames(recipes))
+    -- The build menu's recipes too, which it doesn't teach: it teaches only craftRecipes.
+    PZHarness.Fixtures.learnRecipes(player, buildRecipes)
     -- An empty barrel as vanilla's pickup gives it, the server module loaded by the first tick
     -- in single player.
     player:getInventory():AddItem(EnhancedIrrigation.StandSystem.barrelItem(BARREL_SPEC,
@@ -293,18 +271,18 @@ end
 --- under MARK.
 function QA.setup(player)
     getGameTime():setTimeOfDay(10)
-    local recipes = buildRecipes()
-    setUpCharacter(player, recipes)
+    local buildRecipes = PZHarness.Test.buildRecipeNames()
+    setUpCharacter(player, buildRecipes)
     local lot = Stage.findLot(player, AREA.w, AREA.h, true)
     if not lot then
         print(MARK .. " no open lot of soil or grass " .. AREA.w .. "x" .. AREA.h .. " within "
-            .. PZHarness.Stage.SEARCH_RADIUS .. " squares")
+            .. Harness.SEARCH_RADIUS .. " squares")
         return
     end
     local summary = { types = 0, items = 0, unknown = {}, unplaced = {} }
-    Stage.clearLot(lot, AREA.w, AREA.h, MARGIN)
+    Stage.clearLot(lot, MARGIN)
     summary.missing = placeBeds(player, lot)
-    layItems(lot, itemGroups(recipes), summary)
+    layItems(lot, itemGroups(buildRecipes), summary)
     PZHarness.Fixtures.teleportToMiddle(player, lot.x + ARRIVE.x, lot.y + ARRIVE.y, lot.z)
     print(string.format("%s laid out %d beds, %d tanks and %d items of %d types on the lot at %d,%d", MARK, #BEDS,
         #TANKS, summary.items, summary.types, lot.x, lot.y))

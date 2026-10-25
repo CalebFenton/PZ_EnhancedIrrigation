@@ -1,12 +1,24 @@
 -- Development only. What the --art and --promo modes and the Enhanced Irrigation QA scenario need
 -- besides the harness's staging (PZHarness/Stage.lua): finding a lot near the character, clearing
--- it, building the mod's tiles and sowing crops on it.
+-- it, sowing crops on it, and the values they share. The mod's tiles are built through
+-- EnhancedIrrigationDebugBuild.lua.
 
 require "PZHarness/Fixtures"
-require "EnhancedIrrigation/Utilities"
 local Harness = require "PZHarness/Stage"
 
 local Stage = {}
+
+Stage.VANILLA_WELL = "camping_01_16"
+-- Water points of a crop just watered.
+Stage.WATERED = 100
+-- Fuel enough that a fire burns at its full light radius through every shot: the clock's jump to
+-- a night shot burns the hours it skips (IsoFireplace.update counts world hours).
+Stage.BOILER_FUEL = 48 * 60
+
+--- A new sprinkler's record fields, as Set Sprinkler fits one.
+function Stage.newSprinkler()
+    return { condition = 100, ceiling = 100 }
+end
 
 local isGroundCover, clearGroundCover = Harness.isGroundCover, Harness.clearGroundCover
 
@@ -77,11 +89,11 @@ function Stage.lotSquare(lot, x, y, up)
     return getCell():getGridSquare(lot.x + x, lot.y + y, lot.z + (up or 0))
 end
 
---- Clears `lot`'s `w` by `h` squares, and `margin` more round it, of trees and ground cover, so
---- nothing stands in the way of what is set on it.
-function Stage.clearLot(lot, w, h, margin)
-    for x = -margin, w + margin - 1 do
-        for y = -margin, h + margin - 1 do
+--- Clears `lot`'s squares, and `margin` more round it, of trees and ground cover, so nothing
+--- stands in the way of what is set on it.
+function Stage.clearLot(lot, margin)
+    for x = -margin, lot.w + margin - 1 do
+        for y = -margin, lot.h + margin - 1 do
             local square = Stage.lotSquare(lot, x, y)
             local tree = square and square:getTree()
             if tree then
@@ -94,18 +106,24 @@ function Stage.clearLot(lot, w, h, margin)
     end
 end
 
---- The object of the tile `sprite` on `square` as the build menu builds one
---- (ISBuildIsoEntity:setInfo): a thumpable with the entity that owns the tile. Returns it, or nil
---- and what is missing.
-function Stage.build(square, sprite)
-    local script = EnhancedIrrigation.tileEntity(sprite)
-    if not script then
-        return nil, "the entity of the tile " .. sprite
+--- Stage.clearLot for shots, which also takes the trees further round (Harness.removeTrees), as
+--- they draw black where the character can't see them.
+function Stage.clearForShots(lot, margin)
+    Harness.removeTrees(lot.x, lot.y, lot.z)
+    Stage.clearLot(lot, margin)
+end
+
+--- Recalculates `lot`'s squares and those beside it, once what was set on them is in place, so
+--- that they draw it.
+function Stage.recalcLot(lot)
+    for x = -1, lot.w do
+        for y = -1, lot.h do
+            local square = Stage.lotSquare(lot, x, y)
+            if square then
+                square:RecalcAllWithNeighbours(true)
+            end
+        end
     end
-    local thumpable = IsoThumpable.new(getCell(), square, sprite, false, nil)
-    GameEntityFactory.CreateIsoObjectEntity(thumpable, script, true)
-    square:AddSpecialObject(thumpable)
-    return thumpable
 end
 
 --- A crop sown on `square`, then grown to `stage` at full health and `water` water points, its tile

@@ -1,11 +1,11 @@
 -- Development only; dev/run-debug-client.sh --art runs it instead of the tests. It checks the art
 -- from art/models in the world: it stages the mod's tiles beside vanilla's on one open lot and
--- saves each shot to <cachedir>/Screenshots as <name>.png.
+-- saves each shot to <cachedir>/Screenshots as art_<name>.png.
 -- Single player only: it lays the lines through the authority's LineSystem.
 
 require "EnhancedIrrigation/Sprites"
-require "EnhancedIrrigation/Utilities"
 local Stage = require "EnhancedIrrigationDevStage"
+local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Harness = require "PZHarness/Stage"
 local Capture = require "PZHarness/Capture"
 
@@ -18,7 +18,6 @@ local WALL_NORTH = "walls_exterior_house_01_1"
 local WALL_WEST = "walls_exterior_house_01_0"
 local VANILLA_BARREL = "carpentry_02_122"
 local VANILLA_BARREL_FIRE = "crafted_01_26"
-local VANILLA_WELL = "camping_01_16"
 
 -- The lot, in squares east and south of its north-west corner. A column between each material's
 -- dry and wet blocks is left free for the character, and the boilers stand far enough south to
@@ -35,7 +34,6 @@ local CROPS = {
     { x = 7, y = 1, seed = "Carrots", stage = 5 },
     { x = 8, y = 10, seed = "Broccoli", stage = 4 },
 }
-local CROP_WATER = 100
 local STAND_ROW = 18
 local STANDS = { Sprites.TANK_STAND, Sprites.RAISED_BARREL, Sprites.RAISED_BARREL_CLOSED, Sprites.RAISED_BARREL_TARP,
     Sprites.RAISED_BARREL_TARP_CLOSED, VANILLA_BARREL, Sprites.BARREL_FILTER, Sprites.BRICK_FILTER, Sprites.FILTER_CROCK }
@@ -52,18 +50,12 @@ local BOILERS = {
     { x = 4, sprite = VANILLA_BARREL_FIRE, lit = true },
     { x = 5, sprite = Sprites.BOILER_WELDED, lit = true }, { x = 6, sprite = Sprites.BOILER_WELDED },
 }
--- Fuel enough that the fire burns at its full light radius through every shot: the clock's jump to
--- the night shot burns the hours it skips (IsoFireplace.update counts world hours).
-local BOILER_FUEL = 48 * 60
 local MIDNIGHT = 0
--- How dark the climate must have gone before a night shot: the light follows the clock on the
--- climate's next ticks, not at once.
-local NIGHT_STRENGTH = 0.9
 -- The pumps as plain tiles, as the shots need only their sprites, between the well and the barrel
 -- they would draw from, for scale.
 local PUMP_ROW = 26
 local PUMPS = {
-    { x = 1, sprite = VANILLA_WELL }, { x = 2, sprite = Sprites.WOODEN_HAND_PUMP }, { x = 3, sprite = Sprites.IRON_HAND_PUMP },
+    { x = 1, sprite = Stage.VANILLA_WELL }, { x = 2, sprite = Sprites.WOODEN_HAND_PUMP }, { x = 3, sprite = Sprites.IRON_HAND_PUMP },
     { x = 4, sprite = VANILLA_BARREL }, { x = 5, sprite = Sprites.PUMP_HOUSE_WOOD }, { x = 6, sprite = Sprites.PUMP_HOUSE_METAL },
 }
 -- A line of three tiles each, a sprinkler on the middle one: the thinnest pipe and the widest, whose
@@ -75,31 +67,31 @@ local SPRINKLER_LINES = { { material = "plastic", x = 2 }, { material = "clay", 
 -- material's spot is in the free column below its band, where it hides none of the pipes.
 local SHOTS = {}
 for i, material in ipairs(Sprites.PIPE_MATERIALS) do
-    table.insert(SHOTS, { name = "art_pipes_" .. material, x = 5, y = i * 4, zoomSteps = 0 })
+    table.insert(SHOTS, { name = "pipes_" .. material, x = 5, y = i * 4, zoomSteps = 0 })
 end
 for _, shot in ipairs({
-    { name = "art_pipes", x = 5, y = 8, zoomSteps = 2 },
-    { name = "art_lot", x = 5, y = 11, zoomSteps = 3 },
+    { name = "pipes", x = 5, y = 8, zoomSteps = 2 },
+    { name = "lot", x = 5, y = 11, zoomSteps = 3 },
     -- Beside the crock at the row's east end, east of vanilla's barrel; on the crock's square, which
     -- a character walks over, so the crock must draw where it is in front of the character's feet;
     -- behind the row, then in front of it, diagonally in front of the bare stand, whose legs must
     -- draw behind the character.
-    { name = "art_stands", x = 9, y = 18, zoomSteps = 0 },
-    { name = "art_stands_mid", x = 9, y = 18, zoomSteps = 1 },
-    { name = "art_stands_crock", x = 8, y = 18, zoomSteps = 0 },
-    { name = "art_stands_behind", x = 2, y = 17, zoomSteps = 0 },
-    { name = "art_stands_front", x = 1, y = 19, zoomSteps = 0 },
-    { name = "art_wall", x = 8, y = 19, zoomSteps = 0 },
+    { name = "stands", x = 9, y = 18, zoomSteps = 0 },
+    { name = "stands_mid", x = 9, y = 18, zoomSteps = 1 },
+    { name = "stands_crock", x = 8, y = 18, zoomSteps = 0 },
+    { name = "stands_behind", x = 2, y = 17, zoomSteps = 0 },
+    { name = "stands_front", x = 1, y = 19, zoomSteps = 0 },
+    { name = "wall", x = 8, y = 19, zoomSteps = 0 },
     -- East of the pumps' row, then diagonally behind the iron pump, which must hide the character's
     -- legs, then between the sprinklers' lines. Before the boilers' shots, whose last is at night.
-    { name = "art_pumps", x = 8, y = PUMP_ROW, zoomSteps = 0 },
-    { name = "art_pumps_behind", x = 2, y = PUMP_ROW - 1, zoomSteps = 0 },
-    { name = "art_sprinklers", x = 5, y = SPRINKLER_ROW, zoomSteps = 0 },
+    { name = "pumps", x = 8, y = PUMP_ROW, zoomSteps = 0 },
+    { name = "pumps_behind", x = 2, y = PUMP_ROW - 1, zoomSteps = 0 },
+    { name = "sprinklers", x = 5, y = SPRINKLER_ROW, zoomSteps = 0 },
     -- East of the boilers' row at noon, then diagonally behind the lit stone boiler, which must
     -- hide the character's legs, then east of the row again at night, by the fires' light.
-    { name = "art_boilers", x = 7, y = BOILER_ROW, zoomSteps = 0 },
-    { name = "art_boilers_behind", x = 2, y = BOILER_ROW - 1, zoomSteps = 0 },
-    { name = "art_boilers_night", x = 7, y = BOILER_ROW, zoomSteps = 0, night = true },
+    { name = "boilers", x = 7, y = BOILER_ROW, zoomSteps = 0 },
+    { name = "boilers_behind", x = 2, y = BOILER_ROW - 1, zoomSteps = 0 },
+    { name = "boilers_night", x = 7, y = BOILER_ROW, zoomSteps = 0, night = true },
 }) do
     table.insert(SHOTS, shot)
 end
@@ -134,8 +126,7 @@ local function buildStage(lot)
     if not LineSystem or not SFarmingSystem then
         return "the authority's systems (LineSystem, SFarmingSystem); --art runs in single player only"
     end
-    Harness.removeTrees(lot.x, lot.y, lot.z)
-    Stage.clearLot(lot, AREA.w, AREA.h, MARGIN)
+    Stage.clearForShots(lot, MARGIN)
     for _, wall in ipairs(WALLS) do
         PZHarness.Fixtures.newTile(lotSquare(lot, wall.x, wall.y), wall.sprite)
     end
@@ -158,17 +149,17 @@ local function buildStage(lot)
         end
         -- Through the record, as Set Sprinkler sets it, which draws it as the tap is drawn.
         local record = EnhancedIrrigation.Lines.recordAt(lot.x + line.x + 1, lot.y + SPRINKLER_ROW, lot.z)
-        record.sprinkler = { condition = 100, ceiling = 100 }
+        record.sprinkler = Stage.newSprinkler()
         record:afterChange()
     end
     for _, crop in ipairs(CROPS) do
-        local missing = Stage.plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage, CROP_WATER)
+        local missing = Stage.plant(lotSquare(lot, crop.x, crop.y), crop.seed, crop.stage, Stage.WATERED)
         if missing then
             return missing
         end
     end
     for x, sprite in ipairs(STANDS) do
-        local built, missing = Stage.build(lotSquare(lot, x - 1, STAND_ROW), sprite)
+        local built, missing = Build.tile(lotSquare(lot, x - 1, STAND_ROW), sprite)
         if not built then
             return missing
         end
@@ -179,47 +170,36 @@ local function buildStage(lot)
         local fireplace = IsoFireplace.new(getCell(), lotSquare(lot, boiler.x, BOILER_ROW), getSprite(boiler.sprite))
         lotSquare(lot, boiler.x, BOILER_ROW):AddTileObject(fireplace)
         if boiler.lit then
-            fireplace:setFuelAmount(BOILER_FUEL)
+            fireplace:setFuelAmount(Stage.BOILER_FUEL)
             fireplace:setLit(true)
         end
     end
     for _, pump in ipairs(PUMPS) do
         PZHarness.Fixtures.newTile(lotSquare(lot, pump.x, PUMP_ROW), pump.sprite)
     end
-    for x = -1, AREA.w do
-        for y = -1, AREA.h do
-            local square = lotSquare(lot, x, y)
-            if square then
-                square:RecalcAllWithNeighbours(true)
-            end
-        end
-    end
+    Stage.recalcLot(lot)
+end
+
+-- The shots have no regions: --art writes no JSON, only the screenshots.
+local function noRegions()
+    return {}
 end
 
 -- The steps that turn the clock to midnight for a night shot, walk the character to the shot's
 -- spot, let it see around, zoom and save.
-local function addShot(steps, player, lot, shot)
+local function addShot(run, player, lot, shot)
     if shot.night then
-        table.insert(steps, function()
-            getGameTime():setTimeOfDay(MIDNIGHT)
-            return function()
-                return getClimateManager():getNightStrength() >= NIGHT_STRENGTH
-            end
-        end)
+        Harness.addHour(run, MIDNIGHT)
     end
-    Harness.addLookAround(steps, player, lotSquare(lot, shot.x, shot.y))
-    table.insert(steps, function()
+    Harness.addLookAround(run.steps, player, lotSquare(lot, shot.x, shot.y))
+    run:add(function()
         return Harness.zoomOut(shot.zoomSteps)
     end)
-    table.insert(steps, function()
-        return Capture.DRAW_FRAMES
-    end)
-    table.insert(steps, function()
-        Capture.screenshot(MARK, shot.name)
-    end)
+    run:addOpaque(shot.name, noRegions)
 end
 
-function Art.capture(onDone)
+--- Shoots the stage and calls onDone; --art has no groups to select.
+function Art.capture(_, onDone)
     local run = Capture.new(MARK)
     local player = getPlayer()
     local lot = findLot(player)
@@ -230,7 +210,7 @@ function Art.capture(onDone)
     print(string.format("%s stage at %d,%d natural=%s", MARK, lot.x, lot.y, tostring(lot.natural)))
     -- Hides the HUD, the debug console and the character window, which the shots don't need.
     ISUIHandler.setVisibleAllUI(false)
-    table.insert(run.steps, function()
+    run:add(function()
         getGameTime():setTimeOfDay(12)
         local missing = buildStage(lot)
         if missing then
@@ -238,7 +218,7 @@ function Art.capture(onDone)
         end
     end)
     for _, shot in ipairs(SHOTS) do
-        addShot(run.steps, player, lot, shot)
+        addShot(run, player, lot, shot)
     end
     run:run(nil, onDone)
 end

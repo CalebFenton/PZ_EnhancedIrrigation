@@ -12,7 +12,7 @@ PZHarness.register({
     modes = {
         -- They wait on the lighting, the zoom and the UI rather than on frame counts, so they draw
         -- uncapped, and they shoot a clear day.
-        art = { uncapped = true, clearWeather = true, fastUI = true, run = function(_, done) Art.capture(done) end },
+        art = { uncapped = true, clearWeather = true, fastUI = true, run = Art.capture },
         promo = { uncapped = true, clearWeather = true, fastUI = true, run = Promo.capture },
     },
 })
