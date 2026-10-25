@@ -69,7 +69,7 @@ local CLEARANCES = { 5, 3, 0 }
 local HOMESTEAD = {
     w = 11, h = 5,
     tank = { 1, 1, sprite = Sprites.RAISED_BARREL },
-    second = { 1, 3, sprite = Sprites.RAISED_TARP_BARREL },
+    second = { 1, 3, sprite = Sprites.RAISED_BARREL_TARP },
     filter = { 2, 0, sprite = Sprites.BARREL_FILTER },
     material = "iron",
     tap = { 2, 1 },

@@ -62,7 +62,7 @@ local BED_CROPS = 10
 -- barrels within plumbing reach of each other, one full and one empty.
 local TANK_ROW = 8
 local TANKS = {
-    { x = 1, sprite = Sprites.STAND },
+    { x = 1, sprite = Sprites.TANK_STAND },
     { x = 3, sprite = BARREL },
     { x = 6, sprite = BARREL, full = true },
     { x = 9, sprite = BARREL },

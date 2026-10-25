@@ -53,7 +53,7 @@ local DO = {
     [StandJobs.TAKE_DOWN] = function(character, raised)
         local spec = Stands.raisedSpec(raised)
         local item = StandSystem.barrelItem(spec, raised:getSquare())
-        replace(raised, Stands.STAND_ENTITY, Sprites.STAND)
+        replace(raised, Stands.STAND_ENTITY, Sprites.TANK_STAND)
         EnhancedIrrigation.Materials.giveItems(character, item)
     end,
 }

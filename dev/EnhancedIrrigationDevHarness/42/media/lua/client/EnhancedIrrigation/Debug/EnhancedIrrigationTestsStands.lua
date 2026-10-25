@@ -42,14 +42,14 @@ T.test("irrigation_stands_stand_built_from_build_menu", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.stand = T.buildFromMenu(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.STAND)
+        self.stand = T.buildFromMenu(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.TANK_STAND)
         if not self.stand then return end
         T.read(self, "tanks.read", T.at(self.stand), "built")
     end,
     validate = function(self)
         local built = self.reads.built
         expect(built.isStand, "the build menu built " .. tostring(built.entity) .. ", not a Tank Stand")
-        expect(built.sprite == Sprites.STAND, "the built stand is drawn as " .. tostring(built.sprite))
+        expect(built.sprite == Sprites.TANK_STAND, "the built stand is drawn as " .. tostring(built.sprite))
     end,
 })
 
@@ -182,7 +182,7 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
         T.waitFor(self, function() return T.player():getInventory():getFirstTypeRecurse(BARREL_HELD) == nil end,
             "this client to let go of vanilla's barrel")
         T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), true)
-        T.waitFor(self, function() return T.copyOf(self.tank, Sprites.STAND) ~= nil end, "this client's copy of the stand")
+        T.waitFor(self, function() return T.copyOf(self.tank, Sprites.TANK_STAND) ~= nil end, "this client's copy of the stand")
         T.batch(function()
             T.read(self, "tanks.read", T.at(self.tank), "stand")
             T.read(self, "stands.barrels", { dropped = true }, "after")
@@ -191,7 +191,7 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
     validate = function(self)
         T.expectOffered(self, "take down")
         local stand = self.reads.stand
-        expect(stand.isStand and stand.sprite == Sprites.STAND, "taking the barrel down left " .. tostring(stand.entity))
+        expect(stand.isStand and stand.sprite == Sprites.TANK_STAND, "taking the barrel down left " .. tostring(stand.entity))
         local vanilla, after = self.reads.vanilla.barrels, self.reads.after.barrels
         if not (expect(#vanilla == 1, "vanilla's pickup gave " .. #vanilla .. " barrels")
                 and expect(#after == 1, "Take Barrel Down gave " .. #after .. " barrels")) then

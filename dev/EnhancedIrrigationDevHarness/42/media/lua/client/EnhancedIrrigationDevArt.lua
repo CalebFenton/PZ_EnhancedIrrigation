@@ -37,8 +37,8 @@ local CROPS = {
 }
 local CROP_WATER = 100
 local STAND_ROW = 18
-local STANDS = { Sprites.STAND, Sprites.RAISED_BARREL, Sprites.RAISED_BARREL_CLOSED, Sprites.RAISED_TARP_BARREL,
-    Sprites.RAISED_TARP_BARREL_CLOSED, VANILLA_BARREL, Sprites.BARREL_FILTER, Sprites.BRICK_FILTER, Sprites.FILTER_CROCK }
+local STANDS = { Sprites.TANK_STAND, Sprites.RAISED_BARREL, Sprites.RAISED_BARREL_CLOSED, Sprites.RAISED_BARREL_TARP,
+    Sprites.RAISED_BARREL_TARP_CLOSED, VANILLA_BARREL, Sprites.BARREL_FILTER, Sprites.BRICK_FILTER, Sprites.FILTER_CROCK }
 local WALLS = {
     { x = 7, y = 16, sprite = WALL_NORTH }, { x = 8, y = 16, sprite = WALL_NORTH }, { x = 9, y = 16, sprite = WALL_NORTH },
     { x = 7, y = 16, sprite = WALL_WEST }, { x = 7, y = 17, sprite = WALL_WEST },

@@ -27,9 +27,9 @@ Stands.STAND_ENTITY = "EnhancedIrrigation_TankStand"
 Stands.BARRELS = {
     { barrel = "carpentry_02_122", entity = "EnhancedIrrigation_RaisedBarrel", sprite = Sprites.RAISED_BARREL },
     { barrel = "carpentry_02_126", entity = "EnhancedIrrigation_RaisedBarrelClosed", sprite = Sprites.RAISED_BARREL_CLOSED },
-    { barrel = "carpentry_02_124", entity = "EnhancedIrrigation_RaisedBarrel_Tarp", sprite = Sprites.RAISED_TARP_BARREL },
+    { barrel = "carpentry_02_124", entity = "EnhancedIrrigation_RaisedBarrel_Tarp", sprite = Sprites.RAISED_BARREL_TARP },
     { barrel = "carpentry_02_127", entity = "EnhancedIrrigation_RaisedBarrel_TarpClosed",
-        sprite = Sprites.RAISED_TARP_BARREL_CLOSED },
+        sprite = Sprites.RAISED_BARREL_TARP_CLOSED },
 }
 
 local BY_ENTITY, BY_TILE = {}, {}

@@ -61,11 +61,11 @@ Sprites.TAP = tile(128)
 -- The Tank Stand, empty, and with a rain barrel on it: open, lidded, and the tarp barrel open and
 -- lidded. The lidded ones' entities are named as the open ones' plus "Closed", which is how
 -- vanilla's lid action (ISOpenCloseLid) finds the other.
-Sprites.STAND = tile(129)
+Sprites.TANK_STAND = tile(129)
 Sprites.RAISED_BARREL = tile(130)
 Sprites.RAISED_BARREL_CLOSED = tile(131)
-Sprites.RAISED_TARP_BARREL = tile(132)
-Sprites.RAISED_TARP_BARREL_CLOSED = tile(133)
+Sprites.RAISED_BARREL_TARP = tile(132)
+Sprites.RAISED_BARREL_TARP_CLOSED = tile(133)
 
 Sprites.BARREL_FILTER = tile(134)
 Sprites.BRICK_FILTER = tile(135)

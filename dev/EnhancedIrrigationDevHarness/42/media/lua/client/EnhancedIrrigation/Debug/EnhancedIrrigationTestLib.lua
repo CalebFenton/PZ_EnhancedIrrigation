@@ -664,7 +664,7 @@ T.TANKS = {
     -- Vanilla's lidded rain barrel, which no rain fills meanwhile.
     lidded = { sprite = "carpentry_02_126" },
     -- A Tank Stand with no barrel on it: no tank.
-    stand = { sprite = Sprites.STAND },
+    stand = { sprite = Sprites.TANK_STAND },
     -- A rain barrel on a Tank Stand, open and lidded.
     raised = { sprite = Sprites.RAISED_BARREL },
     raisedLidded = { sprite = Sprites.RAISED_BARREL_CLOSED },
