@@ -52,10 +52,14 @@ Pipes.KINDS = {
 Pipes.ORDER = EnhancedIrrigation.Sprites.PIPE_MATERIALS
 
 --- The materials list (EnhancedIrrigation.Materials) of `lengths` lengths of `kind`'s pipe, each
---- with its joint.
-function Pipes.materials(kind, lengths)
+--- with its joint, after the materials of `first` (a list, left as it is), if given.
+function Pipes.materials(kind, lengths, first)
     local spec = Pipes.KINDS[kind]
-    local list = { { item = spec.item, need = spec.perLength * lengths } }
+    local list = {}
+    for _, material in ipairs(first or {}) do
+        table.insert(list, material)
+    end
+    table.insert(list, { item = spec.item, need = spec.perLength * lengths })
     local joint = spec.joint
     if joint then
         table.insert(list, { tags = joint.tags, types = joint.types, uses = lengths, labelKey = joint.labelKey })
@@ -63,14 +67,10 @@ function Pipes.materials(kind, lengths)
     return list
 end
 
---- The materials list of laying `lengths` tiles of `kind`'s line: its pipe and joints, and the pipe
---- wrench where that is the joint.
+--- The materials list of laying `lengths` tiles of `kind`'s line: the pipe wrench where that is the
+--- joint, then its pipe and joints.
 function Pipes.layMaterials(kind, lengths)
-    local list = Pipes.materials(kind, lengths)
-    if Pipes.KINDS[kind].wrench then
-        table.insert(list, 1, Pipes.WRENCH)
-    end
-    return list
+    return Pipes.materials(kind, lengths, Pipes.KINDS[kind].wrench and { Pipes.WRENCH })
 end
 
 --- The kinds `character` carries any pipe of, in menu order.

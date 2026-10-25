@@ -244,12 +244,8 @@ LineJobs.JOBS = {
             return #Tanks.pushingAt(x, y, z) == 0 and "Tooltip_EnhancedIrrigation_NoPressure" or nil
         end),
         materials = function(character, object)
-            local list = { Pipes.WRENCH }
             local state = Lines.stateOf(object)
-            for _, material in ipairs(state and Pipes.materials(state.material, 1) or {}) do
-                table.insert(list, material)
-            end
-            return list
+            return state and Pipes.materials(state.material, 1, { Pipes.WRENCH }) or { Pipes.WRENCH }
         end,
     },
     [LineJobs.PATCH] = {

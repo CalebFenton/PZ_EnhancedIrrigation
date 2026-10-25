@@ -72,15 +72,8 @@ end
 
 -- What a job that lays pipe takes: the wrench, the knowledge, and the pipe the run needs.
 local function plumbMaterials(character, object, with)
-    local list = {}
-    for _, material in ipairs(LinkJobs.PLUMB_TOOLS) do
-        table.insert(list, material)
-    end
     local kind, lengths = LinkJobs.pipeFor(object, with)
-    for _, material in ipairs(kind and Pipes.materials(kind, lengths) or {}) do
-        table.insert(list, material)
-    end
-    return list
+    return kind and Pipes.materials(kind, lengths, LinkJobs.PLUMB_TOOLS) or LinkJobs.PLUMB_TOOLS
 end
 
 --- Why the fixture `fixture` can't be plumbed to the tank on the square `with` names, as far as
