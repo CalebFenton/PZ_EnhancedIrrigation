@@ -21,7 +21,7 @@ require "EnhancedIrrigation/Lines/Taps"
 require "EnhancedIrrigation/Power"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Timers"
-require "EnhancedIrrigation/Lines/Flow"
+require "EnhancedIrrigation/Lines/TapSystem"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ValveSystem = {}
@@ -29,7 +29,7 @@ EnhancedIrrigation.ValveSystem = ValveSystem
 
 local Lines, Taps, Valves, Power = EnhancedIrrigation.Lines, EnhancedIrrigation.Taps, EnhancedIrrigation.Valves,
     EnhancedIrrigation.Power
-local Flow, Timers = EnhancedIrrigation.Flow, EnhancedIrrigation.Timers
+local TapSystem, Timers = EnhancedIrrigation.TapSystem, EnhancedIrrigation.Timers
 
 -- The records of the taps with a valve, found again each ten minutes, and added to as one is fitted.
 local valved = {}
@@ -86,12 +86,8 @@ function ValveSystem.update(record)
     local from = now - EnhancedIrrigation.hoursSince(valve)
     if not record.holder then
         for _, hours in ipairs(openHours(record, tap, from, now)) do
-            local tank = Taps.tankFor(tap)
-            if not tank then
+            if hours > 0 and TapSystem.run(tap, hours) then
                 break
-            end
-            if hours > 0 then
-                Flow.run(record, Flow.fromTank(tank, tap:getZ()), hours)
             end
         end
     end
@@ -102,8 +98,8 @@ function ValveSystem.update(record)
         valve.grid = Power.gridPowered(tap)
     end
     record.valveOpen = isOpen(record, tap, now) or nil
-    -- Flow.run told the clients of every tile it ran; this tells them whether the valve runs now,
-    -- or nothing when that didn't change.
+    -- TapSystem.run told the clients of every tile it ran; this tells them whether the valve runs
+    -- now, or nothing when that didn't change.
     record:sendSummary()
 end
 
