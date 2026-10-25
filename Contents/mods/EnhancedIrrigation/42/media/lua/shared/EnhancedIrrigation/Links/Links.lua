@@ -54,6 +54,18 @@ function Links.minutesFor(distance)
     return Links.BASE_MINUTES + Links.MINUTES_PER_TILE * distance
 end
 
+--- Moves up to `litres` from the FluidContainer `from` into `to`, as far as `from` holds and `to`
+--- has room; the mixture moves, taint and all. Moves nothing below LEAST_FLOW. Returns whether any
+--- moved; the caller syncs what it moved between. Authority only.
+function Links.carry(from, to, litres)
+    litres = math.min(litres, from:getAmount(), to:getFreeCapacity())
+    if litres < Links.LEAST_FLOW then
+        return false
+    end
+    FluidContainer.Transfer(from, to, litres)
+    return true
+end
+
 --- The square `at`, and for Plumb the pipe `kind` chosen, as a job's `with`: a string, which a
 --- multiplayer action's arguments can carry.
 function Links.encode(at, kind)

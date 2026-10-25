@@ -167,15 +167,9 @@ local function flow(tankA, tankB, hours)
         else
             from, to = fluidB, fluidA
         end
-        litres = math.min(from:getAmount(), to:getFreeCapacity())
+        litres = math.huge
     end
-    litres = math.min(litres, Links.RATE * hours)
-    if litres < Links.LEAST_FLOW then
-        return false
-    end
-    -- The mixture moves, taint and all.
-    FluidContainer.Transfer(from, to, litres)
-    return true
+    return Links.carry(from, to, math.min(litres, Links.RATE * hours))
 end
 
 --- Moves water through every link with both ends loaded, as `hours` of flow: between two tanks, or

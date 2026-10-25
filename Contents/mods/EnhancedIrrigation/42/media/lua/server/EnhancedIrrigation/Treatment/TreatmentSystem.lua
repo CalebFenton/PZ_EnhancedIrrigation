@@ -72,13 +72,8 @@ end
 local DO = {
     -- The container keeps what the head has no room for.
     [TreatmentJobs.POUR_IN] = function(character, unit, item)
-        local record = Treatment.recordOf(unit)
-        local fluid = item:getFluidContainer()
-        local litres = math.min(fluid:getAmount(), record:headRoom())
-        local tainted = fluid:isTainted()
-        fluid:removeFluid(litres, false)
+        Treatment.recordOf(unit):takeFrom(item:getFluidContainer(), math.huge)
         item:syncItemFields()
-        record:fill(litres, tainted)
     end,
     [TreatmentJobs.CLEAN_FILTER] = function(character, unit)
         Treatment.recordOf(unit):clean()

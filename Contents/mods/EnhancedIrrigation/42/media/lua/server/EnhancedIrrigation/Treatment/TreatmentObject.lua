@@ -72,10 +72,19 @@ function TreatmentObject:headRoom()
     return math.max(0, self:spec().head - self.head)
 end
 
---- Adds `litres` of raw water to the head, `tainted` or not; the caller kept to its room.
-function TreatmentObject:fill(litres, tainted)
+--- Takes up to `most` litres of raw water out of `fluid` (a FluidContainer) into the head, as far
+--- as `fluid` holds and the head has room, unless that comes to less than `least`; the taint goes
+--- with it. Returns the litres taken.
+function TreatmentObject:takeFrom(fluid, most, least)
+    local litres = math.min(most, fluid:getAmount(), self:headRoom())
+    if least and litres < least then
+        return 0
+    end
+    local tainted = fluid:isTainted()
+    fluid:removeFluid(litres, false)
     self.head = self.head + litres
-    self.headTainted = self.headTainted or tainted == true
+    self.headTainted = self.headTainted or tainted
+    return litres
 end
 
 -- The tank at the far end of `record`'s `role` link ("inlet" or "outlet"), while it is loaded and
@@ -90,31 +99,21 @@ local function tankOf(record, unit, role)
 end
 
 --- Tops the head up from `tank` with what a link carries in `hours`, while the tank holds water and
---- nothing else and the head can hold it; the taint goes with it. Returns whether any moved.
+--- nothing else. Returns whether any moved.
 function TreatmentObject:draw(tank, hours)
     local fluid = tank:getFluidContainer()
     if self:isBurntThrough() or not Treatment.isWater(fluid) then
         return false
     end
-    local litres = math.min(Links.RATE * hours, fluid:getAmount(), self:headRoom())
-    if litres < Links.LEAST_FLOW then
-        return false
-    end
-    local tainted = fluid:isTainted()
-    fluid:removeFluid(litres, false)
-    self:fill(litres, tainted)
-    return true
+    return self:takeFrom(fluid, Links.RATE * hours, Links.LEAST_FLOW) > 0
 end
 
 --- Empties the basin of `unit` into `tank` by what a link carries in `hours`, as far as the tank
 --- has room; the mixture moves as it is. Returns whether any moved.
 function TreatmentObject:drain(unit, tank, hours)
-    local basin, fluid = unit:getFluidContainer(), tank:getFluidContainer()
-    local litres = math.min(Links.RATE * hours, basin:getAmount(), fluid:getFreeCapacity())
-    if litres < Links.LEAST_FLOW then
+    if not Links.carry(unit:getFluidContainer(), tank:getFluidContainer(), Links.RATE * hours) then
         return false
     end
-    FluidContainer.Transfer(basin, fluid, litres)
     self.basinChanged = true
     return true
 end

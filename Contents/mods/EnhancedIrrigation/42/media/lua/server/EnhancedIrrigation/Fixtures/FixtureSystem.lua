@@ -73,17 +73,12 @@ function FixtureSystem.giveBackReserve(link)
     end
 end
 
--- Fills `fixture`'s buffer from `tank` by up to `litres`, as far as the buffer has room and the
--- tank has water; the mixture moves, taint and all. Syncs the fixture, not the tank. Returns
--- whether any moved.
+-- Fills `fixture`'s buffer from `tank` by up to `litres` (Links.carry). Syncs the fixture, not the
+-- tank. Returns whether any moved.
 local function fill(tank, fixture, litres)
-    local buffer = FixtureSystem.ensureBuffer(fixture)
-    local tankFluid = tank:getFluidContainer()
-    local moved = math.min(litres, buffer:getFreeCapacity(), tankFluid:getAmount())
-    if moved < Links.LEAST_FLOW then
+    if not Links.carry(tank:getFluidContainer(), FixtureSystem.ensureBuffer(fixture), litres) then
         return false
     end
-    FluidContainer.Transfer(tankFluid, buffer, moved)
     fixture:sync()
     return true
 end
