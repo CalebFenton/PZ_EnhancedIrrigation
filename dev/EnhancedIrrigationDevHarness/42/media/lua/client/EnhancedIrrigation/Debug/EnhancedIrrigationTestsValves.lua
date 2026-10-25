@@ -60,7 +60,7 @@ local function setFromPanel(self, line, label, set)
         local panel = ValveUI.instances[T.player():getPlayerNum()]
         set(panel)
         panel:update()
-        self.panelRefusal = panel.refusal
+        self.panelBlocker = panel.blocker
         panel:onClick(panel.ok)
     end)
 end
@@ -165,7 +165,7 @@ T.test("irrigation_valves_wind_up_runs_its_minutes_and_shuts", {
         end)
     end,
     validate = function(self)
-        expect(self.panelRefusal == nil, "the panel refused winding: " .. tostring(self.panelRefusal))
+        expect(self.panelBlocker == nil, "the panel refused winding: " .. tostring(self.panelBlocker))
         local wound = self.reads.wound.valve
         expectNear("the minutes wound", (wound.untilHour - wound.now) * 60, 10, 1)
         T.expectRefused(self, "water", "Tooltip_EnhancedIrrigation_ValveRunning")
@@ -204,7 +204,7 @@ end
 
 --- Expects the panel's setting to have reached the valve.
 local function expectSet(self)
-    expect(self.panelRefusal == nil, "the panel refused the setting: " .. tostring(self.panelRefusal))
+    expect(self.panelBlocker == nil, "the panel refused the setting: " .. tostring(self.panelBlocker))
     local set = self.reads.set.valve
     expect(set.start == self.start, "the timer starts at " .. tostring(set.start) .. ", not " .. self.start)
     expect(set.minutes == 30, "the timer runs " .. tostring(set.minutes) .. " minutes")

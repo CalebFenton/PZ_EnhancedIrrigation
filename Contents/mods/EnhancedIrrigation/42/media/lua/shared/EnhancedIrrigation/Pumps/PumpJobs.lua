@@ -140,9 +140,9 @@ PumpJobs.JOBS = {
     [PumpJobs.TURN_ON] = {
         minutes = SWITCH_MINUTES, position = "Mid",
         blocker = function(character, pump)
-            local refusal, summary = fittedBlocker(pump)
-            if refusal then
-                return refusal
+            local blocker, summary = fittedBlocker(pump)
+            if blocker then
+                return blocker
             end
             if summary.on then
                 return Jobs.UNKNOWN
@@ -165,11 +165,11 @@ PumpJobs.JOBS = {
     [PumpJobs.REPAIR_PUMP] = {
         minutes = REPAIR_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump)
-            local refusal, summary = fittedBlocker(pump)
-            if refusal then
-                return refusal
+            local blocker, summary = fittedBlocker(pump)
+            if blocker then
+                return blocker
             end
-            return EnhancedIrrigation.Parts.mendRefusal(summary.partCondition, summary.partCeiling, Pumps.REPAIR_LOSS,
+            return EnhancedIrrigation.Parts.mendBlocker(summary.partCondition, summary.partCeiling, Pumps.REPAIR_LOSS,
                 "Tooltip_EnhancedIrrigation_PumpTooRepaired", "Tooltip_EnhancedIrrigation_PumpSound")
         end,
         materials = {

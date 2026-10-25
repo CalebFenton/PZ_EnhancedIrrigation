@@ -123,9 +123,9 @@ TreatmentJobs.JOBS = {
         position = "Mid", heavy = true, sound = "Shoveling",
         equip = function(character) return cleaningTool(character) end,
         blocker = function(character, unit)
-            local refusal = kindBlocker(unit, TreatmentJobs.CLEAN_FILTER)
-            if refusal then
-                return refusal
+            local blocker = kindBlocker(unit, TreatmentJobs.CLEAN_FILTER)
+            if blocker then
+                return blocker
             end
             local summary = Treatment.currentSummary(unit)
             return not (summary and summary.clogged) and "Tooltip_EnhancedIrrigation_NotClogged" or nil
@@ -135,9 +135,9 @@ TreatmentJobs.JOBS = {
         minutes = SCRUB_MINUTES,
         position = "Low",
         blocker = function(character, unit)
-            local refusal = kindBlocker(unit, TreatmentJobs.SCRUB_CROCK)
-            if refusal then
-                return refusal
+            local blocker = kindBlocker(unit, TreatmentJobs.SCRUB_CROCK)
+            if blocker then
+                return blocker
             end
             local summary = Treatment.currentSummary(unit)
             if summary and summary.cracked then
@@ -160,15 +160,15 @@ TreatmentJobs.JOBS = {
         anim = "BlowTorch", position = "Mid", sound = "BlowTorch",
         equip = EnhancedIrrigation.Materials.holdsDrainable(WELDING_TORCH),
         blocker = function(character, unit)
-            local refusal = kindBlocker(unit, TreatmentJobs.PATCH_DRUM)
-            if refusal then
-                return refusal
+            local blocker = kindBlocker(unit, TreatmentJobs.PATCH_DRUM)
+            if blocker then
+                return blocker
             end
             local summary = Treatment.currentSummary(unit)
             if not summary then
                 return Jobs.UNKNOWN
             end
-            return EnhancedIrrigation.Parts.mendRefusal(summary.condition, summary.ceiling, Treatment.PATCH_LOSS,
+            return EnhancedIrrigation.Parts.mendBlocker(summary.condition, summary.ceiling, Treatment.PATCH_LOSS,
                 "Tooltip_EnhancedIrrigation_DrumWornOut", "Tooltip_EnhancedIrrigation_DrumSound")
         end,
         materials = {

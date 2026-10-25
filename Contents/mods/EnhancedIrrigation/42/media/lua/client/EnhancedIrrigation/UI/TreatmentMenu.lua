@@ -96,7 +96,7 @@ local function addPlumbing(menu, playerNum, character, unit)
         LinkMenu.addPlumbOptions(menu, playerNum, character, unit, {
             nameKey = plumbEnd.nameKey,
             job = plumbEnd.job,
-            refusal = function(at) return (LinkJobs.unitBlocker(unit, Links.encode(at), plumbEnd.role)) end,
+            blocker = function(at) return (LinkJobs.unitBlocker(unit, Links.encode(at), plumbEnd.role)) end,
             noneKey = "ContextMenu_EnhancedIrrigation_NoTankForFixture",
         })
     end

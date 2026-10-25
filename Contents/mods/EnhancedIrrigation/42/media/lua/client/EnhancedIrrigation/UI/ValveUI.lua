@@ -63,7 +63,7 @@ function ValveUI:initialise()
     self.knob:setKnobPosition(self.spec.minutes or 0)
     self:addChild(self.knob)
     y = self.knob:getBottom() + PAD
-    self.refusalY = y
+    self.blockerY = y
     y = y + FONT_HGT_SMALL + PAD
     self.ok = ISButton:new(PAD, y, BUTTON_WID, BUTTON_HGT, getText(self.spec.okKey), self, ValveUI.onClick)
     self.ok.internal = "OK"
@@ -101,8 +101,8 @@ function ValveUI:prerender()
         self:drawTextRight(Timers.hourText(self.hour), self.width / 2 + 30, self.hourY + (BUTTON_HGT - FONT_HGT_SMALL) / 2,
             1, 1, 1, 1, UIFont.Small)
     end
-    if self.refusal then
-        self:drawTextCentre(getText(self.refusal), self.width / 2, self.refusalY, 1, 0.3, 0.3, 1, UIFont.Small)
+    if self.blocker then
+        self:drawTextCentre(getText(self.blocker), self.width / 2, self.blockerY, 1, 0.3, 0.3, 1, UIFont.Small)
     end
 end
 
@@ -115,8 +115,8 @@ function ValveUI:update()
         return
     end
     local jobs = EnhancedIrrigationAction.jobsOf(self.spec.feature)
-    self.refusal = jobs.blocker(self.character, job, object, self:setting())
-    self.ok:setEnable(self.refusal == nil)
+    self.blocker = jobs.blocker(self.character, job, object, self:setting())
+    self.ok:setEnable(self.blocker == nil)
 end
 
 function ValveUI:onClick(button)
@@ -124,7 +124,7 @@ function ValveUI:onClick(button)
         self.hour = (self.hour + 1) % 24
     elseif button.internal == "HOUR_DOWN" then
         self.hour = (self.hour + 23) % 24
-    elseif button.internal == "OK" and self.refusal == nil then
+    elseif button.internal == "OK" and self.blocker == nil then
         EnhancedIrrigationAction.queue(self.playerNum, self.spec.feature, self.spec.job, self.spec.object, self:setting())
         self:destroy()
     elseif button.internal == "CLOSE" then

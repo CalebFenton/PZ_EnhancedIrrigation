@@ -188,7 +188,7 @@ JobOptions.onWorldMenu(Pumps.isPump, function(context, playerNum, character, pum
     LinkMenu.addPlumbOptions(menu, playerNum, character, pump, {
         nameKey = "ContextMenu_EnhancedIrrigation_PlumbOutlet",
         job = LinkJobs.PLUMB_PUMP,
-        refusal = function(at) return (LinkJobs.pumpBlocker(pump, Links.encode(at))) end,
+        blocker = function(at) return (LinkJobs.pumpBlocker(pump, Links.encode(at))) end,
         noneKey = "ContextMenu_EnhancedIrrigation_NoOutletInReach",
         lines = true,
     })

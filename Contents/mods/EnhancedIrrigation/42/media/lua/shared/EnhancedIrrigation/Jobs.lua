@@ -23,7 +23,7 @@ end
 
 --- Why a job is refused: its `blocker` (a Tooltip key) if any, else Short while any of `needs` is
 --- unmet, else nil.
-function Jobs.refusal(blocker, needs)
+function Jobs.refusalOf(blocker, needs)
     if blocker then
         return blocker
     end
@@ -58,7 +58,7 @@ function Jobs.define(Module)
     end
 
     function Module.refusal(character, job, object, with)
-        return Jobs.refusal(Module.blocker(character, job, object, with),
+        return Jobs.refusalOf(Module.blocker(character, job, object, with),
             Module.needs(character, job, object, with))
     end
 end

@@ -68,7 +68,7 @@ function LineCursor:refusal(square)
     end
     local blocker = LineJobs.layBlocker(square, function(px, py, pz) return self:isPending(px, py, pz) end)
     local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.layMaterials(self.material, self:pendingCount() + 1))
-    return EnhancedIrrigation.Jobs.refusal(blocker, needs)
+    return EnhancedIrrigation.Jobs.refusalOf(blocker, needs)
 end
 
 -- The line tiles this side knows, which a tile laid or taken up anywhere changes.

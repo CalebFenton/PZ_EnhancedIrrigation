@@ -37,10 +37,10 @@ function Parts.restores(ceiling, loss)
     return ceiling - loss
 end
 
---- Why a mend costing `loss` is refused for a part at `condition` of `ceiling`: `wornKey` when it
+--- The blocker of a mend costing `loss` for a part at `condition` of `ceiling`: `wornKey` when it
 --- would restore nothing, `soundKey` when the part already stands at what it would restore; else
 --- nil.
-function Parts.mendRefusal(condition, ceiling, loss, wornKey, soundKey)
+function Parts.mendBlocker(condition, ceiling, loss, wornKey, soundKey)
     local restores = Parts.restores(ceiling, loss)
     if restores <= 0 then
         return wornKey

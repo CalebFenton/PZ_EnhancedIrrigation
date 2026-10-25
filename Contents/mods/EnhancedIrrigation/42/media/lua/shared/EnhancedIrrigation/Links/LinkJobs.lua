@@ -182,17 +182,17 @@ local function tankBlocker(tank, with)
     return nil, here, other
 end
 
--- The row of a plumbing job toward the square `with` names, refused as `blocker(object, with)`
+-- The row of a plumbing job toward the square `with` names, refused as `endsBlocker(object, with)`
 -- refuses it as far as both ends go, then by the run's length and the pipe `with` names, which
 -- only a client that made up a job leaves out.
-local function plumbJobFor(blocker)
+local function plumbJobFor(endsBlocker)
     return {
         minutes = function(object, with) return Links.minutesFor(runTiles(object, with)) end,
         position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
         blocker = function(character, object, with)
-            local refusal, here, other = blocker(object, with)
-            if refusal then
-                return refusal
+            local blocker, here, other = endsBlocker(object, with)
+            if blocker then
+                return blocker
             end
             if Links.distance(here, other) > Links.MAX_TILES then
                 return "Tooltip_EnhancedIrrigation_OutOfReach"
