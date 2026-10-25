@@ -10,6 +10,7 @@ EnhancedIrrigationPumpAction = EnhancedIrrigationPumpAction or EnhancedIrrigatio
 local Action = EnhancedIrrigationPumpAction
 local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 
+Action.OWNER = Pumps
 Action.RUN_EVENT = "EnhancedIrrigationPump"
 Action.LOOT_POSITION = "Mid"
 Action.HEAVY = true
@@ -28,10 +29,6 @@ end
 
 function Action:refusal()
     return PumpJobs.refusal(self.character, PumpJobs.PUMP, self.pump)
-end
-
-function Action:hold()
-    return EnhancedIrrigation.PumpSystem.hold(self.pump, self)
 end
 
 function Action:runFor(hours)

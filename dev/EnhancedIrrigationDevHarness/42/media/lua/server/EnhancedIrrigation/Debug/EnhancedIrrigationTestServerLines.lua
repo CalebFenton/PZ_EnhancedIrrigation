@@ -171,7 +171,8 @@ handler("lines.holdTap", function(player, args)
         return nil, "the tap tile at " .. args.x .. "," .. args.y
     end
     local standIn = { character = { getUsername = function() return args.as end } }
-    return { held = EnhancedIrrigation.TapSystem.hold(tap, standIn) }
+    local record = EnhancedIrrigation.Lines.recordOf(tap)
+    return { held = record ~= nil and EnhancedIrrigation.Holds.hold(record, standIn) }
 end)
 
 -- Dates the hold on the tap at x, y, z back past Holds.LAPSE_MS, as if its action had

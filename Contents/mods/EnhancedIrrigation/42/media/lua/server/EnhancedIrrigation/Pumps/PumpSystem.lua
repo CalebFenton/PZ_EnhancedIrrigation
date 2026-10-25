@@ -15,7 +15,6 @@ require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Pumps/PumpHouse"
-require "EnhancedIrrigation/Holds"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpSystem = {}
@@ -112,15 +111,6 @@ local DO = {
 function PumpSystem.perform(character, job, pump, with)
     local record = Pumps.recordOf(pump)
     return record ~= nil and EnhancedIrrigation.ObjectSystem.perform(PumpJobs, DO, character, job, pump, with, record)
-end
-
--- Holding ------------------------------------------------------------------------------------------
-
---- Holds `pump` for the Pump `action`, unless another action holds it. Returns whether `action`
---- holds it now.
-function PumpSystem.hold(pump, action)
-    local record = Pumps.recordOf(pump)
-    return record ~= nil and EnhancedIrrigation.Holds.hold(record, action)
 end
 
 -- Pumping --------------------------------------------------------------------------------------------

@@ -11,9 +11,9 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 -- the parameter named as the target's field: the server finds the class by its Type
 -- (NetTimedAction.parse) and rebuilds the action from the parameter names of the class's new
 -- (NetTimedAction.set). It defines target(); isTarget(object); refusal(), a Tooltip key or nil;
--- hold(), whether it holds the target now; runFor(hours), on the authority, the Tooltip key of
--- why it stops or nil; playSounds(), through keepPlaying; LOOT_POSITION; RUN_EVENT; and HEAVY for
--- heavy work.
+-- runFor(hours), on the authority, the Tooltip key of why it stops or nil; playSounds(), through
+-- keepPlaying; OWNER, the shared module whose record of the target it holds (recordOf);
+-- LOOT_POSITION; RUN_EVENT; and HEAVY for heavy work.
 EnhancedIrrigation = EnhancedIrrigation or {}
 EnhancedIrrigation.HeldAction = EnhancedIrrigation.HeldAction or ISBaseTimedAction:derive("EnhancedIrrigationHeldAction")
 
@@ -51,6 +51,13 @@ end
 -- calls, so the authority asks this itself before it opens and before each run.
 function Action:atTarget()
     return EnhancedIrrigationAction.withinReach(self.character, self:target(), EnhancedIrrigationAction.REACH)
+end
+
+-- Holds the target's record for this action, unless another action holds it. Returns whether this
+-- action holds it now. Authority only.
+function Action:hold()
+    local record = self.OWNER.recordOf(self:target())
+    return record ~= nil and EnhancedIrrigation.Holds.hold(record, self)
 end
 
 -- Opens it, holding the target; the time counts from here. Returns whether it opened. Authority

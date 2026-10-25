@@ -7,7 +7,6 @@ require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
-require "EnhancedIrrigation/Lines/Taps"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/UI/ValveUI"
@@ -21,7 +20,6 @@ EnhancedIrrigation.LineMenu = LineMenu
 
 local Lines = EnhancedIrrigation.Lines
 local LineJobs = EnhancedIrrigation.LineJobs
-local Taps = EnhancedIrrigation.Taps
 local Pipes = EnhancedIrrigation.Pipes
 local Needs, JobOptions = EnhancedIrrigation.Needs, EnhancedIrrigation.JobOptions
 local Materials = EnhancedIrrigation.Materials
@@ -137,7 +135,7 @@ local function addLineOptions(context, playerNum, character, line, state)
     if state.tap then
         local water = menu:addOption(getText("ContextMenu_EnhancedIrrigation_WaterFromTank"), playerNum,
             EnhancedIrrigationWaterAction.queue, line)
-        Needs.refuse(water, Taps.blocker(line, character))
+        Needs.refuse(water, LineJobs.refusal(character, LineJobs.WATER, line))
         addValve(menu, playerNum, character, line, state)
     else
         addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_FitTap", LineJobs.TAP, line)

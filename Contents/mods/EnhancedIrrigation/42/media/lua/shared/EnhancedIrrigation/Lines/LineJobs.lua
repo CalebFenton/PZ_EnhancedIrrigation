@@ -1,5 +1,6 @@
--- The hands-on jobs at a garden line, done on the authority by LineSystem. Running water from a
--- tap, a valve or a pump isn't a job of fixed length, so it is Taps', Valves' and Pumps'.
+-- The hands-on jobs at a garden line, done on the authority by LineSystem. Water from Tank, held
+-- for as long as the character keeps the tap open (EnhancedIrrigationWaterAction), has a row with
+-- only a blocker, as Pump has in PumpJobs.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
@@ -25,6 +26,7 @@ local Pumps, Sprinklers, Valves = EnhancedIrrigation.Pumps, EnhancedIrrigation.S
 local Taps = EnhancedIrrigation.Taps
 
 LineJobs.LAY = "LayLine"
+LineJobs.WATER = "WaterFromTank"
 LineJobs.DRILL = "DrillHoles"
 LineJobs.TAP = "FitTap"
 LineJobs.PATCH = "PatchCrack"
@@ -184,6 +186,18 @@ end
 -- carried, Wind Valve's its minutes and Set Valve Timer's its setting (Valves.decodeWind and
 -- decodeTimer); the others' is nil.
 LineJobs.JOBS = {
+    [LineJobs.WATER] = {
+        blocker = atLine(function(character, tap, state)
+            if state.heldBy and state.heldBy ~= character:getUsername() then
+                return "Tooltip_EnhancedIrrigation_TapInUse"
+            end
+            if state.valveOpen then
+                return "Tooltip_EnhancedIrrigation_ValveRunning"
+            end
+            local _, refusal = Taps.tankFor(tap)
+            return refusal
+        end),
+    },
     [LineJobs.LAY] = {
         minutes = 3,
         equip = function(character, floor, kind)

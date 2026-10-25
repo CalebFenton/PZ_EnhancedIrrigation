@@ -192,7 +192,8 @@ handler("pumps.hold", function(_, args, defer)
     end
     local standIn = { character = { getUsername = function() return args.as end } }
     defer(function() mod().Holds.release(standIn) end)
-    return { held = mod().PumpSystem.hold(pump, standIn) }
+    local record = mod().Pumps.recordOf(pump)
+    return { held = record ~= nil and mod().Holds.hold(record, standIn) }
 end)
 
 -- Dates the hold on the pump at x, y, z back past Holds.LAPSE_MS, as if its action had

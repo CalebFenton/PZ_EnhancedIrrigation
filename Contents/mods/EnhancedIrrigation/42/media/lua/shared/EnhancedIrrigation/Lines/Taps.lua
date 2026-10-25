@@ -1,5 +1,5 @@
 -- Water from Tank: a garden line's tap runs while a character holds it open. What the menu and
--- the authority both read: which tank feeds a tap, and why water can't run.
+-- the authority both read: which tank feeds a tap.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
@@ -38,20 +38,6 @@ function Taps.tankFor(tap)
         return nil, "Tooltip_EnhancedIrrigation_TankEmpty"
     end
     return best
-end
-
---- Why `character` can't run water from the tap tile `tap`, a Tooltip key, or nil: someone else
---- holds it, its valve runs it, or no tank can feed it.
-function Taps.blocker(tap, character)
-    local state = Lines.stateOf(tap)
-    if state and state.heldBy and state.heldBy ~= character:getUsername() then
-        return "Tooltip_EnhancedIrrigation_TapInUse"
-    end
-    if state and state.valveOpen then
-        return "Tooltip_EnhancedIrrigation_ValveRunning"
-    end
-    local _, refusal = Taps.tankFor(tap)
-    return refusal
 end
 
 return Taps
