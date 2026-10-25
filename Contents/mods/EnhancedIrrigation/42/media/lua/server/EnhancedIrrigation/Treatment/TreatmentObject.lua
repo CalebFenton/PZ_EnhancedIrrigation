@@ -256,25 +256,25 @@ function TreatmentObject:advance(hours)
     end
 end
 
--- Whether the far end of `record`'s inlet or outlet is in a chunk this side hasn't loaded: its
--- tank may hold the water, or the room, that would have kept the unit running, which can't be
+-- Whether the far ends of `record`'s inlet and outlet are in chunks this side has loaded: a tank
+-- there may hold the water, or the room, that would have kept the unit running, which can't be
 -- known until it loads. A loaded square with no tank on it feeds and takes nothing, and the unit
 -- runs on.
-local function endsUnloaded(record)
+local function endsLoaded(record)
     for _, role in ipairs({ "inlet", "outlet" }) do
         local at = Links.farEnd(record, role)
         if at and not EnhancedIrrigation.chunkLoaded(at.x, at.y, at.z) then
-            return true
+            return false
         end
     end
-    return false
+    return true
 end
 
 --- Brings the record up to now while its unit is loaded, and the tanks at its inlet's and outlet's
 --- far ends too; otherwise it keeps its lastHour, so the whole gap is caught up once all load (at
 --- most LONGEST_PASS), the pipes running through the gap as they would have.
 function TreatmentObject:catchUp()
-    if self:getIsoObject() and not endsUnloaded(self) then
+    if self:getIsoObject() and endsLoaded(self) then
         EnhancedIrrigation.ObjectSystem.Object.catchUp(self)
     end
 end

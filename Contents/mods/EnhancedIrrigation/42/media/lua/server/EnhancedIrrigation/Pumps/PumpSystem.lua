@@ -49,14 +49,10 @@ function PumpSystem.onCreate(params)
     local pump = params.thumpable
     PumpSystem.System.instance:loadIsoObject(pump)
     local record = Pumps.recordOf(pump)
-    if record and params.craftRecipeData then
-        local used = params.craftRecipeData:getAllConsumedItems()
-        for i = 0, used:size() - 1 do
-            local fullType = used:get(i):getFullType()
-            if Pumps.sealLitres(fullType) then
-                record:fitSeal(fullType)
-            end
-        end
+    local seal = record and EnhancedIrrigation.ObjectSystem.consumedItem(params,
+        function(item) return Pumps.sealLitres(item:getFullType()) ~= nil end)
+    if seal then
+        record:fitSeal(seal:getFullType())
         record:sendSummary()
     end
     return nil
@@ -111,17 +107,11 @@ local DO = {
     end,
 }
 
---- Does `job` at `pump` with `with` for `character` on the authority (Jobs.perform), then shows
---- and tells what changed. Returns whether it was done.
+--- Does `job` at `pump` with `with` for `character` on the authority (ObjectSystem.perform).
+--- Returns whether it was done.
 function PumpSystem.perform(character, job, pump, with)
     local record = Pumps.recordOf(pump)
-    if not record then
-        return false
-    end
-    record:catchUp()
-    local done = EnhancedIrrigation.Jobs.perform(PumpJobs, DO, character, job, pump, with)
-    record:afterChange()
-    return done
+    return record ~= nil and EnhancedIrrigation.ObjectSystem.perform(PumpJobs, DO, character, job, pump, with, record)
 end
 
 -- Holding ------------------------------------------------------------------------------------------

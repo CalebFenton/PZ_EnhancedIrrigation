@@ -5,7 +5,6 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/ObjectSystem"
@@ -55,13 +54,10 @@ function TreatmentSystem.onCreate(params)
     end
     TreatmentSystem.System.instance:loadIsoObject(unit)
     local record = Treatment.recordOf(unit)
-    if record and record:spec().kind == "crock" and params.craftRecipeData then
-        local used = params.craftRecipeData:getAllConsumedItems()
-        for i = 0, used:size() - 1 do
-            if used:get(i):hasTag(ItemTag.BUCKET) then
-                record.bucket = used:get(i):getFullType()
-            end
-        end
+    local bucket = record and record:spec().kind == "crock" and EnhancedIrrigation.ObjectSystem.consumedItem(params,
+        function(item) return item:hasTag(ItemTag.BUCKET) end)
+    if bucket then
+        record.bucket = bucket:getFullType()
     end
     return result
 end
@@ -100,21 +96,11 @@ local DO = {
     end,
 }
 
---- Does `job` at `unit` with `with` for `character` on the authority (Jobs.perform), on the unit as
---- time has left it, then shows and tells what changed. Returns whether it was done.
+--- Does `job` at `unit` with `with` for `character` on the authority (ObjectSystem.perform).
+--- Returns whether it was done.
 function TreatmentSystem.perform(character, job, unit, with)
     local record = Treatment.recordOf(unit)
-    if not record then
-        return false
-    end
-    local x, y, z = unit:getX(), unit:getY(), unit:getZ()
-    record:catchUp()
-    local done = EnhancedIrrigation.Jobs.perform(TreatmentJobs, DO, character, job, unit, with)
-    -- Unless the job took the unit away, and its record with it.
-    if Treatment.recordAt(x, y, z) == record then
-        record:afterChange()
-    end
-    return done
+    return record ~= nil and EnhancedIrrigation.ObjectSystem.perform(TreatmentJobs, DO, character, job, unit, with, record)
 end
 
 return TreatmentSystem

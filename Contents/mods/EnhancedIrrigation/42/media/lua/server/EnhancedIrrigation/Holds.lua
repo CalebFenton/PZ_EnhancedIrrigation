@@ -29,7 +29,7 @@ local function letGo(record)
     record.holder, record.heldBy, record.heldMs = nil, nil, nil
     held[record] = nil
     -- Unless the object went while held, taking its record.
-    if record.x and record.luaSystem:getLuaObjectAt(record.x, record.y, record.z) == record then
+    if record:isCurrent() then
         record:afterChange()
     end
 end

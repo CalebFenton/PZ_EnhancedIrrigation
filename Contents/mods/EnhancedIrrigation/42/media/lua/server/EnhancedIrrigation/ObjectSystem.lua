@@ -8,6 +8,7 @@ require "Map/SGlobalObjectSystem"
 require "Map/SGlobalObject"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
+require "EnhancedIrrigation/Jobs"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ObjectSystem = {}
@@ -35,6 +36,12 @@ function Object:update()
     self:afterChange()
 end
 
+--- Whether the record is still its system's: removing its object takes the record away and clears
+--- its x, y, z.
+function Object:isCurrent()
+    return self.x ~= nil and self.luaSystem:getLuaObjectAt(self.x, self.y, self.z) == self
+end
+
 --- Sends the clients the summary, if it changed.
 function Object:sendSummary()
     local summary = self:buildSummary()
@@ -52,7 +59,6 @@ end
 --- class), isObject(isoObject). Returns the class.
 function ObjectSystem.define(spec)
     local System = SGlobalObjectSystem:derive("EnhancedIrrigation_" .. spec.name .. "System")
-    System.owner = spec.owner
 
     function System:new()
         return SGlobalObjectSystem.new(self, spec.owner.SYSTEM_NAME)
@@ -100,6 +106,33 @@ function ObjectSystem.define(spec)
     Events.EveryTenMinutes.Add(updateAll)
     SGlobalObjectSystem.RegisterSystemClass(System)
     return System
+end
+
+--- Does `job` at `object` with `with` for `character` on the authority (Jobs.perform of `jobs`,
+--- run by `DO`), on `record` as time has left it, then shows and tells what changed, unless the
+--- job took the record away. `record` is nil for a job that makes one. Returns whether it was done.
+function ObjectSystem.perform(jobs, DO, character, job, object, with, record)
+    if record then
+        record:catchUp()
+    end
+    local done = EnhancedIrrigation.Jobs.perform(jobs, DO, character, job, object, with)
+    if record and record:isCurrent() then
+        record:afterChange()
+    end
+    return done
+end
+
+--- The last item the build of `params` (an entity's OnCreate) consumed for which `matches(item)`
+--- holds, or nil: the build menu's chosen inputs.
+function ObjectSystem.consumedItem(params, matches)
+    local found = nil
+    local used = params.craftRecipeData and params.craftRecipeData:getAllConsumedItems()
+    for i = 0, (used and used:size() or 0) - 1 do
+        if matches(used:get(i)) then
+            found = used:get(i)
+        end
+    end
+    return found
 end
 
 -- Tiles -------------------------------------------------------------------------------------------

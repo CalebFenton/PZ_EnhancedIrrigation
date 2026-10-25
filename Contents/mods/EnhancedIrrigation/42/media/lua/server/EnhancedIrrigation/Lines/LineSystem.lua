@@ -6,7 +6,6 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Materials"
-require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
@@ -201,21 +200,11 @@ function LineSystem.takeSprinkler(record)
     return item
 end
 
---- Does `job` at `object` with `with` for `character` on the authority (Jobs.perform), on the
---- tile as time has left it, then shows and tells what changed. Returns whether it was done.
+--- Does `job` at `object` with `with` for `character` on the authority (ObjectSystem.perform); Lay
+--- makes the tile's record. Returns whether it was done.
 function LineSystem.perform(character, job, object, with)
     local record = job ~= LineJobs.LAY and Lines.recordOf(object) or nil
-    -- Kept here: removing a record (Take Up) clears its x, y, z.
-    local x, y, z = object:getX(), object:getY(), object:getZ()
-    if record then
-        record:catchUp()
-    end
-    local done = EnhancedIrrigation.Jobs.perform(LineJobs, DO, character, job, object, with)
-    -- Unless Take Up took the record with the tile.
-    if record and Lines.recordAt(x, y, z) == record then
-        record:afterChange()
-    end
-    return done
+    return EnhancedIrrigation.ObjectSystem.perform(LineJobs, DO, character, job, object, with, record)
 end
 
 return LineSystem
