@@ -47,8 +47,7 @@ end
 
 --- The BARRELS entry of the raised barrel `isoObject`, or nil for anything else.
 function Stands.raisedSpec(isoObject)
-    local name = EnhancedIrrigation.entityName(isoObject)
-    return name and BY_ENTITY[name]
+    return EnhancedIrrigation.entitySpec(isoObject, BY_ENTITY)
 end
 
 function Stands.isRaised(isoObject)

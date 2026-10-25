@@ -42,6 +42,12 @@ function Object:isCurrent()
     return self.x ~= nil and self.luaSystem:getLuaObjectAt(self.x, self.y, self.z) == self
 end
 
+--- The record's row of its owner's ENTITIES, by the entity name it keeps in `unit`, so it knows
+--- its numbers unloaded too; nil for a record of no entity.
+function Object:spec()
+    return self.unit and self.luaSystem.owner.ENTITIES[self.unit]
+end
+
 --- Sends the clients the summary, if it changed.
 function Object:sendSummary()
     local summary = self:buildSummary()
@@ -55,10 +61,11 @@ end
 
 --- Defines and registers a feature's system. `spec`: name (the class is
 --- EnhancedIrrigation_<name>System), sprites (its tiles' names, for the load hook), owner (its
---- shared module: SYSTEM_NAME and the accessors of GlobalObjects.addAccessors), Object (its record
---- class), isObject(isoObject). Returns the class.
+--- shared module: SYSTEM_NAME, the accessors of GlobalObjects.addAccessors and, for an entity's
+--- records, ENTITIES), Object (its record class), isObject(isoObject). Returns the class.
 function ObjectSystem.define(spec)
     local System = SGlobalObjectSystem:derive("EnhancedIrrigation_" .. spec.name .. "System")
+    System.owner = spec.owner
 
     function System:new()
         return SGlobalObjectSystem.new(self, spec.owner.SYSTEM_NAME)

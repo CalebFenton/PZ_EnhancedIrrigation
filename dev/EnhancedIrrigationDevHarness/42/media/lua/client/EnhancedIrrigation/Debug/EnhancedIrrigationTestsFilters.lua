@@ -33,7 +33,7 @@ for _, entity in ipairs({ BARREL, BRICK }) do
             if not spots then return end
             self.unit = T.buildFromMenu(self, "Base." .. entity, spots[1], SPRITES[entity])
             if not self.unit then return end
-            self.unit.spec = Treatment.UNITS[entity]
+            self.unit.spec = Treatment.ENTITIES[entity]
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
             T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built filter")
@@ -60,7 +60,7 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        local head = Treatment.UNITS[BARREL].head
+        local head = Treatment.ENTITIES[BARREL].head
         self.room = 5
         self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = head - self.room } })
         T.give(self, "carried", { { type = "Base.Bucket" }, { type = "Base.PetrolCan" } })
@@ -91,13 +91,13 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
         run(self, self.unit, "hour", { 1 })
     end,
     validate = function(self)
-        local head = Treatment.UNITS[BARREL].head
+        local head = Treatment.ENTITIES[BARREL].head
         T.expectRefused(self, "petrol", "Tooltip_EnhancedIrrigation_OnlyWater")
         T.expectOffered(self, "pour")
         local poured = self.reads.poured
         expectNear("the head and basin after pouring", poured.record.head + poured.basin.litres, head, T.LITRES)
         local hour = self.reads.hour
-        expectBasin("the hour's water", hour.steps[1], hour.before.basin.litres + Treatment.UNITS[BARREL].rate, true)
+        expectBasin("the hour's water", hour.steps[1], hour.before.basin.litres + Treatment.ENTITIES[BARREL].rate, true)
         local bucket = self.reads.bucket
         expectNear("the bucket's water left", bucket.litres, 10 - self.room, T.LITRES)
         expect(bucket.tainted, "the bucket's water left is clean")
@@ -361,7 +361,7 @@ T.test("irrigation_treatment_filter_inlet_keeps_the_film_through_an_absence", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
         if not spots then return end
-        local spec = Treatment.UNITS[BARREL]
+        local spec = Treatment.ENTITIES[BARREL]
         self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = spec.head, headTainted = true,
             ripeHours = Treatment.RIPE_HOURS } })
         self.raw = T.placeTank(self, spots[2], "lidded", 300, true)
@@ -403,7 +403,7 @@ T.test("irrigation_treatment_filter_outlet_drains_through_an_absence", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
         if not spots then return end
-        local spec = Treatment.UNITS[BARREL]
+        local spec = Treatment.ENTITIES[BARREL]
         self.unit = placeUnit(self, spots[1], BARREL, { fields = { head = spec.head, ripeHours = Treatment.RIPE_HOURS } })
         self.raw = T.placeTank(self, spots[2], "lidded", 100)
         self.clean = T.placeTank(self, spots[3], "lidded")

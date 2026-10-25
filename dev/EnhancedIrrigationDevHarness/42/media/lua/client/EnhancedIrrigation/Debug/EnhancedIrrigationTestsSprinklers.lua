@@ -113,7 +113,7 @@ local ROT_HOURS = 2
 T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
     instant = true,
     run = function(self)
-        if not T.need(self, Pumps.UNITS[IRON].rate * 60 > Sprinklers.RATE,
+        if not T.need(self, Pumps.ENTITIES[IRON].rate * 60 > Sprinklers.RATE,
             "an iron hand pump that lifts more than a sprinkler asks") then return end
         local squares = T.layout(self, NORTH_SOUTH, { joined = true })
         if not squares then return end

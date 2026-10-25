@@ -755,10 +755,10 @@ end
 --- Queues placing the pump `entity` (a T.PUMP_SPRITES key) at `handle`, with `with.part` fitted
 --- as Fit Pump fits it ({ type, condition, ceiling, fraction }) and `with.fields` on its record, if
 --- given, and a wait for this client's copy and its summary. Returns its handle, with `spec`
---- (Pumps.UNITS, nil for a Pump House).
+--- (Pumps.ENTITIES, nil for a Pump House).
 function T.placePump(self, handle, entity, with)
     local pump = { x = handle.x, y = handle.y, z = handle.z, sprite = T.PUMP_SPRITES[entity],
-        spec = Pumps.UNITS[entity], square = handle.square }
+        spec = Pumps.ENTITIES[entity], square = handle.square }
     T.server(self, "pumps.place", T.at(pump, { sprite = pump.sprite, part = with and with.part,
         fields = with and with.fields }))
     T.waitFor(self, function() return T.pumpSummary(pump) ~= nil end, "this client's copy of the " .. entity)
@@ -838,7 +838,7 @@ function T.placeUnit(self, handle, entity, opts)
     opts = opts or {}
     local up = opts.up or 0
     local unit = { x = handle.x, y = handle.y, z = handle.z + up, sprite = T.TREATMENT_SPRITES[entity],
-        spec = Treatment.UNITS[entity], square = up == 0 and handle.square or nil }
+        spec = Treatment.ENTITIES[entity], square = up == 0 and handle.square or nil }
     T.server(self, "treatment.place", T.at(unit, { sprite = unit.sprite, fields = opts.fields }))
     T.waitFor(self, function()
         unit.square = getSquare(unit.x, unit.y, unit.z)

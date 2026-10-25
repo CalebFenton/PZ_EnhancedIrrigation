@@ -107,4 +107,10 @@ function EnhancedIrrigation.entityName(isoObject)
     return script and script:getName() or nil
 end
 
+--- The row of `byEntity` (a table by entity script name) for `isoObject`'s entity, or nil.
+function EnhancedIrrigation.entitySpec(isoObject, byEntity)
+    local name = EnhancedIrrigation.entityName(isoObject)
+    return name and byEntity[name] or nil
+end
+
 return EnhancedIrrigation

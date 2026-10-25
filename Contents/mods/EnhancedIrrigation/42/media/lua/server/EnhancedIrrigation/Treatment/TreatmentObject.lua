@@ -27,8 +27,8 @@ EnhancedIrrigation.TreatmentObject = TreatmentObject
 local EMPTY_HEAD = 0.001
 
 -- The world's save format: renaming one loses it from saves. unit: the unit's entity script name,
--- a key of Treatment.UNITS, so the record knows its numbers unloaded too; head: litres of raw water
--- waiting; headTainted: whether any of it is tainted; passed: litres treated since the last
+-- a key of Treatment.ENTITIES, so the record knows its numbers unloaded too; head: litres of raw
+-- water waiting; headTainted: whether any of it is tainted; passed: litres treated since the last
 -- cleaning; ripeHours: wet hours the sand's film has grown; dryHours: hours since the head ran dry;
 -- cracked: a crock frost split; bucket: the full type of the bucket a crock stands in; hotHours: a
 -- boiler drum's heat, as hours of fire; condition and ceiling: its drum's condition and what it was
@@ -61,10 +61,6 @@ end
 
 -- The chunk loaded again; the next pass catches up the time it was away.
 function TreatmentObject:stateToIsoObject(isoObject)
-end
-
-function TreatmentObject:spec()
-    return self.unit and Treatment.UNITS[self.unit]
 end
 
 --- The litres of raw water the head has room for.

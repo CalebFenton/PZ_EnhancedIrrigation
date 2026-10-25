@@ -22,20 +22,15 @@ Tanks.ENTITIES = {
     AmphoraClosed = {},
 }
 
-local function specOf(isoObject)
-    local name = EnhancedIrrigation.entityName(isoObject)
-    return name and Tanks.ENTITIES[name]
-end
-
 --- Whether `isoObject` is a tank: one of the entities above, with its water container.
 function Tanks.isTank(isoObject)
-    return specOf(isoObject) ~= nil and isoObject:getFluidContainer() ~= nil
+    return EnhancedIrrigation.entitySpec(isoObject, Tanks.ENTITIES) ~= nil and isoObject:getFluidContainer() ~= nil
 end
 
 --- The level `object`'s water stands at: its floor, plus one for a tank on a stand. Anything else
 --- that holds or carries water, a treatment unit or a line tile, stands on its floor.
 function Tanks.levelOf(object)
-    local spec = specOf(object)
+    local spec = EnhancedIrrigation.entitySpec(object, Tanks.ENTITIES)
     return object:getZ() + (spec and spec.raised and 1 or 0)
 end
 

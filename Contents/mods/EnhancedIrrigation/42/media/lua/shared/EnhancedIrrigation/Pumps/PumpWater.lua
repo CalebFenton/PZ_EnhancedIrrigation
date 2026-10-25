@@ -126,11 +126,11 @@ end
 
 -- Delivery -------------------------------------------------------------------------------------------
 
---- What a pump lifting by `spec` (a row of UNITS or PARTS) would lift into, as this side sees it:
---- its outlet's tank, while that stands within its lift and has room, or its outlet's line tile,
---- while its line has no tap; and the source it draws from (PumpWater.sourceOf, with the hose's
---- `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of why it
---- lifts nothing.
+--- What a pump lifting by `spec` (a row of Pumps.ENTITIES or PARTS) would lift into, as this side
+--- sees it: its outlet's tank, while that stands within its lift and has room, or its outlet's line
+--- tile, while its line has no tap; and the source it draws from (PumpWater.sourceOf, with the
+--- hose's `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of
+--- why it lifts nothing.
 function PumpWater.deliveryOf(pump, spec, intake)
     local b = Links.farEnd(EnhancedIrrigation.squareOf(pump), "pump")
     if not b then

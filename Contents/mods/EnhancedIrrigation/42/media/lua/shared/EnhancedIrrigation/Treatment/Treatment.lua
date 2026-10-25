@@ -63,7 +63,7 @@ Treatment.PATCH_LOSS = 10
 -- scales its numbers. A Filter Crock seeps one person's drinking and cooking water in a day; it
 -- holds about what a bucket does. A boiler's head is its Metal Drum, and its rate fast clean water
 -- for a woodpile; the firebox under it changes only what building it takes.
-Treatment.UNITS = {
+Treatment.ENTITIES = {
     EnhancedIrrigation_BarrelFilter = { kind = "sand", head = 50, rate = 4, clogLitres = 2000, plumbed = true },
     EnhancedIrrigation_BrickFilter = { kind = "sand", head = 200, rate = 16, clogLitres = 8000, plumbed = true },
     EnhancedIrrigation_FilterCrock = { kind = "crock", head = 8, rate = 10 / 24, clogLitres = 300 },
@@ -76,13 +76,12 @@ Treatment.UNITS = {
 Treatment.CROCK_ITEM = "EnhancedIrrigation.FilterCrock"
 Treatment.CROCK_BUCKET = "Base.Bucket"
 
---- The spec of `isoObject`'s unit (a row of UNITS), or nil when it isn't one.
+--- The spec of `isoObject`'s unit (a row of ENTITIES), or nil when it isn't one.
 function Treatment.specOf(isoObject)
-    local name = EnhancedIrrigation.entityName(isoObject)
-    return name and Treatment.UNITS[name] or nil
+    return EnhancedIrrigation.entitySpec(isoObject, Treatment.ENTITIES)
 end
 
---- Whether `isoObject` is a treatment unit: one of UNITS, with its basin.
+--- Whether `isoObject` is a treatment unit: one of ENTITIES, with its basin.
 function Treatment.isUnit(isoObject)
     return Treatment.specOf(isoObject) ~= nil and isoObject:getFluidContainer() ~= nil
 end

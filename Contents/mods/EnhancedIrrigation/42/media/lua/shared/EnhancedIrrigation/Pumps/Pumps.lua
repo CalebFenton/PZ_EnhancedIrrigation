@@ -30,7 +30,7 @@ Pumps.SPRITES = { EnhancedIrrigation.Sprites.WOODEN_HAND_PUMP, EnhancedIrrigatio
 -- point of its body's condition; `squeals`, whether it squeals as it works; `noise`, the radius
 -- and volume of the sound zombies hear while it works. A hand pump's rate fills a rain barrel in
 -- an hour or two of sweat (design, Starting numbers); wood squeals, loud enough to carry.
-Pumps.UNITS = {
+Pumps.ENTITIES = {
     EnhancedIrrigation_WoodenHandPump = {
         kind = "hand", lift = 1, rate = 6, push = 2, wearLitres = 300, squeals = true,
         noise = { radius = 15, volume = 15 },
@@ -51,7 +51,7 @@ Pumps.BODY_CONDITION = 100
 Pumps.APPLIANCE_PUMP = "EnhancedIrrigation.AppliancePump"
 Pumps.UTILITY_PUMP = "EnhancedIrrigation.UtilityPump"
 
--- The pump parts a Pump House takes, by full type: `lift`, `rate`, `push` and `noise` as UNITS';
+-- The pump parts a Pump House takes, by full type: `lift`, `rate`, `push` and `noise` as ENTITIES';
 -- `wearPerHour`, the condition an hour of running takes; `draw`, the generator fuel an hour of
 -- running burns in vanilla's own units, before the GeneratorFuelConsumption option (IsoGenerator):
 -- a washer's for the pump out of one. A washer's pump is made for a drum's few minutes of draining,
@@ -102,10 +102,9 @@ Pumps.LIFT_KEYS = {
     [2] = "Tooltip_EnhancedIrrigation_LiftsTwoStoreys",
 }
 
---- The spec of `isoObject`'s pump (a row of UNITS), or nil when it isn't one.
+--- The spec of `isoObject`'s pump (a row of ENTITIES), or nil when it isn't one.
 function Pumps.specOf(isoObject)
-    local name = EnhancedIrrigation.entityName(isoObject)
-    return name and Pumps.UNITS[name] or nil
+    return EnhancedIrrigation.entitySpec(isoObject, Pumps.ENTITIES)
 end
 
 function Pumps.isPump(isoObject)
@@ -122,8 +121,8 @@ function Pumps.partSpec(part)
     return part and Pumps.PARTS[part] or nil
 end
 
---- The numbers `pump` lifts by, as this side sees it: a hand pump's own row of UNITS, a Pump House's
---- fitted part's row of PARTS, or nil for a Pump House with none.
+--- The numbers `pump` lifts by, as this side sees it: a hand pump's own row of ENTITIES, a Pump
+--- House's fitted part's row of PARTS, or nil for a Pump House with none.
 function Pumps.liftingSpec(pump)
     local spec = Pumps.specOf(pump)
     if spec and spec.kind == "house" then
@@ -175,7 +174,7 @@ function Pumps.linesInReach(pump)
     return found
 end
 
---- The litres an hour a pump lifting by `spec` (a row of UNITS or PARTS) moves while it has water.
+--- The litres an hour a pump lifting by `spec` (a row of ENTITIES or PARTS) moves with water.
 function Pumps.perHour(spec)
     return spec.rate * 60
 end

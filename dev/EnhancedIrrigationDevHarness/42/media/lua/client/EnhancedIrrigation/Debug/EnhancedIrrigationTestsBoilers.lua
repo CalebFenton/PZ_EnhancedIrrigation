@@ -64,7 +64,7 @@ for _, entity in ipairs({ STONE, WELDED }) do
             if not spot then return end
             self.unit = T.buildFromMenu(self, "Base." .. entity, spot, SPRITES[entity])
             if not self.unit then return end
-            self.unit.spec = Treatment.UNITS[entity]
+            self.unit.spec = Treatment.ENTITIES[entity]
             readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
             T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
                 "this client's summary of the built boiler")

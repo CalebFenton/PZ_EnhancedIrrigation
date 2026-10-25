@@ -385,7 +385,7 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         readUntil(self, self.iron, "plumbed", function(state) return state.outlet end)
     end,
     validate = function(self)
-        T.expectRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.UNITS[WOODEN].lift])
+        T.expectRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.ENTITIES[WOODEN].lift])
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed the wooden pump two storeys up")
         T.expectOffered(self, "iron")
@@ -515,7 +515,7 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
     validate = function(self)
         local half = self.reads.half
         local before, after = half.before, half.steps[1]
-        local push = Pumps.UNITS[WOODEN].push
+        local push = Pumps.ENTITIES[WOODEN].push
         local each = Lines.HOLE_RATE * push * HALF_HOUR
         for i = 1, 2 do
             expectNear("crop " .. i .. "'s water", after.squares[i].water - before.squares[i].water,
@@ -523,7 +523,7 @@ T.test("irrigation_pumps_hand_pump_drives_its_line", {
         end
         expectNear("the seal's wear", after.record.sealWear - before.record.sealWear, 2 * each, T.LITRES)
         expectNear("the pump's wear", before.record.condition - after.record.condition,
-            2 * each / Pumps.UNITS[WOODEN].wearLitres, 0.0001)
+            2 * each / Pumps.ENTITIES[WOODEN].wearLitres, 0.0001)
         T.expectOffered(self, "pump")
         expect(self.sawRunning, "this client never saw the line run while the pump was worked")
     end,

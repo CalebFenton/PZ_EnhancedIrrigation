@@ -22,7 +22,7 @@ local PumpObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrriga
 EnhancedIrrigation.PumpObject = PumpObject
 
 -- The world's save format: renaming one loses it from saves. unit: the pump's entity script name,
--- a key of Pumps.UNITS, so the record knows its numbers unloaded too; seal: the full type of the
+-- a key of Pumps.ENTITIES, so the record knows its numbers unloaded too; seal: the full type of the
 -- seal fitted, nil for none; sealWear: the litres lifted on it; condition: the body's, worn by the
 -- litres lifted; intake: { x, y } of the natural water the hose drinks from, nil for none, kept so
 -- an unloaded river still counts; lastHour: when time last reached it. A Pump House's: part: the
@@ -53,10 +53,6 @@ end
 -- The chunk loaded again: show its timer; the next pass catches up the time it was away.
 function PumpObject:stateToIsoObject(isoObject)
     self:show()
-end
-
-function PumpObject:spec()
-    return self.unit and Pumps.UNITS[self.unit]
 end
 
 --- The litres the seal fitted has left to lift, 0 without one.

@@ -34,9 +34,9 @@ function Flow.fromTank(tank, z)
     }
 end
 
---- The source of a line a pump lifting by `spec` (a row of Pumps.UNITS or PARTS) drives: the push
---- and rate of `spec`, and `draw(litres)`, which lifts what the line asks and returns the litres
---- lifted.
+--- The source of a line a pump lifting by `spec` (a row of Pumps.ENTITIES or PARTS) drives: the
+--- push and rate of `spec`, and `draw(litres)`, which lifts what the line asks and returns the
+--- litres lifted.
 function Flow.fromPump(spec, draw)
     return { push = spec.push, perHour = EnhancedIrrigation.Pumps.perHour(spec), pumped = true, holds = true, draw = draw }
 end

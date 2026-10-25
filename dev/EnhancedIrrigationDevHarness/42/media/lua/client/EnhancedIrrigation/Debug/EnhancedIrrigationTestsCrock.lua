@@ -67,7 +67,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         if not spots then return end
         self.unit = T.buildFromMenu(self, "Base." .. CROCK, spots[1], SPRITES[CROCK], { FORGED_BUCKET })
         if not self.unit then return end
-        self.unit.spec = Treatment.UNITS[CROCK]
+        self.unit.spec = Treatment.ENTITIES[CROCK]
         readUntil(self, self.unit, "built", function(state) return state.record ~= nil end)
         T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(self.unit)) ~= nil end,
             "this client's summary of the crock")
@@ -84,7 +84,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         expect(built.entity == CROCK, "the build menu built " .. tostring(built.entity))
         expect(built.record and built.record.head == 0, "the crock has no record, or water in its head")
         expect(built.basin and built.basin.litres == 0 and built.basin.locked, "the crock's basin isn't empty and locked")
-        expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, Treatment.UNITS[CROCK].head))
+        expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, Treatment.ENTITIES[CROCK].head))
         T.expectOffered(self, "take down")
         local taken = self.reads.taken
         expect(not taken.found and not taken.record, "Take Down left the unit or its record")
