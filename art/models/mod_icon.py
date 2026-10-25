@@ -22,20 +22,29 @@ from PIL import Image
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "dev" / "harness" / "lib"))
 import promo  # noqa: E402
+from palette import PALETTE  # noqa: E402
 
 ICON = REPO / "Contents" / "mods" / "EnhancedIrrigation" / "42" / "enhanced_irrigation_icon.png"
 SIZE = promo.MOD_ICON
 
+
+def paint(name):
+    """PALETTE's sRGB colour `name` as the icon draws it, lit flat."""
+    value = PALETTE[name]["color"]
+    return tuple(int(value[i:i + 2], 16) for i in (1, 3, 5))
+
+
 # Darker than the item icons' outline, which sits on the lighter inventory: the mod list is dark.
+# The shades are picked by hand; the base colours are the tiles'.
 OUTLINE = (22, 24, 28)
-STAVE, STAVE_LIGHT, STAVE_DARK, STAVE_SEAM = (147, 88, 42), (176, 112, 60), (112, 64, 30), (100, 56, 26)
-HOOP, HOOP_LIGHT = (92, 93, 99), (150, 152, 160)
-RIM = (124, 71, 32)
+STAVE, STAVE_LIGHT, STAVE_DARK, STAVE_SEAM = paint("stave"), (176, 112, 60), (112, 64, 30), (100, 56, 26)
+HOOP, HOOP_LIGHT = paint("hoop"), (150, 152, 160)
+RIM = paint("stavedark")
 WATER, WATER_LIGHT, WATER_DARK = (58, 140, 214), (170, 216, 255), (36, 92, 160)
-BOARD, BOARD_LIGHT = (138, 100, 66), (176, 138, 92)
-BARK, BARK_LIGHT = (91, 70, 51), (124, 98, 72)
-BRASS, BRASS_LIGHT = (176, 141, 69), (226, 196, 120)
-HANDLE = (179, 38, 30)
+BOARD, BOARD_LIGHT = paint("planks"), (176, 138, 92)
+BARK, BARK_LIGHT = paint("bark"), (124, 98, 72)
+BRASS, BRASS_LIGHT = paint("brass"), (226, 196, 120)
+HANDLE = paint("red")
 
 # The barrel's rows, inclusive: the rim, two rows of the water inside it, seen a little from above,
 # and the front lip, then the staves, which bulge between BULGE's rows, under two iron hoops.
