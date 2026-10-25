@@ -135,24 +135,10 @@ local function addHandOptions(menu, playerNum, character, pump)
     addReplaceSeal(menu, playerNum, character, pump)
 end
 
--- The panel of the Pump House `pump`'s timer as it stands now: its hour and knob; nil once the
--- timer is gone.
+-- The panel of the Pump House `pump`'s timer as it stands now; nil once the timer is gone.
 local function timerPanel(pump)
     local summary = Pumps.currentSummary(pump)
-    local timer = summary and summary.timer
-    if not timer then
-        return nil
-    end
-    return {
-        title = getItemNameFromFullType(timer.item),
-        object = pump,
-        feature = "pump",
-        job = PumpJobs.SET_TIMER,
-        okKey = "ContextMenu_EnhancedIrrigation_SetTimer",
-        timer = true,
-        start = timer.start,
-        minutes = timer.minutes,
-    }
+    return ValveUI.specOf(summary and summary.timer, pump, "pump", PumpJobs.SET_TIMER)
 end
 
 --- Walks `character` to the Pump House `pump` and opens its timer's panel there (ValveUI).

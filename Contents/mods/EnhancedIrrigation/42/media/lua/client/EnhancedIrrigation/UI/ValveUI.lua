@@ -182,6 +182,26 @@ function ValveUI:new(character, spec, makeSpec)
     return o
 end
 
+--- The panel's spec (ValveUI.open) for `valve` ({ item, start, minutes, untilHour }, as a summary
+--- keeps it) on `object`, its button queuing `job` of `feature`: a Wind-up Valve's knob, or a
+--- timer's hour and knob. Nil without a valve.
+function ValveUI.specOf(valve, object, feature, job)
+    if not valve then
+        return nil
+    end
+    local windUp = Valves.kindOf(valve.item) == "windup"
+    return {
+        title = getItemNameFromFullType(valve.item),
+        object = object,
+        feature = feature,
+        job = job,
+        okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
+        timer = not windUp,
+        start = valve.start,
+        minutes = windUp and Valves.minutesLeft(valve) or valve.minutes,
+    }
+end
+
 --- Opens `character`'s panel for the valve `makeSpec()` describes as it stands now, in place of one
 --- already open; it closes once makeSpec() answers nil or another job. A spec: title, the valve's
 --- name; object, the tile or Pump House it is on; feature and job, the job its button queues

@@ -91,25 +91,12 @@ local function addDrill(menu, playerNum, character, line, state)
     end
 end
 
--- The panel of the valve on the tap tile `line` as it stands now: a Wind-up Valve's knob, or a
--- timer's hour and knob; nil once the valve is gone.
+-- The panel of the valve on the tap tile `line` as it stands now; nil once the valve is gone.
 local function valvePanel(line)
     local state = Lines.stateOf(line)
     local valve = state and state.valve
-    if not valve then
-        return nil
-    end
-    local windUp = Valves.kindOf(valve.item) == "windup"
-    return {
-        title = getItemNameFromFullType(valve.item),
-        object = line,
-        feature = "line",
-        job = windUp and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER,
-        okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
-        timer = not windUp,
-        start = valve.start,
-        minutes = windUp and Valves.minutesLeft(valve) or valve.minutes,
-    }
+    local job = valve and (Valves.kindOf(valve.item) == "windup" and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER)
+    return ValveUI.specOf(valve, line, "line", job)
 end
 
 --- Walks `character` to the tap tile `line` and opens its valve's panel there (ValveUI).
