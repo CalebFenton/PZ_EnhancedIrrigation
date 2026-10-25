@@ -245,7 +245,7 @@ function PumpObject:buildSummary()
     local sealLitres = Pumps.sealLitres(self.seal)
     return {
         seal = self.seal,
-        sealLeft = sealLitres and math.ceil(100 * self:sealLeft() / sealLitres) or 0,
+        sealPercent = sealLitres and math.ceil(100 * self:sealLeft() / sealLitres) or 0,
         sealWorn = self:sealLeft() <= 0,
         condition = math.ceil(self.condition),
         wornOut = self:isWornOut(),

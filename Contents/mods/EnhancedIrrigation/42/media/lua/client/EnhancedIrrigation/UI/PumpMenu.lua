@@ -46,7 +46,7 @@ local function handWords(words, summary)
     elseif summary.sealWorn then
         table.insert(words, getText("IGUI_EnhancedIrrigation_SealWornOut"))
     else
-        table.insert(words, getText("IGUI_EnhancedIrrigation_Seal", summary.sealLeft))
+        table.insert(words, getText("IGUI_EnhancedIrrigation_Seal", summary.sealPercent))
     end
     table.insert(words, summary.wornOut and getText("IGUI_EnhancedIrrigation_PumpWornOut")
         or getText("IGUI_EnhancedIrrigation_PumpCondition", summary.condition))
