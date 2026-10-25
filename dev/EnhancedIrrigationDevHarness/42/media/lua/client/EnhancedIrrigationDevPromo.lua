@@ -472,10 +472,7 @@ local function addMenu()
         -- The panel LineMenu opens for the Timer Valve fitted above.
         open = function()
             local tap = homesteadTap()
-            return EI.ValveUI.open(getPlayer(), function()
-                local state = EI.Lines.stateOf(tap)
-                return EI.ValveUI.specOf(state and state.valve, tap, "line", EI.LineJobs.SET_TIMER)
-            end)
+            return EI.ValveUI.open(getPlayer(), function() return EI.LineMenu.valvePanel(tap) end)
         end,
         close = function(panel)
             panel:destroy()

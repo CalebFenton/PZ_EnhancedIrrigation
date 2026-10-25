@@ -91,8 +91,8 @@ local function addDrill(menu, playerNum, character, line, state)
     end
 end
 
--- The panel of the valve on the tap tile `line` as it stands now; nil once the valve is gone.
-local function valvePanel(line)
+--- The panel of the valve on the tap tile `line` as it stands now; nil once the valve is gone.
+function LineMenu.valvePanel(line)
     local state = Lines.stateOf(line)
     local valve = state and state.valve
     local job = valve and (Valves.kindOf(valve.item) == "windup" and LineJobs.WIND_VALVE or LineJobs.SET_TIMER)
@@ -101,7 +101,7 @@ end
 
 --- Walks `character` to the tap tile `line` and opens its valve's panel there (ValveUI).
 function LineMenu.openValve(character, line)
-    ValveUI.walkAndOpen(character, line, function() return valvePanel(line) end)
+    ValveUI.walkAndOpen(character, line, function() return LineMenu.valvePanel(line) end)
 end
 
 local function addValve(menu, playerNum, character, line, state)
