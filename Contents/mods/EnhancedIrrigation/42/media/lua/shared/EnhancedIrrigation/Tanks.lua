@@ -87,20 +87,16 @@ function Tanks.litres(tank)
     return tank:getFluidContainer():getAmount()
 end
 
---- Takes up to `litres` out of `tank` and returns how many it took; the clients learn of it with
---- the next sync (Tanks.sync). Authority only.
+--- Takes up to `litres` out of `tank`, sends what it holds then to the clients (which also fires
+--- OnWaterAmountChange) and returns how many it took. Authority only.
 function Tanks.take(tank, litres)
     local container = tank:getFluidContainer()
     local taken = math.min(litres, container:getAmount())
     if taken > 0 then
         container:removeFluid(taken, false)
+        tank:sync()
     end
     return taken
-end
-
---- Sends `tank`'s water to the clients, which also fires OnWaterAmountChange. Authority only.
-function Tanks.sync(tank)
-    tank:sync()
 end
 
 return Tanks

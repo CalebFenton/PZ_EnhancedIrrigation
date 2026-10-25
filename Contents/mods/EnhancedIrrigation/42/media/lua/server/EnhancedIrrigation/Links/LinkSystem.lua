@@ -201,7 +201,7 @@ function LinkSystem:pass(hours)
         end
     end
     for tank in pairs(changed) do
-        Tanks.sync(tank)
+        tank:sync()
     end
 end
 

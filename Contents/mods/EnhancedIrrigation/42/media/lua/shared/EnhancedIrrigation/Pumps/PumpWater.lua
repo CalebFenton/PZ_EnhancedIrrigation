@@ -191,11 +191,7 @@ function PumpWater.draw(source, fluid, litres)
         if source.infinite then
             return litres
         end
-        local moved = Tanks.take(source.object, litres)
-        if moved > 0 then
-            Tanks.sync(source.object)
-        end
-        return moved
+        return Tanks.take(source.object, litres)
     end
     if not source.object then
         fluid:addFluid(FluidType.TaintedWater, litres)
@@ -220,7 +216,7 @@ function PumpWater.fillTank(source, into, litres)
         return 0
     end
     local moved = PumpWater.draw(source, fluid, litres)
-    Tanks.sync(into)
+    into:sync()
     return moved
 end
 

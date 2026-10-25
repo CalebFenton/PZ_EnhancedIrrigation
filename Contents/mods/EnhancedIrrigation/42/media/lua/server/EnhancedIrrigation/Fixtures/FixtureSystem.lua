@@ -115,7 +115,7 @@ function FixtureSystem.plumb(fixture, tank, kind, lengths, conditions)
         EnhancedIrrigation.squareOf(tank), kind, lengths, conditions, "fixture")
     link.reserve = holdReserve(fixture)
     if not Fixtures.townWaterRuns(fixture) and fill(tank, fixture, Fixtures.capacityOf(fixture)) then
-        Tanks.sync(tank)
+        tank:sync()
     end
 end
 

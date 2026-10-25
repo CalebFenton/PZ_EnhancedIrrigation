@@ -288,10 +288,10 @@ function TreatmentObject:afterChange()
         unit:sync()
     end
     if self.drewFrom then
-        Tanks.sync(self.drewFrom)
+        self.drewFrom:sync()
     end
     if self.drainedInto then
-        Tanks.sync(self.drainedInto)
+        self.drainedInto:sync()
     end
     self.basinChanged, self.drewFrom, self.drainedInto = nil, nil, nil
     self:sendSummary()

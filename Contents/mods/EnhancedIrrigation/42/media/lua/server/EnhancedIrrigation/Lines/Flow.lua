@@ -30,13 +30,7 @@ function Flow.fromTank(tank, z)
     return {
         push = math.sqrt(Tanks.levelOf(tank) - z),
         holds = Tanks.litres(tank) > 0,
-        draw = function(litres)
-            local taken = Tanks.take(tank, litres)
-            if taken > 0 then
-                Tanks.sync(tank)
-            end
-            return taken
-        end,
+        draw = function(litres) return Tanks.take(tank, litres) end,
     }
 end
 
