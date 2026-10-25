@@ -281,7 +281,7 @@ end)
 
 --- The treatment unit at args' x, y, z, or nil.
 function Server.treatmentUnitAt(args)
-    return mod().Treatment.unitAt(args.x, args.y, args.z)
+    return mod().Treatment.unitOn(getCell():getGridSquare(args.x, args.y, args.z))
 end
 
 --- The treatment unit record at args' x, y, z, or nil.

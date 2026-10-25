@@ -91,11 +91,6 @@ function Treatment.unitOn(square)
     return EnhancedIrrigation.findObjectOn(square, Treatment.isUnit)
 end
 
---- The unit on the loaded square x, y, z, or nil.
-function Treatment.unitAt(x, y, z)
-    return Treatment.unitOn(getCell():getGridSquare(x, y, z))
-end
-
 --- Whether water runs between `tank` and `unit` through the unit's `role` end: into its head from
 --- a tank at least level with it, out of its basin into a tank no higher.
 function Treatment.runsFor(role, tank, unit)
