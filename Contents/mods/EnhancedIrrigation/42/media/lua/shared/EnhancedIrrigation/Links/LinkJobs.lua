@@ -127,7 +127,7 @@ function LinkJobs.unitBlocker(unit, with, role)
         return PLUMBED[role]
     end
     if Links.find(here, other) then
-        return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
+        return "Tooltip_EnhancedIrrigation_UnitPlumbedThere"
     end
     if not Treatment.runsFor(role, tank, unit) then
         return WRONG_LEVEL[role]
@@ -151,13 +151,13 @@ function LinkJobs.pumpBlocker(pump, with)
     end
     local into = Tanks.tankAt(other.x, other.y, other.z) or Lines.lineAt(other.x, other.y, other.z)
     if not into then
-        return "Tooltip_EnhancedIrrigation_TankGone"
+        return "Tooltip_EnhancedIrrigation_OutletEndGone"
     end
     if Links.roleAt(here, "pump") then
         return PLUMBED.pump
     end
     if Links.find(here, other) then
-        return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
+        return "Tooltip_EnhancedIrrigation_PumpPlumbedThere"
     end
     local taken = Lines.isLine(into) and Lines.FEED_TAKEN[Lines.feedOf(Lines.component(other.x, other.y, other.z))]
     if taken then
@@ -183,9 +183,9 @@ local function tankBlocker(tank, with)
 end
 
 -- The row of a plumbing job toward the square `with` names, refused as `endsBlocker(object, with)`
--- refuses it as far as both ends go, then by the run's length and the pipe `with` names, which
--- only a client that made up a job leaves out.
-local function plumbJobFor(endsBlocker)
+-- refuses it as far as both ends go, then by the run's length (`tooFarKey`, or OutOfReach for a
+-- run to a tank) and the pipe `with` names, which only a client that made up a job leaves out.
+local function plumbJobFor(endsBlocker, tooFarKey)
     return {
         minutes = function(object, with) return Links.minutesFor(runTiles(object, with)) end,
         position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
@@ -195,7 +195,7 @@ local function plumbJobFor(endsBlocker)
                 return blocker
             end
             if Links.distance(here, other) > Links.MAX_TILES then
-                return "Tooltip_EnhancedIrrigation_OutOfReach"
+                return tooFarKey or "Tooltip_EnhancedIrrigation_OutOfReach"
             end
             return not LinkJobs.pipeFor(object, with) and Jobs.UNKNOWN or nil
         end,
@@ -245,7 +245,7 @@ LinkJobs.JOBS = {
     },
     [LinkJobs.PLUMB_INLET] = unitPlumbJob("inlet"),
     [LinkJobs.PLUMB_OUTLET] = unitPlumbJob("outlet"),
-    [LinkJobs.PLUMB_PUMP] = plumbJobFor(LinkJobs.pumpBlocker),
+    [LinkJobs.PLUMB_PUMP] = plumbJobFor(LinkJobs.pumpBlocker, "Tooltip_EnhancedIrrigation_OutletOutOfReach"),
     [LinkJobs.UNPLUMB] = {
         minutes = 10, position = "Mid", sound = "RepairWithWrench", equip = holdWrench,
         blocker = function(character, object, with)

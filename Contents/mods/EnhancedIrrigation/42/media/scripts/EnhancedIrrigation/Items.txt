@@ -135,7 +135,7 @@ module EnhancedIrrigation
         Weight = 0.3,
         Icon = EnhancedIrrigation_WaterValve,
         WorldStaticModel = ElectronicsScrap,
-        Tooltip = Tooltip_EnhancedIrrigation_WaterValveItem,
+        Tooltip = Tooltip_EnhancedIrrigation_WaterValve,
         Tags = base:ignorezombiedensity,
         ResearchableRecipes = EnhancedIrrigation_MakeTimerValve,
     }
@@ -147,7 +147,7 @@ module EnhancedIrrigation
         Weight = 0.6,
         Icon = EnhancedIrrigation_WindUpValve,
         WorldStaticModel = Timer,
-        Tooltip = Tooltip_EnhancedIrrigation_WindUpValveItem,
+        Tooltip = Tooltip_EnhancedIrrigation_WindUpValve,
     }
 
     item TimerValve
@@ -157,7 +157,7 @@ module EnhancedIrrigation
         Weight = 1.3,
         Icon = EnhancedIrrigation_TimerValve,
         WorldStaticModel = AlarmClock,
-        Tooltip = Tooltip_EnhancedIrrigation_TimerValveItem,
+        Tooltip = Tooltip_EnhancedIrrigation_TimerValve,
     }
 
     item SprinklerTimer
@@ -167,7 +167,7 @@ module EnhancedIrrigation
         Weight = 0.5,
         Icon = EnhancedIrrigation_SprinklerTimer,
         WorldStaticModel = AlarmClock,
-        Tooltip = Tooltip_EnhancedIrrigation_SprinklerTimerItem,
+        Tooltip = Tooltip_EnhancedIrrigation_SprinklerTimer,
         Tags = base:ignorezombiedensity,
         ResearchableRecipes = EnhancedIrrigation_MakeTimerValve,
     }

@@ -73,7 +73,7 @@ function LinkMenu.linkLabel(here, there)
     local square = getCell():getGridSquare(there.x, there.y, there.z)
     local object = Fixtures.fixtureOn(square) or Treatment.unitOn(square) or Pumps.pumpOn(square)
     if object then
-        return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", getText("ContextMenu_EnhancedIrrigation_FixtureThere",
+        return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", getText("ContextMenu_EnhancedIrrigation_ObjectThere",
             LinkMenu.objectName(object), Links.distance(here, there), LinkMenu.direction(here, there)))
     end
     if Lines.lineOn(square) then

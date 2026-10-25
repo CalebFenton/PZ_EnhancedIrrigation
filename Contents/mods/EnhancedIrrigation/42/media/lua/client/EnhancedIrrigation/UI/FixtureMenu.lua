@@ -89,7 +89,7 @@ local function addLinkOptions(context, playerNum, character, fixture)
         nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
         job = LinkJobs.PLUMB_FIXTURE,
         blocker = function(at) return (LinkJobs.fixtureBlocker(fixture, Links.encode(at))) end,
-        noneKey = "ContextMenu_EnhancedIrrigation_NoTankForFixture",
+        noneKey = "ContextMenu_EnhancedIrrigation_NoTankForEnd",
     })
 end
 
