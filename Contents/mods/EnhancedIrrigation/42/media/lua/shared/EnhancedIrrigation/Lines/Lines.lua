@@ -55,7 +55,7 @@ Lines.ROOT_ROT_PER_HOUR = (0.5 + 0.4) / 2
 
 -- Holes ---------------------------------------------------------------------------------------------
 
--- A punched hole may split brittle pipe as it's made (Pipes.KINDS punchCracks).
+-- A punched hole may split brittle pipe as it's made (Pipes.MATERIALS punchCracks).
 Lines.PUNCH_CRACK_CHANCE = 0.2
 
 -- The four same-floor neighbours of a tile, each with its bit in a pipe's shape. The edge between

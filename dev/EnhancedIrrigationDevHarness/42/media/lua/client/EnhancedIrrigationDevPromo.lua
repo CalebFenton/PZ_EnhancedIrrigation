@@ -40,8 +40,8 @@ local ITEMS = {
     "EnhancedIrrigation.FilterCrockUnfired", "EnhancedIrrigation.FilterCrock", "EnhancedIrrigation.AppliancePump",
     "EnhancedIrrigation.UtilityPump",
 }
-for _, kind in ipairs(EI.Pipes.ORDER) do
-    table.insert(ITEMS, EI.Pipes.KINDS[kind].item)
+for _, material in ipairs(EI.Sprites.PIPE_MATERIALS) do
+    table.insert(ITEMS, EI.Pipes.MATERIALS[material].item)
 end
 table.insert(ITEMS, EI.Pipes.WRENCH.item)
 -- Inputs that take any item with a tag show this one.

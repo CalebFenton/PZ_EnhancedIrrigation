@@ -53,7 +53,7 @@ end
 
 -- The conditions of the iron pipe this client's character carries, lowest first.
 local function ironConditions()
-    local items = T.player():getInventory():getAllTypeRecurse(Pipes.KINDS.iron.item)
+    local items = T.player():getInventory():getAllTypeRecurse(Pipes.MATERIALS.iron.item)
     local conditions = {}
     for i = 0, items:size() - 1 do
         table.insert(conditions, items:get(i):getCondition())
@@ -143,7 +143,7 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         -- Iron needs no joint.
         T.give(self, "tools", { { type = "Base.PipeWrench" },
-            { type = "Base.MetalPipe", count = self.lengths * Pipes.KINDS.iron.perLength } })
+            { type = "Base.MetalPipe", count = self.lengths * Pipes.MATERIALS.iron.perLength } })
         local with, past = Links.encode(T.at(self.high), "iron"), Links.encode(T.at(self.far), "iron")
         T.useMenu(self, self.low, "one tile past", T.job("link", LinkJobs.PLUMB, past), false)
         T.read(self, "tanks.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB, with = past }), "forced")
@@ -190,7 +190,7 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
             self.b = T.placeTank(self, spots[2], "lidded")
         end)
         local lengths = lengthsFor(apart)
-        local iron, lead, plastic = Pipes.KINDS.iron, Pipes.KINDS.lead, Pipes.KINDS.plastic
+        local iron, lead, plastic = Pipes.MATERIALS.iron, Pipes.MATERIALS.lead, Pipes.MATERIALS.plastic
         self.ironCount = lengths * iron.perLength
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = iron.item, count = self.ironCount },
@@ -213,7 +213,7 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
         if expect(#links == 1, "the server has " .. #links .. " links at the tank") then
             expect(links[1].kind == "lead", "the link is " .. tostring(links[1].kind) .. " pipe, not the lead chosen")
         end
-        local iron, lead = Pipes.KINDS.iron.item, Pipes.KINDS.lead.item
+        local iron, lead = Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item
         expect(T.counted(self, lead) == 0, "plumbing left " .. T.counted(self, lead) .. " lead pipe")
         expect(T.counted(self, iron) == self.ironCount, "plumbing with lead took iron pipe: " .. T.counted(self, iron) .. " left")
     end,
@@ -232,7 +232,7 @@ T.test("irrigation_links_unplumb_gives_back_the_pipe", {
             self.a = T.placeTank(self, spots[1], "lidded")
             self.b = T.placeTank(self, spots[2], "lidded")
         end)
-        local iron = Pipes.KINDS.iron
+        local iron = Pipes.MATERIALS.iron
         local count = lengthsFor(apart) * iron.perLength
         local most = instanceItem(iron.item):getConditionMax()
         -- Each length worn differently, so one condition for all would show. Iron needs no joint.
@@ -429,7 +429,7 @@ T.test("irrigation_links_unplumb_from_the_bare_floor", {
         T.useOption(self, function() return self.a.square:getFloor() end, "unplumb",
             T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
         T.readUntil(self, "links.read", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
-        self.count = lengths * Pipes.KINDS.iron.perLength
+        self.count = lengths * Pipes.MATERIALS.iron.perLength
         T.waitFor(self, function() return #ironConditions() == self.count end, "this client's copy of the pipe given back")
     end,
     validate = function(self)

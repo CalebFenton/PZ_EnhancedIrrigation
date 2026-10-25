@@ -56,7 +56,7 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
             end
             context:hideAndChildren()
             local cursor = T.layCursor(self, "iron", true)
-            if not T.need(self, cursor and cursor.kind == "iron" and cursor, "the Lay Line cursor for iron pipe") then
+            if not T.need(self, cursor and cursor.material == "iron" and cursor, "the Lay Line cursor for iron pipe") then
                 return
             end
             self.cursor, self.valid = cursor, {}

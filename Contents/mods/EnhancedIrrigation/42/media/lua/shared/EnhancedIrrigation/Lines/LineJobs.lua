@@ -43,9 +43,9 @@ LineJobs.SET_VALVE_TIMER = "SetValveTimer"
 local VALVE_MINUTES = 1
 
 -- What makes a hole, in the order Drill Holes picks among those carried: the tools that cut before
--- the ones that punch. `reach`: the hardest pipe it gets into (Pipes.KINDS hardness). `punches`: it
--- may split brittle pipe (LineJobs.mayCrack). `materials`: what it takes, the tool itself first,
--- which is held while drilling.
+-- the ones that punch. `reach`: the hardest pipe it gets into (Pipes.MATERIALS hardness).
+-- `punches`: it may split brittle pipe (LineJobs.mayCrack). `materials`: what it takes, the tool
+-- itself first, which is held while drilling.
 LineJobs.HOLE_TOOLS = {
     { reach = 3, materials = { { tool = "DRILL_METAL", item = "Base.HandDrill" } } },
     { reach = 2, materials = { { item = "Base.OldDrill", keep = true } } },
@@ -60,7 +60,7 @@ LineJobs.HOLE_TOOLS = {
 
 --- The first of HOLE_TOOLS that `character` carries and that gets into `material`'s pipe, or nil.
 function LineJobs.holeTool(character, material)
-    local hardness = Pipes.KINDS[material].hardness
+    local hardness = Pipes.MATERIALS[material].hardness
     for _, tool in ipairs(LineJobs.HOLE_TOOLS) do
         if tool.reach >= hardness and Materials.needs(character, { tool.materials[1] })[1].have > 0 then
             return tool
@@ -71,7 +71,7 @@ end
 
 --- Whether a hole made with `tool` (of HOLE_TOOLS) may split `material`'s pipe.
 function LineJobs.mayCrack(tool, material)
-    return tool.punches == true and Pipes.KINDS[material].punchCracks == true
+    return tool.punches == true and Pipes.MATERIALS[material].punchCracks == true
 end
 
 -- The hole tool Drill Holes would use at `object`, and the item of it the character holds.
@@ -81,11 +81,11 @@ local function holeToolAt(character, object)
     if not tool then
         return nil
     end
-    local material = tool.materials[1]
-    if material.tool then
-        return tool, Materials.workingTool(character, ItemTag[material.tool])
+    local first = tool.materials[1]
+    if first.tool then
+        return tool, Materials.workingTool(character, ItemTag[first.tool])
     end
-    return tool, character:getInventory():getFirstTypeRecurse(material.item)
+    return tool, character:getInventory():getFirstTypeRecurse(first.item)
 end
 
 local holdWrench = Materials.holds(Pipes.WRENCH)
@@ -182,7 +182,7 @@ local function atValve(kind, check)
     end)
 end
 
--- Lay's `with` is the pipe kind, Set Sprinkler's the sprinkler carried, Fit Valve's the valve
+-- Lay's `with` is the pipe material, Set Sprinkler's the sprinkler carried, Fit Valve's the valve
 -- carried, Wind Valve's its minutes and Set Valve Timer's its setting (Valves.decodeWind and
 -- decodeTimer); the others' is nil.
 LineJobs.JOBS = {
@@ -200,17 +200,17 @@ LineJobs.JOBS = {
     },
     [LineJobs.LAY] = {
         minutes = 3,
-        equip = function(character, floor, kind)
-            return Pipes.KINDS[kind] and Pipes.KINDS[kind].wrench and holdWrench(character) or nil
+        equip = function(character, floor, material)
+            return Pipes.MATERIALS[material] and Pipes.MATERIALS[material].wrench and holdWrench(character) or nil
         end,
-        blocker = function(character, floor, kind)
-            if not Pipes.KINDS[kind] then
+        blocker = function(character, floor, material)
+            if not Pipes.MATERIALS[material] then
                 return "Tooltip_EnhancedIrrigation_CantLayHere"
             end
             return LineJobs.layBlocker(floor:getSquare())
         end,
-        materials = function(character, floor, kind)
-            return Pipes.KINDS[kind] and Pipes.layMaterials(kind, 1) or {}
+        materials = function(character, floor, material)
+            return Pipes.MATERIALS[material] and Pipes.layMaterials(material, 1) or {}
         end,
     },
     [LineJobs.DRILL] = {

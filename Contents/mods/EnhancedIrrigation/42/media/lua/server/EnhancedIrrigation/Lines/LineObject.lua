@@ -147,7 +147,7 @@ function LineObject:freeze(hours)
     if not self.full or self.cracked or not Frost.isHard(self) then
         return
     end
-    local perHour = Pipes.KINDS[self.material].frostPerHour
+    local perHour = Pipes.MATERIALS[self.material].frostPerHour
     local chance = 1 - (1 - perHour) ^ hours
     if ZombRandFloat(0, 1) < chance then
         self.cracked = true

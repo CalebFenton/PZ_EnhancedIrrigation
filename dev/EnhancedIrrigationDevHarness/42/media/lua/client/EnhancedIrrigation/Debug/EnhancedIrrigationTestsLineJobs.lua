@@ -147,8 +147,8 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         local west, tile, east = rows[1][1], rows[1][2], rows[1][3]
         T.placeLine(self, { tile }, "lead")
         T.placeTank(self, tile, "wellAbove")
-        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = Pipes.KINDS.iron.item },
-            { type = Pipes.KINDS.lead.item } })
+        T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = Pipes.MATERIALS.iron.item },
+            { type = Pipes.MATERIALS.lead.item } })
         T.goNextTo(self, tile.square)
         T.useLineJob(self, tile, LineJobs.TAP, "under a well", false)
         T.placeTank(self, west, "ground", TANK_LITRES)
@@ -158,7 +158,7 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         readUntil(self, { tile }, "tapped", function(tiles) return tiles[1].record.tap == true end)
         T.waitFor(self, function() return T.hasOverlay(T.overlaysOf(T.lineObject(tile)), Sprites.TAP) end,
             "this client's copy of the tap's riser")
-        T.count(self, "left", { Pipes.KINDS.iron.item, Pipes.KINDS.lead.item, "Base.PipeWrench" })
+        T.count(self, "left", { Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item, "Base.PipeWrench" })
     end,
     validate = function(self)
         expectRefused(self, "under a well", "Tooltip_EnhancedIrrigation_NoPressure")
@@ -168,7 +168,7 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         expect(record.tap and record.tapMaterial == "lead", "the tap fitted: " .. tostring(record.tap) .. ", of "
             .. tostring(record.tapMaterial) .. " pipe, not the lead tile's own")
         expect(T.hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
-        local iron, lead = Pipes.KINDS.iron.item, Pipes.KINDS.lead.item
+        local iron, lead = Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item
         expect(self.counts.left[lead] == 0, "the tap took no lead pipe")
         expect(self.counts.left[iron] == 1, "the tap on lead pipe took iron pipe")
         expect(self.counts.left["Base.PipeWrench"] == 1, "the tap took the pipe wrench")
@@ -197,7 +197,7 @@ T.test("irrigation_lines_patch_crack", {
         T.step(function() self.described = LineMenu.describe(T.lineSummary(tile)) end)
         T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose the taken-up tile")
-        T.count(self, "back", { Pipes.KINDS.plastic.item })
+        T.count(self, "back", { Pipes.MATERIALS.plastic.item })
     end,
     validate = function(self)
         expectOffered(self, "patch")
@@ -207,7 +207,7 @@ T.test("irrigation_lines_patch_crack", {
         expect(self.described:find(getText("IGUI_EnhancedIrrigation_Cracked"), 1, true) == nil,
             "the menu still says the patched tile is cracked: " .. self.described)
         expectOffered(self, "take up")
-        local plastic = Pipes.KINDS.plastic
+        local plastic = Pipes.MATERIALS.plastic
         expect(self.counts.back[plastic.item] == plastic.perLength, "the patched tile gave back "
             .. tostring(self.counts.back[plastic.item]) .. " plastic pipe, not " .. plastic.perLength)
     end,
@@ -279,11 +279,11 @@ T.test("irrigation_lines_take_up_returns_items", {
             T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose a taken-up tile")
         end
         T.readLines(self, self.tiles, "gone")
-        T.count(self, "back", { Pipes.KINDS.iron.item, Pipes.KINDS.clay.item })
+        T.count(self, "back", { Pipes.MATERIALS.iron.item, Pipes.MATERIALS.clay.item })
     end,
     validate = function(self)
         expectOffered(self, "take up the tap")
-        local iron, clay = Pipes.KINDS.iron, Pipes.KINDS.clay
+        local iron, clay = Pipes.MATERIALS.iron, Pipes.MATERIALS.clay
         -- The tap tile's length, its tap's and the whole tile's.
         local ironWanted = 3 * iron.perLength
         expect(self.counts.back[iron.item] == ironWanted, "the iron tiles gave back "
@@ -306,8 +306,8 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
         local tile = rows[1][1]
         T.trackLines(self, { tile })
         T.placeTank(self, tile, "above", 0)
-        self.worn = math.floor(instanceItem(Pipes.KINDS.iron.item):getConditionMax() / 2)
-        T.give(self, "pipe", { { type = Pipes.KINDS.iron.item, condition = self.worn }, { type = "Base.PipeWrench" } })
+        self.worn = math.floor(instanceItem(Pipes.MATERIALS.iron.item):getConditionMax() / 2)
+        T.give(self, "pipe", { { type = Pipes.MATERIALS.iron.item, condition = self.worn }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tile.square)
         T.step(function()
             local cursor = T.layCursor(self, "iron")
@@ -317,7 +317,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
         T.waitForLines(self, { tile }, "this client's copy of the laid tile")
         T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function()
-            self.back = T.player():getInventory():getFirstTypeRecurse(Pipes.KINDS.iron.item)
+            self.back = T.player():getInventory():getFirstTypeRecurse(Pipes.MATERIALS.iron.item)
             return self.back ~= nil
         end, "this client's copy of the pipe taken up")
     end,

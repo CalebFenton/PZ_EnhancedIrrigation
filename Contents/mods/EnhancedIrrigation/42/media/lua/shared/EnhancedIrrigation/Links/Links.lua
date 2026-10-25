@@ -6,10 +6,10 @@
 -- the links in its system, which sends every client the list.
 --
 -- A link is { a = { x, y, z }, b = { x, y, z }, kind, lengths, conditions }: its ends, the pipe in
--- it (a key of EnhancedIrrigation.Pipes.KINDS and how many lengths), all of which Unplumb gives
--- back, and the condition of each item of that pipe as it went in (Materials.conditions). A link
--- plumbing a fixture, a treatment unit's inlet or outlet, or a pump has that role (ROLE_END) set
--- true; one between two tanks has none.
+-- it (`kind`, the saved name of its key of EnhancedIrrigation.Pipes.MATERIALS, and how many
+-- lengths), all of which Unplumb gives back, and the condition of each item of that pipe as it
+-- went in (Materials.conditions). A link plumbing a fixture, a treatment unit's inlet or outlet, or
+-- a pump has that role (ROLE_END) set true; one between two tanks has none.
 
 require "EnhancedIrrigation/Utilities"
 
@@ -66,25 +66,25 @@ function Links.carry(from, to, litres)
     return true
 end
 
---- The square `at`, and for Plumb the pipe `kind` chosen, as a job's `with`: a string, which a
+--- The square `at`, and for Plumb the pipe `material` chosen, as a job's `with`: a string, which a
 --- multiplayer action's arguments can carry.
-function Links.encode(at, kind)
+function Links.encode(at, material)
     local key = EnhancedIrrigation.squareKey(at.x, at.y, at.z)
-    return kind and key .. "," .. kind or key
+    return material and key .. "," .. material or key
 end
 
---- The square { x, y, z } and the pipe kind, or nil without one, that a job's `with` names; nil
+--- The square { x, y, z } and the pipe material, or nil without one, that a job's `with` names; nil
 --- when it names no square.
 function Links.decode(with)
     if type(with) ~= "string" then
         return nil
     end
     local x, y, z, rest = with:match("^(-?%d+),(-?%d+),(-?%d+)(.*)$")
-    local kind = rest and rest:match("^,(%a+)$")
-    if not x or (rest ~= "" and not kind) then
+    local material = rest and rest:match("^,(%a+)$")
+    if not x or (rest ~= "" and not material) then
         return nil
     end
-    return { x = tonumber(x), y = tonumber(y), z = tonumber(z) }, kind
+    return { x = tonumber(x), y = tonumber(y), z = tonumber(z) }, material
 end
 
 --- Every link as this side knows it: on the authority its own list, which a job may have changed

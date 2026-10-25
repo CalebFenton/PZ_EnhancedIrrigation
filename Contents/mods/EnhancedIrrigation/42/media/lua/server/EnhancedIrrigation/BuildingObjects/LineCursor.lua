@@ -67,7 +67,7 @@ function LineCursor:refusal(square)
         return "Tooltip_EnhancedIrrigation_CantLayHere"
     end
     local blocker = LineJobs.layBlocker(square, function(px, py, pz) return self:isPending(px, py, pz) end)
-    local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.layMaterials(self.kind, self:pendingCount() + 1))
+    local needs = EnhancedIrrigation.Materials.needs(self.character, Pipes.layMaterials(self.material, self:pendingCount() + 1))
     return EnhancedIrrigation.Jobs.refusal(blocker, needs)
 end
 
@@ -98,7 +98,7 @@ function LineCursor:render(x, y, z, square)
     local isLineAt = function(lx, ly, lz)
         return Lines.stateAt(lx, ly, lz) ~= nil or Lines.lineAt(lx, ly, lz) ~= nil or self:isPending(lx, ly, lz)
     end
-    local name = Sprites.pipe(self.kind, false, Lines.shapeAt(x, y, z, isLineAt))
+    local name = Sprites.pipe(self.material, false, Lines.shapeAt(x, y, z, isLineAt))
     if not self.ghost then
         self.ghost = IsoSprite.new()
     end
@@ -118,21 +118,21 @@ function LineCursor:create(x, y, z, north, sprite)
         return
     end
     self.pending[key(x, y, z)] = square
-    EnhancedIrrigationAction.queue(self.player, "line", LineJobs.LAY, floor, self.kind)
+    EnhancedIrrigationAction.queue(self.player, "line", LineJobs.LAY, floor, self.material)
 end
 
---- A cursor laying `kind` pipe for `character`.
-function LineCursor:new(character, kind)
+--- A cursor laying `material` pipe for `character`.
+function LineCursor:new(character, material)
     local o = {}
     setmetatable(o, self)
     self.__index = self
     o:init()
-    local sprite = Sprites.pipe(kind, false, 0)
+    local sprite = Sprites.pipe(material, false, 0)
     o:setSprite(sprite)
     o:setNorthSprite(sprite)
     o.character = character
     o.player = character:getPlayerNum()
-    o.kind = kind
+    o.material = material
     o.pending = {}
     o.refusalCache = { atMs = -math.huge }
     o.noNeedHammer = true
@@ -142,9 +142,9 @@ function LineCursor:new(character, kind)
     return o
 end
 
-function LineCursor.start(playerNum, kind)
+function LineCursor.start(playerNum, material)
     local character = getSpecificPlayer(playerNum)
-    getCell():setDrag(LineCursor:new(character, kind), playerNum)
+    getCell():setDrag(LineCursor:new(character, material), playerNum)
 end
 
 return LineCursor

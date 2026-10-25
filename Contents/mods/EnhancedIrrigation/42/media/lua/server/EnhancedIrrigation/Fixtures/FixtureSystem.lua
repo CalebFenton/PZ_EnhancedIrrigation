@@ -101,13 +101,13 @@ function FixtureSystem.refill(link, hours)
     return nil
 end
 
---- Plumbs `fixture` to `tank` with `kind` pipe in `lengths` lengths (none for vanilla's Plumb), whose
---- items were at `conditions`: the link, the buffer, and a first fill as the pipe goes in full,
---- unless the town's water runs to it.
-function FixtureSystem.plumb(fixture, tank, kind, lengths, conditions)
+--- Plumbs `fixture` to `tank` with `material` pipe in `lengths` lengths (none for vanilla's
+--- Plumb), whose items were at `conditions`: the link, the buffer, and a first fill as the pipe goes
+--- in full, unless the town's water runs to it.
+function FixtureSystem.plumb(fixture, tank, material, lengths, conditions)
     FixtureSystem.ensureBuffer(fixture)
     local link = EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(fixture),
-        EnhancedIrrigation.squareOf(tank), kind, lengths, conditions, "fixture")
+        EnhancedIrrigation.squareOf(tank), material, lengths, conditions, "fixture")
     link.reserve = holdReserve(fixture)
     if not Fixtures.townWaterRuns(fixture) and fill(tank, fixture, Fixtures.capacityOf(fixture)) then
         tank:sync()

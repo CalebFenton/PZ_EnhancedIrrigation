@@ -139,12 +139,12 @@ local function addLineOptions(context, playerNum, character, line, state)
 end
 
 -- The cursor lives with the server's Lua, which loads after this file, so it's looked up here.
-local function addLay(context, playerNum, character, kinds)
+local function addLay(context, playerNum, character, materials)
     local menu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_LayLine"))
-    for _, kind in ipairs(kinds) do
-        local option = menu:addOption(getItemNameFromFullType(Pipes.KINDS[kind].item), playerNum,
-            EnhancedIrrigation.LineCursor.start, kind)
-        Needs.show(option, Materials.needs(character, Pipes.layMaterials(kind, 1)))
+    for _, material in ipairs(materials) do
+        local option = menu:addOption(getItemNameFromFullType(Pipes.MATERIALS[material].item), playerNum,
+            EnhancedIrrigation.LineCursor.start, material)
+        Needs.show(option, Materials.needs(character, Pipes.layMaterials(material, 1)))
     end
 end
 
@@ -165,9 +165,9 @@ function LineMenu.onFill(playerNum, context, worldobjects, test)
     end
     local line = Needs.findClicked(worldobjects, Lines.isLine)
     local state = line and Lines.stateOf(line)
-    local kinds = Pipes.kindsCarried(character)
+    local materials = Pipes.materialsCarried(character)
     local square = clickedFloorSquare(worldobjects)
-    if not state and not (square and #kinds > 0) then
+    if not state and not (square and #materials > 0) then
         return
     end
     if test then
@@ -176,8 +176,8 @@ function LineMenu.onFill(playerNum, context, worldobjects, test)
     if state then
         addLineOptions(context, playerNum, character, line, state)
     end
-    if square and #kinds > 0 then
-        addLay(context, playerNum, character, kinds)
+    if square and #materials > 0 then
+        addLay(context, playerNum, character, materials)
     end
 end
 

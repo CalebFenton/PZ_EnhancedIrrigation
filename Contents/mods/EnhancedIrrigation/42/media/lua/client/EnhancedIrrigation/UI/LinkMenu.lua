@@ -102,7 +102,7 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
         return
     end
     local submenu = Needs.addSubMenu(context, name)
-    local kinds = Pipes.kindsCarried(character)
+    local materials = Pipes.materialsCarried(character)
     local ends = {}
     for _, entry in ipairs(Links.inReach(object, Tanks.tankAt)) do
         if not (spec.skip and spec.skip(entry.at)) then
@@ -114,14 +114,14 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
     end
     table.sort(ends, function(p, q) return p.distance < q.distance end)
     for _, entry in ipairs(ends) do
-        local refusal = spec.refusal and spec.refusal(entry.at) or (#kinds == 0 and "Tooltip_EnhancedIrrigation_NoPipe") or nil
+        local refusal = spec.refusal and spec.refusal(entry.at) or (#materials == 0 and "Tooltip_EnhancedIrrigation_NoPipe") or nil
         if refusal then
             Needs.refuse(submenu:addOption(entry.label), refusal)
         else
             local pipes = Needs.addSubMenu(submenu, entry.label)
-            for _, kind in ipairs(kinds) do
-                local with = Links.encode(entry.at, kind)
-                JobOptions.add(pipes, playerNum, character, "link", getItemNameFromFullType(Pipes.KINDS[kind].item),
+            for _, material in ipairs(materials) do
+                local with = Links.encode(entry.at, material)
+                JobOptions.add(pipes, playerNum, character, "link", getItemNameFromFullType(Pipes.MATERIALS[material].item),
                     spec.job, object, with)
             end
         end

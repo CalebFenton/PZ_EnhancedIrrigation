@@ -31,7 +31,7 @@ local WINTER_TILE_HOURS = 24 * 600
 -- an hour that a full length splits in a hard freeze (Frost.HARD_FREEZE_CELSIUS); `punchCracks`,
 -- whether a punched hole may split it; `hardness`, which hole tools get into it (LineJobs.HOLE_TOOLS
 -- reach).
-Pipes.KINDS = {
+Pipes.MATERIALS = {
     plastic = {
         item = "Base.Pipe", perLength = 1, joint = Pipes.GLUE,
         frostPerHour = 0.3 / WINTER_TILE_HOURS, punchCracks = true, hardness = 1,
@@ -48,16 +48,14 @@ Pipes.KINDS = {
         frostPerHour = 3 / WINTER_TILE_HOURS, punchCracks = true, hardness = 2,
     },
 }
--- The order the menu offers them in: the tiles' order.
-Pipes.ORDER = EnhancedIrrigation.Sprites.PIPE_MATERIALS
 
---- The materials list (EnhancedIrrigation.Materials) of `lengths` lengths of `kind`'s pipe, each
---- with its joint, after the materials of `first` (a list, left as it is), if given.
-function Pipes.materials(kind, lengths, first)
-    local spec = Pipes.KINDS[kind]
+--- The materials list (EnhancedIrrigation.Materials) of `lengths` lengths of `material`'s pipe,
+--- each with its joint, after the materials of `first` (a list, left as it is), if given.
+function Pipes.materials(material, lengths, first)
+    local spec = Pipes.MATERIALS[material]
     local list = {}
-    for _, material in ipairs(first or {}) do
-        table.insert(list, material)
+    for _, entry in ipairs(first or {}) do
+        table.insert(list, entry)
     end
     table.insert(list, { item = spec.item, need = spec.perLength * lengths })
     local joint = spec.joint
@@ -67,27 +65,27 @@ function Pipes.materials(kind, lengths, first)
     return list
 end
 
---- The materials list of laying `lengths` tiles of `kind`'s line: the pipe wrench where that is the
---- joint, then its pipe and joints.
-function Pipes.layMaterials(kind, lengths)
-    return Pipes.materials(kind, lengths, Pipes.KINDS[kind].wrench and { Pipes.WRENCH })
+--- The materials list of laying `lengths` tiles of `material`'s line: the pipe wrench where that is
+--- the joint, then its pipe and joints.
+function Pipes.layMaterials(material, lengths)
+    return Pipes.materials(material, lengths, Pipes.MATERIALS[material].wrench and { Pipes.WRENCH })
 end
 
---- The kinds `character` carries any pipe of, in menu order.
-function Pipes.kindsCarried(character)
-    local kinds = {}
-    for _, kind in ipairs(Pipes.ORDER) do
-        if character:getInventory():getCountTypeRecurse(Pipes.KINDS[kind].item) > 0 then
-            table.insert(kinds, kind)
+--- The materials `character` carries any pipe of, in the tiles' order.
+function Pipes.materialsCarried(character)
+    local carried = {}
+    for _, material in ipairs(EnhancedIrrigation.Sprites.PIPE_MATERIALS) do
+        if character:getInventory():getCountTypeRecurse(Pipes.MATERIALS[material].item) > 0 then
+            table.insert(carried, material)
         end
     end
-    return kinds
+    return carried
 end
 
---- Gives `character` back `lengths` lengths of `kind`'s pipe taken out: every item they took, the
---- i-th at `conditions[i]` (Materials.conditions), new where the list has none. Authority only.
-function Pipes.giveBack(character, kind, lengths, conditions)
-    local spec = Pipes.KINDS[kind]
+--- Gives `character` back `lengths` lengths of `material`'s pipe taken out: every item they took,
+--- the i-th at `conditions[i]` (Materials.conditions), new where the list has none. Authority only.
+function Pipes.giveBack(character, material, lengths, conditions)
+    local spec = Pipes.MATERIALS[material]
     for i = 1, spec.perLength * lengths do
         local item = instanceItem(spec.item)
         local condition = conditions and conditions[i]

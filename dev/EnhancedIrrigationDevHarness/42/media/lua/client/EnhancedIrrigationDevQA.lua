@@ -76,10 +76,10 @@ local LINE_TILES = 24
 local SPARE_LENGTHS = 5
 local LENGTHS = LINE_TILES + SPARE_LENGTHS
 local Pipes, LineJobs, Valves = EnhancedIrrigation.Pipes, EnhancedIrrigation.LineJobs, EnhancedIrrigation.Valves
--- Each kind of pipe, and the items a length of it takes.
+-- Each pipe material, and the items a length of it takes.
 local PIPES = {}
-for _, kind in ipairs(Pipes.ORDER) do
-    local spec = Pipes.KINDS[kind]
+for _, material in ipairs(EnhancedIrrigation.Sprites.PIPE_MATERIALS) do
+    local spec = Pipes.MATERIALS[material]
     table.insert(PIPES, { spec.item, spec.perLength })
 end
 -- What joins plastic, and what joins clay; enough of each one alone for every length.

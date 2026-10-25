@@ -66,11 +66,11 @@ function LinkSystem:sendLinks()
 end
 
 --- Adds the link from the square `at` to the square `other` (Links.new): with `role`, `at` is that
---- role's object. `kind` pipe in `lengths` lengths whose items were at `conditions`, none for
+--- role's object. `material` pipe in `lengths` lengths whose items were at `conditions`, none for
 --- vanilla's Plumb. Returns the link.
-function LinkSystem:addLink(at, other, kind, lengths, conditions, role)
+function LinkSystem:addLink(at, other, material, lengths, conditions, role)
     local link = Links.new(at, other, role)
-    link.kind, link.lengths, link.conditions = kind, lengths, conditions
+    link.kind, link.lengths, link.conditions = material, lengths, conditions
     table.insert(self.links, link)
     self:sendLinks()
     return link
@@ -96,8 +96,8 @@ end
 -- Lays the pipe a job's `with` names from `object` to the square it names, as a link of `role`.
 local function layPipe(role)
     return function(character, object, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(object, with)
-        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(object), Links.decode(with), kind, lengths,
+        local material, lengths = LinkJobs.pipeFor(object, with)
+        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(object), Links.decode(with), material, lengths,
             Materials.conditions(character, materials), role)
     end
 end
@@ -107,9 +107,9 @@ local DO = {
     [LinkJobs.PLUMB] = layPipe(nil),
     -- The tank the fixture's pipe runs to, as LinkJobs.fixtureBlocker found it before the job.
     [LinkJobs.PLUMB_FIXTURE] = function(character, fixture, with, materials)
-        local kind, lengths = LinkJobs.pipeFor(fixture, with)
+        local material, lengths = LinkJobs.pipeFor(fixture, with)
         local other = Links.decode(with)
-        FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), kind, lengths,
+        FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), material, lengths,
             Materials.conditions(character, materials))
     end,
     [LinkJobs.PLUMB_ABOVE] = function(character, fixture, with)

@@ -49,11 +49,11 @@ local function runTiles(tank, with)
     return other and Links.distance(EnhancedIrrigation.squareOf(tank), other) or 0
 end
 
---- The pipe Plumb lays from `tank` to the square `with` names: the kind `with` names, or nil, and
---- the lengths the run takes.
+--- The pipe Plumb lays from `tank` to the square `with` names: the material `with` names, or nil,
+--- and the lengths the run takes.
 function LinkJobs.pipeFor(tank, with)
-    local _, kind = Links.decode(with)
-    return Pipes.KINDS[kind] and kind or nil, Links.lengthsFor(runTiles(tank, with))
+    local _, material = Links.decode(with)
+    return Pipes.MATERIALS[material] and material or nil, Links.lengthsFor(runTiles(tank, with))
 end
 
 -- The square `object` stands on and the square `with` names, or nil when `with` names no other
@@ -72,8 +72,8 @@ end
 
 -- What a job that lays pipe takes: the wrench, the knowledge, and the pipe the run needs.
 local function plumbMaterials(character, object, with)
-    local kind, lengths = LinkJobs.pipeFor(object, with)
-    return kind and Pipes.materials(kind, lengths, LinkJobs.PLUMB_TOOLS) or LinkJobs.PLUMB_TOOLS
+    local material, lengths = LinkJobs.pipeFor(object, with)
+    return material and Pipes.materials(material, lengths, LinkJobs.PLUMB_TOOLS) or LinkJobs.PLUMB_TOOLS
 end
 
 -- The Tooltip key saying an object has its end of each role plumbed already (Links.roleAt).
