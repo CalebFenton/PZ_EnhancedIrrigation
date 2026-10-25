@@ -19,7 +19,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "dev" / "harness" / "lib"))
+sys.path.insert(0, str(REPO / "art" / "models"))
 import promo  # noqa: E402
+from mod_icon import HOOP_LIGHT, STAVE_LIGHT  # noqa: E402
 from promo import PAGE, WIDTH  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -72,8 +74,9 @@ RECIPE_SECTIONS = [
     ("Sprinklers and valves", ["EnhancedIrrigation_MakePipeSprinkler", "EnhancedIrrigation_MakeWindUpValve",
                                "EnhancedIrrigation_MakeTimerValve"]),
 ]
-# The stand's oak, the pumps' iron and the sprinklers' brass; the clean water recipes take WATER.
-ACCENTS = {"Tanks": (176, 112, 60), "Pumps": (150, 152, 160), "Sprinklers and valves": (196, 160, 80)}
+# The stand's oak and the pumps' iron, lit as the mod list icon draws them, and the sprinklers'
+# brass; the clean water recipes take WATER.
+ACCENTS = {"Tanks": STAVE_LIGHT, "Pumps": HOOP_LIGHT, "Sprinklers and valves": (196, 160, 80)}
 
 ITEMS = promo.ItemSheet(CAPTURES, ITEM_ROWS)
 RECIPES = promo.RecipeSheet(CAPTURES, RECIPE_SECTIONS, WATER, ACCENTS)
