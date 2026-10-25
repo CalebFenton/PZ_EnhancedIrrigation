@@ -1,7 +1,7 @@
 VERSION = 1,
 
-/* Times every loot weight of Cisterns for Kentucky (server/EnhancedIrrigation/Items/Distributions.lua);
-   0 keeps it out of loot, and the skills still teach its recipes. */
+/* Times every loot weight of Cisterns for Kentucky; 0 keeps it out of loot, and the skills still
+   teach every recipe of it but the Pump Houses, which researching a pump part then teaches. */
 option EnhancedIrrigation.PamphletLoot
 {
     type = double,
@@ -12,10 +12,10 @@ option EnhancedIrrigation.PamphletLoot
     translation = EnhancedIrrigation_PamphletLoot,
 }
 
-/* Times every loot weight of the Utility Pump and the Lawn Sprinkler
-   (server/EnhancedIrrigation/Items/Distributions.lua); 0 keeps them out of loot, and Make Utility
-   Pump and salvaged Appliance Pumps still run a Pump House, and Make Pipe Sprinkler makes a
-   sprinkler. */
+/* Times every loot weight of the Utility Pump, the Lawn Sprinkler, the Sprinkler Timer and the
+   Water Valve; 0 keeps them out of loot, and Make Utility Pump and salvaged Appliance Pumps still
+   run a Pump House, Make Pipe Sprinkler makes a sprinkler, Salvage Pump gives Water Valves and a
+   Timer Valve made from one does a Sprinkler Timer's work. */
 option EnhancedIrrigation.PartsLoot
 {
     type = double,

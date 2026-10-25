@@ -1,7 +1,7 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
     "Sandbox_EnhancedIrrigation_PamphletLoot": "Cisterns for Kentucky loot",
-    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden and hardware stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry still teaches its plans, and Welding the plumbing.",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "How often the Cisterns for Kentucky pamphlet turns up in farm storage, garden and hardware stores, libraries and post offices, as a multiple of its usual chance.<br>0 leaves it out of loot; Carpentry, Masonry and Welding still teach its other plans and the plumbing, but the Pump Houses then come only from researching a pump part.",
     "Sandbox_EnhancedIrrigation_PartsLoot": "Pump, sprinkler and valve loot",
     "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "How often a Utility Pump, Lawn Sprinkler, Sprinkler Timer or Water Valve turns up in loot, as a multiple of its usual chance.<br>0 leaves them all out of loot; a Pump House still takes an Appliance Pump salvaged from a washer or dishwasher, or a Utility Pump made from a Blower Fan, a Lawn Sprinkler can be made from pipe, Salvage Pump still gives Water Valves, and a Timer Valve made from one does a Sprinkler Timer's work.",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Plumbing keeps taint",

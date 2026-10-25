@@ -3,8 +3,7 @@
     Tooltip.json. Icons are EnhancedIrrigation_<Item>, packed as Item_EnhancedIrrigation_<Item>.
 
     base:ignorezombiedensity keeps the zombie density loot bonus, which is added to every entry
-    whatever its weight, from swamping the pamphlet's small loot weights
-    (server/EnhancedIrrigation/Items/Distributions.lua).
+    whatever its weight, from swamping the small loot weights of the pamphlet and the parts.
 */
 module EnhancedIrrigation
 {
@@ -14,8 +13,8 @@ module EnhancedIrrigation
         A University of Kentucky extension leaflet on storing, moving and filtering farm water: the
         Tank Stand, the Wooden and Iron Hand Pumps, the Pump Houses and the Barrel and Brick Filters
         (build-menu recipes) and plumbing tanks together (a knowledge-only recipe, Recipes.txt). The
-        skills teach them too. Drawn with vanilla's magazine models, as the game's own recipe
-        magazines are.
+        skills teach them too, but for the Pump Houses, which researching a pump part also teaches.
+        Drawn with vanilla's magazine models, as the game's own recipe magazines are.
     */
     item CisternsForKentucky
     {
