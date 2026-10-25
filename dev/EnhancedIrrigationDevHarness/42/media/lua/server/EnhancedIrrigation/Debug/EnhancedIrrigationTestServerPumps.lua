@@ -28,10 +28,10 @@ end
 local function stateAt(player, args)
     local pump = Server.squareAt(args) and pumpAt(args)
     local record = recordAt(args)
-    local state = { found = pump ~= nil, outlet = mod().Pumps.outletOf(args) ~= nil,
+    local state = { found = pump ~= nil, outlet = mod().Links.roleAt(args, "pump") ~= nil,
         endurance = player:getStats():get(CharacterStat.ENDURANCE) }
     if pump then
-        local source = mod().PumpWater.sourceOf(pump, record and record.intake, mod().Pumps.outletEnd(args))
+        local source = mod().PumpWater.sourceOf(pump, record and record.intake, mod().Links.farEnd(args, "pump"))
         state.entity = mod().entityName(pump)
         state.source = source and { kind = source.kind, litres = source.litres, dry = source.dry == true } or nil
     end

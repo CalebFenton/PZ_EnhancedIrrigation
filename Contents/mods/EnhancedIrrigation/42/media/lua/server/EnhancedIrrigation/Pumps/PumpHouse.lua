@@ -10,6 +10,7 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Lines/Flow"
@@ -22,7 +23,7 @@ local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpWater
-local Lines, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow
+local Lines, Links, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Links, EnhancedIrrigation.Flow
 local Timers, Power, HousePower = EnhancedIrrigation.Timers, EnhancedIrrigation.Power, EnhancedIrrigation.HousePower
 
 -- Running --------------------------------------------------------------------------------------------
@@ -50,7 +51,7 @@ local function run(record, pump, part, hours)
     local into, source = PumpWater.deliveryOf(pump, part, record.intake)
     if not into then
         -- Refused, it still runs: its source decides how fast it wears.
-        source = PumpWater.sourceOf(pump, record.intake, Pumps.outletEnd(record))
+        source = PumpWater.sourceOf(pump, record.intake, Links.farEnd(record, "pump"))
     end
     local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
     -- The litres an hour it lifts while it has water, and how many its outlet takes at most.

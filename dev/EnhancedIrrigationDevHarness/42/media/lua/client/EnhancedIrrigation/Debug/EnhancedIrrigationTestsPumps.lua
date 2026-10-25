@@ -146,7 +146,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe" } })
         T.useMenu(self, self.pump, "outlet", T.job("link", LinkJobs.PLUMB_PUMP, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
-        T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
+        T.waitFor(self, function() return Links.roleAt(T.at(self.pump), "pump") ~= nil end, "this client's copy of the outlet")
         -- Full, as rest can't add to it before the work starts.
         self.endurance = 1
         setEndurance(self, self.endurance)
@@ -439,10 +439,10 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
             with = Links.encode(T.at(tapped), "iron") }), "forced")
         T.useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
         readUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
-        T.waitFor(self, function() return Pumps.outletOf(T.at(self.pump)) ~= nil end, "this client's copy of the outlet")
+        T.waitFor(self, function() return Links.roleAt(T.at(self.pump), "pump") ~= nil end, "this client's copy of the outlet")
         T.readMenu(self, self.pump, "plumbed")
         T.step(function()
-            local b = Pumps.outletEnd(T.at(self.pump))
+            local b = Links.farEnd(T.at(self.pump), "pump")
             self.unplumbLabel = LinkMenu.linkLabel(T.at(self.pump), b)
         end)
         T.useOption(self, function() return T.copyOf(self.pump) end, "unplumb", function(context)

@@ -6,6 +6,7 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Parts"
@@ -15,7 +16,7 @@ require "EnhancedIrrigation/Pumps/PumpHouse"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
-local Sprites, Pumps = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pumps
+local Sprites, Pumps, Links = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pumps, EnhancedIrrigation.Links
 
 local PumpObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Pump")
 EnhancedIrrigation.PumpObject = PumpObject
@@ -154,7 +155,7 @@ local function endsLoaded(record)
     if not EnhancedIrrigation.loadedAround(record.x, record.y, record.z) then
         return false
     end
-    local into = Pumps.outletEnd(record)
+    local into = Links.farEnd(record, "pump")
     return into == nil or EnhancedIrrigation.chunkLoaded(into.x, into.y, into.z)
 end
 
@@ -222,7 +223,7 @@ end
 function PumpObject:afterChange()
     self:show()
     self:sendSummary()
-    local b = Pumps.outletEnd(self)
+    local b = Links.farEnd(self, "pump")
     if b then
         EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, self:isRunning())
     end

@@ -287,7 +287,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         T.placeLine(self, { tiles[1] }, "iron")
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.step(function()
-            self.outlet = EnhancedIrrigation.Pumps.outletOf(T.at(spots[1]))
+            self.outlet = EnhancedIrrigation.Links.roleAt(T.at(spots[1]), "pump")
             self.refusal = T.layCursor(self, "iron"):refusal(tiles[2].square)
         end)
         T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),

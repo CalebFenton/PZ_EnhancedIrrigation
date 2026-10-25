@@ -7,6 +7,7 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Lines/Lines"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Pumps/PumpJobs"
@@ -21,7 +22,7 @@ local PumpSystem = {}
 EnhancedIrrigation.PumpSystem = PumpSystem
 
 local Pumps, PumpJobs, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.PumpWater
-local Lines, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow
+local Lines, Links, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Links, EnhancedIrrigation.Flow
 
 PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Pump",
@@ -33,7 +34,7 @@ PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
 
 -- A pump taken away, smashed or by another mod, no longer runs the line its outlet fed.
 function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
-    local b = self:isValidIsoObject(isoObject) and Pumps.outletEnd(EnhancedIrrigation.squareOf(isoObject))
+    local b = self:isValidIsoObject(isoObject) and Links.farEnd(EnhancedIrrigation.squareOf(isoObject), "pump")
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
     if b then
         EnhancedIrrigation.LineSystem.showRunning(b.x, b.y, b.z, false)

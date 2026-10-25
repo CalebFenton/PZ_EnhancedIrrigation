@@ -159,16 +159,6 @@ function Pumps.lifts(spec, tankLevel, pumpZ)
     return tankLevel <= pumpZ + spec.lift
 end
 
---- The outlet link of the pump on the square `at` ({ x, y, z }), or nil.
-function Pumps.outletOf(at)
-    return Links.roleAt(at, "pump")
-end
-
---- The square the outlet of the pump on the square `at` delivers to, or nil without an outlet.
-function Pumps.outletEnd(at)
-    return Links.farEnd(at, "pump")
-end
-
 --- The garden lines the outlet of `pump` reaches, loaded on this side, nearest first: for each, its
 --- nearest tile, { line, at, distance }.
 function Pumps.linesInReach(pump)

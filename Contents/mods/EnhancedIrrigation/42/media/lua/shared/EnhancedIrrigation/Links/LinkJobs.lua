@@ -153,7 +153,7 @@ function LinkJobs.pumpBlocker(pump, with)
     if not into then
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
-    if Pumps.outletOf(here) then
+    if Links.roleAt(here, "pump") then
         return "Tooltip_EnhancedIrrigation_OutletPlumbed"
     end
     if Links.find(here, other) then

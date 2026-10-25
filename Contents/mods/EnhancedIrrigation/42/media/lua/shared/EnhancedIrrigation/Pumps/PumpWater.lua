@@ -3,6 +3,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Tanks"
+require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
@@ -12,6 +13,7 @@ local PumpWater = {}
 EnhancedIrrigation.PumpWater = PumpWater
 
 local Tanks, Lines, Pumps = EnhancedIrrigation.Tanks, EnhancedIrrigation.Lines, EnhancedIrrigation.Pumps
+local Links = EnhancedIrrigation.Links
 
 -- Tiles a pump's Rubber Hose reaches across the ground to natural water.
 PumpWater.HOSE_REACH = 3
@@ -130,7 +132,7 @@ end
 --- `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of why it
 --- lifts nothing.
 function PumpWater.deliveryOf(pump, spec, intake)
-    local b = Pumps.outletEnd(EnhancedIrrigation.squareOf(pump))
+    local b = Links.farEnd(EnhancedIrrigation.squareOf(pump), "pump")
     if not b then
         return nil, "Tooltip_EnhancedIrrigation_NoOutlet"
     end

@@ -771,7 +771,7 @@ end
 function T.linkPump(self, pump, tank, fields)
     T.server(self, "pumps.link", T.at(pump, { tank = T.at(tank), fields = fields }))
     T.waitFor(self, function()
-        if Pumps.outletOf(T.at(pump)) == nil then
+        if EnhancedIrrigation.Links.roleAt(T.at(pump), "pump") == nil then
             return false
         end
         local summary = fields and fields.seal and T.pumpSummary(pump)
