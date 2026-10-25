@@ -261,8 +261,11 @@ LineJobs.JOBS = {
             local full = false
             for _, tile in ipairs(Lines.component(object:getX(), object:getY(), object:getZ())) do
                 -- Its pump or its tap's valve holds it, as a character holds a tap.
-                if tile.state.running or tile.state.valveOpen then
+                if tile.state.running then
                     return "Tooltip_EnhancedIrrigation_LineRunning"
+                end
+                if tile.state.valveOpen then
+                    return "Tooltip_EnhancedIrrigation_ValveRunning"
                 end
                 full = full or tile.state.full
             end

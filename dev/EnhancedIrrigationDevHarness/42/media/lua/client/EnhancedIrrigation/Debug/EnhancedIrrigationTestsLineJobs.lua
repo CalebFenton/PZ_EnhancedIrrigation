@@ -214,19 +214,34 @@ T.test("irrigation_lines_patch_crack", {
 })
 
 -- Draining from a middle tile empties the whole line onto the ground there: that tile's soil shows
--- wet, and no tile's soil soaks. Catches a drain limited to an end, one that leaves water standing,
--- or one that rots a bed.
+-- wet, and no tile's soil soaks. While a Wind-up Valve holds its tap open it is refused, saying the
+-- valve runs it. Catches a drain limited to an end, one that leaves water standing, one that rots a
+-- bed, or a running valve blamed on a pump.
 T.test("irrigation_lines_drain_from_the_middle", {
     instant = true,
     run = function(self)
-        local rows = T.row(self, 3)
+        local rows = T.row(self, 4)
         if not rows then return end
-        self.tiles = rows[1]
+        local beside = rows[1][1]
+        self.tiles = { rows[1][2], rows[1][3], rows[1][4] }
         for _, tile in ipairs(self.tiles) do
             tile.fields = { full = true }
         end
+        self.tiles[1].fields.tap = true
+        T.placeTank(self, beside, "raised", 100)
         T.placeLine(self, self.tiles, "lead")
+        local tap = self.tiles[1]
+        T.server(self, "valves.place", T.at(tap, { item = EnhancedIrrigation.Valves.WIND_UP }))
+        T.read(self, "lines.perform", T.at(tap, { job = LineJobs.WIND_VALVE, with = "60" }), "wound")
+        T.waitForLines(self, { tap }, "this client's copy of the tap its valve runs", function(summary)
+            return summary.valveOpen
+        end)
         T.goNextTo(self, self.tiles[2].square)
+        T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain while the valve runs", false)
+        T.read(self, "lines.perform", T.at(tap, { job = LineJobs.WIND_VALVE, with = "0" }), "shut")
+        T.waitForLines(self, { tap }, "this client's copy of the tap its valve shut", function(summary)
+            return not summary.valveOpen
+        end)
         T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain the middle", true)
         readUntil(self, self.tiles, "drained", function(tiles)
             for _, tile in ipairs(tiles) do
@@ -241,6 +256,7 @@ T.test("irrigation_lines_drain_from_the_middle", {
         end, "this client's copy of the drained tile, wet")
     end,
     validate = function(self)
+        T.expectRefused(self, "drain while the valve runs", "Tooltip_EnhancedIrrigation_ValveRunning")
         expectOffered(self, "drain the middle")
         local shapes = { Sprites.EAST, Sprites.EAST + Sprites.WEST, Sprites.WEST }
         for i, tile in ipairs(self.reads.drained.tiles) do

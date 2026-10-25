@@ -186,7 +186,7 @@ Water a hole gives past what its plant can take soaks the soil, and so does ever
 Once a tap has run, its line stays full of water until you drain it.
 
 - **Freezing.** At -7 °C or colder, a full tile may split. A heated room keeps its tiles safe while you're nearby, but once you leave the area the line freezes as if it were outdoors. Left full outdoors all winter, a 24-tile line can expect about 3 cracks in clay, 1 or 2 in iron, and seldom one in lead or plastic.
-- **Drain Line**, from any tile, takes 2 minutes plus 1 for every 5 tiles, empties the whole line and wets the spot where you opened it. It's greyed out while a pump runs the line.
+- **Drain Line**, from any tile, takes 2 minutes plus 1 for every 5 tiles, empties the whole line and wets the spot where you opened it. It's greyed out while a pump or its tap's valve runs the line.
 - **Cracks** leak about 3 L an hour while the tap runs, more from a higher tank and two or three times that on a pumped line, onto the ground where no plant gets it. **Patch Crack** takes 3 minutes and one use of glue, epoxy or duct tape, on any pipe.
 - **Take Up Pipe** takes 3 minutes and gives each length back as it went in; laid pipe doesn't wear. A cracked length is lost, and the joints are used up. A sledgehammer also removes a tile, but you lose the pipe.
 
