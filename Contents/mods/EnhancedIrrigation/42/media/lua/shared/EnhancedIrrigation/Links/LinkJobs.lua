@@ -76,6 +76,14 @@ local function plumbMaterials(character, object, with)
     return kind and Pipes.materials(kind, lengths, LinkJobs.PLUMB_TOOLS) or LinkJobs.PLUMB_TOOLS
 end
 
+-- The Tooltip key saying an object has its end of each role plumbed already (Links.roleAt).
+local PLUMBED = {
+    fixture = "Tooltip_EnhancedIrrigation_FixturePlumbed",
+    inlet = "Tooltip_EnhancedIrrigation_InletPlumbed",
+    outlet = "Tooltip_EnhancedIrrigation_OutletPlumbed",
+    pump = "Tooltip_EnhancedIrrigation_OutletPlumbed",
+}
+
 --- Why the fixture `fixture` can't be plumbed to the tank on the square `with` names, as far as
 --- both ends go, a Tooltip key, or nil; and the two squares.
 function LinkJobs.fixtureBlocker(fixture, with)
@@ -88,7 +96,7 @@ function LinkJobs.fixtureBlocker(fixture, with)
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
     if Links.roleAt(here, "fixture") then
-        return "Tooltip_EnhancedIrrigation_FixturePlumbed"
+        return PLUMBED.fixture
     end
     -- A fixture is an outlet: its tank must push, as a tap's must.
     if not Tanks.hasPressureFor(tank, here.z) then
@@ -97,11 +105,10 @@ function LinkJobs.fixtureBlocker(fixture, with)
     return nil, here, other
 end
 
--- Each end a unit's pipe can be: the Tooltip key saying the unit has that end plumbed already, and
--- the one saying the tank stands where water can't run that way.
-local UNIT_ENDS = {
-    inlet = { plumbed = "Tooltip_EnhancedIrrigation_InletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_InletTankTooLow" },
-    outlet = { plumbed = "Tooltip_EnhancedIrrigation_OutletPlumbed", wrongLevel = "Tooltip_EnhancedIrrigation_OutletTankTooHigh" },
+-- The Tooltip key saying the tank stands where water can't run through each end of a unit's pipe.
+local WRONG_LEVEL = {
+    inlet = "Tooltip_EnhancedIrrigation_InletTankTooLow",
+    outlet = "Tooltip_EnhancedIrrigation_OutletTankTooHigh",
 }
 
 --- Why the unit `unit`'s `role` end ("inlet" or "outlet") can't be plumbed to the tank on the square
@@ -109,7 +116,7 @@ local UNIT_ENDS = {
 function LinkJobs.unitBlocker(unit, with, role)
     local here, other = endsOf(unit, with)
     local spec = Treatment.specOf(unit)
-    if not (here and spec and spec.plumbed and Treatment.isUnit(unit) and UNIT_ENDS[role]) then
+    if not (here and spec and spec.plumbed and Treatment.isUnit(unit) and WRONG_LEVEL[role]) then
         return Jobs.UNKNOWN
     end
     local tank = Tanks.tankAt(other.x, other.y, other.z)
@@ -117,13 +124,13 @@ function LinkJobs.unitBlocker(unit, with, role)
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
     if Links.roleAt(here, role) then
-        return UNIT_ENDS[role].plumbed
+        return PLUMBED[role]
     end
     if Links.find(here, other) then
         return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
     end
     if not Treatment.runsFor(role, tank, unit) then
-        return UNIT_ENDS[role].wrongLevel
+        return WRONG_LEVEL[role]
     end
     return nil, here, other
 end
@@ -147,7 +154,7 @@ function LinkJobs.pumpBlocker(pump, with)
         return "Tooltip_EnhancedIrrigation_TankGone"
     end
     if Links.roleAt(here, "pump") then
-        return "Tooltip_EnhancedIrrigation_OutletPlumbed"
+        return PLUMBED.pump
     end
     if Links.find(here, other) then
         return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
