@@ -81,18 +81,8 @@ local function kindBlocker(unit, job)
     return not (spec and spec.kind == KIND_OF_JOB[job] and Treatment.isUnit(unit)) and Jobs.UNKNOWN or nil
 end
 
--- The welding torch with the most fuel `character` carries, or nil.
-local function weldingTorch(character)
-    local best = nil
-    local torches = character:getInventory():getAllTypeRecurse("Base.BlowTorch")
-    for i = 0, torches:size() - 1 do
-        local torch = torches:get(i)
-        if not best or torch:getCurrentUses() > best:getCurrentUses() then
-            best = torch
-        end
-    end
-    return best
-end
+-- Patch Drum's torch, which it holds and draws on.
+local WELDING_TORCH = { types = { "Base.BlowTorch" }, uses = 2, labelKey = "IGUI_EnhancedIrrigation_WeldingTorch" }
 
 TreatmentJobs.JOBS = {
     [TreatmentJobs.POUR_IN] = {
@@ -168,7 +158,7 @@ TreatmentJobs.JOBS = {
     [TreatmentJobs.PATCH_DRUM] = {
         minutes = PATCH_MINUTES,
         anim = "BlowTorch", position = "Mid", sound = "BlowTorch",
-        equip = function(character) return weldingTorch(character) end,
+        equip = EnhancedIrrigation.Materials.holdsDrainable(WELDING_TORCH),
         blocker = function(character, unit)
             local refusal = kindBlocker(unit, TreatmentJobs.PATCH_DRUM)
             if refusal then
@@ -185,7 +175,7 @@ TreatmentJobs.JOBS = {
             { skill = "MetalWelding", level = 2 },
             { tool = "WELDING_MASK", item = "Base.WeldingMask" },
             { item = "Base.SmallSheetMetal", need = 1 },
-            { types = { "Base.BlowTorch" }, uses = 2, labelKey = "IGUI_EnhancedIrrigation_WeldingTorch" },
+            WELDING_TORCH,
             { types = { "Base.WeldingRods" }, uses = 1, labelKey = "IGUI_EnhancedIrrigation_WeldingRods" },
         },
     },

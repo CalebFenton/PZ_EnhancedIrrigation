@@ -181,6 +181,14 @@ function Materials.holds(tool)
     end
 end
 
+--- A job row's `equip` holding the fullest of the drainables the material `drainable` names, the
+--- one Materials.consume draws on first.
+function Materials.holdsDrainable(drainable)
+    return function(character)
+        return drainablesOf(character, drainable)[1]
+    end
+end
+
 --- The first of `needs` the character is short of, or nil when they have them all.
 function EnhancedIrrigation.firstUnmet(needs)
     for _, need in ipairs(needs) do
