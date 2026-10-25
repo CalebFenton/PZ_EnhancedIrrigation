@@ -3,7 +3,7 @@ require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. Pumping for set hours runs the authority's own sum
--- (PumpSystem.pump) in one call, so the clock doesn't decide it. Only registers handlers, so a
+-- (PumpSystem.run) in one call, so the clock doesn't decide it. Only registers handlers, so a
 -- --stay rerun loads it again.
 
 local handler = PZHarness.serverHandler
@@ -116,7 +116,7 @@ handler("pumps.link", function(player, args)
 end)
 
 -- Sets `args.fields` on the pump's record, then has the character work it for each of `args.hours`
--- in turn, as the Pump action's runs do (PumpSystem.pump). Answers the state once the fields are
+-- in turn, as the Pump action's runs do (PumpSystem.run). Answers the state once the fields are
 -- set, `before`, and after each run, in `steps`, each with the run's `stopped` key, if any.
 handler("pumps.run", function(player, args)
     local pump, record = pumpAt(args), recordAt(args)
@@ -126,7 +126,7 @@ handler("pumps.run", function(player, args)
     Server.setFields(record, args.fields, 0)
     local reply = { before = stateAt(player, args), steps = {} }
     for _, hours in ipairs(args.hours or {}) do
-        local stopped = mod().PumpSystem.pump(player, pump, hours)
+        local stopped = mod().PumpSystem.run(player, pump, hours)
         local state = stateAt(player, args)
         state.stopped = stopped
         table.insert(reply.steps, state)

@@ -340,7 +340,7 @@ local function buildSprinklers()
     end
     if pump then
         plumb(pump:getSquare(), Stage.lotSquare(lot, spec.line.from, spec.line.y), "pump")
-        local stopped = EI.PumpSystem.pump(getPlayer(), pump, spec.pumpHours)
+        local stopped = EI.PumpSystem.run(getPlayer(), pump, spec.pumpHours)
         if stopped then
             report("water from the sprinklers' pump: " .. tostring(stopped))
         end

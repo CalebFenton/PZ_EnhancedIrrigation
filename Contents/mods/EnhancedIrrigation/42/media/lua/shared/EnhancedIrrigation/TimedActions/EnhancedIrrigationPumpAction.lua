@@ -32,7 +32,7 @@ function Action:refusal()
 end
 
 function Action:runFor(hours)
-    return EnhancedIrrigation.PumpSystem.pump(self.character, self.pump, hours)
+    return EnhancedIrrigation.PumpSystem.run(self.character, self.pump, hours)
 end
 
 function Action:playSounds()

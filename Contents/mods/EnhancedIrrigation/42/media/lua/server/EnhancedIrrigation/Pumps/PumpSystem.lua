@@ -141,7 +141,7 @@ end
 --- by what it lifted, and tires the character; zombies hear it. Returns the Tooltip key of why the
 --- work stops now (the tank full, the source dry, the seal or pump worn out, the character
 --- exhausted), or nil while it goes on.
-function PumpSystem.pump(character, pump, hours)
+function PumpSystem.run(character, pump, hours)
     local record = Pumps.recordOf(pump)
     if not record then
         return EnhancedIrrigation.Jobs.UNKNOWN
