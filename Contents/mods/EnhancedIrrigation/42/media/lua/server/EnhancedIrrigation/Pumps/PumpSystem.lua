@@ -8,6 +8,7 @@ require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
@@ -19,7 +20,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpSystem = {}
 EnhancedIrrigation.PumpSystem = PumpSystem
 
-local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
+local Pumps, PumpJobs, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.PumpWater
 local Lines, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow
 
 PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
@@ -143,11 +144,11 @@ local function tire(character, hours)
     end
 end
 
--- The draw of the line the hand pump of `record` drives from `source` (Pumps.sourceOf): what the
+-- The draw of the line the hand pump of `record` drives from `source` (PumpWater.sourceOf): what the
 -- line asks, as far as the seal and body last, which it wears by what it lifted.
 local function handDraw(record, source)
     return function(litres)
-        local moved = Pumps.draw(source, nil, record:canLift(litres))
+        local moved = PumpWater.draw(source, nil, record:canLift(litres))
         record:lift(moved)
         return moved
     end
@@ -165,15 +166,15 @@ function PumpSystem.pump(character, pump, hours)
         return EnhancedIrrigation.Jobs.UNKNOWN
     end
     record:catchUp()
-    local into, source = Pumps.flowOf(pump)
+    local into, source = PumpWater.flowOf(pump)
     if not into then
         return source
     end
     local spec = Pumps.specOf(pump)
     if Lines.isLine(into) then
-        Flow.run(Lines.recordOf(into), Pumps.lineSource(spec, handDraw(record, source)), hours)
+        Flow.run(Lines.recordOf(into), Flow.fromPump(spec, handDraw(record, source)), hours)
     else
-        record:lift(Pumps.fillTank(source, into, record:canLift(Pumps.perHour(spec) * hours)))
+        record:lift(PumpWater.fillTank(source, into, record:canLift(Pumps.perHour(spec) * hours)))
     end
     if hours > 0 then
         tire(character, hours)

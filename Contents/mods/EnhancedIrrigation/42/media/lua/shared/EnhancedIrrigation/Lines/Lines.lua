@@ -7,12 +7,13 @@
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/GlobalObjects"
+require "EnhancedIrrigation/Links/Links"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Lines = {}
 EnhancedIrrigation.Lines = Lines
 
-local Sprites = EnhancedIrrigation.Sprites
+local Sprites, Links = EnhancedIrrigation.Sprites, EnhancedIrrigation.Links
 
 Lines.SYSTEM_NAME = "enhanced_irrigation_line"
 
@@ -187,6 +188,37 @@ function Lines.tapIn(tiles)
         end
     end
     return nil
+end
+
+--- The outlet link of a pump that feeds the line of `tiles` (Lines.component), or nil.
+function Lines.pumpFeeding(tiles)
+    for _, link in ipairs(Links.all()) do
+        if link.pump then
+            local _, into = Links.ends(link)
+            for _, tile in ipairs(tiles) do
+                if EnhancedIrrigation.sameSquare(into, tile) then
+                    return link
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- A line takes one tap or one pump: two would each run every outlet on it, and a pump would push
+-- against a tank. The Tooltip key refusing another feed to a line each kind feeds.
+Lines.FEED_TAKEN = {
+    tap = "Tooltip_EnhancedIrrigation_LineHasTap",
+    pump = "Tooltip_EnhancedIrrigation_LinePumped",
+}
+
+--- What feeds the line of `tiles` (Lines.component): "tap" while a tap is on it, else "pump" while
+--- a pump's outlet is plumbed to it, else nil.
+function Lines.feedOf(tiles)
+    if Lines.tapIn(tiles) then
+        return "tap"
+    end
+    return Lines.pumpFeeding(tiles) and "pump" or nil
 end
 
 --- The shape (Sprites.pipe) of a tile at x, y, z: the bits of the neighbours `isLineAt(x, y, z)`

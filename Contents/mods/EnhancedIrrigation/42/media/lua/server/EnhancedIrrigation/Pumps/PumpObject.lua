@@ -7,6 +7,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
@@ -112,13 +113,13 @@ function PumpObject:repairPart()
     self.partCondition = self.partCeiling
 end
 
---- Finds again where the hose drinks, while the pump's square is loaded (Pumps.intakeFor), keeping
+--- Finds again where the hose drinks, while the pump's square is loaded (PumpWater.intakeFor), keeping
 --- the one it had while that square is unloaded or still water.
 function PumpObject:findIntake()
     if not getCell():getGridSquare(self.x, self.y, self.z) then
         return
     end
-    local intake = Pumps.intakeFor(self, self.intake)
+    local intake = EnhancedIrrigation.PumpWater.intakeFor(self, self.intake)
     self.intake = intake and { x = intake.x, y = intake.y } or nil
 end
 

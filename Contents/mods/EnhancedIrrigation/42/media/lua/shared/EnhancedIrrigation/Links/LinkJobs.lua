@@ -159,7 +159,7 @@ function LinkJobs.pumpBlocker(pump, with)
     if Links.find(here, other) then
         return "Tooltip_EnhancedIrrigation_AlreadyPlumbed"
     end
-    local taken = Lines.isLine(into) and Pumps.FEED_TAKEN[Pumps.feedOf(Lines.component(other.x, other.y, other.z))]
+    local taken = Lines.isLine(into) and Lines.FEED_TAKEN[Lines.feedOf(Lines.component(other.x, other.y, other.z))]
     if taken then
         return taken
     end

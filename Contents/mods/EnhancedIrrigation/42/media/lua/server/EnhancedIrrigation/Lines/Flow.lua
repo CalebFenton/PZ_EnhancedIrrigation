@@ -15,6 +15,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Lines/Plants"
+require "EnhancedIrrigation/Pumps/Pumps"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Flow = {}
@@ -37,6 +38,13 @@ function Flow.fromTank(tank, z)
             return taken
         end,
     }
+end
+
+--- The source of a line a pump lifting by `spec` (a row of Pumps.UNITS or PARTS) drives: the push
+--- and rate of `spec`, and `draw(litres)`, which lifts what the line asks and returns the litres
+--- lifted.
+function Flow.fromPump(spec, draw)
+    return { push = spec.push, perHour = EnhancedIrrigation.Pumps.perHour(spec), pumped = true, holds = true, draw = draw }
 end
 
 -- Litres an hour out of the tile `record` from `source`: what its holes give its square, what a

@@ -21,6 +21,50 @@ local Treatment, TreatmentJobs, LinkMenu = EnhancedIrrigation.Treatment, Enhance
     EnhancedIrrigation.LinkMenu
 local JobOptions = EnhancedIrrigation.JobOptions
 
+-- Each kind's words for its state, from its summary and the unit, as a list of texts.
+local KIND_WORDS = {
+    sand = function(summary)
+        local words = {}
+        if summary.clogged then
+            table.insert(words, getText("IGUI_EnhancedIrrigation_Clogged"))
+        end
+        if summary.ripeHours >= Treatment.RIPE_HOURS then
+            table.insert(words, getText("IGUI_EnhancedIrrigation_Ripe"))
+        else
+            table.insert(words, getText("IGUI_EnhancedIrrigation_Ripening",
+                math.ceil(Treatment.RIPE_HOURS - summary.ripeHours)))
+        end
+        if summary.head <= 0 and summary.dryHours >= 1 then
+            table.insert(words, getText("IGUI_EnhancedIrrigation_DryFor", math.floor(summary.dryHours)))
+        end
+        return words
+    end,
+    -- Fired clay with charcoal pores passes only clean water, so its state is whether it still can.
+    crock = function(summary)
+        if summary.cracked then
+            return { getText("IGUI_EnhancedIrrigation_Cracked") }
+        end
+        return summary.clogged and { getText("IGUI_EnhancedIrrigation_Clogged") } or {}
+    end,
+    -- Whether the drum is hot from the record, which counts the hours of fire; whether it is
+    -- heating from the fire as vanilla shows it on this side.
+    boiler = function(summary, unit)
+        if summary.burntThrough then
+            return { getText("IGUI_EnhancedIrrigation_BurntThrough") }
+        end
+        local heat = summary.hot and "IGUI_EnhancedIrrigation_Hot"
+            or unit:isLit() and "IGUI_EnhancedIrrigation_Heating" or "IGUI_EnhancedIrrigation_Cold"
+        return { getText(heat), getText("IGUI_EnhancedIrrigation_Drum", summary.condition) }
+    end,
+}
+
+--- The menu's line for `unit` of `spec` with `summary`: the raw water waiting, then its state.
+function TreatmentMenu.describe(unit, spec, summary)
+    local text = getText("IGUI_EnhancedIrrigation_Head", math.floor(summary.head + 0.5), spec.head)
+    local words = KIND_WORDS[spec.kind](summary, unit)
+    return #words > 0 and text .. ", " .. table.concat(words, ", ") or text
+end
+
 -- Each end of a unit's pipe: the job and the option's ContextMenu key.
 local PLUMB_ENDS = {
     { role = "inlet", job = LinkJobs.PLUMB_INLET, nameKey = "ContextMenu_EnhancedIrrigation_PlumbInlet" },
@@ -77,7 +121,7 @@ function TreatmentMenu.onFill(playerNum, context, worldobjects, test)
     local menu = unitMenu(context, unit)
     local summary = Treatment.currentSummary(unit)
     if summary then
-        menu:addOption(Treatment.statusText(unit, spec, summary)).notAvailable = true
+        menu:addOption(TreatmentMenu.describe(unit, spec, summary)).notAvailable = true
     end
     addPourIn(menu, playerNum, character, unit)
     for _, entry in ipairs(TreatmentJobs.KIND_JOBS[spec.kind]) do

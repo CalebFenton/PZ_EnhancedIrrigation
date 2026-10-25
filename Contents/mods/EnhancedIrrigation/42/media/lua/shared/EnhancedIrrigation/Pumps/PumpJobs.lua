@@ -5,6 +5,7 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Parts"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Power"
@@ -84,7 +85,7 @@ PumpJobs.JOBS = {
             if summary and summary.heldBy and summary.heldBy ~= character:getUsername() then
                 return "Tooltip_EnhancedIrrigation_PumpInUse"
             end
-            local into, refusal = Pumps.flowOf(pump)
+            local into, refusal = EnhancedIrrigation.PumpWater.flowOf(pump)
             if not into then
                 return refusal
             end

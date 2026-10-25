@@ -3,8 +3,8 @@
 -- tainted or not as a whole, as vanilla's water is; treats it at its own rate; and puts the result
 -- in its basin, the unit's own FluidContainer, from which vanilla's menus drink, fill and empty.
 -- The basin is input-locked, so water reaches it only through the unit. What a kind does is in its
--- rows here and in the record's KINDS, not spread through the code. A boiler is also a vanilla
--- fireplace, which the game's own fire menus fuel, light and put out.
+-- rows here, in the record's KINDS and in the menu's words, not spread through the code. A boiler
+-- is also a vanilla fireplace, which the game's own fire menus fuel, light and put out.
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
@@ -55,14 +55,14 @@ Treatment.WEAR_DRY = 10
 -- What each Patch Drum takes off the condition a patch restores, as vanilla's repairs fall short.
 Treatment.PATCH_LOSS = 10
 
--- Each unit's entity script name: `kind`, the row of KINDS (and of TreatmentObject.KINDS) that says
--- how it treats; `head`, the litres of raw water it holds; `rate`, the litres an hour it treats;
--- `clogLitres`, the litres it passes before it clogs; `plumbed`, whether it takes inlet and outlet
--- links. Its basin's size is its entity's FluidContainer's. A Barrel Filter's rate is a household's
--- daily water in a day (design, Starting numbers); a Brick Filter's bigger bed of sand scales its
--- numbers. A Filter Crock seeps one person's drinking and cooking water in a day; it holds about
--- what a bucket does. A boiler's head is its Metal Drum, and its rate fast clean water for a
--- woodpile; the firebox under it changes only what building it takes.
+-- Each unit's entity script name: `kind`, its row of TreatmentObject.KINDS and of the menu's words,
+-- which say how it treats; `head`, the litres of raw water it holds; `rate`, the litres an hour it
+-- treats; `clogLitres`, the litres it passes before it clogs; `plumbed`, whether it takes inlet and
+-- outlet links. Its basin's size is its entity's FluidContainer's. A Barrel Filter's rate is a
+-- household's daily water in a day (design, Starting numbers); a Brick Filter's bigger bed of sand
+-- scales its numbers. A Filter Crock seeps one person's drinking and cooking water in a day; it
+-- holds about what a bucket does. A boiler's head is its Metal Drum, and its rate fast clean water
+-- for a woodpile; the firebox under it changes only what building it takes.
 Treatment.UNITS = {
     EnhancedIrrigation_BarrelFilter = { kind = "sand", head = 50, rate = 4, clogLitres = 2000, plumbed = true },
     EnhancedIrrigation_BrickFilter = { kind = "sand", head = 200, rate = 16, clogLitres = 8000, plumbed = true },
@@ -140,58 +140,6 @@ end
 function Treatment.canPlaceBoiler(params)
     local square = params.square
     return square ~= nil and square:isOutside() and not Treatment.wallNear(square)
-end
-
--- What the menu says ---------------------------------------------------------------------------------
-
--- Each kind's words for its state, from its summary and the unit, as a list of texts.
-Treatment.KINDS = {
-    sand = {
-        words = function(summary)
-            local words = {}
-            if summary.clogged then
-                table.insert(words, getText("IGUI_EnhancedIrrigation_Clogged"))
-            end
-            if summary.ripeHours >= Treatment.RIPE_HOURS then
-                table.insert(words, getText("IGUI_EnhancedIrrigation_Ripe"))
-            else
-                table.insert(words, getText("IGUI_EnhancedIrrigation_Ripening",
-                    math.ceil(Treatment.RIPE_HOURS - summary.ripeHours)))
-            end
-            if summary.head <= 0 and summary.dryHours >= 1 then
-                table.insert(words, getText("IGUI_EnhancedIrrigation_DryFor", math.floor(summary.dryHours)))
-            end
-            return words
-        end,
-    },
-    -- Fired clay with charcoal pores passes only clean water, so its state is whether it still can.
-    crock = {
-        words = function(summary)
-            if summary.cracked then
-                return { getText("IGUI_EnhancedIrrigation_Cracked") }
-            end
-            return summary.clogged and { getText("IGUI_EnhancedIrrigation_Clogged") } or {}
-        end,
-    },
-    -- Whether the drum is hot from the record, which counts the hours of fire; whether it is
-    -- heating from the fire as vanilla shows it on this side.
-    boiler = {
-        words = function(summary, unit)
-            if summary.burntThrough then
-                return { getText("IGUI_EnhancedIrrigation_BurntThrough") }
-            end
-            local heat = summary.hot and "IGUI_EnhancedIrrigation_Hot"
-                or unit:isLit() and "IGUI_EnhancedIrrigation_Heating" or "IGUI_EnhancedIrrigation_Cold"
-            return { getText(heat), getText("IGUI_EnhancedIrrigation_Drum", summary.condition) }
-        end,
-    },
-}
-
---- The menu's line for `unit` of `spec` with `summary`: the raw water waiting, then its state.
-function Treatment.statusText(unit, spec, summary)
-    local text = getText("IGUI_EnhancedIrrigation_Head", math.floor(summary.head + 0.5), spec.head)
-    local words = Treatment.KINDS[spec.kind].words(summary, unit)
-    return #words > 0 and text .. ", " .. table.concat(words, ", ") or text
 end
 
 -- A unit's basin is its own container, which every side holds, so a summary needs nothing added.

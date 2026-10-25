@@ -11,6 +11,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
+require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/Power"
@@ -20,7 +21,7 @@ EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
-local Pumps = EnhancedIrrigation.Pumps
+local Pumps, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpWater
 local Lines, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Flow
 local Timers, Power, HousePower = EnhancedIrrigation.Timers, EnhancedIrrigation.Power, EnhancedIrrigation.HousePower
 
@@ -35,10 +36,10 @@ end
 -- that can leave a hair of condition no hour could wear.
 local LEAST_CONDITION = 0.01
 
--- The source of the line a Pump House with `part` drives from `source` (Pumps.sourceOf), giving at
--- most `litres`: what the time it ran wet lifts.
+-- The source of the line a Pump House with `part` drives from `source` (PumpWater.sourceOf),
+-- giving at most `litres`: what the time it ran wet lifts.
 local function lineSource(part, source, litres)
-    return Pumps.lineSource(part, function(asked) return Pumps.draw(source, nil, math.min(asked, litres)) end)
+    return Flow.fromPump(part, function(asked) return PumpWater.draw(source, nil, math.min(asked, litres)) end)
 end
 
 -- Runs the record's Pump House `pump` with `part` for up to `hours`: lifts the part's rate from its
@@ -46,10 +47,10 @@ end
 -- go, or what the line its outlet feeds takes of it, and wears the part, faster for the time its
 -- source is dry. Stops where the part burns out. Returns the hours it ran.
 local function run(record, pump, part, hours)
-    local into, source = Pumps.deliveryOf(pump, part, record.intake)
+    local into, source = PumpWater.deliveryOf(pump, part, record.intake)
     if not into then
         -- Refused, it still runs: its source decides how fast it wears.
-        source = Pumps.sourceOf(pump, record.intake, Pumps.outletEnd(record))
+        source = PumpWater.sourceOf(pump, record.intake, Pumps.outletEnd(record))
     end
     local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
     -- The litres an hour it lifts while it has water, and how many its outlet takes at most.
@@ -93,7 +94,7 @@ local function run(record, pump, part, hours)
             Flow.run(line, lineSource(part, source, litres), wet)
         end
     elseif into and litres >= Pumps.LEAST_LITRES then
-        Pumps.fillTank(source, into, litres)
+        PumpWater.fillTank(source, into, litres)
     end
     return ran
 end
