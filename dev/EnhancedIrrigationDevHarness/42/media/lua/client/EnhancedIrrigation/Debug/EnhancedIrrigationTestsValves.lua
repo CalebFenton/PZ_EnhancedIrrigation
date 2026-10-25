@@ -2,7 +2,7 @@ require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/LineJobs"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 

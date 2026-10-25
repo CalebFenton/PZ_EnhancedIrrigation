@@ -6,7 +6,7 @@ require "EnhancedIrrigation/Materials"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Parts"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Power"
 
 EnhancedIrrigation = EnhancedIrrigation or {}

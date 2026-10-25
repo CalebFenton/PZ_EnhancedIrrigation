@@ -7,7 +7,7 @@
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Stands/Stands"
 require "EnhancedIrrigation/Lines/LineJobs"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 local Stage = require "EnhancedIrrigationDevStage"
 
 local QA = {}

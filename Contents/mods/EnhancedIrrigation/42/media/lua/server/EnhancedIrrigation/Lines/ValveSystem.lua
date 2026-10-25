@@ -19,7 +19,7 @@ require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Taps"
 require "EnhancedIrrigation/Power"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/Lines/Flow"
 

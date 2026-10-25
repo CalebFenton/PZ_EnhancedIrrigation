@@ -9,7 +9,7 @@ require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceSystem = {}

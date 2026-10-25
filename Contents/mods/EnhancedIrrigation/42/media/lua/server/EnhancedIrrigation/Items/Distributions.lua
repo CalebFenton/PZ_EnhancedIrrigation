@@ -4,7 +4,7 @@ require "Items/Distributions"
 require "Items/ProceduralDistributions"
 require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Lines/Sprinklers"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 
 -- Where the mod's found items turn up in the game's loot lists, each a find rather than a given.
 

@@ -121,7 +121,7 @@ module EnhancedIrrigation
 
     /*
         The valves that run a garden line's tap with nobody holding it, fitted to the tap
-        (shared/EnhancedIrrigation/Lines/Valves.lua): a kitchen timer driving a hose diaphragm, wound by
+        (shared/EnhancedIrrigation/Valves.lua): a kitchen timer driving a hose diaphragm, wound by
         hand, made by anyone (Recipes.txt); a Timer Valve, an alarm clock wired to a salvaged Water
         Valve, which also switches a Pump House; and a Sprinkler Timer, the plug-in kind garden
         stores sold, which does what a Timer Valve does. Researching a Water Valve or a Sprinkler

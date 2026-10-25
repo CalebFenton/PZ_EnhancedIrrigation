@@ -10,7 +10,7 @@ require "EnhancedIrrigation/GlobalObjects"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Jobs"
 require "EnhancedIrrigation/Parts"
 

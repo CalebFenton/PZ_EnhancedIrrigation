@@ -2,7 +2,7 @@
 -- which the renders and tools/make_tiles.py read.
 
 require "EnhancedIrrigation/Utilities"
-require "EnhancedIrrigation/Lines/Valves"
+require "EnhancedIrrigation/Valves"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Sprites = {}
