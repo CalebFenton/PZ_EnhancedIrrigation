@@ -1,5 +1,9 @@
 require "PZHarness/TestLib"
-require "ISUI/ISWorldObjectContextMenu"
+require "PZHarness/TestMenus"
+require "PZHarness/TestBuild"
+require "PZHarness/TestChunks"
+require "PZHarness/TestLearning"
+require "PZHarness/TestReads"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Links/Links"
@@ -21,8 +25,6 @@ local Links = EnhancedIrrigation.Links
 local Tanks = EnhancedIrrigation.Tanks
 local Sprites = EnhancedIrrigation.Sprites
 
--- How long this client may take to show what the server changed.
-local SYNC_MS = 5000
 -- How near the litres a test reads of a tank, basin or fixture must come to its sums.
 T.LITRES = 0.05
 -- How near this client's copy of a tank's water must come to what the server put in it, and the
@@ -44,138 +46,14 @@ T.HALF_HOUR = 0.5
 -- Vanilla's house wall on a square's west edge.
 T.WALL_WEST = "walls_exterior_house_01_0"
 
--- Waits and reads -----------------------------------------------------------------------------------
-
---- Queues a wait until `condition()` holds or `ms` (SYNC_MS unless given) pass; missing `what` if
---- it never held.
-function T.waitFor(self, condition, what, ms)
-    local sinceMs, held = nil, false
-    T.waitUntil(function()
-        sinceMs = sinceMs or getTimestampMs()
-        held = condition() and true or false
-        return held or getTimestampMs() - sinceMs > (ms or SYNC_MS)
-    end, math.huge, what)
-    T.step(function() T.need(self, held, what) end)
-end
-
--- Queues a wait until it is light where the character stands. The game refuses a craft or build
--- in the dark (CraftRecipeData.canPerform), and the light lags the clock the previous test put
--- back by some frames, as T.craftTest's own wait allows for.
-local function waitForLight(self)
-    T.waitFor(self, function() return not T.player():tooDarkToRead() end, "light where the character stands")
-end
-
---- Queues the server handler `name` with `args` and puts its answer in self.reads[label], the one
---- store of what the tests read from the server.
-function T.read(self, name, args, label)
-    self.reads = self.reads or {}
-    T.server(self, name, args)
-    T.step(function() self.reads[label] = self.server[name] end)
-end
-
---- Queues calls of the server handler `name` until `done(answer)` holds or `maxMs` pass
---- (T.serverUntil), and puts the last answer in self.reads[label]: for what an action's complete()
---- does after this client's perform().
-function T.readUntil(self, name, args, label, done, maxMs)
-    self.reads = self.reads or {}
-    T.serverUntil(self, name, args, function(reply) return reply ~= nil and done(reply) end, maxMs)
-    T.step(function() self.reads[label] = self.server[name] end)
-end
-
 -- Menus ---------------------------------------------------------------------------------------------
-
---- The right-click menu of `object` as the character would open it, or nil.
-function T.worldMenu(object)
-    local context = ISWorldObjectContextMenu.createMenu(0, { object }, 0, 0)
-    return type(context) == "table" and context or nil
-end
-
---- The first option in `menu` or any submenu under it for which `matches(option)` holds, or nil.
-function T.findOption(root, menu, matches)
-    for _, option in ipairs(menu.options) do
-        if matches(option) then
-            return option
-        end
-        local sub = option.subOption and root:getSubMenu(option.subOption)
-        local found = sub and T.findOption(root, sub, matches)
-        if found then
-            return found
-        end
-    end
-    return nil
-end
-
-function T.findNamed(root, menu, name)
-    return T.findOption(root, menu, function(option) return option.name == name end)
-end
 
 --- The option of the world menu `context` that queues `job` of the action feature `feature`
 --- (EnhancedIrrigationAction.queue), with `with` if given, in any submenu, or nil.
 function T.jobOption(context, feature, job, with)
-    return T.findOption(context, context, function(option)
+    return T.findOption(context, function(option)
         return option.onSelect == EnhancedIrrigationAction.queue and option.param1 == feature and option.param2 == job
             and (with == nil or option.param4 == with)
-    end)
-end
-
---- Clicks `option` as ISContextMenu:onMouseUp does. A get-up option's handler would run only once
---- its ISWaitWhileGettingUp completes, behind the test's later waits; the character stands, so it
---- runs here at once.
-function T.choose(option)
-    if option.onSelect == ISContextMenu.onGetUpAndThen then
-        option.param1(option.param2, option.param3, option.param4, option.param5, option.param6, option.param7,
-            option.param8, option.param9, option.param10)
-        return
-    end
-    option.onSelect(option.target, option.param1, option.param2, option.param3, option.param4, option.param5,
-        option.param6, option.param7, option.param8, option.param9, option.param10)
-end
-
-function T.offered(option)
-    return option ~= nil and not option.notAvailable
-end
-
---- The tooltip text of `option`, or "".
-function T.tooltipOf(option)
-    return option and option.toolTip and option.toolTip.description or ""
-end
-
---- Turns the character at once, body and animation, toward `target`: an object as an action's
---- faceThisObject aims at it (the nearest piece of a sprite grid, its facing position), or a
---- square's middle. An action otherwise waits for its turn (waitToStart) in real time, which
---- neither the instant cheat nor the frame rate shortens, and a square's middle isn't where the
---- game aims at a fixture or a treatment unit.
-function T.face(target)
-    local p = T.player()
-    if instanceof(target, "IsoGridSquare") then
-        local dx, dy = target:getX() + 0.5 - p:getX(), target:getY() + 0.5 - p:getY()
-        if math.abs(dx) > 0.5 or math.abs(dy) > 0.5 then
-            p:setTargetAndCurrentDirection(dx, dy)
-        end
-        return
-    end
-    p:faceThisObject(target)
-    local forward = p:getForwardDirection()
-    p:setTargetAndCurrentDirection(forward:getX(), forward:getY())
-end
-
---- Queues opening the world menu of `getObject()`, looked up when the step runs, and noting in
---- self.menu[label] what the option `find(context)` finds: { found, offered, tooltip, submenu,
---- name }. When `choose` and it is offered, the character faces the object (T.face) and chooses it.
-function T.useOption(self, getObject, label, find, choose)
-    self.menu = self.menu or {}
-    T.step(function()
-        local object = T.need(self, getObject(), "this client's copy of what " .. label .. " works on")
-        local context = object and T.need(self, T.worldMenu(object), "a world menu for " .. label)
-        if not context then return end
-        local option = find(context)
-        self.menu[label] = { found = option ~= nil, offered = T.offered(option), tooltip = T.tooltipOf(option),
-            submenu = option ~= nil and option.subOption ~= nil, name = option and option.name }
-        if choose and T.offered(option) then
-            T.face(object)
-            T.choose(option)
-        end
-        context:hideAndChildren()
     end)
 end
 
@@ -195,114 +73,12 @@ function T.job(feature, job, with)
     end
 end
 
---- A `find` for T.useOption: the option that runs `handler` (T.optionRunning).
-function T.running(handler)
-    return function(context) return T.optionRunning(context, handler) end
-end
-
---- The option in `context`, in any submenu, that runs vanilla's `handler`. A get-up option carries
---- its handler as its first parameter.
-function T.optionRunning(context, handler)
-    return T.findOption(context, context, function(option)
-        return option.onSelect == handler or option.param1 == handler
-    end)
-end
-
---- The option of the submenu named by `nameKey` in `context` for which `matches(option)` holds, or
---- nil.
-function T.inSubmenu(context, nameKey, matches)
-    local parent = T.findNamed(context, context, getText(nameKey))
-    local sub = parent and parent.subOption and context:getSubMenu(parent.subOption)
-    return sub and T.findOption(context, sub, matches) or nil
-end
-
---- Queues the names of every option in the world menu of this client's copy of `handle`
---- (T.copyOf) into self.names[label].
-function T.readMenu(self, handle, label)
-    self.names = self.names or {}
-    T.step(function()
-        local copy = T.copyOf(handle)
-        local context = T.need(self, copy and T.worldMenu(copy), "a world menu for " .. label)
-        if not context then return end
-        local names = {}
-        T.findOption(context, context, function(option)
-            table.insert(names, option.name)
-            return false
-        end)
-        self.names[label] = names
-        context:hideAndChildren()
-    end)
-end
-
---- Expects (`want`, or not) a line of the menu T.readMenu read as `label` to list `word` whole
---- among the words of its status line, where a search of the line would find "ripe" in "ripening".
-function T.expectWord(self, label, word, want)
-    local found = false
-    for _, name in ipairs(self.names and self.names[label] or {}) do
-        for part in (name .. ", "):gmatch("(.-), ") do
-            found = found or part == word
-        end
-    end
-    T.expect(found == (want ~= false), label .. ": the menu " .. (found and "lists " or "doesn't list ") .. word)
-end
-
--- Expects (`want`, or not) a line of the menu T.readMenu read as `label` to contain `text`.
-function T.expectLine(self, label, text, want)
-    local found = false
-    for _, name in ipairs(self.names and self.names[label] or {}) do
-        found = found or name:find(text, 1, true) ~= nil
-    end
-    T.expect(found == (want ~= false), label .. ": the menu " .. (found and "says " or "doesn't say ") .. text)
-end
-
---- Expects the option T.useOption noted as `label` offered.
-function T.expectOffered(self, label)
-    local seen = self.menu and self.menu[label]
-    T.expect(seen and seen.offered, label .. ": not offered (" .. tostring(seen and seen.tooltip) .. ")")
-end
-
---- Expects the option T.useOption noted as `label` in the menu but greyed out, its tooltip saying
---- the text of `tooltipKey` when given.
-function T.expectRefused(self, label, tooltipKey)
-    local seen = self.menu and self.menu[label]
-    if T.expect(seen and seen.found, label .. ": the option isn't in the menu") then
-        T.expect(not seen.offered, label .. ": offered")
-        if tooltipKey then
-            T.expect(seen.tooltip:find(getText(tooltipKey), 1, true) ~= nil,
-                label .. ": the tooltip doesn't say " .. getText(tooltipKey) .. ": " .. seen.tooltip)
-        end
-    end
-end
-
 --- How many of `fullType` T.count noted as "left", 0 if it noted none.
 function T.counted(self, fullType)
     return self.counts.left and self.counts.left[fullType] or 0
 end
 
 -- Recipes -------------------------------------------------------------------------------------------
-
---- Queues making this client's and the server's copy of the character know (`known`) or not know
---- the recipes `names`. When the test ends each side knows exactly the recipes it knew before,
---- including those a level up taught meanwhile (vanilla's AutoLearn), which the leak check counts.
-function T.knowRecipes(self, names, known)
-    T.step(function()
-        local p = T.player()
-        local saved = PZHarness.Fixtures.knownRecipes(p)
-        if known then
-            PZHarness.Fixtures.learnRecipes(p, names)
-        else
-            PZHarness.Fixtures.forgetRecipes(p, names)
-        end
-        T.defer(self, function()
-            local list = p:getKnownRecipes()
-            list:clear()
-            for _, name in ipairs(saved) do
-                list:add(name)
-            end
-        end)
-    end)
-    T.server(self, "recipes.know", { names = names, known = known })
-end
 
 --- Queues crafting the recipe `name` from the first carried `from` the way the right-click menu
 --- does or, with `opts.bench` ({ entity script, sprite }, T.placeBench), the way that bench's window
@@ -319,10 +95,7 @@ function T.craft(self, name, from, counted, opts)
     if opts.workTable then
         T.placeWorkTable(T.player())
     end
-    for i = 0, recipe:getRequiredSkillCount() - 1 do
-        local skill = recipe:getRequiredSkill(i)
-        T.setPerk(self, skill:getPerk(), skill:getLevel())
-    end
+    T.setRecipeSkills(self, recipe)
     local placed = opts.bench and T.placeBench(self, opts.bench[1], opts.bench[2])
     if opts.bench and not placed then return false end
     local inputs, unmatched = T.recipeInputs(recipe, opts.prefer)
@@ -331,9 +104,9 @@ function T.craft(self, name, from, counted, opts)
     if opts.ready then
         opts.ready(self)
     end
-    waitForLight(self)
+    T.waitForLight(self)
     T.step(function()
-        local item = T.need(self, T.player():getInventory():getFirstTypeRecurse(from), "a " .. from .. " to craft from")
+        local item = T.need(self, T.carried(from), "a " .. from .. " to craft from")
         if not item then return end
         T.startCraft(self, recipe, item, placed and placed.object)
         -- Queued after the craft's actions, which T.startCraft has just queued.
@@ -344,78 +117,16 @@ end
 
 -- The build menu -------------------------------------------------------------------------------------
 
---- The build menu entry of `entity` (a game entity script's full name), or nil.
-function T.buildEntry(entity)
-    local script = getScriptManager():getGameEntityScript(entity)
-    local spriteConfig = script and script:getComponentScriptFor(ComponentType.SpriteConfig)
-    local infos = SpriteConfigManager.GetObjectInfoList()
-    for i = 0, infos:size() - 1 do
-        if spriteConfig and infos:get(i):getScript() == spriteConfig then
-            return infos:get(i)
-        end
-    end
-    return nil
-end
-
--- What one build of `recipe` takes, as T.give items (T.recipeInputs, with `prefer`), with as many
--- full drainables as an input's uses need, where T.recipeInputs gives one: two sand bags for eight
--- uses. Also the inputs that had no possible item.
-local function buildInputs(recipe, prefer)
-    local items, unmatched = T.recipeInputs(recipe, prefer)
-    if #unmatched > 0 then
-        return items, unmatched
-    end
-    local inputs = recipe:getInputs()
-    for i = 0, inputs:size() - 1 do
-        local input, item = inputs:get(i), T.inputItem(inputs:get(i), prefer)
-        if item:isItemType(ItemType.DRAINABLE) and not input:isItemCount() then
-            local perItem = math.floor(1 / item:getUseDelta() + 0.0001)
-            items[i + 1].count = math.ceil(input:getIntAmount() / perItem)
-        end
-    end
-    return items, unmatched
-end
-
---- Queues building `entity` (a full name) from the build menu at `handle`, through the build menu's
---- own path (ISBuildIsoEntity, ISBuildAction): the character gets the recipe's skill levels and
---- knowledge and exactly its inputs, each the first of `prefer` (full names) it takes if any
---- (T.inputItem), and the build waits for this client's copy of the tile `sprite`. A build the
---- menu refuses, for its inputs or its square, is missing. Returns the built tile's handle, or nil.
---- ISBuildIsoEntity is server Lua, which loads after this file, so it is reached at call time.
-function T.buildFromMenu(self, entity, handle, sprite, prefer)
-    local info = T.need(self, T.buildEntry(entity), "the build menu entry of " .. entity)
-    local recipe = info and info:getRecipe() and info:getRecipe():getCraftRecipe()
-    if not T.need(self, recipe, "the build recipe of " .. entity) then return nil end
+--- Queues building `entity` (a full name) from the build menu at the tile handle `handle` (T.build,
+--- each input the first of `prefer` it takes), the tile removed when the test ends (tanks.track),
+--- and waits for this client's copy of the tile `sprite`. Returns the built tile's handle, or nil.
+function T.buildTile(self, entity, handle, sprite, prefer)
     local built = T.at(handle, { square = handle.square, sprite = sprite })
-    for i = 0, recipe:getRequiredSkillCount() - 1 do
-        local skill = recipe:getRequiredSkill(i)
-        T.setPerk(self, skill:getPerk(), skill:getLevel())
-    end
-    T.knowRecipes(self, { recipe:getName() }, true)
-    local inputs, unmatched = buildInputs(recipe, prefer)
-    if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return nil end
-    T.give(self, "materials", inputs)
     T.server(self, "tanks.track", T.at(handle))
-    -- Stands first: the character's current square follows a teleport only on its next update, and
-    -- the cursor walks a character it can't see beside the site (luautils.walkAdjSquares).
-    T.goNextTo(self, handle.square)
-    waitForLight(self)
-    T.step(function()
-        local player = T.player()
-        local build = ISBuildIsoEntity:new(player, info, 1, ISInventoryPaneContextMenu.getContainers(player))
-        -- What the build panel does before the cursor can build (ISBuildPanel): the player number
-        -- the drag sets (IsoCell.setDrag), and the recipe's inputs picked from what is carried.
-        build.player = player:getPlayerNum()
-        build.buildPanelLogic:refresh()
-        build.buildPanelLogic:autoPopulateInputs()
-        local canBuild = build.buildPanelLogic:canPerformCurrentRecipe()
-        local validSquare = build:isValid(handle.square)
-        if T.need(self, canBuild, "the build menu building " .. entity .. " from its inputs")
-            and T.need(self, validSquare, "the build menu taking " .. entity .. "'s square") then
-            build:tryBuild(handle.x, handle.y, handle.z)
-        end
-    end)
-    T.waitFor(self, function() return T.copyOf(built) ~= nil end, "this client's copy of the built " .. entity)
+    if not T.build(self, entity, handle.square, prefer, function() return T.copyOf(built) ~= nil end,
+        "this client's copy of the built " .. entity) then
+        return nil
+    end
     return built
 end
 
@@ -531,63 +242,6 @@ function T.row(self, count, opts)
     return found
 end
 
--- Chunks --------------------------------------------------------------------------------------------
-
--- Tiles the character goes away for a reload, as Renewable Energy's chunk reload tests go: well
--- past this client's chunk map, so it saves the chunk and lets it go.
-local AWAY = 600
--- How long a chunk may take to unload behind the character, or load again in front of it.
-T.LOAD_MS = 60000
--- A test with a reload outlasts the runner's default timeout.
-T.RELOAD_SECONDS = 150
-
---- Queues a trip AWAY tiles east and back, so this client saves the chunk of `at` ({ x, y, z }),
---- lets it go and loads it again; `whileAway()`, if given, queues what happens while it is gone.
---- In single player the server is the same game and its chunk goes too; a multiplayer server keeps
---- chunks loaded long after the character leaves, so there the trip reloads only this client's
---- copy, sent again by the server. Sets self.chunkLoads, the LoadChunk events for the chunk: none
---- would mean it came back from a cache with its state.
-function T.reload(self, at, whileAway)
-    local p = T.player()
-    -- A teleport from inside a timed action doesn't stick, so OnTick makes it.
-    local target, home
-    T.onTick(self, function()
-        if target then
-            p:teleportTo(target[1], target[2], target[3])
-            target = nil
-        end
-    end)
-    local loads = 0
-    local function onLoadChunk(chunk)
-        local origin = chunk:getGridSquare(0, 0, 0)
-        local dx, dy = origin and at.x - origin:getX(), origin and at.y - origin:getY()
-        if origin and dx >= 0 and dx < 8 and dy >= 0 and dy < 8 then
-            loads = loads + 1
-        end
-    end
-    Events.LoadChunk.Add(onLoadChunk)
-    T.defer(self, function() Events.LoadChunk.Remove(onLoadChunk) end)
-    T.step(function()
-        home = { p:getX(), p:getY(), p:getZ() }
-        target = { at.x + AWAY + 0.5, at.y + 0.5, 0 }
-    end)
-    T.waitFor(self, function() return getSquare(at.x, at.y, at.z) == nil end, "this client to unload the chunk",
-        T.LOAD_MS)
-    if whileAway then
-        whileAway()
-    end
-    T.step(function() target = home end)
-    T.waitFor(self, function() return getSquare(at.x, at.y, at.z) ~= nil end, "this client to load the chunk again",
-        T.LOAD_MS)
-    T.step(function() self.chunkLoads = loads end)
-end
-
---- Expects the chunk T.reload sent away to have come back through LoadChunk, not from a cache:
---- `what` names the thing in it.
-function T.expectReloaded(self, what)
-    T.expect((self.chunkLoads or 0) > 0, "the " .. what .. "'s chunk came back without LoadChunk, from a cache")
-end
-
 -- Tanks and crops -----------------------------------------------------------------------------------
 
 -- What T.placeTank places, by kind: the tile, and how many floors above the given square it goes.
@@ -637,16 +291,6 @@ function T.copyOf(handle, sprite)
     return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), sprite or handle.sprite)
 end
 
---- The names of the overlays drawn over `object` (its attached sprites), none for nil.
-function T.overlaysOf(object)
-    local names = {}
-    local attached = object and object:getAttachedAnimSprite()
-    for i = 0, (attached and attached:size() or 0) - 1 do
-        table.insert(names, attached:get(i):getName())
-    end
-    return names
-end
-
 --- Whether the list of overlay names `names` (T.overlaysOf, or a server read's) holds `name`.
 function T.hasOverlay(names, name)
     for _, overlay in ipairs(names or {}) do
@@ -673,17 +317,10 @@ end
 
 -- Items --------------------------------------------------------------------------------------------
 
---- Queues filling the first carried `fullType`, emptied first, with `litres` of `fluid` (a
---- FluidType name) on the server, as much as it holds, and a wait for this client's copy to hold
---- that.
-function T.fillCarried(self, fullType, fluid, litres)
-    T.server(self, "items.fill", { type = fullType, fluid = fluid, litres = litres })
-    T.waitFor(self, function()
-        local item = T.player():getInventory():getFirstTypeRecurse(fullType)
-        local container = item and item:getFluidContainer()
-        return container ~= nil
-            and math.abs(container:getAmount() - math.min(litres, container:getCapacity())) < T.LITRES
-    end, "this client's copy of the filled " .. fullType)
+--- The ceiling (Parts.ceilingOf) of `carried`, an item of the server's that T.carriedItems read,
+--- or nil for none. Parts.ceilingOf reads only the item's modData, which the read carries.
+function T.ceilingOf(carried)
+    return carried and EnhancedIrrigation.Parts.ceilingOf({ getModData = function() return carried.modData end })
 end
 
 --- Queues giving the character what plumbing takes: the knowledge (LinkJobs.RECIPE), a pipe

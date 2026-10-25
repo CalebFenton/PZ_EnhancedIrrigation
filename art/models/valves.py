@@ -1,7 +1,7 @@
 """The valves and timers, found on their own and fitted to a tap or a Pump House."""
 from mathutils import Vector
 
-from kit import FACING, LEFT, RIGHT, SQUARE, TOWARD, UP, box, cylinder, spline, tube
+from art.kit import FACING, LEFT, RIGHT, SQUARE, TOWARD, UP, box, cylinder, spline, tube
 from lines import TAP_SPOUT_END
 from palette import M
 from pumps import HOSE_RADIUS, HOUSE_PLUG, WIRE_RADIUS

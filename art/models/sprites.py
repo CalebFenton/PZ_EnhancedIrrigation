@@ -1,8 +1,9 @@
 """The tile numbers of enhanced_irrigation_01, which Lua reads through Sprites.lua: keep the two in
 step. Free of Blender, so tools/make_tiles.py reads them as the renders do.
 """
+from art.tilefile import COLUMNS
+
 TILESET = "enhanced_irrigation_01"
-COLUMNS = 8  # the game reads tilesets and their depth maps in rows this wide
 
 # Pipe tiles: a block per material in Sprites.PIPE_MATERIALS' order, the dry shapes then the wet
 # ones, each numbered by its shape (the bits of the neighbours it joins).

@@ -62,13 +62,13 @@ for _, case in ipairs({ { entity = T.WOODEN, name = "wooden", seal = T.LEATHER }
         run = function(self)
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
-            self.pump = T.buildFromMenu(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity], { case.seal })
+            self.pump = T.buildTile(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity], { case.seal })
             if not self.pump then return end
             T.readPumpUntil(self, self.pump, "built", function(state) return state.record ~= nil end)
             T.count(self, "left", { case.seal, DIRTY_LEATHER })
             T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == case.seal end,
                 "this client's summary of the built pump")
-            T.readMenu(self, self.pump, "built")
+            T.readMenu(self, function() return T.copyOf(self.pump) end, "built")
         end,
         validate = function(self)
             local built = self.reads.built
@@ -148,7 +148,7 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         expectNear("the pump's condition", after.record.condition, Pumps.BODY_CONDITION - ROOM / spec.wearLitres, 0.001)
         expect(after.endurance < self.endurance, "pumping left the server's endurance at " .. after.endurance)
         expect(self.clientEndurance < self.endurance, "pumping left this client's endurance at " .. self.clientEndurance)
-        T.expectRefused(self, "full", "Tooltip_EnhancedIrrigation_OutletFull")
+        T.expectOptionRefused(self, "full", "Tooltip_EnhancedIrrigation_OutletFull")
     end,
 })
 
@@ -178,7 +178,7 @@ T.test("irrigation_pumps_stop_when_the_character_is_exhausted", {
         expect(after.endurance <= Pumps.EXHAUSTED, "the pump stopped with the endurance at " .. after.endurance)
         expect(after.tank.litres > 0 and after.tank.litres < T.BARREL_LITRES / 2, "the exhausted character lifted "
             .. after.tank.litres .. " L")
-        T.expectRefused(self, "tired", "Tooltip_EnhancedIrrigation_Exhausted")
+        T.expectOptionRefused(self, "tired", "Tooltip_EnhancedIrrigation_Exhausted")
     end,
 })
 
@@ -220,7 +220,7 @@ T.test("irrigation_pumps_one_worker_per_pump", {
     end,
     validate = function(self)
         expect(self.reads.other.held, "the other player couldn't hold the free pump")
-        T.expectRefused(self, "while held", "Tooltip_EnhancedIrrigation_PumpInUse")
+        T.expectOptionRefused(self, "while held", "Tooltip_EnhancedIrrigation_PumpInUse")
         expectNear("the tank's water while another player held the pump", self.reads.refused.tank.litres,
             T.BARREL_LITRES - ROOM, T.LITRES)
         T.expectOffered(self, "freed")
@@ -251,7 +251,7 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         self.tank = T.placeTank(self, spots[3], "lidded")
         T.linkPump(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
-        T.readMenu(self, self.pump, "source")
+        T.readMenu(self, function() return T.copyOf(self.pump) end, "source")
         T.step(function()
             self.sourceName = T.copyOf(self.source):getFluidContainer():getTranslatedContainerName()
         end)
@@ -290,7 +290,7 @@ T.test("irrigation_pumps_river_intake_gives_tainted_water", {
         self.tank = T.placeTank(self, spots[2], "lidded")
         T.linkPump(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
-        T.readMenu(self, self.pump, "river")
+        T.readMenu(self, function() return T.copyOf(self.pump) end, "river")
         T.runPump(self, self.pump, "ran", { T.MINUTE }, { tank = self.tank })
     end,
     validate = function(self)
@@ -327,7 +327,7 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
         T.readPumpUntil(self, self.iron, "plumbed", function(state) return state.outlet end)
     end,
     validate = function(self)
-        T.expectRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.ENTITIES[T.WOODEN].lift])
+        T.expectOptionRefused(self, "wooden", Pumps.LIFT_KEYS[Pumps.ENTITIES[T.WOODEN].lift])
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed the wooden pump two storeys up")
         T.expectOffered(self, "iron")
@@ -339,7 +339,7 @@ T.test("irrigation_pumps_lift_refuses_a_tank_too_high_for_wood", {
 
 -- The option of `context` that plumbs the pump's outlet to a tile of `tiles` with iron pipe, or nil.
 local function plumbToLine(context, tiles)
-    return T.findOption(context, context, function(option)
+    return T.findOption(context, function(option)
         local at, kind = Links.decode(option.param4)
         if not (option.onSelect == EnhancedIrrigationAction.queue and option.param2 == LinkJobs.PLUMB_PUMP and kind == "iron") then
             return false
@@ -380,25 +380,25 @@ T.test("irrigation_pumps_plumb_outlet_to_a_line", {
         T.useMenu(self, self.pump, "untapped", function(context) return plumbToLine(context, untapped) end, true)
         T.readPumpUntil(self, self.pump, "plumbed", function(state) return state.outlet end)
         T.waitFor(self, function() return Links.roleAt(T.at(self.pump), "pump") ~= nil end, "this client's copy of the outlet")
-        T.readMenu(self, self.pump, "plumbed")
+        T.readMenu(self, function() return T.copyOf(self.pump) end, "plumbed")
         T.step(function()
             local b = Links.farEnd(T.at(self.pump), "pump")
             self.unplumbLabel = LinkMenu.linkLabel(T.at(self.pump), b)
         end)
         T.useOption(self, function() return T.copyOf(self.pump) end, "unplumb", function(context)
-            return T.findNamed(context, context, self.unplumbLabel)
+            return T.findNamed(context, self.unplumbLabel)
         end, false)
         T.goNextTo(self, untapped[2].square)
         T.useLineJob(self, untapped[2], LineJobs.TAP, "fit tap", false)
     end,
     validate = function(self)
-        T.expectRefused(self, "tapped", "Tooltip_EnhancedIrrigation_LineHasTap")
+        T.expectOptionRefused(self, "tapped", "Tooltip_EnhancedIrrigation_LineHasTap")
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed the pump to a tapped line")
         T.expectOffered(self, "untapped")
         T.expectWord(self, "plumbed", getText("IGUI_EnhancedIrrigation_OutletToLine"))
         T.expectOffered(self, "unplumb")
-        T.expectRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_LinePumped")
+        T.expectOptionRefused(self, "fit tap", "Tooltip_EnhancedIrrigation_LinePumped")
     end,
 })
 
@@ -468,7 +468,7 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         T.runPump(self, self.pump, "worn", { T.MINUTE }, { tank = self.tank })
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.sealWorn end, "this client's summary of the worn seal")
         T.goNextTo(self, self.pump.square)
-        T.readMenu(self, self.pump, "worn")
+        T.readMenu(self, function() return T.copyOf(self.pump) end, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", T.running(EnhancedIrrigationPumpAction.queue), false)
         T.give(self, "seals", { { type = "Base.Screwdriver" }, { type = T.LEATHER }, { type = PLUNGER } })
         T.step(function() self.leather, self.plunger = self.items.seals[2], self.items.seals[3] end)
@@ -483,14 +483,14 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
         T.count(self, "left", { T.LEATHER, DIRTY_LEATHER, PLUNGER, "Base.Screwdriver" })
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.seal == PLUNGER and not summary.sealWorn end,
             "this client's summary of the new seal")
-        T.readMenu(self, self.pump, "new")
+        T.readMenu(self, function() return T.copyOf(self.pump) end, "new")
     end,
     validate = function(self)
         local worn = self.reads.worn.steps[1]
         expectNear("the tank after the seal's last litres", worn.tank.litres, SEAL_LEFT, T.LITRES)
         expect(worn.stopped == "Tooltip_EnhancedIrrigation_SealWornOut", "the pump stopped for " .. tostring(worn.stopped))
         T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_SealWornOut"))
-        T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_SealWornOut")
+        T.expectOptionRefused(self, "pump", "Tooltip_EnhancedIrrigation_SealWornOut")
         T.expectOffered(self, "leather")
         T.expectOffered(self, "plunger")
         local leathered, replaced = self.reads.leathered.record, self.reads.replaced.record
@@ -523,7 +523,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         T.runPump(self, self.pump, "worn", { 1 }, { tank = self.tank })
         T.waitForPumpSummary(self, self.pump, function(summary) return summary.wornOut end, "this client's summary of the worn pump")
         T.goNextTo(self, self.pump.square)
-        T.readMenu(self, self.pump, "worn")
+        T.readMenu(self, function() return T.copyOf(self.pump) end, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", T.running(EnhancedIrrigationPumpAction.queue), false)
         T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
         -- The cursor lists what it can smash on the square it hovers, once the character sees it.
@@ -547,7 +547,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         expectNear("the tank after the body's last litres", worn.tank.litres, BODY_LEFT * self.pump.spec.wearLitres, T.LITRES)
         expect(worn.stopped == "Tooltip_EnhancedIrrigation_PumpWornOut", "the pump stopped for " .. tostring(worn.stopped))
         T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_PumpWornOut"))
-        T.expectRefused(self, "pump", "Tooltip_EnhancedIrrigation_PumpWornOut")
+        T.expectOptionRefused(self, "pump", "Tooltip_EnhancedIrrigation_PumpWornOut")
         local smashed = self.reads.smashed
         expect(not smashed.found and smashed.record == nil, "the smashed pump or its record is still there")
     end,

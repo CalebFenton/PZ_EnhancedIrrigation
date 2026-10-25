@@ -75,7 +75,7 @@ T.test("irrigation_pump_house_power_refuses_the_grid_in_the_open", {
         update(self, self.house, "hour", { hoursAgo = 1, fields = { on = true }, tank = self.tank })
     end,
     validate = function(self)
-        T.expectRefused(self, "on", "IGUI_RadioRequiresPowerNearby")
+        T.expectOptionRefused(self, "on", "IGUI_RadioRequiresPowerNearby")
         expect(self.reads.forced.done == false, "the server switched the unpowered house on")
         local after = self.reads.hour.after
         expectNear("the tank after an hour unpowered", after.tank.litres, 0, T.LITRES)
@@ -114,7 +114,7 @@ T.test("irrigation_pump_house_power_runs_on_the_grid_beside_a_room", {
             return EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum of the running house")
         update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
-        T.readMenu(self, self.house, "running")
+        T.readMenu(self, function() return T.copyOf(self.house) end, "running")
         T.useMenu(self, self.house, "off", T.job("pump", PumpJobs.TURN_OFF), true)
         readUntil(self, self.house, "off", function(state) return not state.record.on end)
         T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
@@ -238,7 +238,7 @@ T.test("irrigation_pump_house_power_stops_when_its_generator_is_spent", {
         self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE, { on = true }))
         update(self, self.house, "spent", { hoursAgo = 2 * FUEL_HOURS, tank = self.tank, generator = self.generator })
         T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
-        T.readMenu(self, self.house, "spent")
+        T.readMenu(self, function() return T.copyOf(self.house) end, "spent")
     end,
     validate = function(self)
         local before, after = self.reads.spent.before, self.reads.spent.after

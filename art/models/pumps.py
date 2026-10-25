@@ -3,7 +3,7 @@ import math
 
 from mathutils import Vector
 
-from kit import LEFT, RIGHT, TOWARD, UP, board, box, cylinder, heading, lathe, on_ground, spline, tube
+from art.kit import LEFT, RIGHT, TOWARD, UP, board, box, cylinder, heading, lathe, on_ground, spline, tube
 from palette import M
 
 

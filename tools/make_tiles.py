@@ -37,25 +37,21 @@ definitions (newtiledefinitions.tiles).
   Material as they are built: Wood for the wooden pump and the plank house, Metal for the iron pump
   and the sheet-steel house.
 
-The game loads a mod's depth maps (media/depthmaps/DEPTH_<tileset>.png, which art/models/render.py
-renders) only when the mod's common/media has a tileGeometry.txt (TileDepthTextureManager.init),
-so this writes one without geometry. Without the depth map every tile would be drawn as if it
+With the harness's lib/art/tilefile.py, it also writes the tileGeometry.txt that makes the game
+load the depth map art/models/render.py renders. Without it every tile would be drawn as if it
 filled its square up to the ceiling, and a pipe would hide whoever walks over it.
 """
 import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "dev", "harness", "check"))
+sys.path.insert(0, os.path.join(HERE, "..", "dev", "harness", "lib"))
 sys.path.insert(0, os.path.join(HERE, "..", "art", "models"))
-import tiledefs  # noqa: E402
-from sprites import (BARREL_FILTER, BOILER_STONE, BOILER_WELDED, BRICK_FILTER, COLUMNS, FILTER_CROCK,  # noqa: E402
-                     IRON_HAND_PUMP, PUMP_HOUSE_METAL, PUMP_HOUSE_WOOD, RAISED_BARRELS, ROWS, STAND, TILESET,
-                     WOODEN_HAND_PUMP)
+from art import tilefile  # noqa: E402
+from sprites import (BARREL_FILTER, BOILER_STONE, BOILER_WELDED, BRICK_FILTER, FILTER_CROCK, IRON_HAND_PUMP,  # noqa: E402
+                     PUMP_HOUSE_METAL, PUMP_HOUSE_WOOD, RAISED_BARRELS, ROWS, STAND, TILESET, WOODEN_HAND_PUMP)
 
 MEDIA = os.path.join(HERE, "..", "Contents", "mods", "EnhancedIrrigation", "common", "media")
-TILES_FILE = os.path.join(MEDIA, "enhanced_irrigation.tiles")
-GEOMETRY_FILE = os.path.join(MEDIA, "tileGeometry.txt")
 
 
 def stand_like(name, **props):
@@ -77,19 +73,7 @@ TILES[PUMP_HOUSE_METAL] = stand_like("Pump House", Material="Metal")
 
 
 def main():
-    assert max(TILES) < COLUMNS * ROWS, "a tile past sprites.ROWS: raise it to the last tile's"
-    tiles = [sorted(TILES.get(index, {}).items(), key=lambda prop: prop[0].lower())
-             for index in range(COLUMNS * ROWS)]
-    # The only tileset in the file, so number 1.
-    tileset = tiledefs.Tileset(TILESET, TILESET + ".png", COLUMNS, ROWS, 1, tiles)
-    data = tiledefs.dumps([tileset])
-    assert tiledefs.loads(data) == [tileset], "the tiles would not read back as written"
-    os.makedirs(MEDIA, exist_ok=True)
-    with open(TILES_FILE, "wb") as f:
-        f.write(data)
-    print("%s: %d tiles with properties" % (os.path.basename(TILES_FILE), len(TILES)))
-    with open(GEOMETRY_FILE, "w") as f:
-        f.write("tileGeometry\n{\n    VERSION = 2,\n}\n")
+    tilefile.write(MEDIA, "enhanced_irrigation.tiles", [(TILESET, ROWS, TILES)])
 
 
 if __name__ == "__main__":

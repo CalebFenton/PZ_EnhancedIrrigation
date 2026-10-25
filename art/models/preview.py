@@ -14,8 +14,8 @@ render.py wrote, not from the pack the game loads:
   their size, so they can be held against the game's.
 - icons.png: every icon at four times its size.
 
-Writes to PREVIEWS (default $TMPDIR/enhanced-irrigation-previews) and prints the folder. PZ_MEDIA
-overrides where the game's media folder is.
+Writes to PREVIEWS (default $TMPDIR/enhanced-irrigation-previews) and prints the folder. PZ_APP
+overrides the game's Contents folder, where the game's sprites are read.
 """
 import os
 import sys
@@ -24,62 +24,22 @@ import tempfile
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-REPO = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, os.path.join(REPO, "dev", "harness", "check"))
-import items  # noqa: E402
-import kit  # noqa: E402
+sys.path[:0] = [HERE, os.path.join(os.path.dirname(os.path.dirname(HERE)), "dev", "harness", "lib")]
 import render  # noqa: E402
 import sprites  # noqa: E402
 import tiles  # noqa: E402
-from packs import read_index  # noqa: E402
+from art import kit  # noqa: E402
+from art.preview import BACKGROUND, enlarge, floor_diamond, grid, over, vanilla_sprite  # noqa: E402
+from art.render import TILE_H, TILE_W  # noqa: E402
+from art.tilefile import COLUMNS  # noqa: E402
 
 OUT = os.environ.get("PREVIEWS", os.path.join(tempfile.gettempdir(), "enhanced-irrigation-previews"))
-PZ_MEDIA = os.environ.get("PZ_MEDIA", os.path.expanduser(
-    "~/Library/Application Support/Steam/steamapps/common/ProjectZomboid/Project Zomboid.app/Contents/Java/media"))
-BACKGROUND = np.array([0.3, 0.3, 0.3, 1.0], dtype=np.float32)
+ART = render.ART
 GRASS = np.array([0.36, 0.42, 0.22, 1.0], dtype=np.float32)
 
 
-def over(sheet, pixels, x, y):
-    """Alpha-composites `pixels` onto `sheet` with its top left at (x, y)."""
-    height, width, _ = pixels.shape
-    region = sheet[y:y + height, x:x + width]
-    alpha = pixels[..., 3:4]
-    region[..., :3] = pixels[..., :3] * alpha + region[..., :3] * (1 - alpha)
-    region[..., 3:] = alpha + region[..., 3:] * (1 - alpha)
-
-
-def grid(cells, columns, cell_w, cell_h):
-    rows = (len(cells) + columns - 1) // columns
-    sheet = np.tile(BACKGROUND, (rows * cell_h, columns * cell_w, 1))
-    for i, pixels in enumerate(cells):
-        over(sheet, pixels, (i % columns) * cell_w, (i // columns) * cell_h)
-    return sheet
-
-
-def enlarge(pixels, factor):
-    return pixels.repeat(factor, axis=0).repeat(factor, axis=1)
-
-
-def floor_diamond(fill=None):
-    """A tile's floor in its cell: its outline, or filled with `fill`, so a sprite's placement on its
-    square shows."""
-    width, height = render.TILE_W, render.TILE_H
-    cell = np.zeros((height, width, 4), dtype=np.float32)
-    for x in range(width):
-        dy = round(abs(x - width / 2 + 0.5) / 2)
-        top, bottom = height - width // 2 + dy, height - 1 - dy
-        if fill is not None:
-            cell[top:bottom + 1, x] = fill
-        else:
-            for y in (top, bottom):
-                cell[min(y, height - 1), x] = (0.5, 0.5, 0.5, 1)
-    return cell
-
-
 def tile(index):
-    return kit.load_pixels(render.tile_path(index))
+    return kit.load_pixels(ART.tile_file(sprites.TILESET, index))
 
 
 def tile_sheet():
@@ -88,7 +48,7 @@ def tile_sheet():
         cell = floor_diamond()
         over(cell, tile(index), 0, 0)
         cells.append(enlarge(cell, 2))
-    kit.save_pixels(os.path.join(OUT, "tiles.png"), grid(cells, sprites.COLUMNS, 2 * render.TILE_W, 2 * render.TILE_H))
+    kit.save_pixels(os.path.join(OUT, "tiles.png"), grid(cells, COLUMNS, 2 * TILE_W, 2 * TILE_H))
 
 
 # A 5 x 5 frame of pipe with a cross through it, a stub off each side and a lone piece in a corner:
@@ -135,29 +95,6 @@ def lines_sheets():
         kit.save_pixels(os.path.join(OUT, "lines_%s.png" % material), enlarge(sheet, 2))
 
 
-def vanilla_sprite(name):
-    """A sprite of the game's Tiles2x.pack as its full cell, or None without the game."""
-    path = os.path.join(PZ_MEDIA, "texturepacks", "Tiles2x.pack")
-    if not os.path.exists(path):
-        return None
-    for page in read_index(path):
-        for sprite in page.sprites:
-            if sprite.name != name:
-                continue
-            with open(path, "rb") as f:
-                f.seek(page.image_start)
-                data = f.read(page.image_length)
-            scratch = os.path.join(tempfile.gettempdir(), "enhanced-irrigation-page.png")
-            with open(scratch, "wb") as f:
-                f.write(data)
-            pixels = kit.load_pixels(scratch)
-            cell = np.zeros((sprite.cell_height, sprite.cell_width, 4), dtype=np.float32)
-            cell[sprite.offset_y:sprite.offset_y + sprite.height, sprite.offset_x:sprite.offset_x + sprite.width] = \
-                pixels[sprite.y:sprite.y + sprite.height, sprite.x:sprite.x + sprite.width]
-            return cell
-    return None
-
-
 def stands_sheet():
     cells = []
 
@@ -167,7 +104,7 @@ def stands_sheet():
             over(cell, pixels, 0, 0)
         cells.append(cell)
 
-    barrel = vanilla_sprite("carpentry_02_122")
+    barrel = vanilla_sprite("carpentry_02_122", ART.scratch)
     if barrel is not None:
         add(barrel)
     add(tile(sprites.pipe_index("plastic", False, 10)), tile(sprites.TAP))
@@ -176,19 +113,19 @@ def stands_sheet():
     for index in [sprites.STAND, *sprites.RAISED_BARRELS, sprites.BARREL_FILTER, sprites.BRICK_FILTER,
                   sprites.FILTER_CROCK, sprites.BOILER_STONE, sprites.BOILER_WELDED]:
         add(tile(index))
-    well = vanilla_sprite("camping_01_16")
+    well = vanilla_sprite("camping_01_16", ART.scratch)
     if well is not None:
         add(well)
     for index in (sprites.WOODEN_HAND_PUMP, sprites.IRON_HAND_PUMP, sprites.PUMP_HOUSE_WOOD, sprites.PUMP_HOUSE_METAL):
         add(tile(index))
     if barrel is not None:
         add(barrel)
-    kit.save_pixels(os.path.join(OUT, "stands.png"), enlarge(grid(cells, len(cells), render.TILE_W, render.TILE_H), 3))
+    kit.save_pixels(os.path.join(OUT, "stands.png"), enlarge(grid(cells, len(cells), TILE_W, TILE_H), 3))
 
 
 def icon_sheet():
-    cells = [enlarge(kit.load_pixels(render.icon_path(name)), 4) for name in items.ITEMS]
-    cells += [enlarge(kit.load_pixels(render.build_icon_path(name)), 4) for name in tiles.BUILD_ICONS]
+    cells = [enlarge(kit.load_pixels(ART.icon_file(name)), 4) for name in ART.items]
+    cells += [enlarge(kit.load_pixels(ART.build_icon_file(name)), 4) for name in ART.build_icons]
     kit.save_pixels(os.path.join(OUT, "icons.png"), grid(cells, len(cells), 200, 200))
 
 

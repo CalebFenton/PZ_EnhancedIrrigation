@@ -11,7 +11,7 @@ require "EnhancedIrrigation/UI/LineMenu"
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
-local expectOffered, expectRefused = T.expectOffered, T.expectRefused
+local expectOffered, expectOptionRefused = T.expectOffered, T.expectOptionRefused
 local Sprites, Pipes, Lines = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pipes, EnhancedIrrigation.Lines
 local LineJobs, LineMenu = EnhancedIrrigation.LineJobs, EnhancedIrrigation.LineMenu
 
@@ -36,7 +36,7 @@ local function useDrill(self, handle, label, choose)
     self.drills = self.drills or {}
     T.useOption(self, function() return T.lineObject(handle) end, label, function(context)
         local count = 0
-        T.findOption(context, context, function(option)
+        T.findOption(context, function(option)
             if option.onSelect == EnhancedIrrigationAction.queue and option.param2 == LineJobs.DRILL then
                 count = count + 1
             end
@@ -75,8 +75,8 @@ T.test("irrigation_lines_drill_holes_tool_gate", {
         T.readLines(self, self.tiles, "drilled")
     end,
     validate = function(self)
-        expectRefused(self, "awl on iron", "Tooltip_EnhancedIrrigation_NoHoleMaker")
-        expectRefused(self, "awl on clay", "Tooltip_EnhancedIrrigation_NoHoleMaker")
+        expectOptionRefused(self, "awl on iron", "Tooltip_EnhancedIrrigation_NoHoleMaker")
+        expectOptionRefused(self, "awl on clay", "Tooltip_EnhancedIrrigation_NoHoleMaker")
         expectOffered(self, "awl on plastic")
         expectOffered(self, "hand drill on iron")
         expect(self.drills["hand drill on iron"] == 1, "carrying an awl and a hand drill, the menu has "
@@ -158,8 +158,8 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         T.count(self, "left", { Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item, "Base.PipeWrench" })
     end,
     validate = function(self)
-        expectRefused(self, "under a well", "Tooltip_EnhancedIrrigation_NoPressure")
-        expectRefused(self, "beside a ground barrel", "Tooltip_EnhancedIrrigation_NoPressure")
+        expectOptionRefused(self, "under a well", "Tooltip_EnhancedIrrigation_NoPressure")
+        expectOptionRefused(self, "beside a ground barrel", "Tooltip_EnhancedIrrigation_NoPressure")
         expectOffered(self, "beside a raised barrel")
         local record = recordOf(self, "tapped", 1)
         expect(record.tap and record.tapMaterial == "lead", "the tap fitted: " .. tostring(record.tap) .. ", of "
@@ -253,7 +253,7 @@ T.test("irrigation_lines_drain_from_the_middle", {
         end, "this client's copy of the drained tile, wet")
     end,
     validate = function(self)
-        T.expectRefused(self, "drain while the valve runs", "Tooltip_EnhancedIrrigation_ValveRunning")
+        T.expectOptionRefused(self, "drain while the valve runs", "Tooltip_EnhancedIrrigation_ValveRunning")
         expectOffered(self, "drain the middle")
         local shapes = { Sprites.EAST, Sprites.EAST + Sprites.WEST, Sprites.WEST }
         for i, tile in ipairs(self.reads.drained.tiles) do
@@ -330,7 +330,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
         T.waitForLines(self, { tile }, "this client's copy of the laid tile")
         T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function()
-            self.back = T.player():getInventory():getFirstTypeRecurse(Pipes.MATERIALS.iron.item)
+            self.back = T.carried(Pipes.MATERIALS.iron.item)
             return self.back ~= nil
         end, "this client's copy of the pipe taken up")
     end,

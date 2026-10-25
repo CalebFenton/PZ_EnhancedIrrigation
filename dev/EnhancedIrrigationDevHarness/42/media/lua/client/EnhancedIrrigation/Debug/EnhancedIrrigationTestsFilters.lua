@@ -64,7 +64,7 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
         readUntil(self, self.unit, "poured", function(state)
             return state.record and state.record.head + state.basin.litres > head - T.LITRES
         end)
-        T.read(self, "items.carried", { type = "Base.Bucket" }, "bucket")
+        T.readCarried(self, { "Base.Bucket" }, nil, "bucket")
         T.waitFor(self, function()
             local summary = Treatment.summaryOf(T.copyOf(self.unit))
             return summary ~= nil and summary.head > head - 1
@@ -74,16 +74,16 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
     end,
     validate = function(self)
         local head = Treatment.ENTITIES[BARREL_FILTER].head
-        T.expectRefused(self, "petrol", "Tooltip_EnhancedIrrigation_OnlyWater")
+        T.expectOptionRefused(self, "petrol", "Tooltip_EnhancedIrrigation_OnlyWater")
         T.expectOffered(self, "pour")
         local poured = self.reads.poured
         expectNear("the head and basin after pouring", poured.record.head + poured.basin.litres, head, T.LITRES)
         local hour = self.reads.hour
         expectBasin("the hour's water", hour.steps[1], hour.before.basin.litres + Treatment.ENTITIES[BARREL_FILTER].rate, true)
-        local bucket = self.reads.bucket.items[1]
+        local bucket = T.carriedFirst(self, "Base.Bucket", "bucket")
         expectNear("the bucket's water left", bucket.litres, 10 - self.room, T.LITRES)
         expect(bucket.tainted, "the bucket's water left is clean")
-        T.expectRefused(self, "full", "Tooltip_EnhancedIrrigation_HeadFull")
+        T.expectOptionRefused(self, "full", "Tooltip_EnhancedIrrigation_HeadFull")
     end,
 })
 
@@ -124,7 +124,7 @@ T.test("irrigation_treatment_filter_ripe_passes_clean_water", {
         run(self, self.unit, "run", { self.hours }, { head = 50, headTainted = true, ripeHours = Treatment.RIPE_HOURS })
         local litres = self.unit.spec.rate * self.hours
         waitForCopy(self, self.unit, litres, nil, "this client's copy of the filled basin")
-        T.readMenu(self, self.unit, "ripe")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "ripe")
         T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), false)
     end,
     validate = function(self)
@@ -133,7 +133,7 @@ T.test("irrigation_treatment_filter_ripe_passes_clean_water", {
         expectBasin("the server", after, litres, false)
         expectBasin("this client", clientBasin(self.unit), litres, false)
         T.expectWord(self, "ripe", getText("IGUI_EnhancedIrrigation_Ripe"))
-        T.expectRefused(self, "clean", "Tooltip_EnhancedIrrigation_NotClogged")
+        T.expectOptionRefused(self, "clean", "Tooltip_EnhancedIrrigation_NotClogged")
     end,
 })
 
@@ -152,7 +152,7 @@ T.test("irrigation_treatment_filter_dry_spell_kills_the_layer", {
         run(self, self.short, "short fed", { 1 }, { head = 10, headTainted = true })
         run(self, self.dead, "dry", { Treatment.DRY_DEATH_HOURS }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
         waitForServer(self, self.dead, "dry", "ripeHours")
-        T.readMenu(self, self.dead, "dead")
+        T.readMenu(self, function() return T.copyOf(self.dead) end, "dead")
         run(self, self.dead, "fed", { 1 }, { head = 10, headTainted = true })
     end,
     validate = function(self)
@@ -181,8 +181,8 @@ T.test("irrigation_treatment_filter_hard_freeze_kills_the_layer", {
         run(self, self.dry, "dry", { 1 }, { head = 0, ripeHours = Treatment.RIPE_HOURS })
         waitForServer(self, self.wet, "wet", "ripeHours")
         waitForServer(self, self.dry, "dry", "ripeHours")
-        T.readMenu(self, self.wet, "wet")
-        T.readMenu(self, self.dry, "dry")
+        T.readMenu(self, function() return T.copyOf(self.wet) end, "wet")
+        T.readMenu(self, function() return T.copyOf(self.dry) end, "dry")
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS + 20 })
         run(self, self.wet, "thawed", { 1 }, { headTainted = true })
     end,
@@ -212,12 +212,12 @@ T.test("irrigation_treatment_filter_clogged_trickles_until_cleaned", {
             passed = spec.clogLitres })
         waitForCopy(self, self.unit, nil, function(summary) return summary.clogged end,
             "this client's summary of the clogged filter")
-        T.readMenu(self, self.unit, "clogged")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "clogged")
         T.give(self, "tools", { { type = "Base.Shovel" } })
         T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), true)
         readUntil(self, self.unit, "cleaned", function(state) return not state.summary.clogged end)
         waitForServer(self, self.unit, "cleaned", "clogged")
-        T.readMenu(self, self.unit, "cleaned")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "cleaned")
         run(self, self.unit, "after", { 1 }, { head = 20, headTainted = true })
     end,
     validate = function(self)
@@ -287,7 +287,7 @@ T.test("irrigation_treatment_filter_inlet_refuses_a_lower_tank", {
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
     end,
     validate = function(self)
-        T.expectRefused(self, "lower tank", "Tooltip_EnhancedIrrigation_InletTankTooLow")
+        T.expectOptionRefused(self, "lower tank", "Tooltip_EnhancedIrrigation_InletTankTooLow")
         local forced = self.reads.forced
         expect(forced.done == false and forced.links == 0, "the server plumbed an inlet from a lower tank")
     end,
@@ -319,7 +319,7 @@ T.test("irrigation_treatment_filter_outlet_fills_a_tank_no_higher", {
         run(self, self.unit, "passed", { 1 }, nil, self.tank)
     end,
     validate = function(self)
-        T.expectRefused(self, "higher tank", "Tooltip_EnhancedIrrigation_OutletTankTooHigh")
+        T.expectOptionRefused(self, "higher tank", "Tooltip_EnhancedIrrigation_OutletTankTooHigh")
         T.expectOffered(self, "outlet")
         local passed = self.reads.passed.steps[1]
         expect(passed.outlet, "the server didn't plumb the outlet")
@@ -352,7 +352,7 @@ T.test("irrigation_treatment_filter_inlet_keeps_the_film_through_an_absence", {
         T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = gap, tank = T.at(self.raw), into = T.at(self.clean) }),
             "back")
         waitForServer(self, self.unit, "back", "ripeHours")
-        T.readMenu(self, self.unit, "back")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "back")
         run(self, self.unit, "next", { 1 }, nil, self.clean)
     end,
     validate = function(self)
@@ -444,21 +444,20 @@ end
 -- however long ago it last ran. Loaded again, one pass treats the whole gap at its rate. Catches a
 -- record that treats into a basin it can't reach, or forgets the time it was away.
 T.test("irrigation_treatment_filter_record_catches_up_after_its_chunk_reloads", {
-    spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
+    spOnly = T.CHUNK_RELOAD_SP_ONLY,
     instant = true,
-    timeoutSeconds = T.RELOAD_SECONDS,
+    timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         self.gap = 5
         self.unit = placeUnit(self, spots[1], BARREL_FILTER, { fields = { head = 40, ripeHours = Treatment.RIPE_HOURS } })
-        T.reload(self, T.at(self.unit), function()
+        T.reloadChunk(self, T.at(self.unit), function()
             T.read(self, "treatment.update", T.at(self.unit, { hoursAgo = self.gap }), "away")
         end)
         T.read(self, "treatment.update", T.at(self.unit), "back")
     end,
     validate = function(self)
-        T.expectReloaded(self, "filter")
         local away, back = self.reads.away, self.reads.back
         expect(not away.after.loaded, "the filter's chunk stayed loaded on the server")
         expectNear("the head while away", away.after.record.head, 40, T.LITRES)

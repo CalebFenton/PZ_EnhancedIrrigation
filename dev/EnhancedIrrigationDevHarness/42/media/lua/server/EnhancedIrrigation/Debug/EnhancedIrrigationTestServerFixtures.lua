@@ -35,7 +35,7 @@ end
 --- The fixture at args' x, y, z (describe), and the tank at `args.tank` ({ x, y, z }) if given,
 --- as Server.stateAt sees it.
 local function stateAt(args)
-    local square = Server.squareAt(args)
+    local square = PZHarness.Fixtures.squareAt(args)
     local fixture = square and fixtureAt(args)
     local state = fixture and describe(fixture) or { found = false }
     state.tank = args.tank and Server.stateAt(args.tank) or nil
@@ -55,7 +55,7 @@ end
 -- from before the mod holds it; with `args.buffer` = { litres, tainted }, given a buffer holding
 -- that much. Answers its state. Removed, with its links, when the test ends.
 handler("fixtures.place", function(_, args, defer)
-    local square = Server.squareAt(args)
+    local square = PZHarness.Fixtures.squareAt(args)
     if not square then
         return nil, "a loaded square for " .. tostring(args.sprite)
     end

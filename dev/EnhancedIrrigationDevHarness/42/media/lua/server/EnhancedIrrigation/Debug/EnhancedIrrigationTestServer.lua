@@ -1,5 +1,6 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
+require "PZHarness/ServerChecks"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua; it returns
@@ -18,16 +19,11 @@ local EI = EnhancedIrrigation
 
 local Server = {}
 
---- The loaded square at args' x, y, z, or nil.
-function Server.squareAt(args)
-    return args and args.x and getSquare(args.x, args.y, args.z)
-end
-
 --- The square at args' x, y, z, made where there is none, as on a floor above open ground, whose
 --- square only comes to be with what stands there; with `withFloor`, on a floor laid for it if it
 --- has none, taken away with it when the test ends. Returns it, or nil and what is missing.
 function Server.squareFor(args, defer, withFloor)
-    local square = Server.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
+    local square = Fixtures.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
     if not square then
         return nil, "a square at " .. args.x .. "," .. args.y .. "," .. args.z
     end
@@ -41,15 +37,6 @@ function Server.squareFor(args, defer, withFloor)
         end)
     end
     return square
-end
-
---- The fields `savedFields` names (a record class's SAVED_FIELDS) of `record`, as plain values.
-function Server.fieldsOf(record, savedFields)
-    local fields = {}
-    for _, key in ipairs(savedFields) do
-        fields[key] = record[key]
-    end
-    return fields
 end
 
 --- Sets `fields` (saved fields) on `record` and, given `hoursAgo`, winds its clock to that many
@@ -169,7 +156,7 @@ end
 --- What stands at args' x, y, z (describe), whether the square is `loaded`, and how many `links`
 --- have an end there.
 function Server.stateAt(args)
-    local square = Server.squareAt(args)
+    local square = Fixtures.squareAt(args)
     if not square then
         return { loaded = false, found = false }
     end
@@ -284,7 +271,7 @@ local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "Treat
 -- barrel moveable carried when `args.barrel`. Answers whether it was done and the object's state
 -- after, so a test sees the server refuse what its menu would have greyed out.
 handler("jobs.perform", function(player, args)
-    local square = Server.squareAt(args)
+    local square = Fixtures.squareAt(args)
     local object = square and EI.findObjectOn(square, Server.isPlaced)
     if not object then
         return nil, "the server's object at " .. tostring(args.x) .. "," .. tostring(args.y)
@@ -363,7 +350,7 @@ end
 --- (`lit`, `fuel` in minutes), and the tanks at `args.tank` and `args.into` ({ x, y, z }) if given,
 --- as Server.stateAt sees them.
 function Server.treatmentStateAt(args)
-    local square = Server.squareAt(args)
+    local square = Fixtures.squareAt(args)
     local unit = square and Server.treatmentUnitAt(args)
     local record = Server.treatmentRecordAt(args)
     local here = { x = args.x, y = args.y, z = args.z }
@@ -372,7 +359,7 @@ function Server.treatmentStateAt(args)
         inlet = EI.Links.roleAt(here, "inlet") ~= nil, outlet = EI.Links.roleAt(here, "outlet") ~= nil,
     }
     if record then
-        state.record = Server.fieldsOf(record, EI.TreatmentObject.SAVED_FIELDS)
+        state.record = Fixtures.fieldsOf(record, EI.TreatmentObject.SAVED_FIELDS)
         state.summary = record:buildSummary()
     end
     if unit then
@@ -391,57 +378,5 @@ function Server.treatmentStateAt(args)
     state.into = args.into and Server.stateAt(args.into) or nil
     return state
 end
-
--- Items ---------------------------------------------------------------------------------------------
-
--- Every item of `args.type` the server's copy of the character carries, bags included: its
--- condition, the ceiling it carries (Parts.ceilingOf), for a drainable its uses left, and for a
--- fluid container the `litres` it holds and whether they are `tainted`.
-handler("items.carried", function(player, args)
-    local items = player:getInventory():getAllTypeRecurse(args.type)
-    local found = {}
-    for i = 0, items:size() - 1 do
-        local item = items:get(i)
-        local fluid = item:getFluidContainer()
-        table.insert(found, { condition = item:getCondition(), ceiling = EI.Parts.ceilingOf(item),
-            uses = instanceof(item, "DrainableComboItem") and item:getCurrentUses() or nil,
-            litres = fluid and fluid:getAmount(), tainted = fluid and fluid:isTainted() })
-    end
-    return { items = found }
-end)
-
--- Fills the first carried item of `args.type`, emptied first, with `args.litres` of `args.fluid` (a
--- FluidType name), and sends it to the client.
-handler("items.fill", function(player, args)
-    local item = player:getInventory():getFirstTypeRecurse(args.type)
-    local fluid = item and item:getFluidContainer()
-    if not fluid then
-        return nil, "a carried " .. args.type .. " with a fluid container"
-    end
-    fluid:Empty()
-    fluid:addFluid(FluidType[args.fluid], args.litres)
-    item:syncItemFields()
-    return { litres = fluid:getAmount(), tainted = fluid:isTainted() }
-end)
-
--- Recipes -------------------------------------------------------------------------------------------
-
--- The server's half of T.knowRecipes.
-handler("recipes.know", function(player, args, defer)
-    local saved = Fixtures.knownRecipes(player)
-    if args.known then
-        Fixtures.learnRecipes(player, args.names)
-    else
-        Fixtures.forgetRecipes(player, args.names)
-    end
-    defer(function()
-        local known = player:getKnownRecipes()
-        known:clear()
-        for _, name in ipairs(saved) do
-            known:add(name)
-        end
-    end)
-    return {}
-end)
 
 return Server

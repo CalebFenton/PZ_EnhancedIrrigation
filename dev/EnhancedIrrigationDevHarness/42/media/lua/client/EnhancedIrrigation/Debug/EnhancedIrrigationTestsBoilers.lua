@@ -37,16 +37,6 @@ local function clearSpot(self)
     return spots and spots[1]
 end
 
--- Whether the build cursor of `entity` would take `square` (ISBuildIsoEntity:isValid, the
--- entity's OnIsValid among it). Server Lua, loaded after this file, so reached at call time.
-local function placeable(entity, square)
-    local player = T.player()
-    local build = ISBuildIsoEntity:new(player, T.buildEntry("Base." .. entity), 1,
-        ISInventoryPaneContextMenu.getContainers(player))
-    build.player = player:getPlayerNum()
-    return build:isValid(square)
-end
-
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
 -- on both sides, with its record at once. Its menu holds vanilla's Add Fuel and Light beside its
 -- own line, which reads the empty drum cold and sound. Catches a recipe the build menu can't build,
@@ -89,8 +79,8 @@ T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
         self.placed = {}
         T.step(function()
             for _, entity in ipairs({ STONE, WELDED }) do
-                self.placed[entity] = { clear = placeable(entity, clear.square),
-                    indoors = placeable(entity, indoors[1].square) }
+                self.placed[entity] = { clear = T.placeable("Base." .. entity, clear.square),
+                    indoors = T.placeable("Base." .. entity, indoors[1].square) }
             end
         end)
         local east = { x = clear.x + 1, y = clear.y, z = clear.z }
@@ -101,7 +91,7 @@ T.test("irrigation_treatment_boiler_refused_indoors_or_by_a_wall", {
         end, "this client's copy of the wall")
         T.step(function()
             for entity, placed in pairs(self.placed) do
-                placed.walled = placeable(entity, clear.square)
+                placed.walled = T.placeable("Base." .. entity, clear.square)
             end
         end)
     end,
@@ -136,7 +126,7 @@ local function burning(self)
         local copy = T.copyOf(self.unit)
         return copy ~= nil and copy:isLit() and copy:hasAnimatedAttachments()
     end, "this client's copy of the boiler burning, with vanilla's flames")
-    T.readMenu(self, self.unit, "burning")
+    T.readMenu(self, function() return T.copyOf(self.unit) end, "burning")
 end
 
 -- Vanilla's fire menu on the boiler adds fuel and offers to light it; lit as vanilla's Light leaves
@@ -207,19 +197,19 @@ T.test("irrigation_treatment_boiler_passes_clean_water_only_while_hot", {
         self.head = self.unit.spec.rate * 4
         run(self, self.unit, "raw", {}, { head = self.head, headTainted = true })
         setFire(self, self.unit, true, FUEL)
-        T.readMenu(self, self.unit, "heating")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "heating")
         -- Each run starts the drum at the heat the steps before left it, which a ten-minute pass in
         -- between would have moved on a little.
         run(self, self.unit, "heating", { 1 }, { hotHours = 0 })
         run(self, self.unit, "hot", { 1 })
         waitForServer(self, self.unit, "hot", "hot")
-        T.readMenu(self, self.unit, "hot")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "hot")
         setFire(self, self.unit, false)
         run(self, self.unit, "cooling", { 1, 1 }, { hotHours = Treatment.HEAT_MAX_HOURS })
         waitForServer(self, self.unit, "cooling", "hot")
-        T.readMenu(self, self.unit, "cooled")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "cooled")
         run(self, self.cold, "cold", { 2 }, { head = self.head, headTainted = true })
-        T.readMenu(self, self.cold, "cold")
+        T.readMenu(self, function() return T.copyOf(self.cold) end, "cold")
     end,
     validate = function(self)
         local rate = self.unit.spec.rate
@@ -272,7 +262,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         setFire(self, self.unit, true, FUEL)
         run(self, self.unit, "holed", { 1 })
         waitForServer(self, self.unit, "holed", "burntThrough")
-        T.readMenu(self, self.unit, "burnt")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "burnt")
         T.fillCarried(self, "Base.Bucket", "Water", 5)
         T.useMenu(self, self.unit, "holed pour", T.job("treatment", TreatmentJobs.POUR_IN, bucket), false)
         setFire(self, self.unit, false)
@@ -283,7 +273,7 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.useMenu(self, self.unit, "patch", T.job("treatment", TreatmentJobs.PATCH_DRUM), true)
         readUntil(self, self.unit, "patched", function(state) return not state.summary.burntThrough end)
         waitForServer(self, self.unit, "patched", "condition")
-        T.readMenu(self, self.unit, "patched")
+        T.readMenu(self, function() return T.copyOf(self.unit) end, "patched")
         run(self, self.unit, "after patch", { 1 }, { head = 20, headTainted = true })
         T.useMenu(self, self.unit, "again", T.job("treatment", TreatmentJobs.PATCH_DRUM), false)
         T.count(self, "used", { "Base.SmallSheetMetal" })
@@ -298,11 +288,11 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         expectNear("the head of a drum burnt through", holed.steps[1].record.head, 0, T.LITRES)
         expectNear("a burnt-through boiler's hour", holed.steps[1].basin.litres, holed.before.basin.litres, T.LITRES)
         T.expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_BurntThrough"))
-        T.expectRefused(self, "holed pour", "Tooltip_EnhancedIrrigation_BurntThrough")
+        T.expectOptionRefused(self, "holed pour", "Tooltip_EnhancedIrrigation_BurntThrough")
         T.expectOffered(self, "patch")
         T.expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Drum",
             Treatment.DRUM_CONDITION - Treatment.PATCH_LOSS))
-        T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_DrumSound")
+        T.expectOptionRefused(self, "again", "Tooltip_EnhancedIrrigation_DrumSound")
         T.expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Cold"))
         local after = self.reads["after patch"]
         expectNear("a patched, unlit boiler's hour", after.steps[1].basin.litres, after.before.basin.litres, T.LITRES)

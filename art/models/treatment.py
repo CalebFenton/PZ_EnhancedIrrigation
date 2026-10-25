@@ -4,7 +4,7 @@ import random
 
 from mathutils import Vector
 
-from kit import box, circle, cylinder, group, heading, lathe, parts, profile_radius, tube
+from art.kit import box, circle, cylinder, group, heading, lathe, parts, profile_radius, tube
 from palette import M
 from stands import BARREL_CORE, BARREL_HEIGHT, BARREL_PROFILE, barrel_shell
 

@@ -1,6 +1,5 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
-local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. Only registers handlers, so a --stay rerun loads it again.
 
@@ -11,7 +10,7 @@ local EI = EnhancedIrrigation
 -- The appliance drawn as `args.sprite` at x, y, z: whether it runs and whether its pump is gone;
 -- nothing without one.
 handler("appliances.state", function(_, args)
-    local square = Server.squareAt(args)
+    local square = PZHarness.Fixtures.squareAt(args)
     local appliance = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
     if not appliance then
         return {}
@@ -27,7 +26,7 @@ end)
 -- whether a washer-dryer is set to dry. A refused action on a multiplayer client would clear the
 -- test's queue, so the switch is run here rather than queued.
 handler("appliances.toggle", function(player, args)
-    local square = Server.squareAt(args)
+    local square = PZHarness.Fixtures.squareAt(args)
     local washer = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
     if not washer then
         return nil, "the washer at " .. args.x .. "," .. args.y

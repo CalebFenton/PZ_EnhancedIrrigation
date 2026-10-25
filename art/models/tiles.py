@@ -2,21 +2,18 @@
 builders of lines, stands, treatment, pumps and valves. A tile is a list of layers.
 
 Tile coordinates are a square one metre wide centred on the origin: its north edge is y = +0.5 and
-its west edge x = -0.5 (see kit.py).
+its west edge x = -0.5 (see the harness's lib/art/kit.py).
 """
 import lines
 import pumps
 import stands
 import treatment
 import valves
-from sprites import (BARREL_FILTER, BOILER_STONE, BOILER_WELDED, BRICK_FILTER, COLUMNS, FILTER_CROCK, HOUSE_TIMER,
-                     IRON_HAND_PUMP, PIPE_MATERIALS, PUMP_HOUSE_METAL, PUMP_HOUSE_WOOD, RAISED_BARRELS, ROWS, SHAPES,
-                     SPRINKLER, STAND, TAP, TAP_SPRINKLER_TIMER, TAP_TIMER_VALVE, TAP_WIND_UP, WOODEN_HAND_PUMP,
-                     pipe_index)
-
-
-def layer(build, turn=0, **options):
-    return {"build": build, "options": options, "turn": turn}
+from art.render import layer
+from art.tilefile import COLUMNS
+from sprites import (BARREL_FILTER, BOILER_STONE, BOILER_WELDED, BRICK_FILTER, FILTER_CROCK, HOUSE_TIMER, IRON_HAND_PUMP,
+                     PIPE_MATERIALS, PUMP_HOUSE_METAL, PUMP_HOUSE_WOOD, RAISED_BARRELS, ROWS, SHAPES, SPRINKLER, STAND,
+                     TAP, TAP_SPRINKLER_TIMER, TAP_TIMER_VALVE, TAP_WIND_UP, WOODEN_HAND_PUMP, pipe_index)
 
 
 TILES = {}

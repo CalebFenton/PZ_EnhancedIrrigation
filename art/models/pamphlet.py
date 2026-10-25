@@ -1,5 +1,5 @@
 """The pamphlet."""
-from kit import box, text
+from art.kit import box, text
 from palette import M
 
 

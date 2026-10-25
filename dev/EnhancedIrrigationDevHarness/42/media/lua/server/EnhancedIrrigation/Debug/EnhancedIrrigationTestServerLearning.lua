@@ -1,6 +1,7 @@
 require "PZHarness/ServerFixtures"
 require "PZHarness/Fixtures"
-require "PZHarness/Checks"
+require "PZHarness/ServerChecks"
+require "PZHarness/Loot"
 
 -- Development only, not published. Loot tables are checked here because only the authority fills
 -- them (Distributions.lua leaves a multiplayer client out). A --stay rerun loads this file again,
@@ -8,20 +9,6 @@ require "PZHarness/Checks"
 
 local handler = PZHarness.serverHandler
 local Fixtures = PZHarness.Fixtures
-
--- `names` as a set of whether the character knows each.
-local function knownOf(player, names)
-    local known = {}
-    for _, name in ipairs(names) do
-        known[name] = player:isRecipeActuallyKnown(name)
-    end
-    return known
-end
-
--- Whether the character knows each of `args.names`, in `known` by name.
-handler("learning.known", function(player, args)
-    return { known = knownOf(player, args.names) }
-end)
 
 -- Forgets that the character read the title (modData literatureTitle) of its carried `args.type`,
 -- whose cooldown would make reading it again teach nothing (ISReadABook:complete).
@@ -33,29 +20,6 @@ handler("learning.forgetLiterature", function(player, args)
     end
     player:getReadLiterature():remove(title)
     return {}
-end)
-
--- Forgets `args.forget`, if given, sets the levels `args.levels` (perk id -> level), each at the XP
--- that starts it, then awards the XP that takes `args.perk` one level up, as the authority awards a
--- timed action's XP: the game levels the perk up and fires LevelPerk. The perks setting puts the
--- levels back when the test ends, recipes.know the recipes. Answers the level before and after.
-handler("learning.levelUp", function(player, args)
-    if args.forget then
-        Fixtures.forgetRecipes(player, args.forget)
-    end
-    Fixtures.setPerkLevels(player, args.levels)
-    local perk = Perks.FromString(args.perk)
-    local before = player:getPerkLevel(perk)
-    local next = PerkFactory.getPerk(perk):getTotalXpForLevel(before + 1)
-    addXpNoMultiplier(player, perk, next - player:getXp():getXP(perk) + 1)
-    return { before = before, after = player:getPerkLevel(perk) }
-end)
-
--- Sets the levels `args.levels` (perk id -> level) with no level up, so no LevelPerk teaches
--- anything: a character who earned them before the mod was added. Put back when the test ends.
-handler("learning.setLevels", function(player, args)
-    Fixtures.setPerkLevels(player, args.levels)
-    return { known = knownOf(player, args.names) }
 end)
 
 -- Loot ----------------------------------------------------------------------------------------------
@@ -79,69 +43,20 @@ local function distributions(expect)
     return D
 end
 
--- The first room and container type whose procList picks each ProceduralDistributions list.
-local function procListUsers()
-    local users = {}
-    for roomName, room in pairs(SuburbsDistributions) do
-        if type(room) == "table" and room.rolls == nil then
-            for containerType, containerTable in pairs(room) do
-                if type(containerTable) == "table" and type(containerTable.procList) == "table" then
-                    for _, choice in ipairs(containerTable.procList) do
-                        if choice.name and not users[choice.name] then
-                            users[choice.name] = { room = roomName, container = containerType }
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return users
-end
-
--- Calls fn(items, path) for every items list of every room, bag, procedural and vehicle table.
-local function forEachItemsList(fn)
-    local seen = {}
-    local function walk(t, path, depth)
-        if seen[t] or depth > 6 then
-            return
-        end
-        seen[t] = true
-        if type(t.items) == "table" then
-            fn(t.items, path)
-        end
-        for key, value in pairs(t) do
-            if type(value) == "table" and key ~= "items" and key ~= "procList" then
-                walk(value, path .. "." .. tostring(key), depth + 1)
-            end
-        end
-    end
-    walk(SuburbsDistributions, "SuburbsDistributions", 0)
-    walk(ProceduralDistributions.list, "ProceduralDistributions", 0)
-    walk(VehicleDistributions, "VehicleDistributions", 0)
-end
-
--- Applies the sandbox options of Distributions.LOOT as a load with their values does; returns the
--- function that sets one and applies it, and the one that puts the save's options and loot back,
--- deferred too in case the check throws.
-local function withLootOptions(D, defer)
-    local options = SandboxVars.EnhancedIrrigation
-    local saved = {}
+-- Saves the sandbox options of Distributions.LOOT; returns the function that sets one and applies
+-- it as a load with that value does, and the one that puts the save's options and loot back
+-- (PZHarness.Fixtures.saveOptions says when it runs).
+local function lootOptionSetter(D, defer)
+    local names = {}
     for _, loot in ipairs(D.LOOT) do
-        saved[loot.option] = options[loot.option]
+        table.insert(names, loot.option)
     end
-    local restored = false
-    local function restore()
-        if restored then return end
-        restored = true
-        for option, value in pairs(saved) do
-            options[option] = value
-        end
+    local restore = Fixtures.saveOptions(defer, names, function()
         D.apply()
         ItemPickerJava.Parse()
-    end
-    defer(restore)
+    end)
     return function(option, value)
-        options[option] = value
+        SandboxVars.EnhancedIrrigation[option] = value
         D.apply()
     end, restore
 end
@@ -150,13 +65,12 @@ end
 -- once, at its weight times the save's value of its option, since the merge at load. Each of
 -- `args.multipliers` scales every weight, applied twice as a second load applies it; at 0 the item
 -- is in no loot list at all, since a zero weight still spawns through the zombie density bonus.
-handler("learning.lootLists", function(player, args, defer)
-    local expect, expectNear, failures = PZHarness.Checks.new()
+PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, args, defer)
     local D = distributions(expect)
     if not D then
-        return { failures = failures }
+        return
     end
-    local users = procListUsers()
+    local users = PZHarness.Loot.procListUsers()
     local function checkAt(loot, multiplier, label)
         for _, entry in ipairs(loot.lists) do
             local name, weight = entry[1], entry[2]
@@ -177,7 +91,7 @@ handler("learning.lootLists", function(player, args, defer)
             end
         end
         if multiplier == 0 then
-            forEachItemsList(function(items, path)
+            PZHarness.Loot.forEachItemsList(function(items, path)
                 expect(Fixtures.countPairs(items, loot.item) == 0, label .. ": " .. loot.item .. " is still in " .. path)
             end)
         end
@@ -186,7 +100,7 @@ handler("learning.lootLists", function(player, args, defer)
     for _, loot in ipairs(D.LOOT) do
         checkAt(loot, SandboxVars.EnhancedIrrigation[loot.option], "as loaded")
     end
-    local set, restore = withLootOptions(D, defer)
+    local set, restore = lootOptionSetter(D, defer)
     for _, loot in ipairs(D.LOOT) do
         for _, multiplier in ipairs(args.multipliers) do
             set(loot.option, multiplier)
@@ -195,99 +109,54 @@ handler("learning.lootLists", function(player, args, defer)
         end
     end
     restore()
-    return { failures = failures }
 end)
 
--- Takes the container's items off the cell's processed items, where ItemContainer.AddItem puts
--- every new item: hundreds of fills in one frame would pile up there.
-local function forgetItems(container, processItems)
-    local items = container:getItems()
-    for i = 0, items:size() - 1 do
-        processItems:remove(items:get(i))
-    end
-end
-
--- The name of the loot rarity option that scales the item `fullType`, and the option: the one
--- vanilla reads for the item's loot type (ItemPickerJava.getLootType, getLootModifierFromType),
--- "<type>LootNew", or "<type>Loot" for the books' types. Else nil and the loot type.
-local function rarityOf(fullType)
-    local item = getScriptManager():getItem(fullType)
-    local lootType = item and ItemPickerJava.getLootType(item)
-    if not lootType then
-        return nil, nil
-    end
-    local options = getSandboxOptions()
-    for _, name in ipairs({ lootType .. "LootNew", lootType .. "Loot" }) do
-        local option = options:getOptionByName(name)
-        if option then
-            return name, option
-        end
-    end
-    return nil, lootType
-end
+-- The highest value of the item's option and of the loot rarity options (SandboxOptions).
+local HIGHEST = 4
 
 -- Each list of each item of Distributions.LOOT hands the item out through the game's own roll of a
 -- container that picks it (ItemPickerJava.rollItem), within `args.fills` fills, with the item's
 -- option and the loot rarity option of its kind at their highest.
-handler("learning.lootRolls", function(player, args, defer)
-    local expect, _, failures = PZHarness.Checks.new()
+PZHarness.checkHandler("learning.lootRolls", function(expect, _, _, args, defer)
+    local Loot = PZHarness.Loot
     local D = distributions(expect)
     if not D then
-        return { failures = failures }
+        return
     end
     local rarities = {}
     for _, loot in ipairs(D.LOOT) do
-        local name, option = rarityOf(loot.item)
+        local name, option = Loot.rarityOf(loot.item)
         if expect(name ~= nil, loot.item .. ": no loot rarity option for its loot type " .. tostring(option)) then
-            rarities[name] = rarities[name] or { option = option, saved = option:getValue() }
+            rarities[name] = HIGHEST
         end
     end
-    -- In debug mode ItemPickInfo logs every roll into a container that isn't on a square.
-    local generalLog = DebugType.General:getLogSeverity()
-    local function restoreLoot()
-        DebugType.General:setLogSeverity(generalLog)
-        for _, rarity in pairs(rarities) do
-            rarity.option:setValue(rarity.saved)
-        end
-        ItemPickerJava.InitSandboxLootSettings()
-    end
-    defer(restoreLoot)
-    local set, restore = withLootOptions(D, defer)
+    local set, restore = lootOptionSetter(D, defer)
     for _, loot in ipairs(D.LOOT) do
-        set(loot.option, 4)
+        set(loot.option, HIGHEST)
     end
     ItemPickerJava.Parse()
-    -- The rarity options' highest value (SandboxOptions).
-    for _, rarity in pairs(rarities) do
-        rarity.option:setValue(4)
-    end
-    ItemPickerJava.InitSandboxLootSettings()
-    DebugType.General:setLogSeverity(LogSeverity.Off)
-    local users = procListUsers()
+    local users = Loot.procListUsers()
     local container = ItemContainer.new("crate", nil, nil)
-    local processItems = getCell():getProcessItems()
-    for _, loot in ipairs(D.LOOT) do
-        for _, entry in ipairs(loot.lists) do
-            local name = entry[1]
-            local user = users[name]
-            local list = user and ItemPickerJava.getItemContainer(user.room, user.container, name, false)
-            if expect(list ~= nil, name .. ": no parsed list to roll") then
-                local found = false
-                for _ = 1, args.fills do
-                    container:removeAllItems()
-                    ItemPickerJava.rollItem(list, container, true, nil, nil)
-                    found = container:getFirstTypeRecurse(loot.item) ~= nil
-                    forgetItems(container, processItems)
-                    if found then
-                        break
+    Loot.withMeasureOptions(rarities, function()
+        for _, loot in ipairs(D.LOOT) do
+            local function holdsItem(filled)
+                return filled:getFirstTypeRecurse(loot.item) ~= nil
+            end
+            for _, entry in ipairs(loot.lists) do
+                local name = entry[1]
+                local list = Loot.proceduralList(name, users)
+                if expect(list ~= nil, name .. ": no parsed list to roll") then
+                    local fill, found = Loot.rollFill(list), false
+                    for _ = 1, args.fills do
+                        found = Loot.fillOnce(fill, container, holdsItem)
+                        if found then
+                            break
+                        end
                     end
+                    expect(found, name .. " never handed out " .. loot.item .. " in " .. args.fills .. " fills")
                 end
-                container:removeAllItems()
-                expect(found, name .. " never handed out " .. loot.item .. " in " .. args.fills .. " fills")
             end
         end
-    end
-    restoreLoot()
+    end)
     restore()
-    return { failures = failures }
 end)

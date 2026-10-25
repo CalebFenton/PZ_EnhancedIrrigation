@@ -66,7 +66,7 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
         T.knowRecipes(self, { LinkJobs.RECIPE }, false)
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = "Base.MetalPipe", count = self.pipes } })
         T.useMenu(self, self.low, "plumb", function(context)
-            return T.findNamed(context, context, getText("ContextMenu_EnhancedIrrigation_PlumbToTank"))
+            return T.findNamed(context, getText("ContextMenu_EnhancedIrrigation_PlumbToTank"))
         end, false)
         T.batch(function()
             T.read(self, "jobs.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB,
@@ -75,7 +75,7 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
         end)
     end,
     validate = function(self)
-        T.expectRefused(self, "plumb")
+        T.expectOptionRefused(self, "plumb")
         expect(not (self.menu.plumb and self.menu.plumb.submenu), "Plumb to Tank lists tanks to a character who doesn't know how")
         local forced = self.reads.forced
         expect(forced.done == false, "the server plumbed for a character who doesn't know how")
@@ -97,7 +97,7 @@ T.test("irrigation_links_plumb_lists_no_well", {
         T.givePlumbing(self, 4)
         T.useMenu(self, self.barrel, "plumb to the well", T.job("link", LinkJobs.PLUMB), false)
         T.useOption(self, function() return T.copyOf(self.barrel) end, "no tank in reach", function(context)
-            return T.findNamed(context, context, getText("ContextMenu_EnhancedIrrigation_NoTankInReach"))
+            return T.findNamed(context, getText("ContextMenu_EnhancedIrrigation_NoTankInReach"))
         end, false)
     end,
     validate = function(self)
@@ -186,7 +186,7 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
     end,
     validate = function(self)
         T.expectOffered(self, "iron")
-        T.expectRefused(self, "plastic")
+        T.expectOptionRefused(self, "plastic")
         T.expectOffered(self, "lead")
         local links = self.reads.links.links
         if expect(#links == 1, "the server has " .. #links .. " links at the tank") then

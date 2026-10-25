@@ -137,13 +137,13 @@ T.test("irrigation_fixtures_need_a_tank_a_storey_up", {
         self.tank = T.placeTank(self, spots[2], "ground", TANK_LITRES)
         T.givePlumbing(self, 1)
         T.useMenu(self, self.sink, "ground barrel", function(context)
-            return T.findNamed(context, context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
+            return T.findNamed(context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
         end, false)
         T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_FIXTURE,
             with = Links.encode(T.at(self.tank), "iron") }), "forced")
     end,
     validate = function(self)
-        T.expectRefused(self, "ground barrel", "Tooltip_EnhancedIrrigation_FixtureNoPressure")
+        T.expectOptionRefused(self, "ground barrel", "Tooltip_EnhancedIrrigation_FixtureNoPressure")
         local forced = self.reads.forced
         expect(forced.done == false and not forced.linked, "the server plumbed a sink to a tank on its level")
     end,
@@ -387,14 +387,13 @@ T.test("irrigation_fixtures_plumbed_sink_converts_on_load", {
     spOnly = "a multiplayer server keeps the chunk loaded after the character leaves, so its load hook never runs",
     instant = true,
     sandbox = { WaterShutModifier = 0 },
-    timeoutSeconds = T.RELOAD_SECONDS,
+    timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     run = function(self)
         if not placePlumbed(self) then return end
-        T.reload(self, T.at(self.sink))
+        T.reloadChunk(self, T.at(self.sink))
         readConverted(self)
     end,
     validate = function(self)
-        T.expectReloaded(self, "sink")
         expectConverted(self)
     end,
 })
@@ -439,7 +438,7 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
             local fill = T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
             self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
             self.fill = T.offered(fill)
-            self.wash = T.offered(T.findNamed(context, context, getText("ContextMenu_Wash")))
+            self.wash = T.offered(T.findNamed(context, getText("ContextMenu_Wash")))
             if fill then
                 T.choose(fill)
             end
@@ -487,7 +486,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
             local context = T.need(self, T.copyOf(self.sink) and T.worldMenu(T.copyOf(self.sink)), "a world menu for the sink")
             if not context then return end
             local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
-            self.drink, self.drinkTooltip = T.offered(drink), drink and T.tooltipOf(drink) or ""
+            self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
             context:hideAndChildren()
         end)
     end,
@@ -512,19 +511,18 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
 -- the tile's reserve or drops it.
 T.test("irrigation_fixtures_buffer_survives_reload", {
     instant = true,
-    timeoutSeconds = T.RELOAD_SECONDS,
+    timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     sandbox = { WaterShutModifier = 0 },
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
         -- Not a sink's full reserve, so a reload that refilled it from the tile would show.
         self.sink = T.placeFixture(self, spots[1], SINK, { buffer = { litres = 12, tainted = true } })
-        T.reload(self, T.at(self.sink))
+        T.reloadChunk(self, T.at(self.sink))
         readUntil(self, self.sink, nil, "reloaded", function(state) return state.found ~= false end)
         waitForCopy(self, self.sink, function(state) return state.buffer end, "this client's copy of the reloaded sink")
     end,
     validate = function(self)
-        T.expectReloaded(self, "sink")
         expectFixture("the server, reloaded", self.reads.reloaded, { litres = 12, tainted = true })
         expectFixture("this client, reloaded", clientState(self.sink), { litres = 12, tainted = true })
     end,
@@ -547,7 +545,7 @@ T.test("irrigation_fixtures_washer_keeps_its_switch", {
             local context = T.need(self, washer and T.worldMenu(washer), "a world menu for the washer")
             if not context then return end
             self.switches = 0
-            T.findOption(context, context, function(option)
+            T.findOption(context, function(option)
                 if option.name == getText("ContextMenu_Turn_On") then
                     self.switches = self.switches + 1
                 end

@@ -240,11 +240,11 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         end)
         T.waitFor(self, function() return not T.hasOverlay(T.overlaysOf(T.lineObject(tile)), Sprites.SPRINKLER) end,
             "this client's copy of the bare tile")
-        T.read(self, "items.carried", { type = Sprinklers.ITEM }, "carried")
+        T.readCarried(self, { Sprinklers.ITEM })
     end,
     validate = function(self)
-        T.expectRefused(self, "on the tap", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
-        T.expectRefused(self, "carrying none", "Tooltip_EnhancedIrrigation_NoSprinkler")
+        T.expectOptionRefused(self, "on the tap", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
+        T.expectOptionRefused(self, "carrying none", "Tooltip_EnhancedIrrigation_NoSprinkler")
         T.expectOffered(self, "set")
         local set = self.reads.set.tiles[1]
         local sprinkler = set.record.sprinkler
@@ -252,14 +252,15 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
             "the sprinkler went on at " .. tostring(sprinkler and sprinkler.condition) .. " of "
             .. tostring(sprinkler and sprinkler.ceiling))
         expect(T.hasOverlay(set.overlays, Sprites.SPRINKLER), "the server doesn't draw the sprinkler")
-        T.expectRefused(self, "tap on it", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
+        T.expectOptionRefused(self, "tap on it", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
         T.expectOffered(self, "take")
         local taken = self.reads.taken.tiles[1].record
         expect(taken.sprinkler == nil, "the tile's record still keeps the sprinkler it gave back")
-        local items = self.reads.carried.items
-        expect(#items == 1 and items[1].condition == WORN.condition and items[1].ceiling == WORN.ceiling,
+        local items = T.carriedItems(self, Sprinklers.ITEM)
+        local ceiling = T.ceilingOf(items[1])
+        expect(#items == 1 and items[1].condition == WORN.condition and ceiling == WORN.ceiling,
             "Take Sprinkler gave " .. #items .. " sprinklers" .. (items[1] and " at " .. items[1].condition .. " of "
-            .. items[1].ceiling or ""))
+            .. ceiling or ""))
     end,
 })
 
@@ -331,13 +332,14 @@ T.test("irrigation_sprinklers_make_pipe_sprinkler", {
             { prefer = { "Base.Pliers" } }) then
             return
         end
-        T.read(self, "items.carried", { type = Sprinklers.ITEM }, "made")
+        T.readCarried(self, { Sprinklers.ITEM }, nil, "made")
     end,
     validate = function(self)
         local craft = self.counts.craft or {}
         expect(craft[Sprinklers.ITEM] == 1, "the craft made " .. tostring(craft[Sprinklers.ITEM]) .. " sprinklers")
-        local made = self.reads.made.items[1]
-        expect(made and made.condition == Sprinklers.MADE_CEILING and made.ceiling == Sprinklers.MADE_CEILING,
-            "the made sprinkler is at " .. tostring(made and made.condition) .. " of " .. tostring(made and made.ceiling))
+        local made = T.carriedFirst(self, Sprinklers.ITEM, "made")
+        local ceiling = T.ceilingOf(made)
+        expect(made and made.condition == Sprinklers.MADE_CEILING and ceiling == Sprinklers.MADE_CEILING,
+            "the made sprinkler is at " .. tostring(made and made.condition) .. " of " .. tostring(ceiling))
     end,
 })

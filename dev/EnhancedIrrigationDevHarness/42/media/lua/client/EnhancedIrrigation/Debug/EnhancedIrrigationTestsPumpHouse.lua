@@ -43,11 +43,11 @@ for _, case in ipairs({ { entity = T.WOOD, name = "wood" }, { entity = T.METAL, 
         run = function(self)
             local spots = T.layout(self, { { 0, 0 } }, { bare = true })
             if not spots then return end
-            self.house = T.buildFromMenu(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity])
+            self.house = T.buildTile(self, "Base." .. case.entity, spots[1], T.PUMP_SPRITES[case.entity])
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
             T.waitForPumpSummary(self, self.house, function() return true end, "this client's summary of the built house")
-            T.readMenu(self, self.house, "built")
+            T.readMenu(self, function() return T.copyOf(self.house) end, "built")
             T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         end,
         validate = function(self)
@@ -56,7 +56,7 @@ for _, case in ipairs({ { entity = T.WOOD, name = "wood" }, { entity = T.METAL, 
             expect(record.unit == case.entity and record.part == nil, "the built house is " .. tostring(record.unit)
                 .. " with " .. tostring(record.part) .. " in it")
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
-            T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_NoPumpFitted")
+            T.expectOptionRefused(self, "on", "Tooltip_EnhancedIrrigation_NoPumpFitted")
         end,
     })
 end
@@ -83,12 +83,12 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         end, true)
         readUntil(self, self.house, "fitted", function(state) return state.record.part ~= nil end)
         T.waitForPumpSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
-        T.readMenu(self, self.house, "fitted")
+        T.readMenu(self, function() return T.copyOf(self.house) end, "fitted")
         T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
-        T.read(self, "items.carried", { type = APPLIANCE }, "carried")
+        T.readCarried(self, { APPLIANCE })
         T.waitFor(self, function()
-            self.back = T.player():getInventory():getFirstTypeRecurse(APPLIANCE)
+            self.back = T.carried(APPLIANCE)
             return self.back ~= nil
         end, "this client's copy of the part taken out")
     end,
@@ -102,9 +102,10 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
         T.expectOffered(self, "take out")
         expect(self.reads.taken.record.part == nil, "Take Out Pump left " .. tostring(self.reads.taken.record.part)
             .. " in the house")
-        local items = self.reads.carried.items
-        expect(#items == 1 and items[1].condition == WORN and items[1].ceiling == CEILING, "the server's part came back as "
-            .. (items[1] and (items[1].condition .. " of " .. items[1].ceiling) or "nothing"))
+        local items = T.carriedItems(self, APPLIANCE)
+        local ceiling = T.ceilingOf(items[1])
+        expect(#items == 1 and items[1].condition == WORN and ceiling == CEILING, "the server's part came back as "
+            .. (items[1] and (items[1].condition .. " of " .. ceiling) or "nothing"))
         expect(self.back and self.back:getCondition() == WORN and Parts.ceilingOf(self.back) == CEILING,
             "this client's part came back at " .. tostring(self.back and self.back:getCondition()))
     end,
@@ -127,9 +128,9 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
         T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
-        T.read(self, "items.carried", { type = APPLIANCE }, "carried")
+        T.readCarried(self, { APPLIANCE })
         T.waitFor(self, function()
-            self.back = T.player():getInventory():getFirstTypeRecurse(APPLIANCE)
+            self.back = T.carried(APPLIANCE)
             return self.back ~= nil
         end, "this client's copy of the part taken out")
         T.step(function() self.backCondition = self.back:getCondition() end)
@@ -140,7 +141,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     end,
     validate = function(self)
         T.expectOffered(self, "take out")
-        local items = self.reads.carried.items
+        local items = T.carriedItems(self, APPLIANCE)
         expect(#items == 1 and items[1].condition == WORN, "the server's part came back at "
             .. (items[1] and items[1].condition or "nothing"))
         expect(self.backCondition == WORN, "this client's part came back at " .. tostring(self.backCondition))
@@ -193,14 +194,14 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
             { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
         T.waitForPumpSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
-        T.readMenu(self, self.house, "burnt")
+        T.readMenu(self, function() return T.copyOf(self.house) end, "burnt")
         T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
         T.setPerk(self, Perks.Electricity, 2)
         T.give(self, "kit", { { type = "Base.Screwdriver" }, { type = "Base.ElectronicsScrap" }, { type = "Base.TirePiece" } })
         T.useMenu(self, self.house, "repair", T.job("pump", PumpJobs.REPAIR_PUMP), true)
         readUntil(self, self.house, "repaired", function(state) return state.record.partCondition > 0 end)
         T.waitForPumpSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
-        T.readMenu(self, self.house, "repaired")
+        T.readMenu(self, function() return T.copyOf(self.house) end, "repaired")
         T.useMenu(self, self.house, "again", T.job("pump", PumpJobs.REPAIR_PUMP), false)
         T.count(self, "used", { "Base.ElectronicsScrap", "Base.TirePiece", "Base.Screwdriver" })
     end,
@@ -210,14 +211,14 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
             .. burnt.record.partCondition)
         expect(not burnt.record.on and not burnt.summary.running, "the burnt-out house is still switched on")
         T.expectWord(self, "burnt", getText("IGUI_EnhancedIrrigation_PartBurntOut", getItemNameFromFullType(APPLIANCE)))
-        T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpBurntOut")
+        T.expectOptionRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpBurntOut")
         T.expectOffered(self, "repair")
         local restored = CEILING - Pumps.REPAIR_LOSS
         local repaired = self.reads.repaired.record
         expect(repaired.partCondition == restored and repaired.partCeiling == restored, "the repair left the part at "
             .. repaired.partCondition .. " of " .. repaired.partCeiling)
         T.expectWord(self, "repaired", partWord(APPLIANCE, restored))
-        T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSound")
+        T.expectOptionRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSound")
         local used = self.counts.used
         expect(used["Base.ElectronicsScrap"] == 0 and used["Base.TirePiece"] == 0, "the repair left its scrap or tire piece")
         expect(used["Base.Screwdriver"] == 1, "the repair took the screwdriver")
@@ -283,10 +284,10 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         update(self, self.house, "hours", { hoursAgo = 3, tank = self.tank })
         T.waitForPumpSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
             "this client's summary of the set timer")
-        T.readMenu(self, self.house, "set")
+        T.readMenu(self, function() return T.copyOf(self.house) end, "set")
         T.useMenu(self, self.house, "take off", T.job("pump", PumpJobs.TAKE_OFF_TIMER), true)
         readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
-        T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
+        T.readCarried(self, { Valves.TIMER })
     end,
     validate = function(self)
         local Valves = EnhancedIrrigation.Valves
@@ -302,7 +303,8 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
         T.expectOffered(self, "take off")
         expect(self.reads.off.record.timer == nil, "Take Off Timer left the timer in the house")
-        expect(#self.reads.carried.items == 1, "Take Off Timer gave back " .. #self.reads.carried.items .. " timers")
+        local back = #T.carriedItems(self, Valves.TIMER)
+        expect(back == 1, "Take Off Timer gave back " .. back .. " timers")
     end,
 })
 
@@ -351,7 +353,7 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
     end,
     validate = function(self)
         expect(self.reads["turned on"].done and self.reads.on.record.running, "Turn On didn't run the house")
-        T.expectRefused(self, "drain running", "Tooltip_EnhancedIrrigation_LineRunning")
+        T.expectOptionRefused(self, "drain running", "Tooltip_EnhancedIrrigation_LineRunning")
         local half = self.reads.half
         local each = Lines.HOLE_RATE * Pumps.PARTS[UTILITY].push * T.HALF_HOUR
         for i = 1, 2 do
@@ -377,9 +379,9 @@ local AWAY_HOURS = 1
 -- away, so no ten-minute pass before the reload runs what the gap doesn't count. The line's house
 -- stands clear of the other's well and barrel, which it would draw from instead of its own.
 T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
-    spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
+    spOnly = T.CHUNK_RELOAD_SP_ONLY,
     instant = true,
-    timeoutSeconds = T.RELOAD_SECONDS,
+    timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     run = function(self)
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
@@ -398,7 +400,7 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, T.WOOD, APPLIANCE)
         T.server(self, "pumps.update", T.at(self.house))
         T.server(self, "pumps.update", T.at(self.lineHouse))
-        T.reload(self, T.at(self.house), function()
+        T.reloadChunk(self, T.at(self.house), function()
             update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
             update(self, self.lineHouse, "line away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
         end)
@@ -409,12 +411,11 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
                 end
             end
             return true
-        end, "this client to load the line's house again", T.LOAD_MS)
+        end, "this client to load the line's house again", T.CHUNK_MS)
         update(self, self.house, "back", { tank = self.tank })
         update(self, self.lineHouse, "line back", { squares = self.tiles, tank = self.barrel })
     end,
     validate = function(self)
-        T.expectReloaded(self, "house")
         local away, back = self.reads.away, self.reads.back
         expect(away.after.record.lastHour == away.before.record.lastHour, "the barrel's house ran while away")
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
@@ -444,7 +445,7 @@ T.test("irrigation_pump_house_make_utility_pump", {
             { UTILITY, "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }, { workTable = true }) then
             return
         end
-        T.read(self, "items.carried", { type = UTILITY }, "made")
+        T.readCarried(self, { UTILITY }, nil, "made")
     end,
     validate = function(self)
         local craft = self.counts.craft or {}
@@ -452,8 +453,9 @@ T.test("irrigation_pump_house_make_utility_pump", {
         for _, fullType in ipairs({ "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }) do
             expect(craft[fullType] == 0, "the craft left " .. tostring(craft[fullType]) .. " " .. fullType)
         end
-        local made = self.reads.made.items[1]
-        expect(made and made.condition == Pumps.MADE_CEILING and made.ceiling == Pumps.MADE_CEILING,
-            "the made pump is at " .. tostring(made and made.condition) .. " of " .. tostring(made and made.ceiling))
+        local made = T.carriedFirst(self, UTILITY, "made")
+        local ceiling = T.ceilingOf(made)
+        expect(made and made.condition == Pumps.MADE_CEILING and ceiling == Pumps.MADE_CEILING,
+            "the made pump is at " .. tostring(made and made.condition) .. " of " .. tostring(ceiling))
     end,
 })

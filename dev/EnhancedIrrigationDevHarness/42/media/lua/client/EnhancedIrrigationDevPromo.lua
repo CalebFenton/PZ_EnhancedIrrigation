@@ -19,6 +19,7 @@ require "EnhancedIrrigation/UI/ValveUI"
 local Stage = require "EnhancedIrrigationDevStage"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Harness = require "PZHarness/Stage"
+require "PZHarness/StageLots"
 local Capture = require "PZHarness/Capture"
 
 local Promo = {}
@@ -159,7 +160,7 @@ local lots = {}
 -- Positions --------------------------------------------------------------------------------------
 
 local function at(lot, position)
-    return Stage.lotSquare(lot, position[1], position[2])
+    return Harness.lotSquare(lot, position[1], position[2])
 end
 
 -- The squares of `lot` at each list of positions given, in order.
@@ -168,17 +169,6 @@ local function squaresAt(lot, ...)
     for i = 1, select("#", ...) do
         for _, position in ipairs((select(i, ...))) do
             table.insert(squares, at(lot, position))
-        end
-    end
-    return squares
-end
-
--- Every square of `lot`, which its shots frame.
-local function lotSquares(lot)
-    local squares = {}
-    for x = 0, lot.w - 1 do
-        for y = 0, lot.h - 1 do
-            table.insert(squares, Stage.lotSquare(lot, x, y))
         end
     end
     return squares
@@ -201,12 +191,8 @@ local function build(lot, position, sprite, full)
     return object
 end
 
-local function placeTile(lot, position, sprite)
-    return PZHarness.Fixtures.newTile(at(lot, position), sprite)
-end
-
 local function plant(lot, x, y, seed)
-    local missing = Stage.plant(Stage.lotSquare(lot, x, y), seed, CROP_STAGE[seed], Stage.WATERED)
+    local missing = Stage.plant(Harness.lotSquare(lot, x, y), seed, CROP_STAGE[seed], Stage.WATERED)
     if missing then
         report(missing)
     end
@@ -243,7 +229,7 @@ end
 
 local function buildHomestead(lot)
     local spec = lot.spec
-    Stage.clearForShots(lot, MARGIN)
+    Harness.clearLotForShots(lot, MARGIN)
     local tank = build(lot, spec.tank, spec.tank.sprite, true)
     local second = build(lot, spec.second, spec.second.sprite, true)
     if tank and second then
@@ -257,7 +243,7 @@ local function buildHomestead(lot)
     end
     for _, bed in ipairs(spec.beds) do
         for x = bed.from, bed.to do
-            LineSystem.place(Stage.lotSquare(lot, x, bed.y), spec.material, { holed = true, soak = HOMESTEAD_SOAK })
+            LineSystem.place(Harness.lotSquare(lot, x, bed.y), spec.material, { holed = true, soak = HOMESTEAD_SOAK })
             plant(lot, x, bed.y, bed.seed)
         end
     end
@@ -267,13 +253,13 @@ local function buildHomestead(lot)
     if not tap or stopped then
         report("water from the homestead's tap: " .. tostring(stopped))
     end
-    Stage.recalcLot(lot)
+    Harness.recalcLot(lot)
 end
 
 local function buildPumps(lot)
     local spec = lot.spec
-    Stage.clearForShots(lot, MARGIN)
-    placeTile(lot, spec.well, Stage.VANILLA_WELL)
+    Harness.clearLotForShots(lot, MARGIN)
+    Harness.placeTile(at(lot, spec.well), Stage.VANILLA_WELL)
     placePump(lot, spec.wooden, Sprites.WOODEN_HAND_PUMP)
     placePump(lot, spec.iron, Sprites.IRON_HAND_PUMP)
     local barrel = build(lot, spec.barrel, Sprites.RAISED_BARREL)
@@ -290,13 +276,13 @@ local function buildPumps(lot)
         plumb(house:getSquare(), barrel:getSquare(), "pump")
         record:afterChange()
     end
-    Stage.recalcLot(lot)
+    Harness.recalcLot(lot)
 end
 
 local function buildSprinklers(lot)
     local spec = lot.spec
-    Stage.clearForShots(lot, MARGIN)
-    placeTile(lot, spec.well, Stage.VANILLA_WELL)
+    Harness.clearLotForShots(lot, MARGIN)
+    Harness.placeTile(at(lot, spec.well), Stage.VANILLA_WELL)
     local pump = placePump(lot, spec.pump, Sprites.IRON_HAND_PUMP)
     local LineSystem = EI.LineSystem
     local isSprinkler = {}
@@ -304,7 +290,7 @@ local function buildSprinklers(lot)
         isSprinkler[x] = true
     end
     for x = spec.line.from, spec.line.to do
-        LineSystem.place(Stage.lotSquare(lot, x, spec.line.y), spec.material, {
+        LineSystem.place(Harness.lotSquare(lot, x, spec.line.y), spec.material, {
             soak = SPRINKLER_SOAK,
             sprinkler = isSprinkler[x] and Stage.newSprinkler() or nil,
         })
@@ -315,18 +301,18 @@ local function buildSprinklers(lot)
         end
     end
     if pump then
-        plumb(pump:getSquare(), Stage.lotSquare(lot, spec.line.from, spec.line.y), "pump")
+        plumb(pump:getSquare(), Harness.lotSquare(lot, spec.line.from, spec.line.y), "pump")
         local stopped = EI.PumpSystem.run(getPlayer(), pump, spec.pumpHours)
         if stopped then
             report("water from the sprinklers' pump: " .. tostring(stopped))
         end
     end
-    Stage.recalcLot(lot)
+    Harness.recalcLot(lot)
 end
 
 -- As a built unit is once its OnCreate has run: a boiler a fireplace carrying its entity.
 local function buildFilters(lot)
-    Stage.clearForShots(lot, MARGIN)
+    Harness.clearLotForShots(lot, MARGIN)
     for _, unit in ipairs(lot.spec.units) do
         local built = build(lot, unit, unit.sprite)
         local created = built and EI.TreatmentSystem.onCreate({ thumpable = built })
@@ -344,7 +330,7 @@ local function buildFilters(lot)
             report("record for the unit " .. unit.sprite)
         end
     end
-    Stage.recalcLot(lot)
+    Harness.recalcLot(lot)
 end
 
 -- The lots each group needs, and what builds each lot, in the order they are looked for.
@@ -357,36 +343,19 @@ local LOTS = {
 
 -- Shots ------------------------------------------------------------------------------------------
 
--- The squares the character has looked around from so far in the run. What it saw stays seen.
-local lookedFrom = {}
-
--- Has the character look around from each of `squares` it hasn't yet, then from the last, where it
--- stays, and sets the zoom `stepsOut` steps out from the closest.
-local function goTo(squares, stepsOut)
-    for i, square in ipairs(squares) do
-        if i == #squares or not lookedFrom[square] then
-            Harness.addLookAround(run.steps, getPlayer(), square)
-            lookedFrom[square] = true
-        end
-    end
-    run:add(function()
-        return Harness.zoomOut(stepsOut)
-    end)
-end
-
 local function goToLot(name, stepsOut)
     local lot = lots[name]
-    goTo({ at(lot, lot.spec.scout), at(lot, lot.spec.player) }, stepsOut)
+    Harness.addGoTo(run, getPlayer(), { at(lot, lot.spec.scout), at(lot, lot.spec.player) }, stepsOut)
 end
 
 local function addWorld()
     goToLot("homestead", 1)
     run:addOpaque("homestead", function()
-        return { Harness.centred("homestead", lotSquares(lots.homestead)) }
+        return { Harness.centred("homestead", Harness.lotSquares(lots.homestead)) }
     end)
     -- The banner, a step further out, has its title over the left half: the barrels, the tap and
     -- the near end of the beds stand against its right edge, the beds running on past it.
-    goTo({ at(lots.homestead, HOMESTEAD.bannerPlayer) }, 2)
+    Harness.addGoTo(run, getPlayer(), { at(lots.homestead, HOMESTEAD.bannerPlayer) }, 2)
     run:addOpaque("banner", function()
         return { Harness.rightAligned("banner", squaresAt(lots.homestead, HOMESTEAD.banner)) }
     end)
@@ -395,16 +364,16 @@ end
 local function addWater()
     goToLot("pumps", 0)
     run:addOpaque("pumps", function()
-        return { Harness.centred("pumps", lotSquares(lots.pumps)) }
+        return { Harness.centred("pumps", Harness.lotSquares(lots.pumps)) }
     end)
     goToLot("sprinklers", 1)
     run:addOpaque("sprinklers", function()
-        return { Harness.centred("sprinklers", lotSquares(lots.sprinklers)) }
+        return { Harness.centred("sprinklers", Harness.lotSquares(lots.sprinklers)) }
     end)
     Harness.addHour(run, NIGHT)
     goToLot("filters", 0)
     run:addOpaque("filters", function()
-        return { Harness.centred("filters", lotSquares(lots.filters)) }
+        return { Harness.centred("filters", Harness.lotSquares(lots.filters)) }
     end)
     Harness.addHour(run, NOON)
 end
@@ -420,7 +389,7 @@ end
 local function addMenu()
     local carried = {}
     local lot = lots.homestead
-    goTo({ at(lot, HOMESTEAD.player) }, 1)
+    Harness.addGoTo(run, getPlayer(), { at(lot, HOMESTEAD.player) }, 1)
     run:add(function()
         local inventory = getPlayer():getInventory()
         for _, fullType in ipairs(MENU_ITEMS) do
@@ -489,7 +458,7 @@ end
 -- The garden close in, at the closest zoom, so that it reads where Steam shows it smallest.
 local function addPoster()
     local lot = lots.homestead
-    goTo({ at(lot, HOMESTEAD.scout), at(lot, HOMESTEAD.posterPlayer) }, 0)
+    Harness.addGoTo(run, getPlayer(), { at(lot, HOMESTEAD.scout), at(lot, HOMESTEAD.posterPlayer) }, 0)
     run:addOpaque("poster", function()
         return { Harness.squareRegion("poster", squaresAt(lot, HOMESTEAD.poster, { HOMESTEAD.posterPlayer })) }
     end)
@@ -511,18 +480,15 @@ local function prepare(chosen)
     if not LineSystem or not SFarmingSystem or not EI.PumpSystem then
         return "the authority's systems; --promo runs in single player only"
     end
-    local needs = {}
-    for _, name in ipairs(chosen) do
-        for _, lot in ipairs(GROUPS[name].lots) do
-            needs[lot] = true
-        end
-    end
+    local needs = Harness.groupNeeds(GROUPS, chosen, "lots")
     local found, origins, logged = {}, {}, {}
     for _, entry in ipairs(LOTS) do
         if needs[entry.name] then
             local lot, clearance
             for _, c in ipairs(CLEARANCES) do
-                lot, clearance = Stage.findLot(getPlayer(), entry.spec.w, entry.spec.h, true, found, LOT_GAP, c), c
+                lot = Harness.findLot(getPlayer(), entry.spec.w, entry.spec.h,
+                    { floor = Harness.NATURAL_FLOOR, trees = true, others = found, gap = LOT_GAP, clearance = c })
+                clearance = c
                 if lot then
                     break
                 end
@@ -534,7 +500,7 @@ local function prepare(chosen)
             lot.spec = entry.spec
             lots[entry.name] = lot
             table.insert(found, lot)
-            table.insert(origins, Stage.lotSquare(lot, 0, 0))
+            table.insert(origins, Harness.lotSquare(lot, 0, 0))
             table.insert(logged, string.format("%s %d,%d clear %d", entry.name, lot.x, lot.y, clearance))
         end
     end

@@ -1,4 +1,5 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. Pumping for set hours runs the authority's own sums
@@ -7,6 +8,7 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 local handler = PZHarness.serverHandler
 local EI = EnhancedIrrigation
+local Fixtures = PZHarness.Fixtures
 
 local recordAt = Server.pumpRecordAt
 
@@ -21,7 +23,7 @@ end
 --- the generator at `args.generator` and whether it runs, `player`'s `endurance`, and
 --- `args.squares` as Server.readSquares reads them.
 local function stateAt(player, args)
-    local pump = Server.squareAt(args) and pumpAt(args)
+    local pump = Fixtures.squareAt(args) and pumpAt(args)
     local record = recordAt(args)
     local state = { found = pump ~= nil, outlet = EI.Links.roleAt(args, "pump") ~= nil,
         endurance = player:getStats():get(CharacterStat.ENDURANCE) }
@@ -31,16 +33,16 @@ local function stateAt(player, args)
         state.source = source and { kind = source.kind, litres = source.litres, dry = source.dry == true } or nil
     end
     if record then
-        state.record = Server.fieldsOf(record, EI.PumpObject.SAVED_FIELDS)
+        state.record = Fixtures.fieldsOf(record, EI.PumpObject.SAVED_FIELDS)
         state.summary = record:buildSummary()
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
-    local wellSquare = args.well and Server.squareAt(args.well)
+    local wellSquare = args.well and Fixtures.squareAt(args.well)
     local well = wellSquare and EI.findObjectOn(wellSquare, function(object)
         return EI.entityName(object) == "Well"
     end)
     state.wellLitres = well and well:getFluidContainer() and well:getFluidContainer():getAmount() or nil
-    local generatorSquare = args.generator and Server.squareAt(args.generator)
+    local generatorSquare = args.generator and Fixtures.squareAt(args.generator)
     local generator = generatorSquare and generatorSquare:getGenerator()
     if generator then
         state.generator = { fuel = generator:getFuel(), running = generator:isActivated() }

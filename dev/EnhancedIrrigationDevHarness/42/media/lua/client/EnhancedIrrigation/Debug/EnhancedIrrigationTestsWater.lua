@@ -9,7 +9,7 @@ require "EnhancedIrrigation/Tanks"
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
-local expectOffered, expectRefused = T.expectOffered, T.expectRefused
+local expectOffered, expectOptionRefused = T.expectOffered, T.expectOptionRefused
 local Sprites, Lines, Tanks = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.Tanks
 
 -- How long the tap may take to drain the test's tank at the raised speed, in real time.
@@ -54,7 +54,7 @@ T.test("irrigation_water_needs_pressure", {
         T.useWater(self, tile, "water", false)
     end,
     validate = function(self)
-        expectRefused(self, "water", "Tooltip_EnhancedIrrigation_NoPressure")
+        expectOptionRefused(self, "water", "Tooltip_EnhancedIrrigation_NoPressure")
     end,
 })
 
@@ -188,7 +188,7 @@ T.test("irrigation_water_one_person_per_tap", {
     end,
     validate = function(self)
         expect(self.reads.other.held, "the other player couldn't hold the free tap")
-        expectRefused(self, "while held", "Tooltip_EnhancedIrrigation_TapInUse")
+        expectOptionRefused(self, "while held", "Tooltip_EnhancedIrrigation_TapInUse")
         expectNear("the tank's water while another player held the tap", self.reads.refused.litres, T.TANK_LITRES,
             T.FINE_LITRES)
         expectOffered(self, "freed")

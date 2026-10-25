@@ -47,14 +47,13 @@ T.test("irrigation_salvage_washer_gives_a_part_and_stops_it", {
         T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = "Base.Pliers" } })
         T.useMenu(self, self.washer, "salvage", T.job("appliance", ApplianceJobs.SALVAGE_PUMP), true)
         readWasher(self, self.washer, "salvaged", function(state) return state.stripped end)
-        T.read(self, "items.carried", { type = APPLIANCE }, "part")
-        T.read(self, "items.carried", { type = EnhancedIrrigation.Valves.WATER_VALVE }, "valve")
+        T.readCarried(self, { APPLIANCE, EnhancedIrrigation.Valves.WATER_VALVE })
         T.waitFor(self, function()
             local copy = T.copyOf(self.washer)
             return copy ~= nil and EnhancedIrrigation.Appliances.isStripped(copy)
         end, "this client's copy of the stripped washer")
         T.useMenu(self, self.washer, "on", function(context)
-            return T.findNamed(context, context, getText("ContextMenu_Turn_On"))
+            return T.findNamed(context, getText("ContextMenu_Turn_On"))
         end, false)
         toggle(self, self.washer, "forced")
         T.useMenu(self, self.washer, "again", T.job("appliance", ApplianceJobs.SALVAGE_PUMP), false)
@@ -63,14 +62,15 @@ T.test("irrigation_salvage_washer_gives_a_part_and_stops_it", {
         expect(self.reads.running.activated, "the washer never ran")
         T.expectOffered(self, "salvage")
         expect(not self.reads.salvaged.activated, "the stripped washer still runs")
-        local items = self.reads.part.items
+        local items = T.carriedItems(self, APPLIANCE)
         local least, most = ApplianceJobs.SALVAGED_CONDITION[1], ApplianceJobs.SALVAGED_CONDITION[2]
         expect(#items == 1 and items[1].condition >= least and items[1].condition <= most,
             "Salvage Pump gave " .. #items .. " pumps" .. (items[1] and " at " .. items[1].condition or ""))
-        expect(#self.reads.valve.items == 1, "Salvage Pump gave " .. #self.reads.valve.items .. " Water Valves")
-        T.expectRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpSalvaged")
+        local valves = #T.carriedItems(self, EnhancedIrrigation.Valves.WATER_VALVE)
+        expect(valves == 1, "Salvage Pump gave " .. valves .. " Water Valves")
+        T.expectOptionRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpSalvaged")
         expect(not self.reads.forced.activated, "the server switched the stripped washer on")
-        T.expectRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSalvaged")
+        T.expectOptionRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSalvaged")
     end,
 })
 

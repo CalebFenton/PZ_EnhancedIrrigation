@@ -25,8 +25,7 @@ local BARREL_HELD = "Base." .. BARREL
 local function pickUpVanillaBarrel(self, handle)
     local placed = T.placeAsPlayer(self, handle.square, BARREL_ITEM, BARREL)
     T.pickUpAsPlayer(self, placed, BARREL)
-    T.waitFor(self, function() return T.player():getInventory():getFirstTypeRecurse(BARREL_HELD) ~= nil end,
-        "the barrel vanilla's pickup gives")
+    T.waitForCarried(self, BARREL_HELD, "the barrel vanilla's pickup gives")
 end
 
 -- This client's level of the tank on the handle's square, or nil without one.
@@ -42,7 +41,7 @@ T.test("irrigation_stands_stand_built_from_build_menu", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.stand = T.buildFromMenu(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.TANK_STAND)
+        self.stand = T.buildTile(self, "Base." .. Stands.STAND_ENTITY, spots[1], Sprites.TANK_STAND)
         if not self.stand then return end
         T.read(self, "tanks.read", T.at(self.stand), "built")
     end,
@@ -99,8 +98,8 @@ T.test("irrigation_stands_set_barrel_refused_without_an_empty_barrel", {
             "forced")
     end,
     validate = function(self)
-        T.expectRefused(self, "no barrel", "Tooltip_EnhancedIrrigation_NoBarrel")
-        T.expectRefused(self, "full barrel", "Tooltip_EnhancedIrrigation_BarrelNotEmpty")
+        T.expectOptionRefused(self, "no barrel", "Tooltip_EnhancedIrrigation_NoBarrel")
+        T.expectOptionRefused(self, "full barrel", "Tooltip_EnhancedIrrigation_BarrelNotEmpty")
         local forced = self.reads.forced
         expect(forced.done == false, "the server set a barrel holding water on the stand")
         expect(forced.isStand, "the stand is gone after a refused Set Barrel on Stand")
@@ -118,7 +117,7 @@ T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
         T.step(function() self.levelBefore = clientLevel(self.tank) end)
         T.useMenu(self, self.tank, "open lid", function(context)
-            return T.findNamed(context, context, getText("ContextMenu_OpenLid"))
+            return T.findNamed(context, getText("ContextMenu_OpenLid"))
         end, true)
         T.waitFor(self, function() return T.copyOf(self.tank, Sprites.RAISED_BARREL) ~= nil end,
             "this client's copy of the opened barrel")
@@ -155,7 +154,7 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         end)
     end,
     validate = function(self)
-        T.expectRefused(self, "take down", "Tooltip_EnhancedIrrigation_EmptyBarrelFirst")
+        T.expectOptionRefused(self, "take down", "Tooltip_EnhancedIrrigation_EmptyBarrelFirst")
         local forced = self.reads.forced
         expect(forced.done == false, "the server took down a barrel holding water")
         expect(forced.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
@@ -179,7 +178,7 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
             T.read(self, "stands.barrels", {}, "vanilla")
             T.server(self, "stands.dropBarrels", {})
         end)
-        T.waitFor(self, function() return T.player():getInventory():getFirstTypeRecurse(BARREL_HELD) == nil end,
+        T.waitFor(self, function() return T.carried(BARREL_HELD) == nil end,
             "this client to let go of vanilla's barrel")
         T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), true)
         T.waitFor(self, function() return T.copyOf(self.tank, Sprites.TANK_STAND) ~= nil end, "this client's copy of the stand")

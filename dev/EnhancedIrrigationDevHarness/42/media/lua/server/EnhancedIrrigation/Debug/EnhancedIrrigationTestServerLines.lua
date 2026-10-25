@@ -1,4 +1,5 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 -- Development only, not published. The authority's half of the line tests and of the line and
@@ -10,6 +11,7 @@ local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 
 local handler = PZHarness.serverHandler
 local EI = EnhancedIrrigation
+local Fixtures = PZHarness.Fixtures
 
 local function removeLineAt(at)
     local line = EI.Lines.lineAt(at.x, at.y, at.z)
@@ -23,16 +25,6 @@ local function deferRemoval(tiles, defer)
     for _, at in ipairs(tiles) do
         defer(function() removeLineAt(at) end)
     end
-end
-
--- The names of `isoObject`'s overlays.
-local function overlaysOf(isoObject)
-    local names = {}
-    local attached = isoObject:getAttachedAnimSprite()
-    for i = 0, (attached and attached:size() or 0) - 1 do
-        table.insert(names, attached:get(i):getName())
-    end
-    return names
 end
 
 -- The water and health of the plant on `at` as its record has them, or nil.
@@ -53,14 +45,14 @@ local function readTile(at)
     local line = Lines.lineAt(at.x, at.y, at.z)
     local reply = { x = at.x, y = at.y, z = at.z, plant = plantAt(at) }
     if record then
-        reply.record = Server.fieldsOf(record, EI.LineObject.SAVED_FIELDS)
+        reply.record = Fixtures.fieldsOf(record, EI.LineObject.SAVED_FIELDS)
         reply.record.wet = record:isWet()
         reply.record.tiles = #Lines.component(at.x, at.y, at.z)
         reply.record.heldBy = record.heldBy
     end
     if line then
         reply.sprite = line:getSprite():getName()
-        reply.overlays = overlaysOf(line)
+        reply.overlays = Fixtures.overlaysOf(line)
     end
     return reply
 end
@@ -80,7 +72,7 @@ end
 handler("lines.place", function(player, args, defer)
     deferRemoval(args.tiles, defer)
     for _, at in ipairs(args.tiles) do
-        local square = Server.squareAt(at)
+        local square = Fixtures.squareAt(at)
         if not square then
             return nil, "a loaded square for a line tile at " .. at.x .. "," .. at.y
         end
@@ -142,7 +134,7 @@ end)
 -- the action's complete() calls): on the square's floor for Lay, else on the line tile. Answers
 -- whether it was `done` and `args.tiles` after, so a test sees the server refuse on its own.
 handler("lines.perform", function(player, args)
-    local square = Server.squareAt(args)
+    local square = Fixtures.squareAt(args)
     local object
     if args.job == EI.LineJobs.LAY then
         object = square and square:getFloor()
@@ -185,7 +177,7 @@ end)
 -- Sows carrots on `at`, plowed and seeded as the farming system does them, at `water` water points,
 -- taken away when the test ends. Returns what is missing, if anything.
 local function sow(at, water, defer)
-    local square = Server.squareAt(at)
+    local square = Fixtures.squareAt(at)
     if not square then
         return "a loaded square for a crop at " .. at.x .. "," .. at.y
     end

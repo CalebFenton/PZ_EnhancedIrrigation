@@ -30,7 +30,7 @@ SIZE = promo.MOD_ICON
 
 def paint(name):
     """PALETTE's sRGB colour `name` as the icon draws it, lit flat."""
-    value = PALETTE[name]["color"]
+    value = PALETTE[name]["colour"]
     return tuple(int(value[i:i + 2], 16) for i in (1, 3, 5))
 
 

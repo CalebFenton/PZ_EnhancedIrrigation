@@ -7,6 +7,7 @@ require "EnhancedIrrigation/Sprites"
 local Stage = require "EnhancedIrrigationDevStage"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Harness = require "PZHarness/Stage"
+require "PZHarness/StageLots"
 local Capture = require "PZHarness/Capture"
 
 local Art = {}
@@ -97,10 +98,11 @@ for _, shot in ipairs({
 end
 
 -- The north-west corner of the closest lot that takes the whole stage, on soil or grass if one is
--- in reach.
-local function findLot(player)
+-- in reach. Trees and ground cover on it go.
+local function findStageLot(player)
     for _, natural in ipairs({ true, false }) do
-        local lot = Stage.findLot(player, AREA.w, AREA.h, natural)
+        local floor = natural and Harness.NATURAL_FLOOR or nil
+        local lot = Harness.findLot(player, AREA.w, AREA.h, { floor = floor, trees = true })
         if lot then
             lot.natural = natural
             return lot
@@ -108,7 +110,7 @@ local function findLot(player)
     end
 end
 
-local lotSquare = Stage.lotSquare
+local lotSquare = Harness.lotSquare
 
 local function layBlock(lot, material, left, top, fields)
     local LineSystem = EnhancedIrrigation.LineSystem
@@ -126,7 +128,7 @@ local function buildStage(lot)
     if not LineSystem or not SFarmingSystem then
         return "the authority's systems (LineSystem, SFarmingSystem); --art runs in single player only"
     end
-    Stage.clearForShots(lot, MARGIN)
+    Harness.clearLotForShots(lot, MARGIN)
     for _, wall in ipairs(WALLS) do
         PZHarness.Fixtures.newTile(lotSquare(lot, wall.x, wall.y), wall.sprite)
     end
@@ -177,7 +179,7 @@ local function buildStage(lot)
     for _, pump in ipairs(PUMPS) do
         PZHarness.Fixtures.newTile(lotSquare(lot, pump.x, PUMP_ROW), pump.sprite)
     end
-    Stage.recalcLot(lot)
+    Harness.recalcLot(lot)
 end
 
 -- The shots have no regions: --art writes no JSON, only the screenshots.
@@ -191,10 +193,7 @@ local function addShot(run, player, lot, shot)
     if shot.night then
         Harness.addHour(run, MIDNIGHT)
     end
-    Harness.addLookAround(run.steps, player, lotSquare(lot, shot.x, shot.y))
-    run:add(function()
-        return Harness.zoomOut(shot.zoomSteps)
-    end)
+    Harness.addGoTo(run, player, { lotSquare(lot, shot.x, shot.y) }, shot.zoomSteps)
     run:addOpaque(shot.name, noRegions)
 end
 
@@ -202,7 +201,7 @@ end
 function Art.capture(_, onDone)
     local run = Capture.new(MARK)
     local player = getPlayer()
-    local lot = findLot(player)
+    local lot = findStageLot(player)
     if not lot then
         run:fail("no open lot within " .. Harness.SEARCH_RADIUS .. " squares")
         return

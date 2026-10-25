@@ -123,8 +123,8 @@ T.test("irrigation_time_frost_cracks_full_lines", {
 -- are those that leave it just short of damp, so it loads dry. Catches a record that stops while
 -- unloaded, or a tile that loads showing what it was before.
 T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
-    spOnly = "a multiplayer server keeps the chunk loaded after the character leaves",
-    timeoutSeconds = T.RELOAD_SECONDS,
+    spOnly = T.CHUNK_RELOAD_SP_ONLY,
+    timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     run = function(self)
         local rows = T.row(self, 2)
         if not rows then return end
@@ -139,7 +139,7 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
             "this client's copy of the watered tile, wet")
         self.dryPerHour = Lines.SOAK_DRY_OUT / 24
         self.hours = (Lines.HOLE_RATE * Lines.POINTS_PER_LITRE - Lines.DAMP / 2) / self.dryPerHour
-        T.reload(self, tile, function()
+        T.reloadChunk(self, tile, function()
             T.batch(function()
                 -- Aged by no hours first, which drops the hours since its last pass, so the soak
                 -- dries for exactly the hours away.
@@ -155,7 +155,6 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
     validate = function(self)
         local watered, left = self.reads.watered.tiles[1].record, self.reads.left.tiles[1]
         local away, back = self.reads.away.tiles[1], self.reads.back.tiles[1]
-        T.expectReloaded(self, "tile")
         expect(watered.full and left.record.soak >= Lines.DAMP, "the hour's flow left the tile full "
             .. tostring(watered.full) .. ", soak " .. tostring(left.record.soak))
         expect(left.sprite == nil, "the server kept the tile's chunk loaded")

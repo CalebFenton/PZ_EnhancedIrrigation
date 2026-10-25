@@ -31,18 +31,18 @@ function T.placeUnit(self, handle, entity, opts)
     return unit
 end
 
---- Queues building the unit `entity` from the build menu at `handle` (T.buildFromMenu, each input
---- the first of `prefer` it takes), a read of its state once its record is made into
---- self.reads.built, a wait for this client's summary, and the names of its menu into
---- self.names.built. Returns its handle, with `spec`, or nil.
+--- Queues building the unit `entity` from the build menu at `handle` (T.buildTile, each input the
+--- first of `prefer` it takes), a read of its state once its record is made into self.reads.built,
+--- a wait for this client's summary, and the names of its menu into self.names.built. Returns its
+--- handle, with `spec`, or nil.
 function T.buildUnit(self, entity, handle, prefer)
-    local unit = T.buildFromMenu(self, "Base." .. entity, handle, T.TREATMENT_SPRITES[entity], prefer)
+    local unit = T.buildTile(self, "Base." .. entity, handle, T.TREATMENT_SPRITES[entity], prefer)
     if not unit then return nil end
     unit.spec = Treatment.ENTITIES[entity]
     T.readUnitUntil(self, unit, "built", function(state) return state.record ~= nil end)
     T.waitFor(self, function() return Treatment.summaryOf(T.copyOf(unit)) ~= nil end,
         "this client's summary of the built " .. entity)
-    T.readMenu(self, unit, "built")
+    T.readMenu(self, function() return T.copyOf(unit) end, "built")
     return unit
 end
 
@@ -173,14 +173,14 @@ function T.vanillaBasinTest(case)
                 self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
                 self.fill = T.offered(fill)
                 self.empty = T.offered(T.optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
-                self.pour = T.findNamed(context, context, getText("ContextMenu_AddFluidFromItem")) ~= nil
+                self.pour = T.findNamed(context, getText("ContextMenu_AddFluidFromItem")) ~= nil
                 if fill then
                     T.choose(fill)
                 end
                 context:hideAndChildren()
             end)
             T.readUnitUntil(self, self.unit, "drawn", function(state) return state.basin.litres < case.litres - 1 end)
-            T.read(self, "items.carried", { type = "Base.Bucket" }, "bucket")
+            T.readCarried(self, { "Base.Bucket" }, nil, "bucket")
         end,
         validate = function(self)
             T.expect(self.drink, "the menu offers no Drink")
@@ -190,7 +190,7 @@ function T.vanillaBasinTest(case)
             T.expect(self.fill, "the menu offers no Fill for the bucket")
             T.expect(self.empty, "the menu offers no Empty")
             T.expect(not self.pour, "the menu offers vanilla's pour into the basin")
-            local bucket = self.reads.bucket.items[1]
+            local bucket = T.carriedFirst(self, "Base.Bucket", "bucket")
             T.expect(bucket.litres > case.inBucket + 1, "Fill took nothing from the basin")
             T.expectNear("the basin and bucket", self.reads.drawn.basin.litres + bucket.litres, case.litres + case.inBucket,
                 T.LITRES)

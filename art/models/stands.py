@@ -4,7 +4,7 @@ import random
 
 from mathutils import Quaternion
 
-from kit import beam, box, circle, cylinder, group, lathe, parts, profile_radius, tube
+from art.kit import beam, box, circle, cylinder, group, lathe, parts, profile_radius, tube
 from palette import M
 
 

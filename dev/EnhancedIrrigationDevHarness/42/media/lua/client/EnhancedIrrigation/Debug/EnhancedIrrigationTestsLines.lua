@@ -43,7 +43,7 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
         T.step(function()
             local context = T.need(self, T.worldMenu(tiles[1].square:getFloor()), "a world menu on the ground")
             if not context then return end
-            local lay = T.findOption(context, context, function(option)
+            local lay = T.findOption(context, function(option)
                 return option.onSelect == EnhancedIrrigation.LineCursor.start and option.param1 == "iron"
             end)
             self.layOffered = T.offered(lay)

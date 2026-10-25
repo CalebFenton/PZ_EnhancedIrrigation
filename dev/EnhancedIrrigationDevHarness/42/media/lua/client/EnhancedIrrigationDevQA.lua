@@ -11,6 +11,8 @@ require "EnhancedIrrigation/Valves"
 local Stage = require "EnhancedIrrigationDevStage"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Harness = require "PZHarness/Stage"
+require "PZHarness/StageLots"
+local HarnessQA = require "PZHarness/QA"
 
 local QA = {}
 
@@ -27,8 +29,6 @@ local AREA = { w = 12, h = 20 }
 local MARGIN = 1
 -- Where the character is put: between the first two beds, beside their tanks.
 local ARRIVE = { x = 2, y = 2 }
--- Every perk the tests' `perks` setting lists goes to this level.
-local SKILL = 10
 
 -- Vanilla's open round rain barrel, the one a Tank Stand takes, as it stands on the ground.
 local BARREL_SPEC = EnhancedIrrigation.Stands.BARRELS[1]
@@ -99,18 +99,12 @@ local READING = { { "EnhancedIrrigation.CisternsForKentucky", 1 }, { "Base.Water
 -- One of each valve, to fit to the lines' taps.
 local VALVES = { { Valves.WIND_UP, 1 }, { Valves.TIMER, 1 }, { Valves.SPRINKLER_TIMER, 1 } }
 
--- What the build-menu recipes `names` use up; their tools are among TOOLS.
-local function standMaterials(names)
+-- What the build-menu recipes use up (PZHarness.QA.materials); their tools are among TOOLS.
+local function standMaterials()
     local materials = {}
-    for _, name in ipairs(names) do
-        local inputs = getScriptManager():getCraftRecipe(name):getInputs()
-        for i = 0, inputs:size() - 1 do
-            local input = inputs:get(i)
-            local item = input:getResourceType() == ResourceType.Item and not input:isKeep()
-                and PZHarness.Test.inputItem(input)
-            if item then
-                table.insert(materials, { item:getFullName(), input:getIntAmount() })
-            end
+    for _, need in ipairs(HarnessQA.materials(PZHarness.Test.buildRecipeNames())) do
+        if need.used > 0 then
+            table.insert(materials, { need.type, need.used, need.fluid })
         end
     end
     return materials
@@ -123,7 +117,7 @@ local function itemsFor(fullType, uses)
 end
 
 -- The item groups, in order, each a list of { type, count, fluid }.
-local function itemGroups(buildRecipes)
+local function itemGroups()
     local pipes, joints = {}, {}
     for _, pipe in ipairs(PIPES) do
         table.insert(pipes, { pipe[1], pipe[2] * LENGTHS })
@@ -131,22 +125,7 @@ local function itemGroups(buildRecipes)
     for _, joint in ipairs(JOINTS) do
         table.insert(joints, { joint, itemsFor(joint, LENGTHS) })
     end
-    return { pipes, joints, TOOLS, standMaterials(buildRecipes), READING, VALVES }
-end
-
-local function isKnown(fullType)
-    return getScriptManager():FindItem(fullType) ~= nil
-end
-
--- A new item of `fullType`, its fluid container filled with `fluid` if given.
-local function newItem(fullType, fluid)
-    local item = instanceItem(fullType)
-    local container = fluid and item:getFluidContainer()
-    if container then
-        container:Empty()
-        container:addFluid(fluid, container:getCapacity())
-    end
-    return item
+    return { pipes, joints, TOOLS, standMaterials(), READING, VALVES }
 end
 
 -- Lays each group on its own row of the lot, a square to each item type, scattered over it so
@@ -156,14 +135,14 @@ local function layItems(lot, groups, summary)
         local y = FIRST_ITEM_ROW + (row - 1) * 2
         for column, entry in ipairs(group) do
             local fullType, count, fluid = entry[1], entry[2], entry[3]
-            local square = column <= AREA.w and Stage.lotSquare(lot, column - 1, y)
-            if not isKnown(fullType) then
+            local square = column <= AREA.w and Harness.lotSquare(lot, column - 1, y)
+            if not HarnessQA.isKnown(fullType) then
                 table.insert(summary.unknown, fullType)
             elseif not square then
                 table.insert(summary.unplaced, fullType)
             else
                 for _ = 1, count do
-                    square:AddWorldInventoryItem(newItem(fullType, fluid), ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0)
+                    square:AddWorldInventoryItem(HarnessQA.newItem(fullType, fluid), ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0)
                     summary.items = summary.items + 1
                 end
                 summary.types = summary.types + 1
@@ -172,37 +151,18 @@ local function layItems(lot, groups, summary)
     end
 end
 
--- The vanilla build-menu entity of the tile `sprite` built at the lot's x, y, `up` floors above
--- it, turned as the cursor's rotation `nSprite` turns it, by `player` as the build menu builds it
--- (ISBuildIsoEntity:create, which ISBuildAction runs at the end of the job), the build cheat
--- standing in for the materials and the job. Returns what is missing, or nil.
-local function buildAsPlayer(player, lot, sprite, nSprite, x, y, up)
-    local info = SpriteConfigManager.getObjectInfoFromSprite(sprite)
-    if not info then
-        return "the build-menu entity of the tile " .. sprite
-    end
-    local build = ISBuildIsoEntity:new(player, info, nSprite, ISInventoryPaneContextMenu.getContainers(player))
-    -- What the cursor sets before it builds: the player number, the squares it covers, and the
-    -- facing from its rotation.
-    build.player = player:getPlayerNum()
-    local wx, wy, wz = lot.x + x, lot.y + y, lot.z + (up or 0)
-    build:ensureSquaresExist(wx, wy, wz)
-    local chosen = build:getSprite()
-    local cheat = player:isBuildCheat()
-    player:setBuildCheat(true)
-    build.buildPanelLogic:startCraftAction(nil)
-    build:create(wx, wy, wz, build.north, chosen)
-    player:setBuildCheat(cheat)
-    if not PZHarness.Fixtures.objectWithSprite(getCell():getGridSquare(wx, wy, wz), sprite) then
-        return "the " .. info:getName() .. " built at " .. wx .. "," .. wy .. "," .. wz
-    end
+-- The vanilla build-menu entity of `tile` ({ sprite, nSprite }) built at the lot's x, y, `up`
+-- floors above it, by `player` as the build menu builds it (PZHarness.QA.buildAsPlayer). Returns
+-- what is missing, or nil.
+local function buildOnLot(player, lot, tile, x, y, up)
+    return HarnessQA.buildAsPlayer(player, tile.sprite, tile.nSprite, lot.x + x, lot.y + y, lot.z + (up or 0))
 end
 
 -- The stairs and the deck at their top. Returns what is missing, or nil.
 local function buildDeck(player, lot)
-    local missing = buildAsPlayer(player, lot, STAIRS.sprite, STAIRS.nSprite, STAIRS.x, STAIRS.y)
+    local missing = buildOnLot(player, lot, STAIRS, STAIRS.x, STAIRS.y)
     for _, at in ipairs(DECK) do
-        missing = missing or buildAsPlayer(player, lot, DECK_FLOOR.sprite, DECK_FLOOR.nSprite, at.x, at.y, 1)
+        missing = missing or buildOnLot(player, lot, DECK_FLOOR, at.x, at.y, 1)
     end
     return missing
 end
@@ -210,7 +170,7 @@ end
 -- The tile `sprite` built at the lot's x, y, `up` floors above it, `full` of water if asked.
 -- Returns what is missing, or nil.
 local function placeTank(lot, x, y, sprite, up, full)
-    local square = Stage.lotSquare(lot, x, y, up)
+    local square = Harness.lotSquare(lot, x, y, up)
     if not square then
         return "a square for " .. sprite .. " at " .. (lot.x + x) .. "," .. (lot.y + y) .. "," .. (lot.z + (up or 0))
     end
@@ -234,7 +194,7 @@ local function placeBeds(player, lot)
         end
         for i = 1, BED_CROPS do
             local water = i <= bed.dry and DRY or Stage.WATERED
-            missing = Stage.plant(Stage.lotSquare(lot, TANK_X + i, bed.y), bed.seed, GROWING, water)
+            missing = Stage.plant(Harness.lotSquare(lot, TANK_X + i, bed.y), bed.seed, GROWING, water)
             if missing then
                 return missing
             end
@@ -248,21 +208,10 @@ local function placeBeds(player, lot)
     end
 end
 
-local function setUpCharacter(player, buildRecipes)
-    player:setGodMod(true)
-    player:setInvisible(true)
-    player:setUnlimitedCarry(true)
-    player:setUnlimitedEndurance(true)
-    local levels = {}
-    for _, perk in ipairs(PZHarness.testSettings.perks) do
-        levels[perk:getId()] = SKILL
-    end
-    PZHarness.Fixtures.setPerkLevels(player, levels)
-    PZHarness.Test.learnRecipes(player)
-    -- The build menu's recipes too, which it doesn't teach: it teaches only craftRecipes.
-    PZHarness.Fixtures.learnRecipes(player, buildRecipes)
-    -- An empty barrel as vanilla's pickup gives it, the server module loaded by the first tick
-    -- in single player.
+-- The QA character (PZHarness.QA.setUpCharacter), carrying an empty barrel as vanilla's pickup
+-- gives it, the server module loaded by the first tick in single player.
+local function setUpBarrelCarrier(player)
+    HarnessQA.setUpCharacter(player)
     player:getInventory():AddItem(EnhancedIrrigation.StandSystem.barrelItem(BARREL_SPEC,
         player:getCurrentSquare()))
 end
@@ -271,39 +220,20 @@ end
 --- under MARK.
 function QA.setup(player)
     getGameTime():setTimeOfDay(10)
-    local buildRecipes = PZHarness.Test.buildRecipeNames()
-    setUpCharacter(player, buildRecipes)
-    local lot = Stage.findLot(player, AREA.w, AREA.h, true)
+    setUpBarrelCarrier(player)
+    local lot = Harness.findLot(player, AREA.w, AREA.h, { floor = Harness.NATURAL_FLOOR, trees = true })
     if not lot then
         print(MARK .. " no open lot of soil or grass " .. AREA.w .. "x" .. AREA.h .. " within "
             .. Harness.SEARCH_RADIUS .. " squares")
         return
     end
     local summary = { types = 0, items = 0, unknown = {}, unplaced = {} }
-    Stage.clearLot(lot, MARGIN)
+    Harness.clearLot(lot, MARGIN)
     summary.missing = placeBeds(player, lot)
-    layItems(lot, itemGroups(buildRecipes), summary)
+    layItems(lot, itemGroups(), summary)
     PZHarness.Fixtures.teleportToMiddle(player, lot.x + ARRIVE.x, lot.y + ARRIVE.y, lot.z)
-    print(string.format("%s laid out %d beds, %d tanks and %d items of %d types on the lot at %d,%d", MARK, #BEDS,
-        #TANKS, summary.items, summary.types, lot.x, lot.y))
-    if summary.missing then
-        print(MARK .. " missing: " .. summary.missing)
-    end
-    for _, what in ipairs({ "unknown", "unplaced" }) do
-        if #summary[what] > 0 then
-            print(MARK .. " " .. what .. ": " .. table.concat(summary[what], "; "))
-        end
-    end
-end
-
---- QA.setup on the first tick: a scenario's onStart runs during the world's start (OnGameStart),
---- before the global object systems exist, which sowing and clearing ground cover reach.
-function QA.setupSoon()
-    local function onTick()
-        Events.OnTick.Remove(onTick)
-        QA.setup(getPlayer())
-    end
-    Events.OnTick.Add(onTick)
+    HarnessQA.printSummary(MARK, string.format("laid out %d beds, %d tanks and %d items of %d types on the lot at %d,%d",
+        #BEDS, #TANKS, summary.items, summary.types, lot.x, lot.y), summary, { "missing", "unknown", "unplaced" })
 end
 
 return QA

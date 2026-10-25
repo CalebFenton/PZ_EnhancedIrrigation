@@ -88,22 +88,23 @@ T.test("irrigation_valves_fit_and_take_off", {
         T.useLineJob(self, line.tap, LineJobs.FIT_VALVE, "fit", true)
         T.readUntil(self, "valves.read", T.at(line.tap), "fitted", function(reply) return reply.valve.item ~= nil end)
         T.readLines(self, { line.tap }, "shown")
-        T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedFitted")
+        T.readCarried(self, { Valves.WIND_UP }, nil, "carriedFitted")
         T.useLineJob(self, line.tap, LineJobs.TAKE_OFF_VALVE, "takeOff", true)
         T.readUntil(self, "valves.read", T.at(line.tap), "off", function(reply) return reply.valve.item == nil end)
-        T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedOff")
+        T.readCarried(self, { Valves.WIND_UP }, nil, "carriedOff")
     end,
     validate = function(self)
-        T.expectRefused(self, "none", "Tooltip_EnhancedIrrigation_NoValve")
+        T.expectOptionRefused(self, "none", "Tooltip_EnhancedIrrigation_NoValve")
         T.expectOffered(self, "fit")
         expect(self.reads.fitted.valve.item == Valves.WIND_UP, "the tap's valve is " .. tostring(self.reads.fitted.valve.item))
         local overlays = self.reads.shown.tiles[1].overlays or {}
         expect(T.hasOverlay(overlays, Sprites.TAP_VALVES[Valves.WIND_UP]), "the tap shows no valve: "
             .. table.concat(overlays, ", "))
-        expect(#self.reads.carriedFitted.items == 0, "the fitted valve is still carried")
+        expect(#T.carriedItems(self, Valves.WIND_UP, "carriedFitted") == 0, "the fitted valve is still carried")
         T.expectOffered(self, "takeOff")
         expect(self.reads.off.valve.item == nil, "the tap still has its " .. tostring(self.reads.off.valve.item) .. " after Take Off Valve")
-        expect(#self.reads.carriedOff.items == 1, "Take Off Valve gave back " .. #self.reads.carriedOff.items .. " valves")
+        local off = #T.carriedItems(self, Valves.WIND_UP, "carriedOff")
+        expect(off == 1, "Take Off Valve gave back " .. off .. " valves")
     end,
 })
 
@@ -117,11 +118,12 @@ T.test("irrigation_valves_take_up_gives_the_valve_back", {
         placeValve(self, line, Valves.TIMER)
         T.useLineJob(self, line.tap, LineJobs.TAKE_UP, "takeUp", true)
         T.waitFor(self, function() return T.lineObject(line.tap) == nil end, "this client to see the tap taken up")
-        T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
+        T.readCarried(self, { Valves.TIMER })
     end,
     validate = function(self)
         T.expectOffered(self, "takeUp")
-        expect(#self.reads.carried.items == 1, "Take Up Pipe gave back " .. #self.reads.carried.items .. " Timer Valves")
+        local back = #T.carriedItems(self, Valves.TIMER)
+        expect(back == 1, "Take Up Pipe gave back " .. back .. " Timer Valves")
     end,
 })
 
@@ -152,7 +154,7 @@ T.test("irrigation_valves_wind_up_runs_its_minutes_and_shuts", {
         expect(self.panelBlocker == nil, "the panel refused winding: " .. tostring(self.panelBlocker))
         local wound = self.reads.wound.valve
         expectNear("the minutes wound", (wound.untilHour - wound.now) * 60, 10, 1)
-        T.expectRefused(self, "water", "Tooltip_EnhancedIrrigation_ValveRunning")
+        T.expectOptionRefused(self, "water", "Tooltip_EnhancedIrrigation_ValveRunning")
         expectWatered(self.reads.ran, 10, "wound for 10 minutes")
         expect(not self.reads.ran.valve.open, "the run-down valve still runs the line")
     end,
