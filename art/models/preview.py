@@ -1,4 +1,5 @@
-"""Renders review sheets of everything make.sh produced, read back from the files the game loads:
+"""Renders review sheets of everything make.sh produced, read back from the sprites and icons
+render.py wrote, not from the pack the game loads:
 
     blender -b --factory-startup -P art/models/preview.py
 
