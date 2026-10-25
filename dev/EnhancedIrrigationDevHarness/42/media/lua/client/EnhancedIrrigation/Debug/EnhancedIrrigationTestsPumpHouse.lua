@@ -296,7 +296,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.waitForPumpSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
             "this client's summary of the set timer")
         T.readMenu(self, self.house, "set")
-        T.useMenu(self, self.house, "take off", T.job("pump", PumpJobs.TAKE_TIMER), true)
+        T.useMenu(self, self.house, "take off", T.job("pump", PumpJobs.TAKE_OFF_TIMER), true)
         readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
         T.read(self, "items.carried", { type = Valves.TIMER }, "carried")
     end,

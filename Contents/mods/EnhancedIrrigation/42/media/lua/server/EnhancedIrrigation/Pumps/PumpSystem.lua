@@ -93,7 +93,7 @@ local DO = {
         record.timer = { item = item:getFullType() }
         EnhancedIrrigation.PumpHouse.settle(record, pump)
     end,
-    [PumpJobs.TAKE_TIMER] = function(character, pump)
+    [PumpJobs.TAKE_OFF_TIMER] = function(character, pump)
         local record = Pumps.recordOf(pump)
         EnhancedIrrigation.Materials.giveItems(character, instanceItem(record.timer.item))
         record.timer = nil

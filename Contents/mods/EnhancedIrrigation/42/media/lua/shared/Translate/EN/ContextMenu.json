@@ -38,9 +38,9 @@
     "ContextMenu_EnhancedIrrigation_FitValve": "Fit Valve",
     "ContextMenu_EnhancedIrrigation_TakeOffValve": "Take Off Valve",
     "ContextMenu_EnhancedIrrigation_WindValve": "Wind Valve...",
-    "ContextMenu_EnhancedIrrigation_SetValveTimer": "Set Timer...",
+    "ContextMenu_EnhancedIrrigation_SetTimer": "Set Timer...",
     "ContextMenu_EnhancedIrrigation_Wind": "Wind",
-    "ContextMenu_EnhancedIrrigation_SetTimer": "Set",
+    "ContextMenu_EnhancedIrrigation_Set": "Set",
     "ContextMenu_EnhancedIrrigation_FitTimer": "Fit Timer",
     "ContextMenu_EnhancedIrrigation_TakeOffTimer": "Take Off Timer"
 }

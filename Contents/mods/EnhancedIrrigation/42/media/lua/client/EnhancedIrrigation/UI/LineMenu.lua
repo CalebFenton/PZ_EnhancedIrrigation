@@ -95,7 +95,7 @@ end
 local function valvePanel(line)
     local state = Lines.stateOf(line)
     local valve = state and state.valve
-    local job = valve and (Valves.kindOf(valve.item) == "windup" and LineJobs.WIND_VALVE or LineJobs.SET_VALVE_TIMER)
+    local job = valve and (Valves.kindOf(valve.item) == "windup" and LineJobs.WIND_VALVE or LineJobs.SET_TIMER)
     return ValveUI.specOf(valve, line, "line", job)
 end
 
@@ -107,9 +107,9 @@ end
 local function addValve(menu, playerNum, character, line, state)
     if state.valve then
         local windUp = Valves.kindOf(state.valve.item) == "windup"
-        local name = windUp and "ContextMenu_EnhancedIrrigation_WindValve" or "ContextMenu_EnhancedIrrigation_SetValveTimer"
+        local name = windUp and "ContextMenu_EnhancedIrrigation_WindValve" or "ContextMenu_EnhancedIrrigation_SetTimer"
         menu:addOption(getText(name), character, LineMenu.openValve, line)
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_VALVE, line)
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_OFF_VALVE, line)
         return
     end
     JobOptions.addEach(menu, playerNum, character, "line", getText("ContextMenu_EnhancedIrrigation_FitValve"),

@@ -35,9 +35,9 @@ LineJobs.TAKE_UP = "TakeUpPipe"
 LineJobs.SET_SPRINKLER = "SetSprinkler"
 LineJobs.TAKE_SPRINKLER = "TakeSprinkler"
 LineJobs.FIT_VALVE = "FitValve"
-LineJobs.TAKE_VALVE = "TakeValve"
+LineJobs.TAKE_OFF_VALVE = "TakeOffValve"
 LineJobs.WIND_VALVE = "WindValve"
-LineJobs.SET_VALVE_TIMER = "SetValveTimer"
+LineJobs.SET_TIMER = "SetTimer"
 
 -- How long winding or setting a valve takes: a turn of a knob.
 local VALVE_MINUTES = 1
@@ -183,7 +183,7 @@ local function atValve(kind, check)
 end
 
 -- Lay's `with` is the pipe material, Set Sprinkler's the sprinkler carried, Fit Valve's the valve
--- carried, Wind Valve's its minutes and Set Valve Timer's its setting (Valves.decodeWind and
+-- carried, Wind Valve's its minutes and Set Timer's its setting (Valves.decodeWind and
 -- decodeTimer); the others' is nil.
 LineJobs.JOBS = {
     [LineJobs.WATER] = {
@@ -310,7 +310,7 @@ LineJobs.JOBS = {
         end),
         materials = { Pipes.WRENCH },
     },
-    [LineJobs.TAKE_VALVE] = {
+    [LineJobs.TAKE_OFF_VALVE] = {
         minutes = 3, sound = "RepairWithWrench", equip = holdWrench,
         blocker = atLine(function(character, object, state)
             return not state.valve and "Tooltip_EnhancedIrrigation_NoValveHere" or nil
@@ -336,7 +336,7 @@ LineJobs.JOBS = {
             return noTank
         end),
     },
-    [LineJobs.SET_VALVE_TIMER] = {
+    [LineJobs.SET_TIMER] = {
         minutes = VALVE_MINUTES, position = "Mid",
         blocker = atValve("timer", function(character, object, state, with)
             return not Valves.decodeTimer(with) and Jobs.UNKNOWN or nil

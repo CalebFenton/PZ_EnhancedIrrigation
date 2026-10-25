@@ -26,7 +26,7 @@ PumpJobs.TURN_ON = "TurnOn"
 PumpJobs.TURN_OFF = "TurnOff"
 PumpJobs.REPAIR_PUMP = "RepairPump"
 PumpJobs.FIT_TIMER = "FitTimer"
-PumpJobs.TAKE_TIMER = "TakeTimer"
+PumpJobs.TAKE_OFF_TIMER = "TakeOffTimer"
 PumpJobs.SET_TIMER = "SetTimer"
 
 -- Minutes to take a hand pump's cap off, swap the cup on its plunger and screw it back.
@@ -194,7 +194,7 @@ PumpJobs.JOBS = {
         end,
         materials = { SCREWDRIVER },
     },
-    [PumpJobs.TAKE_TIMER] = {
+    [PumpJobs.TAKE_OFF_TIMER] = {
         minutes = TAKE_TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
         blocker = function(character, pump)
             local summary = houseSummary(pump)

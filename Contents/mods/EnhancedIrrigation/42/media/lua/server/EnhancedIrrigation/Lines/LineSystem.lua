@@ -191,13 +191,13 @@ local DO = {
         Materials.takeItem(character, item)
         ValveSystem.fit(Lines.recordOf(object), item)
     end,
-    [LineJobs.TAKE_VALVE] = function(character, object)
+    [LineJobs.TAKE_OFF_VALVE] = function(character, object)
         Materials.giveItems(character, ValveSystem.takeOff(Lines.recordOf(object)))
     end,
     [LineJobs.WIND_VALVE] = function(character, object, with)
         ValveSystem.wind(Lines.recordOf(object), Valves.decodeWind(with))
     end,
-    [LineJobs.SET_VALVE_TIMER] = function(character, object, with)
+    [LineJobs.SET_TIMER] = function(character, object, with)
         ValveSystem.setTimer(Lines.recordOf(object), Valves.decodeTimer(with))
     end,
 }

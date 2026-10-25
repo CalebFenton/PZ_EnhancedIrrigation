@@ -148,8 +148,8 @@ end
 
 local function addTimer(menu, playerNum, character, pump, summary)
     if summary and summary.timer then
-        menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetValveTimer"), character, PumpMenu.openTimer, pump)
-        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffTimer", PumpJobs.TAKE_TIMER, pump)
+        menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetTimer"), character, PumpMenu.openTimer, pump)
+        addJob(menu, playerNum, character, "ContextMenu_EnhancedIrrigation_TakeOffTimer", PumpJobs.TAKE_OFF_TIMER, pump)
         return
     end
     local carried = JobOptions.firstOfEach(character, Valves.ORDER, function(fullType)

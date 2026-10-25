@@ -100,7 +100,7 @@ T.test("irrigation_valves_fit_and_take_off", {
         T.readUntil(self, "valves.read", T.at(line.tap), "fitted", function(reply) return reply.valve.item ~= nil end)
         T.readLines(self, { line.tap }, "shown")
         T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedFitted")
-        T.useOption(self, tap, "takeOff", function(context) return T.jobOption(context, "line", LineJobs.TAKE_VALVE) end,
+        T.useOption(self, tap, "takeOff", function(context) return T.jobOption(context, "line", LineJobs.TAKE_OFF_VALVE) end,
             true)
         T.readUntil(self, "valves.read", T.at(line.tap), "off", function(reply) return reply.valve.item == nil end)
         T.read(self, "items.carried", { type = Valves.WIND_UP }, "carriedOff")

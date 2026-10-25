@@ -195,7 +195,7 @@ function ValveUI.specOf(valve, object, feature, job)
         object = object,
         feature = feature,
         job = job,
-        okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_SetTimer",
+        okKey = windUp and "ContextMenu_EnhancedIrrigation_Wind" or "ContextMenu_EnhancedIrrigation_Set",
         timer = not windUp,
         start = valve.start,
         minutes = windUp and Valves.minutesLeft(valve) or valve.minutes,
