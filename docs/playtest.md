@@ -2,7 +2,7 @@
 
 What the in-game tests can't settle: what only a person playing can hear, see or judge. Each entry says what to check, how to set it up, and what passes. Tick an entry off by deleting it, with a line in the commit saying what you found; a finding that needs a change goes in as a fix.
 
-Set up with `dev/run-debug-client.sh`, then main menu > Scenarios > **Enhanced Irrigation QA** (see `AGENTS.md`), unless an entry says otherwise. Play at default sandbox settings unless the entry names one.
+Set up with `dev/run-debug-client.sh`, then main menu > Scenarios > **Enhanced Irrigation QA**, unless an entry says otherwise: a character in god mode with every skill and recipe of the mod, beside beds of crops, barrels and one of every item the mod's work takes, laid out between a farmhouse and its field. It prints what it laid out, and anything it couldn't, under `EIQA` in `console.txt`. Play at default sandbox settings unless the entry names one.
 
 ## Zombies and sound
 
