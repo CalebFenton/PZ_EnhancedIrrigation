@@ -78,43 +78,6 @@ function T.counted(self, fullType)
     return self.counts.left and self.counts.left[fullType] or 0
 end
 
--- Recipes -------------------------------------------------------------------------------------------
-
---- Queues crafting the recipe `name` from the first carried `from` the way the right-click menu
---- does or, with `opts.bench` ({ entity script, sprite }, T.placeBench), the way that bench's window
---- does: the character knows this recipe (until the test ends), has its skill and carries exactly
---- one craft's inputs (T.recipeInputs with `opts.prefer`). `opts.workTable` checks the scenario's
---- work table stands by the character (T.placeWorkTable); `opts.ready(self)`, if given, queues
---- what the inputs need first. Then counts `counted` (full types) into self.counts.craft. Returns
---- whether it queued the craft. T.craftTest would teach every recipe of the mod.
-function T.craft(self, name, from, counted, opts)
-    opts = opts or {}
-    local recipe = T.need(self, getScriptManager():getCraftRecipe(name), "the recipe " .. name)
-    if not recipe then return false end
-    T.knowRecipes(self, { name }, true)
-    if opts.workTable then
-        T.placeWorkTable(T.player())
-    end
-    T.setRecipeSkills(self, recipe)
-    local placed = opts.bench and T.placeBench(self, opts.bench[1], opts.bench[2])
-    if opts.bench and not placed then return false end
-    local inputs, unmatched = T.recipeInputs(recipe, opts.prefer)
-    if not T.need(self, #unmatched == 0, "an item for " .. table.concat(unmatched, "; ")) then return false end
-    T.give(self, "inputs", inputs)
-    if opts.ready then
-        opts.ready(self)
-    end
-    T.waitForLight(self)
-    T.step(function()
-        local item = T.need(self, T.carried(from), "a " .. from .. " to craft from")
-        if not item then return end
-        T.startCraft(self, recipe, item, placed and placed.object)
-        -- Queued after the craft's actions, which T.startCraft has just queued.
-        T.count(self, "craft", counted, { dropped = true })
-    end)
-    return true
-end
-
 -- The build menu -------------------------------------------------------------------------------------
 
 --- Queues building `entity` (a full name) from the build menu on a T.buildSite (T.build, each
