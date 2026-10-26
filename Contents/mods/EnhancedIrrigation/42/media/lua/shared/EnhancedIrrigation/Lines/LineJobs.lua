@@ -124,11 +124,11 @@ function LineJobs.layBlocker(square, pending)
         if joins and Lines.stateAt(nx, ny, z) then
             touches = true
             if not seen[EnhancedIrrigation.squareKey(nx, ny, z)] then
-                local tiles = Lines.component(nx, ny, z)
+                local tiles, members = Lines.component(nx, ny, z)
                 for _, tile in ipairs(tiles) do
                     seen[EnhancedIrrigation.squareKey(tile.x, tile.y, z)] = true
                 end
-                if Lines.feedOf(tiles) then
+                if Lines.feedOf(tiles, members) then
                     fed = fed + 1
                 end
             end
@@ -140,7 +140,7 @@ function LineJobs.layBlocker(square, pending)
         return "Tooltip_EnhancedIrrigation_NoTankReach"
     end
     -- A pump's outlet stays buried where its tile was taken up, and feeds a tile laid back there.
-    if Lines.pumpFeeding({ { x = x, y = y, z = z } }) then
+    if Lines.pumpFeeding({ [EnhancedIrrigation.squareKey(x, y, z)] = true }) then
         fed = fed + 1
     end
     -- Joining two fed lines would give one line two feeds (Lines.FEED_TAKEN).

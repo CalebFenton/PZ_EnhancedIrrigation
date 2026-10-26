@@ -150,13 +150,13 @@ function Lines.currentSummaryAt(x, y, z)
 end
 
 --- The tiles of the line through x, y, z, the start first and the rest in the order water reaches
---- them from it: a list of { x, y, z, state }, `state` as Lines.stateAt gives it. Empty when x, y,
---- z holds no line tile.
+--- them from it: a list of { x, y, z, state }, `state` as Lines.stateAt gives it; and a squareKey
+--- membership map (true for line, false for examined empty squares). Empty when the start has no line.
 function Lines.component(x, y, z)
     local list, seen = {}, {}
     local start = Lines.stateAt(x, y, z)
     if not start then
-        return list
+        return list, seen
     end
     local squareKey = EnhancedIrrigation.squareKey
     seen[squareKey(x, y, z)] = true
@@ -168,9 +168,9 @@ function Lines.component(x, y, z)
             local nx, ny = tile.x + step.dx, tile.y + step.dy
             local key = squareKey(nx, ny, z)
             -- Marked only once reached: the tile behind a wall may join from another side.
-            if not seen[key] and Lines.joins(tile.x, tile.y, z, step) then
-                seen[key] = true
+            if seen[key] == nil and Lines.joins(tile.x, tile.y, z, step) then
                 local state = Lines.stateAt(nx, ny, z)
+                seen[key] = state ~= nil
                 if state then
                     table.insert(list, { x = nx, y = ny, z = z, state = state })
                 end
@@ -178,7 +178,7 @@ function Lines.component(x, y, z)
         end
         i = i + 1
     end
-    return list
+    return list, seen
 end
 
 --- The tile of `tiles` (Lines.component) that holds the tap, or nil.
@@ -191,15 +191,13 @@ function Lines.tapIn(tiles)
     return nil
 end
 
---- The outlet link of a pump that feeds the line of `tiles` (Lines.component), or nil.
-function Lines.pumpFeeding(tiles)
+--- The outlet link of a pump ending in `members`, a squareKey membership map, or nil.
+function Lines.pumpFeeding(members)
     for _, link in ipairs(Links.all()) do
         if link.pump then
             local _, into = Links.ends(link)
-            for _, tile in ipairs(tiles) do
-                if EnhancedIrrigation.sameSquare(into, tile) then
-                    return link
-                end
+            if members[EnhancedIrrigation.squareKey(into.x, into.y, into.z)] then
+                return link
             end
         end
     end
@@ -213,13 +211,13 @@ Lines.FEED_TAKEN = {
     pump = "Tooltip_EnhancedIrrigation_LinePumped",
 }
 
---- What feeds the line of `tiles` (Lines.component): "tap" while a tap is on it, else "pump" while
---- a pump's outlet is plumbed to it, else nil.
-function Lines.feedOf(tiles)
+--- What feeds the line of `tiles, members` (Lines.component): "tap" while a tap is on it, else
+--- "pump" while a pump's outlet is plumbed to it, else nil.
+function Lines.feedOf(tiles, members)
     if Lines.tapIn(tiles) then
         return "tap"
     end
-    return Lines.pumpFeeding(tiles) and "pump" or nil
+    return Lines.pumpFeeding(members) and "pump" or nil
 end
 
 --- The shape (Sprites.pipe) of a tile at x, y, z: the bits of the neighbours `isLineAt(x, y, z)`

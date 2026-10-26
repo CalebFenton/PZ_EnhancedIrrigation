@@ -254,10 +254,9 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
     end,
 })
 
--- A pump's outlet stays buried where its tile was taken up, and still feeds a tile laid back
--- there: laying it beside a line tapped since is refused on the cursor and by the authority, as
--- joining a tapped and a pumped line is. Catches a pumped tile laid onto a tapped line, or a take-up
--- that takes the pump's outlet with the tile.
+-- Taking up the pumped tile leaves its outlet buried. It doesn't feed an adjacent line, which
+-- can take a tap; laying the missing tile back would join both feeds and must be refused.
+-- Catches an empty neighbor mistaken for component membership, or a lost buried outlet.
 T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
     instant = true,
     run = function(self)
@@ -273,9 +272,12 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         T.goNextTo(self, tiles[2].square)
         T.useLineJob(self, tiles[2], LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function() return T.lineObject(tiles[2]) == nil end, "this client to lose the taken-up tile")
-        tiles[1].fields = T.tapped()
         T.placeLine(self, { tiles[1] }, "iron")
-        T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
+        T.placeTank(self, tiles[1], "above", T.TANK_LITRES)
+        T.give(self, "pipes", { { type = "Base.MetalPipe", count = 2 }, { type = "Base.PipeWrench" } })
+        T.goNextTo(self, tiles[1].square)
+        T.useLineJob(self, tiles[1], LineJobs.TAP, "fit tap", true)
+        T.waitForLines(self, { tiles[1] }, "this client's fitted tap", function(summary) return summary.tap end)
         T.step(function()
             self.outlet = EnhancedIrrigation.Links.roleAt(T.at(spots[1]), "pump")
             self.refusal = T.layCursor(self, "iron"):refusal(tiles[2].square)
@@ -285,6 +287,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
     end,
     validate = function(self)
         expectOffered(self, "take up")
+        expectOffered(self, "fit tap")
         expect(self.outlet ~= nil, "taking up the pump's tile took its outlet")
         expectEqual("a tile on a pump's outlet beside a tap's refusal", self.refusal, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local forced = self.reads.forced
