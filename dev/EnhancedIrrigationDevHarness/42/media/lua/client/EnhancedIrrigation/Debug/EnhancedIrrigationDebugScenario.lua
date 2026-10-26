@@ -1,4 +1,4 @@
-require "PZHarness/TestLib"
+require "PZHarness/TestCraft"
 local QA = require "EnhancedIrrigationDevQA"
 local HarnessQA = require "PZHarness/QA"
 

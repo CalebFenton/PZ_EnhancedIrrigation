@@ -1,4 +1,4 @@
-require "PZHarness/TestLib"
+require "PZHarness/TestCraft"
 require "PZHarness/TestMenus"
 require "PZHarness/TestBuild"
 require "PZHarness/TestChunks"
@@ -135,20 +135,6 @@ end
 
 -- Squares -------------------------------------------------------------------------------------------
 
---- A tile handle of `square`.
-function T.where(square)
-    return { x = square:getX(), y = square:getY(), z = square:getZ(), square = square }
-end
-
---- The { x, y, z } of `handle`, with `extra`'s fields: the args of a server handler.
-function T.at(handle, extra)
-    local at = { x = handle.x, y = handle.y, z = handle.z }
-    for key, value in pairs(extra or {}) do
-        at[key] = value
-    end
-    return at
-end
-
 function T.tiles(handles)
     local tiles = {}
     for i, handle in ipairs(handles) do
@@ -278,8 +264,7 @@ function T.placeTank(self, handle, kind, litres, tainted)
     local up = spec.up or 0
     local tank = { x = handle.x, y = handle.y, z = handle.z + up, sprite = spec.sprite,
         square = up == 0 and handle.square or nil }
-    T.server(self, "tanks.place", T.at(tank, { sprite = spec.sprite, litres = litres, tainted = tainted }))
-    T.waitFor(self, function()
+    T.server(self, "tanks.place", T.at(tank, { sprite = spec.sprite, litres = litres, tainted = tainted }), function()
         local square = getSquare(tank.x, tank.y, tank.z)
         local copy = T.objectWithSprite(square, tank.sprite)
         tank.square = square
@@ -307,8 +292,7 @@ end
 --- Queues a sown crop on each of `handles` at `water` water points, and a wait for this client's
 --- copies.
 function T.plant(self, handles, water)
-    T.server(self, "lines.plant", { tiles = T.tiles(handles), water = water })
-    T.waitFor(self, function()
+    T.server(self, "lines.plant", { tiles = T.tiles(handles), water = water }, function()
         for _, handle in ipairs(handles) do
             if not CFarmingSystem.instance:getLuaObjectOnSquare(getSquare(handle.x, handle.y, handle.z)) then
                 return false
@@ -355,9 +339,8 @@ function T.placeFixture(self, handle, sprite, extra)
     local fixture = { x = handle.x, y = handle.y, z = handle.z, sprite = sprite, square = handle.square }
     local args = T.at(fixture, extra)
     args.sprite = sprite
-    T.server(self, "fixtures.place", args)
     local litres = extra and extra.buffer and extra.buffer.litres
-    T.waitFor(self, function()
+    T.server(self, "fixtures.place", args, function()
         local copy = T.copyOf(fixture)
         local buffer = copy and copy:getFluidContainer()
         return copy ~= nil and (not litres
