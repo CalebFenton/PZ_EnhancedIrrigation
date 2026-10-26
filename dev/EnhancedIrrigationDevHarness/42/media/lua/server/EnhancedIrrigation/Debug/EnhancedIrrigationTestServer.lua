@@ -23,12 +23,10 @@ local Server = {}
 
 --- The square at args' x, y, z, made where there is none, as on a floor above open ground, whose
 --- square only comes to be with what stands there; with `withFloor`, on a floor laid for it if it
---- has none, taken away with it when the test ends. Returns it, or nil and what is missing.
+--- has none, taken away with it when the test ends. Fails the test as missing without one.
 function Server.squareFor(args, defer, withFloor)
-    local square = Fixtures.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true)
-    if not square then
-        return nil, "a square at " .. args.x .. "," .. args.y .. "," .. args.z
-    end
+    local square = PZHarness.need(Fixtures.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true),
+        "a square at " .. args.x .. "," .. args.y .. "," .. args.z)
     if withFloor and not square:getFloor() then
         local floor = square:addFloor("carpentry_02_58")
         defer(function()
@@ -52,13 +50,9 @@ function Server.setFields(record, fields, hoursAgo)
     end
 end
 
---- The line record at `at`'s x, y, z, or nil and what is missing.
+--- The line record at `at`'s x, y, z; fails the test as missing without one.
 function Server.lineRecordAt(at)
-    local record = EI.Lines.recordAt(at.x, at.y, at.z)
-    if not record then
-        return nil, "a line record at " .. at.x .. "," .. at.y .. "," .. at.z
-    end
-    return record
+    return PZHarness.need(EI.Lines.recordAt(at.x, at.y, at.z), "a line record at " .. at.x .. "," .. at.y .. "," .. at.z)
 end
 
 --- The pump record, a hand pump's or a Pump House's, at args' x, y, z, or nil.
@@ -102,14 +96,10 @@ end
 --- Builds the tile `args.sprite` on `square` as the build menu builds it (Build.tile), its record
 --- made as `system`'s OnCreate makes it, which may replace the object, and sends what stands there
 --- to the clients, as the build menu does after the OnCreate. Then `prepare(record)`, if given,
---- answers what is missing or nil, and `args.fields` are set on the record and its summary sent.
---- Removed, with its links and record, when the test ends. Returns the record, or nil and what is
---- missing.
+--- runs, and `args.fields` are set on the record and its summary sent. Removed, with its links and
+--- record, when the test ends. Returns the record; fails the test as missing what it lacks.
 function Server.placeEntity(square, args, defer, system, recordAt, prepare)
-    local built, missing = Build.tile(square, args.sprite)
-    if not built then
-        return nil, missing
-    end
+    local built = PZHarness.need(Build.tile(square, args.sprite))
     Server.removeWhenDone(args, defer)
     defer(function()
         local record = recordAt(args)
@@ -120,13 +110,9 @@ function Server.placeEntity(square, args, defer, system, recordAt, prepare)
     local created = system.onCreate({ thumpable = built })
     local object = created and created.object or built
     object:transmitCompleteItemToClients()
-    local record = recordAt(args)
-    if not record then
-        return nil, "the record of " .. tostring(args.sprite) .. " after its OnCreate"
-    end
-    missing = prepare and prepare(record)
-    if missing then
-        return nil, missing
+    local record = PZHarness.need(recordAt(args), "the record of " .. tostring(args.sprite) .. " after its OnCreate")
+    if prepare then
+        prepare(record)
     end
     Server.setFields(record, args.fields, 0)
     record:sendSummary()
@@ -233,15 +219,8 @@ end
 -- does, which drops it. Answers its state (Server.stateAt). Removed, its links and the floor laid
 -- for it with it, when the test ends.
 handler("tanks.place", function(_, args, defer)
-    local square, missing = Server.squareFor(args, defer, true)
-    if not square then
-        return nil, missing
-    end
-    local object
-    object, missing = Build.tile(square, args.sprite, args.litres, args.tainted)
-    if not object then
-        return nil, missing
-    end
+    local square = Server.squareFor(args, defer, true)
+    local object = PZHarness.need(Build.tile(square, args.sprite, args.litres, args.tainted))
     object:transmitCompleteItemToClients()
     Server.removeWhenDone(args, defer)
     return Server.stateAt(args)
@@ -275,10 +254,8 @@ local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "Treat
 -- greyed out.
 handler("jobs.perform", function(player, args)
     local square = Fixtures.squareAt(args)
-    local object = square and Squares.findObjectOn(square, Server.isPlaced)
-    if not object then
-        return nil, "the server's object at " .. tostring(args.x) .. "," .. tostring(args.y)
-    end
+    local object = PZHarness.need(square and Squares.findObjectOn(square, Server.isPlaced),
+        "the server's object at " .. tostring(args.x) .. "," .. tostring(args.y))
     local with = args.with
     if args.barrel then
         local carried = EI.Stands.barrelsCarried(player)[1]
@@ -301,10 +278,7 @@ local HELD = { line = Server.lineRecordAt, pump = Server.pumpRecordAt }
 -- leaves it silent from then on, as a client's action goes that disconnects mid-run: it never runs
 -- again nor lets go. Let go when the test ends. Answers whether it held.
 handler("holds.hold", function(_, args, defer)
-    local record = HELD[args.feature](args)
-    if not record then
-        return nil, "the " .. args.feature .. " record at " .. args.x .. "," .. args.y
-    end
+    local record = PZHarness.need(HELD[args.feature](args), "the " .. args.feature .. " record at " .. args.x .. "," .. args.y)
     local standIn = { character = { getUsername = function() return args.as end } }
     defer(function() EI.Holds.release(standIn) end)
     return { held = EI.Holds.hold(record, standIn) }
@@ -315,9 +289,7 @@ end)
 -- real time.
 handler("holds.lapse", function(_, args)
     local record = HELD[args.feature](args)
-    if not (record and record.heldMs) then
-        return nil, "a held " .. args.feature .. " at " .. args.x .. "," .. args.y
-    end
+    PZHarness.need(record and record.heldMs, "a held " .. args.feature .. " at " .. args.x .. "," .. args.y)
     record.heldMs = getTimestampMs() - EI.Holds.LAPSE_MS - 1
     return {}
 end)

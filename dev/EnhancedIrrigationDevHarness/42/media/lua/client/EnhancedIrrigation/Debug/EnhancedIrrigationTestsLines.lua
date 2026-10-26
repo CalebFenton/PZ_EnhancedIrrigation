@@ -9,7 +9,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 -- lines may join, and the walls that part them.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear, expectOffered = T.expect, T.expectNear, T.expectOffered
+local expect, expectNear, expectEqual, expectOffered = T.expect, T.expectNear, T.expectEqual, T.expectOffered
 local Sprites, Lines = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines
 local LineJobs, Tanks = EnhancedIrrigation.LineJobs, EnhancedIrrigation.Tanks
 
@@ -46,10 +46,7 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
             local lay = T.findOption(context, function(option)
                 return option.onSelect == EnhancedIrrigation.LineCursor.start and option.param1 == "iron"
             end)
-            self.layOffered = T.offered(lay)
-            if lay then
-                T.choose(lay)
-            end
+            T.chooseOption(self, "lay", lay)
             context:hideAndChildren()
             local cursor = T.layCursor(self, "iron", true)
             if not T.need(self, cursor and cursor.material == "iron" and cursor, "the Lay Line cursor for iron pipe") then
@@ -69,20 +66,20 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
         T.count(self, "left", { "Base.MetalPipe" })
     end,
     validate = function(self)
-        expect(self.noWrench == "Tooltip_EnhancedIrrigation_Short", "laying iron without a pipe wrench: " .. tostring(self.noWrench))
+        expectEqual("laying iron without a pipe wrench's refusal", self.noWrench, "Tooltip_EnhancedIrrigation_Short")
         local noWrench = self.reads["no wrench"]
         expect(noWrench.done == false and noWrench.tiles[1].record == nil, "the server laid iron without a pipe wrench")
-        expect(self.layOffered, "the ground's menu doesn't offer Lay Line for iron pipe")
+        expectOffered(self, "lay")
         local shapes = { Sprites.EAST, Sprites.EAST + Sprites.WEST, Sprites.WEST }
         for i, tile in ipairs(self.tiles) do
             expect(self.valid and self.valid[i], "the cursor refused tile " .. i)
             local want = Sprites.pipe("iron", false, shapes[i])
             local read = self.reads.laid.tiles[i]
             expect(read.record and read.record.material == "iron", "tile " .. i .. " has no iron record")
-            expect(read.sprite == want, "the server shows tile " .. i .. " as " .. tostring(read.sprite) .. ", not " .. want)
-            expect(T.lineSprite(tile) == want, "this client shows tile " .. i .. " as " .. tostring(T.lineSprite(tile)))
+            expectEqual("the server's sprite of tile " .. i, read.sprite, want)
+            expectEqual("this client's sprite of tile " .. i, T.lineSprite(tile), want)
         end
-        expect(T.counted(self, "Base.MetalPipe") == 0, "laying left " .. T.counted(self, "Base.MetalPipe") .. " iron pipe")
+        expectEqual("iron pipe left", T.counted(self, "Base.MetalPipe"), 0)
     end,
 })
 
@@ -116,11 +113,9 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         T.count(self, "left", { "Base.Pipe" })
     end,
     validate = function(self)
-        expect(self.weakJoint == "Tooltip_EnhancedIrrigation_Short",
-            "wood glue and adhesive tape made a joint: " .. tostring(self.weakJoint))
+        expectEqual("a wood glue and adhesive tape joint's refusal", self.weakJoint, "Tooltip_EnhancedIrrigation_Short")
         expect(self.valid, "the cursor refused a tile beside a tank")
-        expect(self.items.joint[1]:getCurrentUses() == self.usesBefore - 1,
-            "the joint used " .. (self.usesBefore - self.items.joint[1]:getCurrentUses()) .. " uses of glue, not 1")
+        expectEqual("uses of glue the joint used", self.usesBefore - self.items.joint[1]:getCurrentUses(), 1)
         expect(T.counted(self, "Base.Pipe") == 0, "laying left the plastic pipe")
         expect(T.lineSummary(self.tile).material == "plastic", "the tile isn't plastic")
     end,
@@ -150,10 +145,9 @@ T.test("irrigation_lines_first_tile_needs_a_tank", {
         end)
     end,
     validate = function(self)
-        expect(self.alone == "Tooltip_EnhancedIrrigation_NoTankReach",
-            "a tile far from tanks and lines: " .. tostring(self.alone))
-        expect(self.besideLine == nil, "a tile beside a line was refused: " .. tostring(self.besideLine))
-        expect(self.besideLineEast == nil, "a tile beside a line was refused: " .. tostring(self.besideLineEast))
+        expectEqual("a tile far from tanks and lines' refusal", self.alone, "Tooltip_EnhancedIrrigation_NoTankReach")
+        expectEqual("a tile beside a line's refusal", self.besideLine, nil)
+        expectEqual("a tile east of a line's refusal", self.besideLineEast, nil)
     end,
 })
 
@@ -189,10 +183,10 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         T.read(self, "lines.perform", lay, "one tap")
     end,
     validate = function(self)
-        expect(self.twoTaps == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "between two taps: " .. tostring(self.twoTaps))
+        expectEqual("a tile between two taps' refusal", self.twoTaps, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local twoTaps, oneTap = self.reads["two taps"], self.reads["one tap"]
         expect(twoTaps.done == false and twoTaps.tiles[2].record == nil, "the server laid a tile between two taps")
-        expect(self.oneTap == nil, "between a tapped and an untapped line: " .. tostring(self.oneTap))
+        expectEqual("a tile between a tapped and an untapped line's refusal", self.oneTap, nil)
         expectOffered(self, "take up the tap")
         local joined = oneTap.tiles[2].record
         expect(oneTap.done and joined and joined.tiles == self.size,
@@ -224,8 +218,8 @@ T.test("irrigation_lines_first_tile_beside_a_pump", {
         T.read(self, "lines.perform", T.at(beside, { job = LineJobs.LAY, with = "iron" }), "laid")
     end,
     validate = function(self)
-        expect(self.beside == nil, "a first tile beside a pump: " .. tostring(self.beside))
-        expect(self.far == "Tooltip_EnhancedIrrigation_NoTankReach", "a first tile two squares off a pump: " .. tostring(self.far))
+        expectEqual("a first tile beside a pump's refusal", self.beside, nil)
+        expectEqual("a first tile two squares off a pump's refusal", self.far, "Tooltip_EnhancedIrrigation_NoTankReach")
         local laid = self.reads.laid
         expect(laid.done and laid.tiles[1].record ~= nil, "the server didn't lay the first tile beside the pump")
     end,
@@ -254,7 +248,7 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
             "forced")
     end,
     validate = function(self)
-        expect(self.refusal == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "between a tap and a pump: " .. tostring(self.refusal))
+        expectEqual("a tile between a tap and a pump's refusal", self.refusal, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local forced = self.reads.forced
         expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile between a tap and a pump")
     end,
@@ -292,8 +286,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
     validate = function(self)
         expectOffered(self, "take up")
         expect(self.outlet ~= nil, "taking up the pump's tile took its outlet")
-        expect(self.refusal == "Tooltip_EnhancedIrrigation_JoinsTwoFeeds", "on a pump's outlet beside a tap: "
-            .. tostring(self.refusal))
+        expectEqual("a tile on a pump's outlet beside a tap's refusal", self.refusal, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local forced = self.reads.forced
         expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile on a pump's outlet beside a tap")
     end,
@@ -334,17 +327,14 @@ T.test("irrigation_lines_walls_part_lines_doorways_join", {
         T.flow(self, doorway, 1, self.tiles, "hour")
     end,
     validate = function(self)
-        expect(self.behindWall == "Tooltip_EnhancedIrrigation_NoTankReach",
-            "laying beside line behind a wall: " .. tostring(self.behindWall))
-        expect(self.throughDoorway == nil, "laying beside line through a door frame was refused: "
-            .. tostring(self.throughDoorway))
+        expectEqual("a tile beside line behind a wall's refusal", self.behindWall, "Tooltip_EnhancedIrrigation_NoTankReach")
+        expectEqual("a tile beside line through a door frame's refusal", self.throughDoorway, nil)
         local hour = self.reads.hour
         if not expect(hour.drawn, "the line didn't run: " .. tostring(hour.stopped)) then return end
         local names = { "behind the wall", "inside", "in the doorway" }
         local wanted = { 0, Sprites.EAST, Sprites.WEST }
         for i, tile in ipairs(hour.tiles) do
-            expect(T.shapeOf(tile.sprite) == wanted[i], "the tile " .. names[i] .. " is shaped "
-                .. tostring(T.shapeOf(tile.sprite)) .. ", not " .. wanted[i])
+            expectEqual("the shape of the tile " .. names[i], T.shapeOf(tile.sprite), wanted[i])
         end
         -- The tank stands a storey over the line: one storey of head.
         expectNear("the crop inside's water", hour.tiles[2].plant.water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, T.CROP_POINTS)

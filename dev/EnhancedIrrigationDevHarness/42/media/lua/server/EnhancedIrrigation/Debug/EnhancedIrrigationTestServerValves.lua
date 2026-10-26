@@ -36,28 +36,22 @@ end
 
 -- Puts a new `args.item` on the tap at x, y, z as Fit Valve fits a carried one.
 handler("valves.place", function(_, args)
-    local record, missing = Server.lineRecordAt(args)
-    if not record then return nil, missing end
+    local record = Server.lineRecordAt(args)
     EnhancedIrrigation.ValveSystem.fit(record, instanceItem(args.item))
     record:afterChange()
     return valveOf(record)
 end)
 
 handler("valves.read", function(_, args)
-    local record, missing = Server.lineRecordAt(args)
-    if not record then return nil, missing end
+    local record = Server.lineRecordAt(args)
     return { valve = valveOf(record) }
 end)
 
 -- Winds the clock of the valve on the tap at x, y, z back `args.hours`, a wind-up's end with it, as
 -- though they had gone by since it last ran, and runs it. Answers the crops and tank after.
 handler("valves.age", function(_, args)
-    local record, missing = Server.lineRecordAt(args)
-    if not record then return nil, missing end
-    local valve = record.valve
-    if not valve then
-        return nil, "a valve on the tap at " .. args.x .. "," .. args.y
-    end
+    local record = Server.lineRecordAt(args)
+    local valve = PZHarness.need(record.valve, "a valve on the tap at " .. args.x .. "," .. args.y)
     valve.lastHour = (valve.lastHour or EnhancedIrrigation.now()) - args.hours
     if valve.untilHour then
         valve.untilHour = valve.untilHour - args.hours

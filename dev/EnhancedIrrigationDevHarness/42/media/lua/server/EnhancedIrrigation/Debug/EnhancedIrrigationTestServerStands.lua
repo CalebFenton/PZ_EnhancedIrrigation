@@ -19,9 +19,7 @@ handler("stands.giveBarrel", function(player, args)
             spec = entry
         end
     end
-    if not spec then
-        return nil, "a barrel of the tile " .. tostring(args.barrel)
-    end
+    PZHarness.need(spec, "a barrel of the tile " .. tostring(args.barrel))
     local item = EI.StandSystem.barrelItem(spec, player:getCurrentSquare())
     if (args.litres or 0) > 0 then
         item:getFluidContainer():addFluid(FluidType.Water, args.litres)

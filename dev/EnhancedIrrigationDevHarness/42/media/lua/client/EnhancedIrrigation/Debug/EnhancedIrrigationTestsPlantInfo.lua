@@ -7,7 +7,7 @@ require "EnhancedIrrigation/UI/PlantInfo"
 -- line tiles of set soaks, the plant info windows opened as Plant Info opens them and drawn.
 
 local T = EnhancedIrrigationTest
-local expect = T.expect
+local expect, expectEqual = T.expect, T.expectEqual
 local Sprites, Lines, PlantInfo = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.PlantInfo
 
 -- Waits for the UI to draw a few times: it draws at its own rate, slower than the game's frames
@@ -82,14 +82,14 @@ T.test("irrigation_plant_info_names_the_soil", {
         local want = { "IGUI_EnhancedIrrigation_Damp", "IGUI_EnhancedIrrigation_Soaked",
             "IGUI_EnhancedIrrigation_Waterlogged" }
         for i, wanted in ipairs(want) do
-            expect(self.keys[i] == wanted, "soil under tile " .. i .. ": " .. tostring(self.keys[i]) .. ", not " .. wanted)
+            expectEqual("the soil word under tile " .. i, self.keys[i], wanted)
         end
-        expect(self.keys[4] == nil, "dry soil is named " .. tostring(self.keys[4]))
+        expectEqual("the dry soil's word", self.keys[4], nil)
         local level = PlantInfo.FARMING_LEVEL
         expect(self.skilled[1] > self.skilled[2], "with Agriculture " .. level .. " the wet crop's info is "
             .. self.skilled[1] .. " tall and the dry one's " .. self.skilled[2] .. ": no soil line")
-        expect(self.unskilled[1] == self.unskilled[2], "below Agriculture " .. level .. " the wet crop's info is "
-            .. self.unskilled[1] .. " tall and the dry one's " .. self.unskilled[2])
+        expectEqual("below Agriculture " .. level .. " the wet crop's info height, against the dry one's", self.unskilled[1],
+            self.unskilled[2])
     end,
 })
 
@@ -115,14 +115,13 @@ T.test("irrigation_plant_info_soil_word_agrees_with_the_roots", {
         T.read(self, "lines.age", { tiles = T.tiles({ logged }), hours = 1 }, "aged")
     end,
     validate = function(self)
-        expect(self.keys[1] == "IGUI_EnhancedIrrigation_Waterlogged", "soil just past waterlogged is named "
-            .. tostring(self.keys[1]))
+        expectEqual("the word of soil just past waterlogged", self.keys[1], "IGUI_EnhancedIrrigation_Waterlogged")
         local before, after = self.reads.aged.before[1], self.reads.aged.tiles[1]
         expect(before.record.soak > Lines.WATERLOGGED, "the soil dried out of waterlogged before it aged: "
             .. before.record.soak)
         expect(after.plant.health < before.plant.health, "the crop under soil named Waterlogged lost no health")
-        expect(self.keys[2] == nil, "soil just short of damp is named " .. tostring(self.keys[2]))
+        expectEqual("the word of soil just short of damp", self.keys[2], nil)
         local want = Sprites.pipe("plastic", false, Sprites.WEST)
-        expect(self.drySprite == want, "soil just short of damp shows as " .. tostring(self.drySprite) .. ", not " .. want)
+        expectEqual("the sprite of soil just short of damp", self.drySprite, want)
     end,
 })

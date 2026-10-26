@@ -12,7 +12,7 @@ require "EnhancedIrrigation/UI/PlantInfo"
 -- lines.flow), so the clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Sprites, Lines, LineJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, Sprinklers, PlantInfo = EnhancedIrrigation.Pumps, EnhancedIrrigation.Sprinklers, EnhancedIrrigation.PlantInfo
 local Parts = EnhancedIrrigation.Parts
@@ -130,7 +130,7 @@ T.test("irrigation_sprinklers_water_their_rectangle_and_waterlog_it", {
             expectNear("the crop at " .. offset .. " left on", square.water, inside and Lines.PLANT_FULL or 0, T.POINTS)
             expectNear("the soak at " .. offset .. " left on", square.soak, inside and Lines.SOAK_MAX or 0, T.POINTS)
         end
-        expect(self.pastKey == nil, "the plant info names the soil past the rectangle " .. tostring(self.pastKey))
+        expectEqual("the plant info's word for the soil past the rectangle", self.pastKey, nil)
         local rotted = self.reads.rotted
         local change = changes(rotted.squares.before, rotted.squares.after)[1]
         expectNear("the health of the waterlogged crop off the line", change.health, -Lines.ROOT_ROT_PER_HOUR * ROT_HOURS, T.POINTS)
@@ -192,7 +192,7 @@ T.test("irrigation_sprinklers_do_nothing_on_a_tapped_line", {
     end,
     validate = function(self)
         local hour = self.reads.hour
-        expect(hour.stopped == nil, "the tap stopped: " .. tostring(hour.stopped))
+        expectEqual("why the tap stopped", hour.stopped, nil)
         local changed = changes(hour.squares.before, hour.squares.after)
         expectNear("the crop on the holed tap tile", changed[1].water, Lines.HOLE_RATE * Lines.POINTS_PER_LITRE, T.POINTS)
         for i = 2, #changed do
@@ -248,19 +248,17 @@ T.test("irrigation_sprinklers_set_and_take_keep_condition", {
         T.expectOffered(self, "set")
         local set = self.reads.set.tiles[1]
         local sprinkler = set.record.sprinkler
-        expect(sprinkler and sprinkler.condition == WORN.condition and sprinkler.ceiling == WORN.ceiling,
-            "the sprinkler went on at " .. tostring(sprinkler and sprinkler.condition) .. " of "
-            .. tostring(sprinkler and sprinkler.ceiling))
+        expectEqual("the set sprinkler's condition", sprinkler and sprinkler.condition, WORN.condition)
+        expectEqual("the set sprinkler's ceiling", sprinkler and sprinkler.ceiling, WORN.ceiling)
         expect(T.hasOverlay(set.overlays, Sprites.SPRINKLER), "the server doesn't draw the sprinkler")
         T.expectOptionRefused(self, "tap on it", "Tooltip_EnhancedIrrigation_TapAndSprinkler")
         T.expectOffered(self, "take")
         local taken = self.reads.taken.tiles[1].record
         expect(taken.sprinkler == nil, "the tile's record still keeps the sprinkler it gave back")
         local items = T.carriedItems(self, Sprinklers.ITEM)
-        local ceiling = T.ceilingOf(items[1])
-        expect(#items == 1 and items[1].condition == WORN.condition and ceiling == WORN.ceiling,
-            "Take Sprinkler gave " .. #items .. " sprinklers" .. (items[1] and " at " .. items[1].condition .. " of "
-            .. ceiling or ""))
+        expectEqual("sprinklers Take Sprinkler gave", #items, 1)
+        expectEqual("the taken sprinkler's condition", items[1] and items[1].condition, WORN.condition)
+        expectEqual("the taken sprinkler's ceiling", T.ceilingOf(items[1]), WORN.ceiling)
     end,
 })
 
@@ -313,10 +311,10 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
         T.step(function() self.taken = soilKey(crop) end)
     end,
     validate = function(self)
-        expect(self.mirrored == nil, "the soil word of the dry crop across the sprinkler: " .. tostring(self.mirrored))
-        expect(self.turned == WATERLOGGED, "the soil word once the rectangle turned away: " .. tostring(self.turned))
+        expectEqual("the soil word of the dry crop across the sprinkler", self.mirrored, nil)
+        expectEqual("the soil word once the rectangle turned away", self.turned, WATERLOGGED)
         T.expectOffered(self, "take")
-        expect(self.taken == WATERLOGGED, "the soil word once the sprinkler was taken: " .. tostring(self.taken))
+        expectEqual("the soil word once the sprinkler was taken", self.taken, WATERLOGGED)
     end,
 })
 
@@ -336,10 +334,9 @@ T.test("irrigation_sprinklers_make_pipe_sprinkler", {
     end,
     validate = function(self)
         local craft = self.counts.craft or {}
-        expect(craft[Sprinklers.ITEM] == 1, "the craft made " .. tostring(craft[Sprinklers.ITEM]) .. " sprinklers")
+        expectEqual("sprinklers the craft made", craft[Sprinklers.ITEM], 1)
         local made = T.carriedFirst(self, Sprinklers.ITEM, "made")
-        local ceiling = T.ceilingOf(made)
-        expect(made and made.condition == Sprinklers.MADE_CEILING and ceiling == Sprinklers.MADE_CEILING,
-            "the made sprinkler is at " .. tostring(made and made.condition) .. " of " .. tostring(ceiling))
+        expectEqual("the made sprinkler's condition", made and made.condition, Sprinklers.MADE_CEILING)
+        expectEqual("the made sprinkler's ceiling", T.ceilingOf(made), Sprinklers.MADE_CEILING)
     end,
 })

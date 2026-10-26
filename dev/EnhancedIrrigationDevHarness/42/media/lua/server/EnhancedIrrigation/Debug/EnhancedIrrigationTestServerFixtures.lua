@@ -56,10 +56,7 @@ end
 -- from before the mod holds it; with `args.buffer` = { litres, tainted }, given a buffer holding
 -- that much. Answers its state. Removed, with its links, when the test ends.
 handler("fixtures.place", function(_, args, defer)
-    local square = PZHarness.Fixtures.squareAt(args)
-    if not square then
-        return nil, "a loaded square for " .. tostring(args.sprite)
-    end
+    local square = PZHarness.need(PZHarness.Fixtures.squareAt(args), "a loaded square for " .. tostring(args.sprite))
     local fixture
     if args.washer or args.combo then
         local Kind = args.combo and IsoCombinationWasherDryer or IsoClothingWasher
@@ -102,11 +99,8 @@ end)
 -- Plumbs the fixture at x, y, z to the tank at `args.tank` as the jobs leave it, with `args.lengths`
 -- lengths of `args.kind` pipe, or none as vanilla's Plumb does, without the job.
 handler("fixtures.plumb", function(_, args)
-    local fixture = fixtureAt(args)
-    local tank = EI.Tanks.tankAt(args.tank.x, args.tank.y, args.tank.z)
-    if not (fixture and tank) then
-        return nil, "the fixture and its tank on the server"
-    end
+    local fixture = PZHarness.need(fixtureAt(args), "the fixture on the server")
+    local tank = PZHarness.need(EI.Tanks.tankAt(args.tank.x, args.tank.y, args.tank.z), "the fixture's tank on the server")
     EI.FixtureSystem.plumb(fixture, tank, args.kind, args.lengths or 0, nil)
     return stateAt(args)
 end)
@@ -116,10 +110,7 @@ end)
 -- whether it was done and the fixture's state after, so a test sees the server refuse what its menu
 -- would have greyed out.
 handler("fixtures.perform", function(player, args)
-    local fixture = fixtureAt(args)
-    if not fixture then
-        return nil, "the server's fixture at " .. tostring(args.x) .. "," .. tostring(args.y)
-    end
+    local fixture = PZHarness.need(fixtureAt(args), "the server's fixture at " .. tostring(args.x) .. "," .. tostring(args.y))
     local done = Jobs.perform(EI.LinkJobs, EI.LinkSystem.site, player, args.job, fixture, args.with)
     local state = stateAt(args)
     state.done = done == true
@@ -132,9 +123,7 @@ end)
 -- in one call, so the ten-minute event can't run a pass of its own in between.
 handler("fixtures.refill", function(_, args)
     local fixture = fixtureAt(args)
-    if not (fixture and fixture:getFluidContainer()) then
-        return nil, "a fixture with a buffer on the server"
-    end
+    PZHarness.need(fixture and fixture:getFluidContainer(), "a fixture with a buffer on the server")
     fixture:getFluidContainer():removeFluid(args.litres, false)
     fixture:sync()
     local reply = { drawn = stateAt(args), passes = {} }
@@ -148,9 +137,6 @@ end)
 -- What the load hook does to a fixture vanilla plumbed (FixtureSystem.convert), at once. Answers
 -- whether there was nothing more to do.
 handler("fixtures.convert", function(_, args)
-    local fixture = fixtureAt(args)
-    if not fixture then
-        return nil, "the fixture on the server"
-    end
+    local fixture = PZHarness.need(fixtureAt(args), "the fixture on the server")
     return { finished = EI.FixtureSystem.convert(fixture) }
 end)

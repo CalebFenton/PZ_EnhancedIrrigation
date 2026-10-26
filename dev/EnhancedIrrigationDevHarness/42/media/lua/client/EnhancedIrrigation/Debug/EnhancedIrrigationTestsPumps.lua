@@ -15,7 +15,7 @@ require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
 -- the sums; the Pump action itself runs at a raised clock speed.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Links, LinkJobs = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Pumps, PumpJobs, LinkMenu = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.LinkMenu
@@ -70,14 +70,14 @@ for _, case in ipairs({ { entity = T.WOODEN, name = "wooden", seal = T.LEATHER }
         end,
         validate = function(self)
             local built = self.reads.built
-            expect(built.entity == case.entity, "the build menu built " .. tostring(built.entity))
+            expectEqual("the entity the build menu built", built.entity, case.entity)
             local record = built.record
             if not expect(record, "the built pump has no record") then return end
-            expect(record.seal == case.seal and record.sealWear == 0, "the built pump's seal is "
-                .. tostring(record.seal) .. " worn " .. tostring(record.sealWear) .. ", not a new " .. case.seal)
-            expect(record.condition == Pumps.BODY_CONDITION, "the built pump's condition is " .. tostring(record.condition))
+            expectEqual("the built pump's seal", record.seal, case.seal)
+            expectEqual("the built pump's seal wear", record.sealWear, 0)
+            expectEqual("the built pump's condition", record.condition, Pumps.BODY_CONDITION)
             for _, fullType in ipairs({ case.seal, DIRTY_LEATHER }) do
-                expect(T.counted(self, fullType) == 0, "building left " .. T.counted(self, fullType) .. " " .. fullType)
+                expectEqual(fullType .. " building left", T.counted(self, fullType), 0)
             end
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoWaterToDraw"))
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Seal", 100))
@@ -139,8 +139,8 @@ T.test("irrigation_pumps_well_fills_a_raised_barrel_until_full", {
         local before, after = self.reads.before, self.reads.after
         expectNear("the barrel's water", after.tank.litres, T.BARREL_LITRES, T.LITRES)
         expect(not after.tank.tainted, "the well's water came out tainted")
-        expect(before.wellLitres ~= nil and after.wellLitres == before.wellLitres, "the well's own container went from "
-            .. tostring(before.wellLitres) .. " to " .. tostring(after.wellLitres))
+        expect(before.wellLitres ~= nil, "the well has no container of its own")
+        expectEqual("the well's own container after pumping", after.wellLitres, before.wellLitres)
         local spec = self.pump.spec
         expectNear("the seal's wear", after.record.sealWear, ROOM, T.LITRES)
         expectNear("the pump's condition", after.record.condition, Pumps.BODY_CONDITION - ROOM / spec.wearLitres, 0.001)
@@ -225,8 +225,7 @@ T.test("irrigation_pumps_one_worker_per_pump", {
         expect(self.heldByMe, "the pump wasn't held for this character while it ran")
         local after = self.reads["let go"]
         expectNear("the tank once this character's work stopped", after.tank.litres, T.BARREL_LITRES, T.LITRES)
-        expect(after.summary.heldBy == nil, "the pump is still held by " .. tostring(after.summary.heldBy)
-            .. " after this character's work stopped")
+        expectEqual("the pump's holder once this character's work stopped", after.summary.heldBy, nil)
     end,
 })
 
@@ -265,8 +264,7 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         expectNear("the barrel after a minute", minute.source.litres, SOURCE_LITRES - rate, T.LITRES)
         expectNear("the tank after the barrel ran dry", hour.tank.litres, SOURCE_LITRES, T.LITRES)
         expect(hour.source and hour.source.dry, "the emptied barrel isn't the pump's dry source")
-        expect(hour.stopped == "Tooltip_EnhancedIrrigation_NoWaterToDraw", "the pump stopped for "
-            .. tostring(hour.stopped))
+        expectEqual("why the pump stopped", hour.stopped, "Tooltip_EnhancedIrrigation_NoWaterToDraw")
     end,
 })
 
@@ -486,18 +484,18 @@ T.test("irrigation_pumps_seal_wears_out_and_is_replaced", {
     validate = function(self)
         local worn = self.reads.worn.steps[1]
         expectNear("the tank after the seal's last litres", worn.tank.litres, SEAL_LEFT, T.LITRES)
-        expect(worn.stopped == "Tooltip_EnhancedIrrigation_SealWornOut", "the pump stopped for " .. tostring(worn.stopped))
+        expectEqual("why the pump stopped", worn.stopped, "Tooltip_EnhancedIrrigation_SealWornOut")
         T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_SealWornOut"))
         T.expectOptionRefused(self, "pump", "Tooltip_EnhancedIrrigation_SealWornOut")
         T.expectOffered(self, "leather")
         T.expectOffered(self, "plunger")
         local leathered, replaced = self.reads.leathered.record, self.reads.replaced.record
-        expect(leathered.seal == T.LEATHER and leathered.sealWear == 0, "the leather went in as "
-            .. tostring(leathered.seal) .. " worn " .. tostring(leathered.sealWear))
-        expect(replaced.seal == PLUNGER and replaced.sealWear == 0, "the plunger went in as "
-            .. tostring(replaced.seal) .. " worn " .. tostring(replaced.sealWear))
+        expectEqual("the seal the leather went in as", leathered.seal, T.LEATHER)
+        expectEqual("the leather seal's wear", leathered.sealWear, 0)
+        expectEqual("the seal the plunger went in as", replaced.seal, PLUNGER)
+        expectEqual("the plunger seal's wear", replaced.sealWear, 0)
         for _, fullType in ipairs({ T.LEATHER, DIRTY_LEATHER, PLUNGER }) do
-            expect(T.counted(self, fullType) == 0, "Replace Seal left " .. T.counted(self, fullType) .. " " .. fullType)
+            expectEqual(fullType .. " Replace Seal left", T.counted(self, fullType), 0)
         end
         expect(T.counted(self, "Base.Screwdriver") == 1, "Replace Seal took the screwdriver")
         T.expectWord(self, "new", getText("IGUI_EnhancedIrrigation_Seal", 100))
@@ -543,7 +541,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
     validate = function(self)
         local worn = self.reads.worn.steps[1]
         expectNear("the tank after the body's last litres", worn.tank.litres, BODY_LEFT * self.pump.spec.wearLitres, T.LITRES)
-        expect(worn.stopped == "Tooltip_EnhancedIrrigation_PumpWornOut", "the pump stopped for " .. tostring(worn.stopped))
+        expectEqual("why the pump stopped", worn.stopped, "Tooltip_EnhancedIrrigation_PumpWornOut")
         T.expectWord(self, "worn", getText("IGUI_EnhancedIrrigation_PumpWornOut"))
         T.expectOptionRefused(self, "pump", "Tooltip_EnhancedIrrigation_PumpWornOut")
         local smashed = self.reads.smashed

@@ -73,10 +73,7 @@ end
 handler("lines.place", function(player, args, defer)
     deferRemoval(args.tiles, defer)
     for _, at in ipairs(args.tiles) do
-        local square = Fixtures.squareAt(at)
-        if not square then
-            return nil, "a loaded square for a line tile at " .. at.x .. "," .. at.y
-        end
+        local square = PZHarness.need(Fixtures.squareAt(at), "a loaded square for a line tile at " .. at.x .. "," .. at.y)
         EI.LineSystem.place(square, at.material or args.material, at.fields)
     end
     return readTiles(args.tiles)
@@ -100,8 +97,7 @@ handler("lines.age", function(player, args)
     local before = readTiles(args.tiles).tiles
     local squaresBefore = Server.readSquares(args.squares)
     for _, at in ipairs(args.tiles) do
-        local record, missing = Server.lineRecordAt(at)
-        if not record then return nil, missing end
+        local record = Server.lineRecordAt(at)
         Server.setFields(record, nil, args.hours)
         record.wetUntil = (record.wetUntil or 0) - args.hours
         record:update()
@@ -117,8 +113,8 @@ end)
 -- feed it, `stopped`, why the water stops, if it does, and `args.squares` as Server.readSquares
 -- reads them in `squares.before` and `squares.after`.
 handler("lines.flow", function(player, args)
-    local tap = EI.Lines.lineAt(args.x, args.y, args.z)
-    if not tap then return nil, "a loaded line tile at " .. args.x .. "," .. args.y .. "," .. args.z end
+    local tap = PZHarness.need(EI.Lines.lineAt(args.x, args.y, args.z),
+        "a loaded line tile at " .. args.x .. "," .. args.y .. "," .. args.z)
     local Tanks = EI.Tanks
     local tank = EI.Taps.tankFor(tap)
     local before = tank and Tanks.litres(tank)
@@ -143,9 +139,7 @@ handler("lines.perform", function(player, args)
     else
         object = EI.Lines.lineAt(args.x, args.y, args.z)
     end
-    if not object then
-        return nil, "the server's object for " .. tostring(args.job) .. " at " .. args.x .. "," .. args.y
-    end
+    PZHarness.need(object, "the server's object for " .. tostring(args.job) .. " at " .. args.x .. "," .. args.y)
     local done = Jobs.perform(EI.LineJobs, EI.LineSystem.site, player, args.job, object, args.with)
     local reply = readTiles(args.tiles or { { x = args.x, y = args.y, z = args.z } })
     reply.done = done == true
@@ -177,12 +171,9 @@ end)
 -- Crops ---------------------------------------------------------------------------------------------
 
 -- Sows carrots on `at`, plowed and seeded as the farming system does them, at `water` water points,
--- taken away when the test ends. Returns what is missing, if anything.
+-- taken away when the test ends; fails the test as missing what it lacks.
 local function sow(at, water, defer)
-    local square = Fixtures.squareAt(at)
-    if not square then
-        return "a loaded square for a crop at " .. at.x .. "," .. at.y
-    end
+    local square = PZHarness.need(Fixtures.squareAt(at), "a loaded square for a crop at " .. at.x .. "," .. at.y)
     local farming = SFarmingSystem.instance
     farming:plow(square)
     defer(function()
@@ -196,21 +187,23 @@ local function sow(at, water, defer)
         end
         square:getModData().plowDay = nil
     end)
-    local plant = farming:getLuaObjectOnSquare(square)
-    if not plant then
-        return "the plowed furrow's record"
-    end
+    local plant = PZHarness.need(farming:getLuaObjectOnSquare(square), "the plowed furrow's record")
     plant:seed("Carrots")
     plant.waterLvl = water
     plant:saveData()
-    return nil
 end
 
--- A sown crop on each of `args.tiles` at `args.water` water points.
+-- A sown crop on each of `args.tiles` at `args.water` water points. Until the test ends vanilla's
+-- drain (SFarmingSystem:lowerWaterLvlAndUpDisease) takes nothing: it lands every few game hours on
+-- a counter that runs on through the whole suite, so the tests' fast clocks would have it take a
+-- point from a crop in whichever test the count happens to reach.
 handler("lines.plant", function(player, args, defer)
+    local farming = SFarmingSystem.instance
+    local own = rawget(farming, "lowerWaterLvlAndUpDisease")
+    farming.lowerWaterLvlAndUpDisease = function() end
+    defer(function() farming.lowerWaterLvlAndUpDisease = own end)
     for _, at in ipairs(args.tiles) do
-        local missing = sow(at, args.water, defer)
-        if missing then return nil, missing end
+        sow(at, args.water, defer)
     end
     return {}
 end)

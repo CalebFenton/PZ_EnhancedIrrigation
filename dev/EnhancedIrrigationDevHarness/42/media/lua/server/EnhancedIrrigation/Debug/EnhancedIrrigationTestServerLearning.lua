@@ -14,10 +14,8 @@ local Fixtures = PZHarness.Fixtures
 -- whose cooldown would make reading it again teach nothing (ISReadABook:complete).
 handler("learning.forgetLiterature", function(player, args)
     local item = player:getInventory():getFirstTypeRecurse(args.type)
-    local title = item and item:getModData().literatureTitle
-    if not title then
-        return nil, "a titled " .. tostring(args.type) .. " in the character's inventory on the server"
-    end
+    local title = PZHarness.need(item and item:getModData().literatureTitle,
+        "a titled " .. tostring(args.type) .. " in the character's inventory on the server")
     player:getReadLiterature():remove(title)
     return {}
 end)

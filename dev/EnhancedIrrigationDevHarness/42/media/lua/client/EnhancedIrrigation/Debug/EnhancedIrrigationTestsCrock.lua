@@ -8,7 +8,7 @@ require "EnhancedIrrigation/UI/TreatmentMenu"
 -- decide what a test sees.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
 local placeUnit, readUntil, run, waitForCopy = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitCopy
 local waitForServer, fillBasin, expectLine, expectBasin = T.waitForUnitServer, T.fillBasin, T.expectLine, T.expectBasin
@@ -32,7 +32,7 @@ T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
     end,
     validate = function(self)
         local craft = self.counts and self.counts.craft or {}
-        expect(craft[UNFIRED] == 1, "shaping made " .. tostring(craft[UNFIRED]) .. " unfired crocks")
+        expectEqual("unfired crocks shaping made", craft[UNFIRED], 1)
         expect(craft["Base.Clay"] == 0 and craft["Base.Charcoal"] == 0, "shaping left clay or charcoal")
     end,
 })
@@ -46,8 +46,8 @@ T.test("irrigation_treatment_crock_fired_in_a_kiln", {
     end,
     validate = function(self)
         local craft = self.counts and self.counts.craft or {}
-        expect(craft[Treatment.CROCK_ITEM] == 1 and craft[UNFIRED] == 0,
-            "firing left " .. tostring(craft[UNFIRED]) .. " unfired and made " .. tostring(craft[Treatment.CROCK_ITEM]))
+        expectEqual("crocks firing made", craft[Treatment.CROCK_ITEM], 1)
+        expectEqual("unfired crocks firing left", craft[UNFIRED], 0)
     end,
 })
 
@@ -75,9 +75,9 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         local taken = self.reads.taken
         expect(not taken.found and not taken.record, "Take Down left the unit or its record")
         local back = self.counts.taken
-        expect(back[Treatment.CROCK_ITEM] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_ITEM]) .. " crocks")
-        expect(back[FORGED_BUCKET] == 1, "Take Down gave back " .. tostring(back[FORGED_BUCKET])
-            .. " forged buckets, the crock's record naming " .. tostring(self.reads.built.record.bucket))
+        expectEqual("crocks Take Down gave back", back[Treatment.CROCK_ITEM], 1)
+        expectEqual("forged buckets Take Down gave back, the crock's record naming "
+            .. tostring(self.reads.built.record.bucket), back[FORGED_BUCKET], 1)
         local bucket = T.carriedFirst(self, FORGED_BUCKET, "bucket")
         expectNear("the bucket's water", bucket.litres, self.litres, T.LITRES)
         expect(not bucket.tainted, "the bucket came back tainted")
@@ -225,10 +225,8 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
         local taken = self.reads.taken
         expect(not taken.found and not taken.record, "Take Down left the unit or its record")
         local back = self.counts.back
-        expect(back[Treatment.CROCK_ITEM] == 0, "Take Down gave back " .. tostring(back[Treatment.CROCK_ITEM])
-            .. " crocks from a cracked one")
-        expect(back[Treatment.CROCK_BUCKET] == 1, "Take Down gave back " .. tostring(back[Treatment.CROCK_BUCKET])
-            .. " plain buckets")
+        expectEqual("crocks Take Down gave back from a cracked one", back[Treatment.CROCK_ITEM], 0)
+        expectEqual("plain buckets Take Down gave back", back[Treatment.CROCK_BUCKET], 1)
         expectNear("the cracked crock's bucket", T.carriedFirst(self, Treatment.CROCK_BUCKET, "bucket").litres, self.litres,
             T.LITRES)
     end,

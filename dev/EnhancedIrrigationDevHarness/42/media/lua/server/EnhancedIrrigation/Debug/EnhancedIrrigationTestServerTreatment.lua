@@ -13,15 +13,7 @@ local unitAt, recordAt, stateAt = Server.treatmentUnitAt, Server.treatmentRecord
 -- Places the unit as Server.placeEntity does (a boiler's OnCreate makes its fireplace), on a floor
 -- laid for it if the square has none (a unit on the storey above). Answers its state.
 handler("treatment.place", function(_, args, defer)
-    local square, missing = Server.squareFor(args, defer, true)
-    if not square then
-        return nil, missing
-    end
-    local record
-    record, missing = Server.placeEntity(square, args, defer, EI.TreatmentSystem, recordAt)
-    if not record then
-        return nil, missing
-    end
+    Server.placeEntity(Server.squareFor(args, defer, true), args, defer, EI.TreatmentSystem, recordAt)
     return stateAt(args)
 end)
 
@@ -33,10 +25,7 @@ end)
 -- `args.fields`, telling the clients each change. Answers the state before (`before`) and after
 -- each hour (`steps`).
 handler("treatment.run", function(_, args)
-    local record = recordAt(args)
-    if not record then
-        return nil, "the record of the unit at " .. args.x .. "," .. args.y
-    end
+    local record = PZHarness.need(recordAt(args), "the record of the unit at " .. args.x .. "," .. args.y)
     Server.setFields(record, args.fields, 0)
     local reply = { before = stateAt(args), steps = {} }
     for _, hours in ipairs(args.hours or {}) do
@@ -51,10 +40,7 @@ end)
 -- `args.hoursAgo` hours if given. Answers `now` and the states before and after in one call, so no
 -- ten-minute event runs in between.
 handler("treatment.update", function(_, args)
-    local record = recordAt(args)
-    if not record then
-        return nil, "the record of the unit at " .. args.x .. "," .. args.y
-    end
+    local record = PZHarness.need(recordAt(args), "the record of the unit at " .. args.x .. "," .. args.y)
     Server.setFields(record, nil, args.hoursAgo)
     local reply = { now = EI.now(), before = stateAt(args) }
     record:update()
@@ -69,9 +55,7 @@ end)
 -- the state.
 handler("treatment.fire", function(_, args)
     local unit, record = unitAt(args), recordAt(args)
-    if not (unit and record and instanceof(unit, "IsoFireplace")) then
-        return nil, "the boiler at " .. args.x .. "," .. args.y
-    end
+    PZHarness.need(unit and record and instanceof(unit, "IsoFireplace"), "the boiler at " .. args.x .. "," .. args.y)
     if args.fuel then
         unit:setFuelAmount(args.fuel)
     end

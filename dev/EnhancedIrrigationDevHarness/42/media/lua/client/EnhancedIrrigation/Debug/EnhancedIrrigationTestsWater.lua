@@ -195,8 +195,9 @@ T.test("irrigation_water_one_person_per_tap", {
         expect(self.walkedOff, "no water ran for this character once the tap was free")
         expect(self.heldByMe, "the tap wasn't held for this character while its water ran")
         local record = self.reads["let go"].tiles[1].record
-        expect(record and record.heldBy == nil, "the tap is still held by " .. tostring(record and record.heldBy)
-            .. " after this character walked off")
+        if expect(record, "the tap's record is gone after this character walked off") then
+            T.expectEqual("the tap's holder after this character walked off", record.heldBy, nil)
+        end
     end,
 })
 

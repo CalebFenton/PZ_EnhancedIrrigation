@@ -66,8 +66,7 @@ T.test("irrigation_salvage_washer_gives_a_part_and_stops_it", {
         local least, most = ApplianceJobs.SALVAGED_CONDITION[1], ApplianceJobs.SALVAGED_CONDITION[2]
         expect(#items == 1 and items[1].condition >= least and items[1].condition <= most,
             "Salvage Pump gave " .. #items .. " pumps" .. (items[1] and " at " .. items[1].condition or ""))
-        local valves = #T.carriedItems(self, EnhancedIrrigation.Valves.WATER_VALVE)
-        expect(valves == 1, "Salvage Pump gave " .. valves .. " Water Valves")
+        T.expectEqual("Water Valves Salvage Pump gave", #T.carriedItems(self, EnhancedIrrigation.Valves.WATER_VALVE), 1)
         T.expectOptionRefused(self, "on", "Tooltip_EnhancedIrrigation_PumpSalvaged")
         expect(not self.reads.forced.activated, "the server switched the stripped washer on")
         T.expectOptionRefused(self, "again", "Tooltip_EnhancedIrrigation_PumpSalvaged")

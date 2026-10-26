@@ -27,10 +27,8 @@ end)
 -- test's queue, so the switch is run here rather than queued.
 handler("appliances.toggle", function(player, args)
     local square = PZHarness.Fixtures.squareAt(args)
-    local washer = square and PZHarness.Fixtures.objectWithSprite(square, args.sprite)
-    if not washer then
-        return nil, "the washer at " .. args.x .. "," .. args.y
-    end
+    local washer = PZHarness.need(square and PZHarness.Fixtures.objectWithSprite(square, args.sprite),
+        "the washer at " .. args.x .. "," .. args.y)
     local combo = instanceof(washer, "IsoCombinationWasherDryer")
     if combo then
         if args.mode then

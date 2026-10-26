@@ -11,7 +11,7 @@ require "EnhancedIrrigation/UI/LinkMenu"
 -- run on the server in one call, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Links, LinkJobs, Pipes = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Pipes
 
 -- What a link pass carries at the link's full rate (links.flow): less than the tests' tanks hold,
@@ -79,9 +79,8 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
         expect(not (self.menu.plumb and self.menu.plumb.submenu), "Plumb to Tank lists tanks to a character who doesn't know how")
         local forced = self.reads.forced
         expect(forced.done == false, "the server plumbed for a character who doesn't know how")
-        expect(forced.links == 0, "the refused plumbing left " .. tostring(forced.links) .. " links")
-        expect(T.counted(self, "Base.MetalPipe") == self.pipes, "the refused plumbing took pipe: "
-            .. T.counted(self, "Base.MetalPipe") .. " left")
+        expectEqual("links the refused plumbing left", forced.links, 0)
+        expectEqual("iron pipe left after the refused plumbing", T.counted(self, "Base.MetalPipe"), self.pipes)
     end,
 })
 
@@ -139,16 +138,15 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
         expect(not self.menu["one tile past"].found, "Plumb to Tank lists a tank " .. (Links.MAX_TILES + 1) .. " tiles away")
         local forced = self.reads.forced
         expect(forced.done == false, "the server plumbed to a tank out of reach")
-        expect(forced.links == 0, "the refused plumbing left " .. tostring(forced.links) .. " links")
+        expectEqual("links the refused plumbing left", forced.links, 0)
         T.expectOffered(self, "at the limit")
         local links = self.reads.links.links
-        if expect(#links == 1, "the server has " .. #links .. " links at the tank") then
-            expect(links[1].kind == "iron" and links[1].lengths == self.lengths,
-                "the link is " .. tostring(links[1].lengths) .. " lengths of " .. tostring(links[1].kind) .. ", not "
-                .. self.lengths .. " of iron")
+        if expectEqual("the server's links at the tank", #links, 1) then
+            expectEqual("the link's pipe", links[1].kind, "iron")
+            expectEqual("the link's lengths", links[1].lengths, self.lengths)
         end
-        expect(T.counted(self, "Base.MetalPipe") == 0, "plumbing left " .. T.counted(self, "Base.MetalPipe") .. " iron pipe")
-        expect(self.viewed == 1, "this client's copy of the list has " .. tostring(self.viewed) .. " links at the tank")
+        expectEqual("iron pipe left after plumbing", T.counted(self, "Base.MetalPipe"), 0)
+        expectEqual("links at the tank in this client's copy of the list", self.viewed, 1)
         expect(T.counted(self, "Base.PipeWrench") == 1, "plumbing used up the pipe wrench")
         expect(self.menu.unplumb.found, "Unplumb doesn't list the plumbed tank")
         expect(not self.menu["plumb again"].found, "Plumb to Tank still lists a tank already plumbed to")
@@ -189,12 +187,12 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
         T.expectOptionRefused(self, "plastic")
         T.expectOffered(self, "lead")
         local links = self.reads.links.links
-        if expect(#links == 1, "the server has " .. #links .. " links at the tank") then
-            expect(links[1].kind == "lead", "the link is " .. tostring(links[1].kind) .. " pipe, not the lead chosen")
+        if expectEqual("the server's links at the tank", #links, 1) then
+            expectEqual("the link's pipe", links[1].kind, "lead")
         end
         local iron, lead = Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item
-        expect(T.counted(self, lead) == 0, "plumbing left " .. T.counted(self, lead) .. " lead pipe")
-        expect(T.counted(self, iron) == self.ironCount, "plumbing with lead took iron pipe: " .. T.counted(self, iron) .. " left")
+        expectEqual("lead pipe left after plumbing", T.counted(self, lead), 0)
+        expectEqual("iron pipe left after plumbing with lead", T.counted(self, iron), self.ironCount)
     end,
 })
 
@@ -238,14 +236,12 @@ T.test("irrigation_links_unplumb_gives_back_the_pipe", {
         T.expectOffered(self, "plumb")
         T.expectOffered(self, "unplumb")
         local links = self.reads.links.links
-        expect(#links == 0, "the server still has " .. #links .. " links after Unplumb")
-        expect(self.viewedPlumbed == 1, "this client's copy had " .. tostring(self.viewedPlumbed) .. " links once plumbed")
-        expect(self.viewedUnplumbed == 0, "this client's copy kept " .. tostring(self.viewedUnplumbed)
-            .. " links after Unplumb")
+        expectEqual("the server's links after Unplumb", #links, 0)
+        expectEqual("links in this client's copy once plumbed", self.viewedPlumbed, 1)
+        expectEqual("links in this client's copy after Unplumb", self.viewedUnplumbed, 0)
         local back = ironConditions()
         for i, condition in ipairs(self.laid) do
-            expect(back[i] == condition, "length " .. i .. " came back at condition " .. tostring(back[i])
-                .. ", laid at " .. condition)
+            expectEqual("the condition length " .. i .. " came back at", back[i], condition)
         end
     end,
 })
@@ -272,7 +268,7 @@ T.test("irrigation_links_levels_tanks_on_one_level", {
     end,
     validate = function(self)
         local passes = self.reads.flow.passes
-        if not expect(#passes == 3, "the flow ran " .. #passes .. " passes") then return end
+        if not expectEqual("the flow's passes", #passes, 3) then return end
         expect(self.ca ~= self.cb, "the two tanks hold the same, so fill can't tell from litres")
         -- At equal fill each tank holds its share of the water by capacity.
         local evenA = self.start * self.ca / (self.ca + self.cb)
@@ -311,7 +307,7 @@ T.test("irrigation_links_fills_downhill_never_uphill", {
     end,
     validate = function(self)
         local down = self.reads.downhill.passes
-        if expect(#down == 2, "the downhill flow ran " .. #down .. " passes") then
+        if expectEqual("the downhill flow's passes", #down, 2) then
             local high, low = self.high, self.low
             for i, pass in ipairs(down) do
                 local moved = math.min(PASS_LITRES, high)
@@ -322,7 +318,7 @@ T.test("irrigation_links_fills_downhill_never_uphill", {
             expect(down[1].b.tainted, "the clean barrel the tainted one filled isn't tainted")
         end
         local up = self.reads.uphill.passes
-        if expect(#up == 1, "the uphill flow ran " .. #up .. " passes") then
+        if expectEqual("the uphill flow's passes", #up, 1) then
             expectNear("the ground barrel linked to a raised one", up[1].a.litres, self.high, T.LITRES)
             expectNear("the raised barrel linked to a ground one", up[1].b.litres, 0, T.LITRES)
         end
@@ -372,11 +368,11 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
         T.expectOffered(self, "unplumb the bare end")
         local want = buriedPipeEast(self.apart)
         local named = self.menu["unplumb the bare end"].name
-        expect(named == want, "Unplumb names the bare end " .. tostring(named) .. ", not " .. want)
+        expectEqual("the name Unplumb gives the bare end", named, want)
         expect(not self.menu["plumb again"].found, "Plumb to Tank lists the tank set back on the plumbed square")
         local forced = self.reads.forced
-        expect(forced.done == false and forced.links == 1, "the server laid a second pipe between the same squares: "
-            .. tostring(forced.links) .. " links")
+        expect(forced.done == false, "the server laid a second pipe between the same squares")
+        expectEqual("links between the same squares", forced.links, 1)
         local joined, moved = self.reads.joined, math.min(PASS_LITRES, self.start / 2)
         expectNear("the tank left, once a tank stands at the other end again", joined.litres, self.start - moved, T.LITRES)
         expectNear("the tank set on the bare end", joined.other.litres, moved, T.LITRES)
@@ -415,10 +411,9 @@ T.test("irrigation_links_unplumb_from_the_bare_floor", {
         T.expectOffered(self, "unplumb")
         local want = buriedPipeEast(self.apart)
         local named = self.menu.unplumb.name
-        expect(named == want, "the bare floor's Unplumb names the pipe " .. tostring(named) .. ", not " .. want)
+        expectEqual("the name the bare floor's Unplumb gives the pipe", named, want)
         expect(#self.reads.links.links == 0, "the server still has the link after Unplumb from the floor")
-        expect(#ironConditions() == self.count, "Unplumb from the floor gave back " .. #ironConditions() .. " iron pipe, not "
-            .. self.count)
+        expectEqual("iron pipe Unplumb from the floor gave back", #ironConditions(), self.count)
     end,
 })
 

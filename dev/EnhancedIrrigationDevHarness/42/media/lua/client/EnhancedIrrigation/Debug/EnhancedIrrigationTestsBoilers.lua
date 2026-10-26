@@ -261,8 +261,8 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.count(self, "used", { "Base.SmallSheetMetal" })
     end,
     validate = function(self)
-        expect(self.reads.scorched.steps[1].summary.condition == Treatment.DRUM_CONDITION - Treatment.WEAR_DRY,
-            "an hour burning dry left the drum at " .. tostring(self.reads.scorched.steps[1].summary.condition))
+        T.expectEqual("the drum's condition after an hour burning dry", self.reads.scorched.steps[1].summary.condition,
+            Treatment.DRUM_CONDITION - Treatment.WEAR_DRY)
         T.expectOffered(self, "pour")
         local holed = self.reads.holed
         expect(holed.before.record.head > 0, "the drum held no water as its last hour began")

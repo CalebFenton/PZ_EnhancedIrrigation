@@ -14,7 +14,7 @@ require "EnhancedIrrigation/UI/FixtureMenu"
 -- day 0.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Links, LinkJobs, Fixtures = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Fixtures
 local LinkMenu = EnhancedIrrigation.LinkMenu
 
@@ -202,8 +202,7 @@ T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
         T.expectOffered(self, "unplumb")
         expect(self.viewed, "this client's own copy of the list never had the sink's link")
         expect(not self.reads.unplumbed.linked, "the server kept the link")
-        expect(T.counted(self, "Base.MetalPipe") == 1, "Unplumb gave back " .. T.counted(self, "Base.MetalPipe")
-            .. " iron pipe, not 1")
+        expectEqual("iron pipe Unplumb gave back", T.counted(self, "Base.MetalPipe"), 1)
         local after = self.reads.refill.passes[1]
         expect(after.buffer, "the unplumbed sink lost its buffer")
         expectNear("the unplumbed sink's buffer after a pass", after.inBuffer, 0, T.LITRES)
@@ -341,15 +340,14 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
         -- accepts a barrel other than vanilla's choice.
         expect(self.preferred and EnhancedIrrigation.sameSquare(self.preferred, T.at(self.full)),
             "vanilla's plumbing doesn't prefer the barrel holding water")
-        expect(self.emptyRefusal == nil, "Plumb Above toward the empty barrel is refused: " .. tostring(self.emptyRefusal))
-        expect(self.farRefusal == "Tooltip_EnhancedIrrigation_OutOfReach",
-            "Plumb Above toward a barrel two tiles off is refused with " .. tostring(self.farRefusal))
+        expectEqual("Plumb Above toward the empty barrel's refusal", self.emptyRefusal, nil)
+        expectEqual("Plumb Above toward a barrel two tiles off's refusal", self.farRefusal,
+            "Tooltip_EnhancedIrrigation_OutOfReach")
         local far = self.reads.far
         expect(far.done == false and not far.linked, "the server plumbed the sink to a barrel two tiles off")
         local plumbed = self.reads.plumbed
         expect(plumbed.done and plumbed.linked, "the server refused to plumb the sink to the empty barrel")
-        expect(plumbed.tank and plumbed.tank.links == 1, "the empty barrel has "
-            .. tostring(plumbed.tank and plumbed.tank.links) .. " links, not the sink's")
+        expectEqual("the empty barrel's links", plumbed.tank and plumbed.tank.links, 1)
         expect(self.reads.full.links == 0, "the sink was plumbed to the barrel vanilla prefers, not the one chosen")
     end,
 })
@@ -434,14 +432,9 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
             local sink = T.copyOf(self.sink)
             local context = T.need(self, sink and T.worldMenu(sink), "a world menu for the sink")
             if not context then return end
-            local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
-            local fill = T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
-            self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
-            self.fill = T.offered(fill)
-            self.wash = T.offered(T.findNamed(context, getText("ContextMenu_Wash")))
-            if fill then
-                T.choose(fill)
-            end
+            T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
+            T.noteOption(self, "wash", T.findNamed(context, getText("ContextMenu_Wash")))
+            T.chooseOption(self, "fill", T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater))
             context:hideAndChildren()
         end)
         local left = sinkLitres() - 10
@@ -452,11 +445,13 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
         end, "this client's copy of the filled bucket")
     end,
     validate = function(self)
-        expect(self.drink, "the sink's menu offers no Drink")
-        expect(self.drinkTooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil,
-            "Drink's tooltip doesn't warn of tainted water: " .. self.drinkTooltip)
-        expect(self.fill, "the sink's menu offers no Fill for the bucket")
-        expect(self.wash, "the sink's menu offers no Wash for the dirty rag")
+        if T.expectOffered(self, "drink") then
+            local tooltip = self.menu.drink.tooltip
+            expect(tooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil,
+                "Drink's tooltip doesn't warn of tainted water: " .. tooltip)
+        end
+        T.expectOffered(self, "fill")
+        T.expectOffered(self, "wash")
         expectFixture("the server, drawn", self.reads.drawn, { litres = sinkLitres() - 10, tainted = true })
         local water = self.items.items[1]:getFluidContainer()
         expectNear("the bucket's water", water:getAmount(), 10, T.LITRES)
@@ -485,8 +480,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
             self.client = clientState(self.sink)
             local context = T.need(self, T.copyOf(self.sink) and T.worldMenu(T.copyOf(self.sink)), "a world menu for the sink")
             if not context then return end
-            local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
-            self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
+            T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
             context:hideAndChildren()
         end)
     end,
@@ -501,9 +495,10 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
             end
         end
         expectTankLitres("the server", after.tank, TANK_LITRES)
-        expect(self.drink, "the plumbed sink's menu offers no Drink")
-        expect(self.drinkTooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) == nil,
-            "Drink's tooltip warns of tainted water at a town tap")
+        if T.expectOffered(self, "drink") then
+            expect(self.menu.drink.tooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) == nil,
+                "Drink's tooltip warns of tainted water at a town tap")
+        end
     end,
 })
 
@@ -556,6 +551,6 @@ T.test("irrigation_fixtures_washer_keeps_its_switch", {
     end,
     validate = function(self)
         expect(self.isWasher, "this client's copy of the washer isn't a washing machine")
-        expect(self.switches == 1, "the washer's menu has " .. tostring(self.switches) .. " Turn On options, not 1")
+        expectEqual("the washer's Turn On options", self.switches, 1)
     end,
 })

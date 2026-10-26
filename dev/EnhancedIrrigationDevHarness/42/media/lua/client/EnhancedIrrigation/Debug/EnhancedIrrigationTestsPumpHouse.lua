@@ -16,7 +16,7 @@ require "EnhancedIrrigation/UI/LineMenu"
 -- clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Sprites, Pumps, PumpJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 local Lines, LineJobs = EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Parts = EnhancedIrrigation.Parts
@@ -51,8 +51,8 @@ for _, case in ipairs({ { entity = T.WOOD, name = "wood" }, { entity = T.METAL, 
         validate = function(self)
             local record = self.reads.built.record
             if not expect(record, "the built house has no record") then return end
-            expect(record.unit == case.entity and record.part == nil, "the built house is " .. tostring(record.unit)
-                .. " with " .. tostring(record.part) .. " in it")
+            expectEqual("the built house", record.unit, case.entity)
+            expectEqual("the built house's part", record.part, nil)
             T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_NoPumpFitted"))
             T.expectOptionRefused(self, "on", "Tooltip_EnhancedIrrigation_NoPumpFitted")
         end,
@@ -93,19 +93,18 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
     validate = function(self)
         T.expectOffered(self, "fit")
         local record = self.reads.fitted.record
-        expect(record.part == APPLIANCE and record.partCondition == WORN and record.partCeiling == CEILING,
-            "the fitted part is " .. tostring(record.part) .. " at " .. tostring(record.partCondition) .. " of "
-            .. tostring(record.partCeiling))
+        expectEqual("the fitted part", record.part, APPLIANCE)
+        expectEqual("the fitted part's condition", record.partCondition, WORN)
+        expectEqual("the fitted part's ceiling", record.partCeiling, CEILING)
         T.expectWord(self, "fitted", partWord(APPLIANCE, WORN))
         T.expectOffered(self, "take out")
-        expect(self.reads.taken.record.part == nil, "Take Out Pump left " .. tostring(self.reads.taken.record.part)
-            .. " in the house")
+        expectEqual("the part Take Out Pump left in the house", self.reads.taken.record.part, nil)
         local items = T.carriedItems(self, APPLIANCE)
-        local ceiling = T.ceilingOf(items[1])
-        expect(#items == 1 and items[1].condition == WORN and ceiling == CEILING, "the server's part came back as "
-            .. (items[1] and (items[1].condition .. " of " .. ceiling) or "nothing"))
-        expect(self.back and self.back:getCondition() == WORN and Parts.ceilingOf(self.back) == CEILING,
-            "this client's part came back at " .. tostring(self.back and self.back:getCondition()))
+        expectEqual("the parts the server's character carries", #items, 1)
+        expectEqual("the server's part's condition", items[1] and items[1].condition, WORN)
+        expectEqual("the server's part's ceiling", T.ceilingOf(items[1]), CEILING)
+        expectEqual("this client's part's condition", self.back and self.back:getCondition(), WORN)
+        expectEqual("this client's part's ceiling", self.back and Parts.ceilingOf(self.back), CEILING)
     end,
 })
 
@@ -140,9 +139,9 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     validate = function(self)
         T.expectOffered(self, "take out")
         local items = T.carriedItems(self, APPLIANCE)
-        expect(#items == 1 and items[1].condition == WORN, "the server's part came back at "
-            .. (items[1] and items[1].condition or "nothing"))
-        expect(self.backCondition == WORN, "this client's part came back at " .. tostring(self.backCondition))
+        expectEqual("the parts the server's character carries", #items, 1)
+        expectEqual("the server's part's condition", items[1] and items[1].condition, WORN)
+        expectEqual("this client's part's condition", self.backCondition, WORN)
         T.expectOffered(self, "fit")
         expectNear("the part fitted again", self.reads.refitted.record.partCondition, WORN + FRACTION, 0.0001)
     end,
@@ -242,7 +241,7 @@ T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
     validate = function(self)
         local after = self.reads.burnt.after
         expectNear("the barrel when the part burnt out", after.tank.litres, T.BARREL_LITRES, T.LITRES)
-        expect(after.record.partCondition == 0, "the part is left at " .. after.record.partCondition)
+        expectEqual("the burnt-out part's condition", after.record.partCondition, 0)
     end,
 })
 
@@ -290,9 +289,9 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
     validate = function(self)
         local Valves = EnhancedIrrigation.Valves
         T.expectOffered(self, "fit")
-        expect(self.reads.fitted.record.timer.item == Valves.TIMER, "the fitted timer is " .. tostring(self.reads.fitted.record.timer.item))
+        expectEqual("the fitted timer", self.reads.fitted.record.timer.item, Valves.TIMER)
         T.expectOffered(self, "set")
-        expect(self.reads.set.record.timer.start == self.start, "the timer starts at " .. tostring(self.reads.set.record.timer.start))
+        expectEqual("the timer's start", self.reads.set.record.timer.start, self.start)
         local hours = self.reads.hours
         expectNear("the barrel after its window", hours.after.tank.litres - hours.before.tank.litres, lifts(APPLIANCE, 0.5), T.LITRES)
         expectNear("the part after its window", hours.before.record.partCondition - hours.after.record.partCondition,
@@ -301,8 +300,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         T.expectWord(self, "set", Valves.describe({ item = Valves.TIMER, start = self.start, minutes = 30 }))
         T.expectOffered(self, "take off")
         expect(self.reads.off.record.timer == nil, "Take Off Timer left the timer in the house")
-        local back = #T.carriedItems(self, Valves.TIMER)
-        expect(back == 1, "Take Off Timer gave back " .. back .. " timers")
+        expectEqual("timers Take Off Timer gave back", #T.carriedItems(self, Valves.TIMER), 1)
     end,
 })
 
@@ -447,13 +445,12 @@ T.test("irrigation_pump_house_make_utility_pump", {
     end,
     validate = function(self)
         local craft = self.counts.craft or {}
-        expect(craft[UTILITY] == 1, "the craft made " .. tostring(craft[UTILITY]) .. " Utility Pumps")
+        expectEqual("Utility Pumps the craft made", craft[UTILITY], 1)
         for _, fullType in ipairs({ "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }) do
-            expect(craft[fullType] == 0, "the craft left " .. tostring(craft[fullType]) .. " " .. fullType)
+            expectEqual(fullType .. " the craft left", craft[fullType], 0)
         end
         local made = T.carriedFirst(self, UTILITY, "made")
-        local ceiling = T.ceilingOf(made)
-        expect(made and made.condition == Pumps.MADE_CEILING and ceiling == Pumps.MADE_CEILING,
-            "the made pump is at " .. tostring(made and made.condition) .. " of " .. tostring(ceiling))
+        expectEqual("the made pump's condition", made and made.condition, Pumps.MADE_CEILING)
+        expectEqual("the made pump's ceiling", T.ceilingOf(made), Pumps.MADE_CEILING)
     end,
 })

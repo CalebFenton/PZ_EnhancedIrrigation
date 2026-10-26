@@ -72,17 +72,13 @@ test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
 })
 
 -- Queues giving the character a `fullType`, as self.items[label], and choosing Research from its
--- right-click menu, noting in self.offered whether the menu offered it; `name` names the item.
+-- right-click menu, noted as self.menu.research; `name` names the item.
 local function research(self, label, fullType, name)
     T.give(self, label, { { type = fullType } })
     T.step(function()
         local context = T.inventoryMenu(self.items[label][1])
         if not T.need(self, context, "the " .. name .. "'s right-click menu") then return end
-        local option = T.findNamed(context, getText("ContextMenu_ResearchCraft"))
-        self.offered = T.offered(option)
-        if self.offered then
-            T.choose(option)
-        end
+        T.chooseOption(self, "research", T.findNamed(context, getText("ContextMenu_ResearchCraft")))
         context:hideAndChildren()
     end)
 end
@@ -100,7 +96,7 @@ test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
         T.waitForKnown(self, RECIPES, marked(CROCK))
     end,
     validate = function(self)
-        expect(self.offered, "the Clay Jar's menu offers no Research")
+        T.expectOffered(self, "research")
         T.expectKnown(self, RECIPES, "researching a Clay Jar", marked(CROCK))
     end,
 })
@@ -120,71 +116,19 @@ test("irrigation_learning_researching_a_metal_drum_teaches_the_boilers", {
         T.waitForKnown(self, RECIPES, marked(BOILERS))
     end,
     validate = function(self)
-        expect(self.offered, "the Metal Drum's menu offers no Research")
+        T.expectOffered(self, "research")
         T.expectKnown(self, RECIPES, "researching a Metal Drum", marked(BOILERS))
     end,
 })
 
--- For each perk and level the recipes' AutoLearn skills name, a character who knows none of them
--- levels that perk up to that level, every other at 0, and then knows exactly the recipes whose
--- AutoLearn it meets, on both sides: vanilla's AutoLearn teaches Plumb to Tank, a craftRecipe, and
--- cf_commonlib's LevelPerk hook (RecipeLearning) the builds, since vanilla's skips build recipes.
--- Catches a recipe taught a level early or never, or taught on one side only.
-test("irrigation_learning_level_up_teaches_at_the_auto_learn_level", {
+-- Learning by skill level (the harness's T.autoLearnTests): vanilla's AutoLearn teaches Plumb to
+-- Tank, a craftRecipe, and cf_commonlib's LevelPerk hook (RecipeLearning) the builds, since
+-- vanilla's skips build recipes.
+T.autoLearnTests("irrigation", RECIPES, {
     timeoutSeconds = 135,
-    run = function(self)
-        local rows = T.autoLearnLevels(RECIPES)
-        if not T.need(self, #rows > 0, "an AutoLearn skill on " .. table.concat(RECIPES, " or ")) then return end
-        self.rows, self.results = rows, {}
-        for i, row in ipairs(rows) do
-            -- Each row starts knowing none; the end of the test puts back what was known before.
-            T.knowRecipes(self, RECIPES, false)
-            T.levelUp(self, row.perk, T.autoLearnLevelsWith(rows, row.perk, row.level - 1))
-            T.waitForKnown(self, RECIPES, T.autoLearnedAt(RECIPES, row.perk, row.level))
-            T.step(function()
-                self.results[i] = { up = self.server["PZHarness.levelUp"] or {}, known = self.known }
-            end)
-        end
-    end,
-    validate = function(self)
-        for i, row in ipairs(self.rows or {}) do
-            local result = self.results[i] or {}
-            local up, what = result.up or {}, row.perk .. " " .. row.level
-            expect(up.before == row.level - 1 and up.after == row.level, row.perk .. " went from " .. tostring(up.before)
-                .. " to " .. tostring(up.after) .. ", expected " .. (row.level - 1) .. " to " .. row.level)
-            self.known = result.known
-            T.expectKnown(self, RECIPES, what, T.autoLearnedAt(RECIPES, row.perk, row.level))
-        end
-    end,
-})
-
--- A character who reached the highest AutoLearn level before the mod was added joins a server: the
--- client asks the server to catch up as it enters the world (RecipeLearning's OnCreatePlayer), and
--- the server, which runs no check of its own on a join, teaches what that level earns and tells the
--- client. Catches a joining character left without recipes the server then refuses to use.
-test("irrigation_learning_joining_server_catches_up_earned_recipes", {
-    mpOnly = "single player has one copy of the character, which IsoWorld.init's own check covers",
-    run = function(self)
-        local rows, highest = T.autoLearnLevels(RECIPES)
-        if not T.need(self, highest, "an AutoLearn skill on " .. table.concat(RECIPES, " or ")) then return end
-        self.highest = highest
-        T.knowRecipes(self, RECIPES, false)
-        T.setLevelsQuietly(self, T.autoLearnLevelsWith(rows, highest.perk, highest.level), RECIPES)
-        T.step(function()
-            sendClientCommand(T.player(), RecipeLearning.COMMAND_MODULE, RecipeLearning.CATCH_UP, {})
-        end)
-        T.waitForKnown(self, RECIPES, T.autoLearnedAt(RECIPES, highest.perk, highest.level))
-    end,
-    validate = function(self)
-        local before = self.server["PZHarness.setLevelsQuietly"] or {}
-        local knewAny = not before.known
-        for _, name in ipairs(RECIPES) do
-            knewAny = knewAny or before.known[name] == true
-        end
-        expect(not knewAny, "setting the levels alone taught the server a recipe, so the catch-up is untested")
-        local highest = self.highest
-        T.expectKnown(self, RECIPES, "joining at " .. highest.perk .. " " .. highest.level,
-            T.autoLearnedAt(RECIPES, highest.perk, highest.level))
+    -- RecipeLearning's OnCreatePlayer request.
+    catchUp = function()
+        sendClientCommand(T.player(), RecipeLearning.COMMAND_MODULE, RecipeLearning.CATCH_UP, {})
     end,
 })
 

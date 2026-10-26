@@ -56,17 +56,10 @@ end
 -- there is none. A Pump House is given `args.part` ({ type, condition, ceiling, fraction }, each but
 -- the type as a new one's unless given) as Fit Pump fits that item. Answers its state.
 handler("pumps.place", function(player, args, defer)
-    local square, missing = Server.squareFor(args, defer)
-    if not square then
-        return nil, missing
-    end
-    local record
-    record, missing = Server.placeEntity(square, args, defer, EI.PumpSystem, recordAt, function(placed)
-        if not args.part then return nil end
-        local item = instanceItem(args.part.type)
-        if not item then
-            return "the part " .. tostring(args.part.type)
-        end
+    local square = Server.squareFor(args, defer)
+    Server.placeEntity(square, args, defer, EI.PumpSystem, recordAt, function(placed)
+        if not args.part then return end
+        local item = PZHarness.need(instanceItem(args.part.type), "the part " .. tostring(args.part.type))
         if args.part.condition then
             item:setCondition(args.part.condition)
         end
@@ -75,11 +68,7 @@ handler("pumps.place", function(player, args, defer)
         end
         item:getModData()[EI.Pumps.FRACTION_KEY] = args.part.fraction
         placed:fitPart(item)
-        return nil
     end)
-    if not record then
-        return nil, missing
-    end
     return stateAt(player, args)
 end)
 
@@ -90,10 +79,8 @@ end)
 -- Plumbs the pump's outlet to the tank or line tile at `args.tank` with the new iron pipe Plumb
 -- Outlet lays for the run (LinkJobs.pipeFor), as its job does once done. Answers the state.
 handler("pumps.link", function(player, args)
-    local pump, record = pumpAt(args), recordAt(args)
-    if not (pump and record) then
-        return nil, "the pump at " .. args.x .. "," .. args.y
-    end
+    local pump = PZHarness.need(pumpAt(args), "the pump at " .. args.x .. "," .. args.y)
+    local record = PZHarness.need(recordAt(args), "the pump's record at " .. args.x .. "," .. args.y)
     local kind, lengths = EI.LinkJobs.pipeFor(pump, EI.Links.encode(args.tank, "iron"))
     EI.LinkSystem.instance:addLink(EI.squareOf(pump), args.tank, kind, lengths, nil, "pump")
     record:sendSummary()
@@ -104,10 +91,8 @@ end)
 -- (PumpSystem.run). Answers the state before, `before`, and after each run, in `steps`, each with
 -- the run's `stopped` key, if any.
 handler("pumps.run", function(player, args)
-    local pump, record = pumpAt(args), recordAt(args)
-    if not (pump and record) then
-        return nil, "the pump at " .. args.x .. "," .. args.y
-    end
+    local pump = PZHarness.need(pumpAt(args), "the pump at " .. args.x .. "," .. args.y)
+    PZHarness.need(recordAt(args), "the pump's record at " .. args.x .. "," .. args.y)
     local reply = { before = stateAt(player, args), steps = {} }
     for _, hours in ipairs(args.hours or {}) do
         local stopped = EI.PumpSystem.run(player, pump, hours)
@@ -123,10 +108,7 @@ end)
 -- ten-minute pass (PumpObject.update). Answers the clock's time, `now`, and the state before and
 -- after, all in one call, so no ten-minute event runs in between.
 handler("pumps.update", function(player, args)
-    local record = recordAt(args)
-    if not record then
-        return nil, "the record of the Pump House at " .. args.x .. "," .. args.y
-    end
+    local record = PZHarness.need(recordAt(args), "the record of the Pump House at " .. args.x .. "," .. args.y)
     Server.setFields(record, args.fields, args.hoursAgo)
     Server.setWater(args.squares, args.water)
     local reply = { now = EI.now(), before = stateAt(player, args) }

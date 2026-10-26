@@ -50,7 +50,7 @@ end
 --- basin empty and locked.
 function T.expectBuiltUnit(self, entity)
     local built = self.reads.built
-    T.expect(built.entity == entity, "the build menu built " .. tostring(built.entity))
+    T.expectEqual("the entity the build menu built", built.entity, entity)
     T.expect(built.record and built.record.head == 0, "the built " .. entity .. " has no record, or water in its head")
     T.expect(built.basin and built.basin.litres == 0 and built.basin.locked,
         "the built " .. entity .. "'s basin isn't empty and locked")
@@ -168,27 +168,24 @@ function T.vanillaBasinTest(case)
                 local copy = T.copyOf(self.unit)
                 local context = T.need(self, copy and T.worldMenu(copy), "a world menu for the unit")
                 if not context then return end
-                local drink = T.optionRunning(context, ISWorldObjectContextMenu.onDrink)
-                local fill = T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater)
-                self.drink, self.drinkTooltip = T.offered(drink), T.tooltipOf(drink)
-                self.fill = T.offered(fill)
-                self.empty = T.offered(T.optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
+                T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
+                T.noteOption(self, "empty", T.optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
                 self.pour = T.findNamed(context, getText("ContextMenu_AddFluidFromItem")) ~= nil
-                if fill then
-                    T.choose(fill)
-                end
+                T.chooseOption(self, "fill", T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater))
                 context:hideAndChildren()
             end)
             T.readUnitUntil(self, self.unit, "drawn", function(state) return state.basin.litres < case.litres - 1 end)
             T.readCarried(self, { "Base.Bucket" }, nil, "bucket")
         end,
         validate = function(self)
-            T.expect(self.drink, "the menu offers no Drink")
-            local warns = self.drinkTooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil
-            T.expect(warns == case.tainted, "Drink's tooltip " .. (warns and "warns" or "doesn't warn")
-                .. " of tainted water: " .. self.drinkTooltip)
-            T.expect(self.fill, "the menu offers no Fill for the bucket")
-            T.expect(self.empty, "the menu offers no Empty")
+            if T.expectOffered(self, "drink") then
+                local tooltip = self.menu.drink.tooltip
+                local warns = tooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil
+                T.expect(warns == case.tainted, "Drink's tooltip " .. (warns and "warns" or "doesn't warn")
+                    .. " of tainted water: " .. tooltip)
+            end
+            T.expectOffered(self, "fill")
+            T.expectOffered(self, "empty")
             T.expect(not self.pour, "the menu offers vanilla's pour into the basin")
             local bucket = T.carriedFirst(self, "Base.Bucket", "bucket")
             T.expect(bucket.litres > case.inBucket + 1, "Fill took nothing from the basin")

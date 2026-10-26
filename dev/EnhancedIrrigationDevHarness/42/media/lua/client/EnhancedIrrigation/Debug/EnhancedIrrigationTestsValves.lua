@@ -10,7 +10,7 @@ require "EnhancedIrrigation/UI/ValveUI"
 -- doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Sprites, Lines, LineJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.LineJobs
 local Valves, LineMenu, ValveUI = EnhancedIrrigation.Valves, EnhancedIrrigation.LineMenu, EnhancedIrrigation.ValveUI
 
@@ -96,15 +96,14 @@ T.test("irrigation_valves_fit_and_take_off", {
     validate = function(self)
         T.expectOptionRefused(self, "none", "Tooltip_EnhancedIrrigation_NoValve")
         T.expectOffered(self, "fit")
-        expect(self.reads.fitted.valve.item == Valves.WIND_UP, "the tap's valve is " .. tostring(self.reads.fitted.valve.item))
+        expectEqual("the tap's valve", self.reads.fitted.valve.item, Valves.WIND_UP)
         local overlays = self.reads.shown.tiles[1].overlays or {}
         expect(T.hasOverlay(overlays, Sprites.TAP_VALVES[Valves.WIND_UP]), "the tap shows no valve: "
             .. table.concat(overlays, ", "))
         expect(#T.carriedItems(self, Valves.WIND_UP, "carriedFitted") == 0, "the fitted valve is still carried")
         T.expectOffered(self, "takeOff")
-        expect(self.reads.off.valve.item == nil, "the tap still has its " .. tostring(self.reads.off.valve.item) .. " after Take Off Valve")
-        local off = #T.carriedItems(self, Valves.WIND_UP, "carriedOff")
-        expect(off == 1, "Take Off Valve gave back " .. off .. " valves")
+        expectEqual("the tap's valve after Take Off Valve", self.reads.off.valve.item, nil)
+        expectEqual("valves Take Off Valve gave back", #T.carriedItems(self, Valves.WIND_UP, "carriedOff"), 1)
     end,
 })
 
@@ -122,8 +121,7 @@ T.test("irrigation_valves_take_up_gives_the_valve_back", {
     end,
     validate = function(self)
         T.expectOffered(self, "takeUp")
-        local back = #T.carriedItems(self, Valves.TIMER)
-        expect(back == 1, "Take Up Pipe gave back " .. back .. " Timer Valves")
+        expectEqual("Timer Valves Take Up Pipe gave back", #T.carriedItems(self, Valves.TIMER), 1)
     end,
 })
 
@@ -151,7 +149,7 @@ T.test("irrigation_valves_wind_up_runs_its_minutes_and_shuts", {
         end)
     end,
     validate = function(self)
-        expect(self.panelBlocker == nil, "the panel refused winding: " .. tostring(self.panelBlocker))
+        expectEqual("the panel's refusal to wind", self.panelBlocker, nil)
         local wound = self.reads.wound.valve
         expectNear("the minutes wound", (wound.untilHour - wound.now) * 60, 10, 1)
         T.expectOptionRefused(self, "water", "Tooltip_EnhancedIrrigation_ValveRunning")
@@ -190,10 +188,10 @@ end
 
 --- Expects the panel's setting to have reached the valve.
 local function expectSet(self)
-    expect(self.panelBlocker == nil, "the panel refused the setting: " .. tostring(self.panelBlocker))
+    expectEqual("the panel's refusal of the setting", self.panelBlocker, nil)
     local set = self.reads.set.valve
-    expect(set.start == self.start, "the timer starts at " .. tostring(set.start) .. ", not " .. self.start)
-    expect(set.minutes == 30, "the timer runs " .. tostring(set.minutes) .. " minutes")
+    expectEqual("the timer's start", set.start, self.start)
+    expectEqual("the timer's minutes", set.minutes, 30)
 end
 
 for _, case in ipairs({ { name = "timer", item = Valves.TIMER }, { name = "sprinkler_timer", item = Valves.SPRINKLER_TIMER } }) do

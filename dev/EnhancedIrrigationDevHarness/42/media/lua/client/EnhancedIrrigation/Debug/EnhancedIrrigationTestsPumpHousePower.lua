@@ -10,7 +10,7 @@ require "EnhancedIrrigation/UI/PumpMenu"
 -- clock doesn't decide the sums.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Pumps, PumpJobs = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs
 
 local APPLIANCE, UTILITY = Pumps.APPLIANCE_PUMP, Pumps.UTILITY_PUMP
@@ -216,7 +216,7 @@ T.test("irrigation_pump_house_power_pays_its_debt_switched_off", {
         local paid = self.reads.paid.after
         expectNear("the payer's fuel once the debt is paid", paid.generator.fuel,
             self.reads.payer.fuel - (owing.owedFuel or 0), FUEL_TOLERANCE)
-        expect(paid.record.owedFuel == nil, "the house still owes " .. tostring(paid.record.owedFuel))
+        expectEqual("the fuel the house still owes", paid.record.owedFuel, nil)
     end,
 })
 
@@ -345,7 +345,7 @@ T.test("irrigation_pump_house_power_tells_a_bank_what_it_draws", {
     validate = function(self)
         local draws = self.reads.draws.draws
         for i, what in ipairs({ "the switched-on house", "the house in its timer's window" }) do
-            expect(draws[i].kind == "IGUI_EnhancedIrrigation_PumpHouseLoad", what .. " reports the load " .. tostring(draws[i].kind))
+            expectEqual(what .. "'s load", draws[i].kind, "IGUI_EnhancedIrrigation_PumpHouseLoad")
             expectNear(what .. "'s draw", draws[i].fuel or 0, Pumps.PARTS[UTILITY].fuel, 0.0001)
         end
         expect(draws[3].kind == nil, "a house a generator pays for also bills the bank")

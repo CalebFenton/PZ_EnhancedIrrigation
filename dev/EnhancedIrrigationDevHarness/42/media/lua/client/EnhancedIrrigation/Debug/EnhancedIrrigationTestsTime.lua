@@ -8,7 +8,7 @@ require "EnhancedIrrigation/Frost"
 -- had passed since its last pass, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Sprites, Lines, Frost = EnhancedIrrigation.Sprites, EnhancedIrrigation.Lines, EnhancedIrrigation.Frost
 
 -- How long the root rot test's soil stays waterlogged as it dries; the test ages it twice that.
@@ -163,12 +163,10 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
         expect(away.record.cracked, "the full pipe came through the hard freeze whole")
         expect(back.record.cracked and not back.record.wet, "the server's record, loaded again: cracked "
             .. tostring(back.record.cracked) .. ", wet " .. tostring(back.record.wet))
-        expect(back.sprite == Sprites.pipe("iron", false, 0), "the server shows the dried tile as " .. tostring(back.sprite))
+        expectEqual("the server's sprite of the dried tile", back.sprite, Sprites.pipe("iron", false, 0))
         local summary = T.lineSummary(self.tile)
         expect(summary.cracked, "this client's summary of the tile isn't cracked")
-        expect(summary.soil == nil, "this client still names the dried soil " .. tostring(summary.soil)
-            .. " at the server's soak " .. tostring(back.record.soak))
-        expect(T.lineSprite(self.tile) == Sprites.pipe("iron", false, 0),
-            "this client shows the dried tile as " .. tostring(T.lineSprite(self.tile)))
+        expectEqual("this client's soil word at the server's soak " .. tostring(back.record.soak), summary.soil, nil)
+        expectEqual("this client's sprite of the dried tile", T.lineSprite(self.tile), Sprites.pipe("iron", false, 0))
     end,
 })

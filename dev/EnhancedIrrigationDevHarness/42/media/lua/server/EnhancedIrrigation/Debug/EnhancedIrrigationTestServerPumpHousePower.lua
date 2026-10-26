@@ -17,10 +17,7 @@ local recordAt = Server.pumpRecordAt
 -- hour now for an hour.
 handler("pumpHouse.bankDraw", function(_, args)
     local record = recordAt(args)
-    local house = record and record:getIsoObject()
-    if not house then
-        return nil, "the Pump House at " .. args.x .. "," .. args.y
-    end
+    local house = PZHarness.need(record and record:getIsoObject(), "the Pump House at " .. args.x .. "," .. args.y)
     local condition = record.partCondition
     local draws = {}
     for i, fields in ipairs(args.cases) do
@@ -40,10 +37,7 @@ end)
 -- new square where there is none, as on a floor above open ground, whose square only comes to be
 -- with it. Answers its fuel. Switched off and taken away when the test ends.
 handler("pumpHouse.generator", function(_, args, defer)
-    local square, missing = Server.squareFor(args, defer)
-    if not square then
-        return nil, missing
-    end
+    local square = Server.squareFor(args, defer)
     local generator = IsoGenerator.new(instanceItem("Base.Generator"), square:getCell(), square)
     defer(function() PZHarness.Fixtures.removePlaced(generator) end)
     generator:setConnected(true)

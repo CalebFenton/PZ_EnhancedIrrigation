@@ -10,7 +10,7 @@ require "EnhancedIrrigation/UI/LineMenu"
 -- smashing with vanilla's sledgehammer cursor.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local expectOffered, expectOptionRefused = T.expectOffered, T.expectOptionRefused
 local Sprites, Pipes, Lines = EnhancedIrrigation.Sprites, EnhancedIrrigation.Pipes, EnhancedIrrigation.Lines
 local LineJobs, LineMenu = EnhancedIrrigation.LineJobs, EnhancedIrrigation.LineMenu
@@ -79,8 +79,7 @@ T.test("irrigation_lines_drill_holes_tool_gate", {
         expectOptionRefused(self, "awl on clay", "Tooltip_EnhancedIrrigation_NoHoleMaker")
         expectOffered(self, "awl on plastic")
         expectOffered(self, "hand drill on iron")
-        expect(self.drills["hand drill on iron"] == 1, "carrying an awl and a hand drill, the menu has "
-            .. tostring(self.drills["hand drill on iron"]) .. " Drill Holes options")
+        expectEqual("Drill Holes options carrying an awl and a hand drill", self.drills["hand drill on iron"], 1)
         expect(not self.menu["holed plastic"].found, "a holed tile still offers Drill Holes")
         local drilled = self.reads.drilled.tiles
         expect(drilled[1].record.holed and drilled[3].record.holed, "the server has the iron or the plastic tile unholed")
@@ -123,9 +122,7 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
         local tooltip = self.menu.nail.tooltip
         expect(tooltip:find(getText("Tooltip_EnhancedIrrigation_MayCrack"), 1, true) ~= nil,
             "the tooltip doesn't warn the nail may split plastic: " .. tooltip)
-        local left = T.counted(self, "Base.Nails")
-        expect(left == self.nails - self.need, "drilling left " .. left .. " of " .. self.nails .. " nails, not "
-            .. (self.nails - self.need))
+        expectEqual("nails drilling left", T.counted(self, "Base.Nails"), self.nails - self.need)
         expect(T.counted(self, "Base.Hammer") == 1, "drilling took the hammer")
     end,
 })
@@ -162,8 +159,8 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         expectOptionRefused(self, "beside a ground barrel", "Tooltip_EnhancedIrrigation_NoPressure")
         expectOffered(self, "beside a raised barrel")
         local record = recordOf(self, "tapped", 1)
-        expect(record.tap and record.tapMaterial == "lead", "the tap fitted: " .. tostring(record.tap) .. ", of "
-            .. tostring(record.tapMaterial) .. " pipe, not the lead tile's own")
+        expect(record.tap, "no tap was fitted")
+        expectEqual("the fitted tap's pipe", record.tapMaterial, "lead")
         expect(T.hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
         local iron, lead = Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item
         expect(T.counted(self, lead) == 0, "the tap took no lead pipe")
@@ -199,14 +196,12 @@ T.test("irrigation_lines_patch_crack", {
     validate = function(self)
         expectOffered(self, "patch")
         expect(not recordOf(self, "patched", 1).cracked, "the patch left the tile cracked")
-        local used = self.usesBefore - self.items.tape[1]:getCurrentUses()
-        expect(used == Pipes.GLUE.uses, "the patch took " .. used .. " uses of tape, not " .. Pipes.GLUE.uses)
+        expectEqual("uses of tape the patch took", self.usesBefore - self.items.tape[1]:getCurrentUses(), Pipes.GLUE.uses)
         expect(self.described:find(getText("IGUI_EnhancedIrrigation_Cracked"), 1, true) == nil,
             "the menu still says the patched tile is cracked: " .. self.described)
         expectOffered(self, "take up")
         local plastic = Pipes.MATERIALS.plastic
-        expect(self.counts.back[plastic.item] == plastic.perLength, "the patched tile gave back "
-            .. tostring(self.counts.back[plastic.item]) .. " plastic pipe, not " .. plastic.perLength)
+        expectEqual("plastic pipe the patched tile gave back", self.counts.back[plastic.item], plastic.perLength)
     end,
 })
 
@@ -261,8 +256,7 @@ T.test("irrigation_lines_drain_from_the_middle", {
             expectNear("tile " .. i .. "'s soak", tile.record.soak, 0, T.POINTS)
             local wet = i == 2
             expect(tile.record.wet == wet, "the server shows tile " .. i .. (wet and " dry" or " wet"))
-            expect(T.lineSprite(self.tiles[i]) == Sprites.pipe("lead", wet, shapes[i]),
-                "this client shows tile " .. i .. " as " .. tostring(T.lineSprite(self.tiles[i])))
+            expectEqual("this client's sprite of tile " .. i, T.lineSprite(self.tiles[i]), Sprites.pipe("lead", wet, shapes[i]))
         end
     end,
 })
@@ -299,10 +293,8 @@ T.test("irrigation_lines_take_up_returns_items", {
         local iron, clay = Pipes.MATERIALS.iron, Pipes.MATERIALS.clay
         -- The tap tile's length, its tap's and the whole tile's.
         local ironWanted = 3 * iron.perLength
-        expect(self.counts.back[iron.item] == ironWanted, "the iron tiles gave back "
-            .. tostring(self.counts.back[iron.item]) .. " iron pipe, not " .. ironWanted)
-        expect(self.counts.back[clay.item] == clay.perLength, "the clay tile gave back "
-            .. tostring(self.counts.back[clay.item]) .. " segments, not " .. clay.perLength)
+        expectEqual("iron pipe the iron tiles gave back", self.counts.back[iron.item], ironWanted)
+        expectEqual("segments the clay tile gave back", self.counts.back[clay.item], clay.perLength)
         for i, tile in ipairs(self.reads.gone.tiles) do
             expect(tile.record == nil and tile.sprite == nil, "tile " .. i .. " is still there")
         end
@@ -336,8 +328,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
     end,
     validate = function(self)
         expectOffered(self, "take up")
-        expect(self.back:getCondition() == self.worn, "the pipe came back at condition " .. self.back:getCondition()
-            .. ", laid at " .. self.worn)
+        expectEqual("the condition the pipe came back at", self.back:getCondition(), self.worn)
     end,
 })
 
@@ -379,8 +370,7 @@ T.test("irrigation_lines_sledgehammer_reshapes_neighbours", {
         expect(after[2].record == nil and after[2].sprite == nil, "the smashed tile is still there")
         for _, i in ipairs({ 1, 3 }) do
             local tile = after[i]
-            expect(T.shapeOf(tile.sprite) == 0, "the server shapes neighbour " .. i .. " "
-                .. tostring(T.shapeOf(tile.sprite)) .. ", not alone")
+            expectEqual("the server's shape of neighbour " .. i, T.shapeOf(tile.sprite), 0)
             expect(tile.record and tile.record.tiles == 1 and not tile.record.tap,
                 "neighbour " .. i .. " is still in a line, or tapped")
         end
@@ -406,8 +396,7 @@ T.test("irrigation_lines_take_up_parts_the_line_at_once", {
         expect(taken.done and taken.tiles[2].record == nil, "the server didn't take up the middle tile")
         for _, i in ipairs({ 1, 3 }) do
             local record = taken.tiles[i].record
-            expect(record and record.tiles == 1, "end " .. i .. " is in a line of "
-                .. tostring(record and record.tiles) .. " tiles, not 1")
+            expectEqual("the tiles in end " .. i .. "'s line", record and record.tiles, 1)
         end
     end,
 })

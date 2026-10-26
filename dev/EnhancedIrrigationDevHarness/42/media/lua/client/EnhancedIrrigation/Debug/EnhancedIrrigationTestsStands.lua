@@ -9,7 +9,7 @@ require "EnhancedIrrigation/UI/StandMenu"
 -- directly (jobs.perform), to show it refuses on its own.
 
 local T = EnhancedIrrigationTest
-local expect, expectNear = T.expect, T.expectNear
+local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Sprites, Stands, StandJobs = EnhancedIrrigation.Sprites, EnhancedIrrigation.Stands, EnhancedIrrigation.StandJobs
 local Tanks = EnhancedIrrigation.Tanks
 
@@ -46,7 +46,7 @@ T.test("irrigation_stands_stand_built_from_build_menu", {
     validate = function(self)
         local built = self.reads.built
         expect(built.isStand, "the build menu built " .. tostring(built.entity) .. ", not a Tank Stand")
-        expect(built.sprite == Sprites.TANK_STAND, "the built stand is drawn as " .. tostring(built.sprite))
+        expectEqual("the built stand's sprite", built.sprite, Sprites.TANK_STAND)
     end,
 })
 
@@ -72,11 +72,10 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         T.expectOffered(self, "set barrel")
         local raised, z = self.reads.raised, self.stand.z
         expect(raised.isRaised and raised.isTank, "the barrel on the stand isn't a raised tank")
-        expect(raised.level == z + 1, "the raised barrel's level is " .. tostring(raised.level) .. ", not " .. (z + 1))
+        expectEqual("the raised barrel's level", raised.level, z + 1)
         expectNear("the raised barrel's water", raised.litres, 0, T.LITRES)
-        expect(T.counted(self, BARREL_HELD) == 0, "setting the barrel on the stand left " .. T.counted(self, BARREL_HELD)
-            .. " barrels carried")
-        expect(self.clientLevel == z + 1, "this client sees the raised barrel at level " .. tostring(self.clientLevel))
+        expectEqual("barrels carried after setting the barrel on the stand", T.counted(self, BARREL_HELD), 0)
+        expectEqual("the raised barrel's level on this client", self.clientLevel, z + 1)
     end,
 })
 
@@ -124,15 +123,15 @@ T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
     end,
     validate = function(self)
         local z = self.tank.z
-        expect(self.levelBefore == z + 1, "this client sees the raised barrel at level " .. tostring(self.levelBefore))
+        expectEqual("the raised barrel's level on this client", self.levelBefore, z + 1)
         T.expectOffered(self, "open lid")
         local opened = self.reads.opened
         expect(opened.isRaised and opened.isTank, "opening the lid made " .. tostring(opened.entity)
             .. ", not a raised tank")
-        expect(opened.level == z + 1, "the opened barrel's level is " .. tostring(opened.level))
+        expectEqual("the opened barrel's level", opened.level, z + 1)
         -- Open, it may catch a little rain meanwhile.
         expectNear("the opened barrel's water", opened.litres, self.litres, 1)
-        expect(self.levelAfter == z + 1, "this client sees the opened barrel at level " .. tostring(self.levelAfter))
+        expectEqual("the opened barrel's level on this client", self.levelAfter, z + 1)
     end,
 })
 
@@ -157,7 +156,7 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         expect(forced.done == false, "the server took down a barrel holding water")
         expect(forced.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
         expectNear("the refused barrel's water", forced.litres, self.litres, T.LITRES)
-        expect(T.counted(self, BARREL_HELD) == 0, "a refused Take Barrel Down gave " .. T.counted(self, BARREL_HELD) .. " barrels")
+        expectEqual("barrels a refused Take Barrel Down gave", T.counted(self, BARREL_HELD), 0)
     end,
 })
 
@@ -188,16 +187,16 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
     validate = function(self)
         T.expectOffered(self, "take down")
         local stand = self.reads.stand
-        expect(stand.isStand and stand.sprite == Sprites.TANK_STAND, "taking the barrel down left " .. tostring(stand.entity))
+        expect(stand.isStand, "taking the barrel down left " .. tostring(stand.entity))
+        expectEqual("the sprite of what taking the barrel down left", stand.sprite, Sprites.TANK_STAND)
         local vanilla, after = self.reads.vanilla.barrels, self.reads.after.barrels
-        if not (expect(#vanilla == 1, "vanilla's pickup gave " .. #vanilla .. " barrels")
-                and expect(#after == 1, "Take Barrel Down gave " .. #after .. " barrels")) then
+        if not (expectEqual("barrels vanilla's pickup gave", #vanilla, 1)
+                and expectEqual("barrels Take Barrel Down gave", #after, 1)) then
             return
         end
         local barrel = after[1]
         for _, key in ipairs({ "fullType", "worldSprite", "hasFluid", "containerName" }) do
-            expect(barrel[key] == vanilla[1][key], "a carried barrel's " .. key .. " is " .. tostring(barrel[key])
-                .. ", vanilla's " .. tostring(vanilla[1][key]))
+            expectEqual("a carried barrel's " .. key .. " against vanilla's", barrel[key], vanilla[1][key])
         end
         expectNear("a carried barrel's weight", barrel.weight, vanilla[1].weight, T.LITRES)
         expectNear("a carried barrel's capacity", barrel.capacity, vanilla[1].capacity, T.LITRES)
