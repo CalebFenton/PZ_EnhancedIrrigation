@@ -128,8 +128,8 @@ end
 --- What a pump lifting by `spec` (a row of Pumps.ENTITIES or PARTS) would lift into, as this side
 --- sees it: its outlet's tank, while that stands within its lift and has room, or its outlet's line
 --- tile, while its line has no tap; and the source it draws from (PumpWater.sourceOf, with the
---- hose's `intake`). Returns the tank or line tile and the source, or nil and the Tooltip key of
---- why it lifts nothing.
+--- hose's `intake`). Returns the tank or line tile, the source, and the line's component (if any)
+--- for this operation to reuse; or nil and the Tooltip key of why it lifts nothing.
 function PumpWater.deliveryOf(pump, spec, intake)
     local b = Links.farEnd(EnhancedIrrigation.squareOf(pump), "pump")
     if not b then
@@ -143,10 +143,12 @@ function PumpWater.deliveryOf(pump, spec, intake)
     if not Pumps.lifts(spec, Tanks.levelOf(into), pump:getZ()) then
         return nil, Pumps.LIFT_KEYS[spec.lift]
     end
+    local tiles
     if Lines.isLine(into) then
         -- A wall knocked down since may have joined it to a tapped line. This pump feeds it too,
         -- so only a tap is another feed.
-        if Lines.feedOf(Lines.component(b.x, b.y, b.z)) == "tap" then
+        tiles = Lines.component(b.x, b.y, b.z)
+        if Lines.tapIn(tiles) then
             return nil, Lines.FEED_TAKEN.tap
         end
     elseif into:getFluidContainer():getFreeCapacity() < Pumps.LEAST_LITRES then
@@ -156,12 +158,12 @@ function PumpWater.deliveryOf(pump, spec, intake)
     if not source or source.dry then
         return nil, "Tooltip_EnhancedIrrigation_NoWaterToDraw"
     end
-    return into, source
+    return into, source, tiles
 end
 
 --- What the hand pump `pump` would lift into, as this side sees it (PumpWater.deliveryOf), unless
---- its body or seal is worn out. Returns the tank or line tile and the source, or nil and the
---- Tooltip key of why it lifts nothing.
+--- its body or seal is worn out. Returns the tank or line tile, the source and any line component,
+--- or nil and the Tooltip key of why it lifts nothing.
 function PumpWater.handDeliveryOf(pump)
     local spec, summary = Pumps.specOf(pump), Pumps.currentSummary(pump)
     if not (spec and spec.kind == "hand" and summary) then

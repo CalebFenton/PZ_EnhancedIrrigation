@@ -21,7 +21,7 @@ local PumpSystem = {}
 EnhancedIrrigation.PumpSystem = PumpSystem
 
 local Pumps, PumpJobs, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.PumpWater
-local Lines, Links, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Links, EnhancedIrrigation.Flow
+local Links, Flow = EnhancedIrrigation.Links, EnhancedIrrigation.Flow
 
 PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
     name = "Pump",
@@ -147,13 +147,13 @@ function PumpSystem.run(character, pump, hours)
         return EnhancedIrrigation.JOB_REFUSALS.unknown
     end
     record:catchUp()
-    local into, source = PumpWater.handDeliveryOf(pump)
+    local into, source, tiles = PumpWater.handDeliveryOf(pump)
     if not into then
         return source
     end
     local spec = Pumps.specOf(pump)
-    if Lines.isLine(into) then
-        Flow.run(Lines.recordOf(into), Flow.fromPump(spec, handDraw(record, source)), hours)
+    if tiles then
+        Flow.run(Flow.prepare(tiles, Flow.fromPump(spec, handDraw(record, source))), hours)
     else
         record:lift(PumpWater.fillTank(source, into, record:canLift(Pumps.perHour(spec) * hours)))
     end

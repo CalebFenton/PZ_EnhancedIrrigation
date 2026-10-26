@@ -364,6 +364,41 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
     end,
 })
 
+-- A full sealed tile cracks during catch-up, before this pump budgets its water and dry wear.
+-- The new crack and the drilled hole exhaust a finite source halfway through the pass.
+T.test("irrigation_pump_house_budgets_after_line_freeze", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, true)
+        local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
+        if not spots then return end
+        self.tiles = { spots[3], spots[4] }
+        self.tiles[1].fields = { full = true }
+        self.litres = (Lines.HOLE_RATE + Lines.CRACK_RATE) * Pumps.PARTS[UTILITY].push * T.HALF_HOUR / 2
+        self.house, self.barrel = T.pumpedLine(self, self.tiles, spots, T.METAL, fitted(UTILITY),
+            { source = "lidded", sourceLitres = self.litres })
+        T.batch(function()
+            T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 1 })
+            T.server(self, "lines.pinRoll", {})
+            local args = T.pumpAt(self.house, { hoursAgo = T.HALF_HOUR, fields = { on = true },
+                squares = self.tiles, water = 0, tank = self.barrel })
+            args.lineHoursAgo = 1
+            T.read(self, "pumps.update", args, "frozen")
+            T.readLines(self, self.tiles, "line")
+        end)
+    end,
+    validate = function(self)
+        local frozen = self.reads.frozen
+        expect(self.reads.line.tiles[1].record.cracked, "the full tile did not crack during the pump's catch-up")
+        expectNear("water drawn after the crack opened", frozen.before.tank.litres - frozen.after.tank.litres,
+            self.litres, T.LITRES)
+        expectNear("water reaching the drilled tile", frozen.after.squares[2].water - frozen.before.squares[2].water,
+            self.litres * Lines.HOLE_RATE / (Lines.HOLE_RATE + Lines.CRACK_RATE) * Lines.POINTS_PER_LITRE, 0.05)
+        expectNear("wear from equal wet and dry running", frozen.before.record.partCondition - frozen.after.record.partCondition,
+            Pumps.PARTS[UTILITY].wearPerHour * T.HALF_HOUR / 2 * (1 + Pumps.DRY_WEAR), 0.001)
+    end,
+})
+
 -- Hours the houses are away while their chunk is unloaded.
 local AWAY_HOURS = 1
 

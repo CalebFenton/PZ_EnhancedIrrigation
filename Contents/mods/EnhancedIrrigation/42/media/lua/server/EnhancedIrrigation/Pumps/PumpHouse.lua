@@ -23,7 +23,7 @@ local PumpHouse = {}
 EnhancedIrrigation.PumpHouse = PumpHouse
 
 local Pumps, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpWater
-local Lines, Links, Flow = EnhancedIrrigation.Lines, EnhancedIrrigation.Links, EnhancedIrrigation.Flow
+local Links, Flow = EnhancedIrrigation.Links, EnhancedIrrigation.Flow
 local Timers, Power, HousePower = EnhancedIrrigation.Timers, EnhancedIrrigation.Power, EnhancedIrrigation.HousePower
 
 -- Running --------------------------------------------------------------------------------------------
@@ -37,31 +37,23 @@ end
 -- that can leave a hair of condition no hour could wear.
 local LEAST_CONDITION = 0.01
 
--- The source of the line a Pump House with `part` drives from `source` (PumpWater.sourceOf),
--- giving at most `litres`: what the time it ran wet lifts.
-local function lineSource(part, source, litres)
-    return Flow.fromPump(part, function(asked) return PumpWater.draw(source, nil, math.min(asked, litres)) end)
-end
-
 -- Runs the record's Pump House `pump` with `part` for up to `hours`: lifts the part's rate from its
 -- source into its outlet's tank, as far as the lift, the tank's room and a finite source's water
 -- go, or what the line its outlet feeds takes of it, and wears the part, faster for the time its
 -- source is dry. Stops where the part burns out. Returns the hours it ran.
 local function run(record, pump, part, hours)
-    local into, source = PumpWater.deliveryOf(pump, part, record.intake)
+    local into, source, tiles = PumpWater.deliveryOf(pump, part, record.intake)
     if not into then
         -- Refused, it still runs: its source decides how fast it wears.
         source = PumpWater.sourceOf(pump, record.intake, Links.farEnd(record, "pump"))
     end
-    local line = into and Lines.isLine(into) and Lines.recordOf(into) or nil
-    -- The litres an hour it lifts while it has water, and how many its outlet takes at most.
-    local perHour, room = Pumps.perHour(part), math.huge
-    if line then
-        perHour = Flow.takesPerHour(line, lineSource(part, source, 0))
-    elseif into then
-        room = into:getFluidContainer():getFreeCapacity()
-    end
     local litres, dryHours = 0, hours
+    local flow = tiles and Flow.prepare(tiles, Flow.fromPump(part, function(asked)
+        return PumpWater.draw(source, nil, math.min(asked, litres))
+    end))
+    -- The litres an hour it lifts while it has water, and how many its outlet takes at most.
+    local perHour = flow and flow.perHour or Pumps.perHour(part)
+    local room = into and not flow and into:getFluidContainer():getFreeCapacity() or math.huge
     if source and not source.dry then
         dryHours = 0
         if into then
@@ -88,11 +80,11 @@ local function run(record, pump, part, hours)
     if record.partCondition < LEAST_CONDITION then
         record.partCondition = 0
     end
-    if line then
+    if flow then
         -- A line that takes nothing is still filled for as long as the pump runs wet.
         local wet = perHour > 0 and litres / perHour or math.min(ran, hours - dryHours)
         if wet > 0 then
-            Flow.run(line, lineSource(part, source, litres), wet)
+            Flow.run(flow, wet)
         end
     elseif into and litres >= Pumps.LEAST_LITRES then
         PumpWater.fillTank(source, into, litres)

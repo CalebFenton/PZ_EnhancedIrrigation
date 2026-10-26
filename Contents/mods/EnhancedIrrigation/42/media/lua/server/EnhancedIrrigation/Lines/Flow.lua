@@ -43,37 +43,25 @@ function Flow.fromPump(spec, draw)
     }
 end
 
--- Litres an hour out of the tile `record` from `source`: what its holes give its square, what a
--- crack lets out, and what its sprinkler throws, which only a pump drives. 0 for each where none.
-local function ratesOf(record, source)
-    local holes = record.holed and Lines.HOLE_RATE * source.push or 0
-    local crack = record.cracked and Lines.CRACK_RATE * source.push or 0
-    local spray = source.pumped and record.sprinkler and Sprinklers.RATE or 0
-    return holes, crack, spray
-end
-
--- The outlets of the line of `tiles` from `source`, and the litres an hour they ask together.
-local function outletsOf(tiles, source)
+--- Catches up `tiles` (Lines.component) before measuring their demand from `source`. The returned
+--- flow belongs to this operation only: its capped `perHour` budgets the pump, and Flow.run
+--- delivers through these same outlets without rediscovering the line or catching it up again.
+function Flow.prepare(tiles, source)
     local outlets, asked = {}, 0
     for _, tile in ipairs(tiles) do
-        local holes, crack, spray = ratesOf(tile.state, source)
-        if holes + crack + spray > 0 then
-            table.insert(outlets, { record = tile.state, holes = holes, crack = crack, spray = spray })
-            asked = asked + holes + crack + spray
+        local record = tile.state
+        record:catchUp()
+        local holes = record.holed and Lines.HOLE_RATE * source.push or 0
+        local crack = record.cracked and Lines.CRACK_RATE * source.push or 0
+        local spray = source.pumped and record.sprinkler and Sprinklers.RATE or 0
+        local rate = holes + crack + spray
+        if rate > 0 then
+            table.insert(outlets, { record = record, holes = holes, spray = spray })
+            asked = asked + rate
         end
     end
-    return outlets, asked
-end
-
--- The litres an hour `source` gives of `asked`: all of it, or as much as its pump lifts.
-local function given(source, asked)
-    return source.perHour and math.min(asked, source.perHour) or asked
-end
-
---- The litres an hour the line through the tile `record` takes from `source` while it runs.
-function Flow.takesPerHour(record, source)
-    local _, asked = outletsOf(Lines.component(record.x, record.y, record.z), source)
-    return given(source, asked)
+    return { tiles = tiles, source = source, outlets = outlets, asked = asked,
+        perHour = source.perHour and math.min(asked, source.perHour) or asked }
 end
 
 -- Gives `litres` to the plant on `record`'s square up to full, the rest to the soil.
@@ -101,25 +89,20 @@ local function spray(record, litres, touched)
     end
 end
 
---- Runs the line through the tile `record` from `source` for `hours` game hours. Its outlets ask
---- their rates together, as much of it as the source gives; a source that gives less than they ask
+--- Runs a prepared `flow` for `hours` game hours. A source that gives less than its outlets ask
 --- gives each the same fraction of what it asked. The caller checks the source first. Authority
 --- only. Returns the litres drawn.
-function Flow.run(record, source, hours)
-    local tiles = Lines.component(record.x, record.y, record.z)
-    for _, tile in ipairs(tiles) do
-        tile.state:catchUp()
-    end
-    local outlets, asked = outletsOf(tiles, source)
-    local demand = given(source, asked) * math.max(0, hours)
+function Flow.run(flow, hours)
+    local source = flow.source
+    local demand = flow.perHour * math.max(0, hours)
     local drawn = demand > 0 and source.draw(demand) or 0
     -- A line that takes nothing still fills: water stands in it to the last joint.
     local filled = drawn > 0 or (demand == 0 and hours > 0 and source.hasWater)
     local touched = {}
     if drawn > 0 then
-        local share = drawn / (asked * hours)
+        local share = drawn / (flow.asked * hours)
         local wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
-        for _, outlet in ipairs(outlets) do
+        for _, outlet in ipairs(flow.outlets) do
             deliver(outlet.record, outlet.holes * hours * share)
             if outlet.spray > 0 then
                 spray(outlet.record, outlet.spray * hours * share, touched)
@@ -127,7 +110,7 @@ function Flow.run(record, source, hours)
             outlet.record.wetUntil = wetUntil
         end
     end
-    for _, tile in ipairs(tiles) do
+    for _, tile in ipairs(flow.tiles) do
         if filled then
             tile.state.full = true
         end

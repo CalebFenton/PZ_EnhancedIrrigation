@@ -105,12 +105,17 @@ end)
 
 -- Sets `args.fields` on the Pump House's record, winds its clock back `args.hoursAgo` hours, if
 -- given, sets the crops of `args.squares` to `args.water` (Server.setWater), and runs its
--- ten-minute pass (PumpObject.update). Answers the clock's time, `now`, and the state before and
--- after, all in one call, so no ten-minute event runs in between.
+-- ten-minute pass (PumpObject.update). `lineHoursAgo` dates those line tiles back without running
+-- them, so the pump must catch them up. Answers the time and state before and after in one call.
 handler("pumps.update", function(player, args)
     local record = PZHarness.need(recordAt(args), "the record of the Pump House at " .. args.x .. "," .. args.y)
     Server.setFields(record, args.fields, args.hoursAgo)
     Server.setWater(args.squares, args.water)
+    if args.lineHoursAgo then
+        for _, at in ipairs(args.squares or {}) do
+            Server.setFields(Server.lineRecordAt(at), nil, args.lineHoursAgo)
+        end
+    end
     local reply = { now = EI.now(), before = stateAt(player, args) }
     record:update()
     reply.after = stateAt(player, args)
