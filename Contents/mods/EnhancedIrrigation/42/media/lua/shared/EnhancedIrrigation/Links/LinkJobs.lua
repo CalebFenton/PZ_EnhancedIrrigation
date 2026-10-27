@@ -47,7 +47,7 @@ local holdWrench = Materials.holds(Pipes.WRENCH)
 -- The tiles of pipe from `tank` to the square `with` names, 0 when it names none.
 local function runTiles(tank, with)
     local other = Links.decode(with)
-    return other and Links.distance(EnhancedIrrigation.squareOf(tank), other) or 0
+    return other and Links.distance(Squares.positionOf(tank), other) or 0
 end
 
 --- The pipe Plumb lays from `tank` to the square `with` names: the material `with` names, or nil,
@@ -64,7 +64,7 @@ local function endsOf(object, with)
     if not other then
         return nil
     end
-    local here = EnhancedIrrigation.squareOf(object)
+    local here = Squares.positionOf(object)
     if Squares.samePosition(here, other) then
         return nil
     end

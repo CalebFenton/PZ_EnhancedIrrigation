@@ -6,6 +6,7 @@ require "EnhancedIrrigation/Utilities"
 local Materials = require "cf_commonlib/Materials"
 local Needs = require "cf_commonlib/Needs"
 local JobOptions = require "cf_commonlib/JobOptions"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -93,7 +94,7 @@ end
 --- greying a tank or line out before its pipe is listed, or nil; `noneKey`, what the submenu says
 --- when it lists none.
 function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
-    local here = EnhancedIrrigation.squareOf(object)
+    local here = Squares.positionOf(object)
     local name = getText(spec.nameKey)
     local tools = Materials.needs(character, LinkJobs.PLUMB_TOOLS)
     if Materials.firstUnmet(tools) then
@@ -133,7 +134,7 @@ end
 --- Unplumb at `object`, a tank, a fixture, a unit, or the floor of a square one stood on: a submenu
 --- of the pipe buried from its square.
 function LinkMenu.addUnplumbOptions(context, playerNum, character, object)
-    local here = EnhancedIrrigation.squareOf(object)
+    local here = Squares.positionOf(object)
     local links = Links.linksAt(here)
     if #links == 0 then return end
     local submenu = JobOptions.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_Unplumb"))
@@ -151,7 +152,7 @@ local function bareEnd(worldobjects)
         local square = clicked:getSquare()
         local floor = square and square:getFloor()
         if floor and not Tanks.tankOn(square) and not Fixtures.fixtureOn(square) and not Treatment.unitOn(square)
-                and not Pumps.pumpOn(square) and #Links.linksAt(EnhancedIrrigation.squareOf(floor)) > 0 then
+                and not Pumps.pumpOn(square) and #Links.linksAt(Squares.positionOf(floor)) > 0 then
             return floor
         end
     end
@@ -165,7 +166,7 @@ end
 
 LinkMenu.onFill = JobOptions.onWorldMenu(clickedEnd, function(context, playerNum, character, object)
     if Tanks.isTank(object) then
-        local here = EnhancedIrrigation.squareOf(object)
+        local here = Squares.positionOf(object)
         LinkMenu.addPlumbOptions(context, playerNum, character, object, {
             nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
             job = LinkJobs.PLUMB,

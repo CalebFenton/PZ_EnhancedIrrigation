@@ -108,8 +108,8 @@ end
 --- in full, unless the town's water runs to it.
 function FixtureSystem.plumb(fixture, tank, material, lengths, conditions)
     FixtureSystem.ensureBuffer(fixture)
-    local link = EnhancedIrrigation.LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(fixture),
-        EnhancedIrrigation.squareOf(tank), material, lengths, conditions, "fixture")
+    local link = EnhancedIrrigation.LinkSystem.instance:addLink(Squares.positionOf(fixture),
+        Squares.positionOf(tank), material, lengths, conditions, "fixture")
     link.reserve = holdReserve(fixture)
     if not Fixtures.townWaterRuns(fixture) and fill(tank, fixture, Fixtures.capacityOf(fixture)) then
         tank:sync()
@@ -129,7 +129,7 @@ function FixtureSystem.convert(fixture)
         return false
     end
     -- Another mod's store stays on vanilla's route, which is all it knows.
-    if Tanks.isTank(tank) and not Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
+    if Tanks.isTank(tank) and not Links.roleAt(Squares.positionOf(fixture), "fixture") then
         FixtureSystem.plumb(fixture, tank, nil, 0, nil)
     end
     return true

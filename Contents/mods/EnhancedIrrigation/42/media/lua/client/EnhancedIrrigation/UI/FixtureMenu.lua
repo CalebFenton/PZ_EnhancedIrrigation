@@ -13,6 +13,7 @@ require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Appliances/Appliances"
 local Needs = require "cf_commonlib/Needs"
 local JobOptions = require "cf_commonlib/JobOptions"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
@@ -35,7 +36,7 @@ function FixtureMenu.onPlumbItem(worldobjects, playerNum, fixture)
     local source = Fixtures.plumbingKeepsTaint() and fixture:FindExternalWaterSource()
     if source and Tanks.isTank(source) then
         EnhancedIrrigationAction.queue(playerNum, "link", LinkJobs.PLUMB_ABOVE, fixture,
-            Links.encode(EnhancedIrrigation.squareOf(source)))
+            Links.encode(Squares.positionOf(source)))
         return
     end
     vanillaPlumb(worldobjects, playerNum, fixture)
@@ -81,7 +82,7 @@ end
 -- A plumbed fixture offers Unplumb, its pipe found there even with its tank gone; any other offers
 -- Plumb to Tank.
 local function addLinkOptions(context, playerNum, character, fixture)
-    if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
+    if Links.roleAt(Squares.positionOf(fixture), "fixture") then
         LinkMenu.addUnplumbOptions(context, playerNum, character, fixture)
         return
     end
@@ -94,7 +95,7 @@ local function addLinkOptions(context, playerNum, character, fixture)
 end
 
 JobOptions.onWorldMenu(JobOptions.clicked(Fixtures.isFixture), function(context, playerNum, character, fixture, worldobjects)
-    if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
+    if Links.roleAt(Squares.positionOf(fixture), "fixture") then
         removeVanillaPlumb(context)
     end
     addWasherSwitch(context, playerNum, worldobjects, fixture)

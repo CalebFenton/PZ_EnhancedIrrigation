@@ -82,7 +82,7 @@ end
 --- squares around it on its floor. Returns { kind = "well" | "tank" | "trough" | "river", object
 --- (nil for an unloaded river), at, infinite, litres, dry }, or nil when it has none.
 function PumpWater.sourceOf(pump, intake, outletEnd)
-    local here = EnhancedIrrigation.squareOf(pump)
+    local here = Squares.positionOf(pump)
     local finite, dry = nil, nil
     for dx = -1, 1 do
         for dy = -1, 1 do
@@ -90,7 +90,7 @@ function PumpWater.sourceOf(pump, intake, outletEnd)
             local objects = square and square:getObjects()
             for i = 0, (objects and objects:size() or 0) - 1 do
                 local object = objects:get(i)
-                local at = EnhancedIrrigation.squareOf(object)
+                local at = Squares.positionOf(object)
                 if isWell(object) then
                     return { kind = "well", object = object, at = at, infinite = true }
                 end
@@ -100,7 +100,7 @@ function PumpWater.sourceOf(pump, intake, outletEnd)
                 if holder and not (tank and outletEnd and Squares.samePosition(at, outletEnd)) then
                     local litres = holder:getFluidContainer():getAmount()
                     local entry = { kind = tank and "tank" or "trough", object = holder,
-                        at = EnhancedIrrigation.squareOf(holder), litres = litres }
+                        at = Squares.positionOf(holder), litres = litres }
                     if litres >= Pumps.LEAST_LITRES then
                         if not finite or litres > finite.litres then
                             finite = entry
@@ -132,7 +132,7 @@ end
 --- hose's `intake`). Returns the tank or line tile, the source, and the line's component (if any)
 --- for this operation to reuse; or nil and the Tooltip key of why it lifts nothing.
 function PumpWater.deliveryOf(pump, spec, intake)
-    local b = Links.farEnd(EnhancedIrrigation.squareOf(pump), "pump")
+    local b = Links.farEnd(Squares.positionOf(pump), "pump")
     if not b then
         return nil, "Tooltip_EnhancedIrrigation_NoOutlet"
     end

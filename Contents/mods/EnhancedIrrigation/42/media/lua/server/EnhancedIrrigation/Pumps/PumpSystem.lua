@@ -6,6 +6,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 local Items = require "cf_commonlib/Items"
 local LibObjectSystem = require "cf_commonlib/ObjectSystem"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Pumps/Pumps"
@@ -29,7 +30,7 @@ PumpSystem.System = LibObjectSystem.define(Pumps, { Object = EnhancedIrrigation.
 
 -- A pump taken away, smashed or by another mod, no longer runs the line its outlet fed.
 function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
-    local b = self:isValidIsoObject(isoObject) and Links.farEnd(EnhancedIrrigation.squareOf(isoObject), "pump")
+    local b = self:isValidIsoObject(isoObject) and Links.farEnd(Squares.positionOf(isoObject), "pump")
     SGlobalObjectSystem.OnObjectAboutToBeRemoved(self, isoObject)
     if b then
         EnhancedIrrigation.LineSystem.setRunning(b.x, b.y, b.z, false)

@@ -325,7 +325,7 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
         T.step(function()
             local sink = T.copyOf(self.sink)
             local source = sink:FindExternalWaterSource()
-            self.preferred = source and EnhancedIrrigation.squareOf(source)
+            self.preferred = source and Squares.positionOf(source)
             self.emptyRefusal = LinkJobs.refusal(T.player(), LinkJobs.PLUMB_ABOVE, sink, self.toEmpty)
             self.farRefusal = LinkJobs.refusal(T.player(), LinkJobs.PLUMB_ABOVE, sink, self.toFar)
         end)

@@ -13,6 +13,7 @@ require "EnhancedIrrigation/Valves"
 local Items = require "cf_commonlib/Items"
 local Needs = require "cf_commonlib/Needs"
 local JobOptions = require "cf_commonlib/JobOptions"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/ValveUI"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
@@ -72,7 +73,7 @@ end
 --- The menu's line for `pump` with `summary`: where it draws; a hand pump's seal and body, or a Pump
 --- House's part and switch; the tank it fills or the line it feeds.
 function PumpMenu.describe(pump, summary)
-    local into = Links.farEnd(EnhancedIrrigation.squareOf(pump), "pump")
+    local into = Links.farEnd(Squares.positionOf(pump), "pump")
     local words = { sourceName(PumpWater.sourceOf(pump, summary.intake, into)) }
     if Pumps.isHouse(pump) then
         houseWords(words, summary)

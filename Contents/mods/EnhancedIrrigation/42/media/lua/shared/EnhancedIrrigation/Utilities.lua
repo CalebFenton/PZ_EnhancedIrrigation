@@ -13,11 +13,6 @@ function EnhancedIrrigation.squareKey(x, y, z)
     return x .. "," .. y .. "," .. z
 end
 
---- The square { x, y, z } of `isoObject`.
-function EnhancedIrrigation.squareOf(isoObject)
-    return { x = isoObject:getX(), y = isoObject:getY(), z = isoObject:getZ() }
-end
-
 --- Whether the chunk of the square x, y, z is loaded on this side. Above the ground a loaded chunk
 --- has squares only where something stands and around it (IsoChunk.loadInWorldStreamerThread), so
 --- a missing square there says nothing of whether it is loaded.

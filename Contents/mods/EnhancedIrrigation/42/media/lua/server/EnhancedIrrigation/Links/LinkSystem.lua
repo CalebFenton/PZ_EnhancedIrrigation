@@ -16,6 +16,7 @@ require "EnhancedIrrigation/Utilities"
 local Materials = require "cf_commonlib/Materials"
 local Jobs = require "cf_commonlib/Jobs"
 local Clock = require "cf_commonlib/Clock"
+local Squares = require "cf_commonlib/Squares"
 require "EnhancedIrrigation/Pipes"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -99,7 +100,7 @@ end
 local function layPipe(role)
     return function(character, row, object, with, materials)
         local material, lengths = LinkJobs.pipeFor(object, with)
-        LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(object), Links.decode(with), material, lengths,
+        LinkSystem.instance:addLink(Squares.positionOf(object), Links.decode(with), material, lengths,
             Materials.conditions(character, materials), role)
         return true
     end
@@ -126,7 +127,7 @@ local DO = {
     [LinkJobs.PLUMB_PUMP] = layPipe("pump"),
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
     [LinkJobs.UNPLUMB] = function(character, row, object, with)
-        local link = Links.find(EnhancedIrrigation.squareOf(object), Links.decode(with))
+        local link = Links.find(Squares.positionOf(object), Links.decode(with))
         LinkSystem.instance:removeLink(link)
         if link.kind then
             Pipes.giveBack(character, link.kind, link.lengths, link.conditions)

@@ -178,7 +178,7 @@ end
 --- What `find(x, y, z)` finds within plumbing reach of `object`, loaded on this side, linked to it
 --- or not, nearest first, each { found, at, distance }.
 function Links.inReach(object, find)
-    local here = EnhancedIrrigation.squareOf(object)
+    local here = Squares.positionOf(object)
     local found = {}
     local storeys = math.floor(Links.MAX_TILES / Links.TILES_PER_STOREY)
     for dz = -storeys, storeys do
