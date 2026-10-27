@@ -14,11 +14,7 @@ require "EnhancedIrrigation/Tanks"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,
 -- menu helpers and fixtures the mod's tests share. Fixtures are placed by server handlers the way
--- the authority places them, and each waits for this client's copy. A tile handle is a T.where
--- handle; a record's has its `kind` (the `records` test setting: "line", "pump", "treatment"). The
--- line, pump and treatment helpers extend it in EnhancedIrrigationTestLibLines, TestLibPumps and
--- TestLibTreatment, for the files that require them. A fixture only one test file uses is that
--- file's own.
+-- the authority places them, and each waits for this client's copy.
 
 EnhancedIrrigationTest = EnhancedIrrigationTest or setmetatable({}, { __index = PZHarness.Test })
 local T = EnhancedIrrigationTest
@@ -77,8 +73,8 @@ function T.findJob(feature, job, with)
 end
 
 --- The reads of a job done on the authority (T.job's opts.reads): what the dev mod's handler
---- `name` (tanks.read, fixtures.state, pumps.state, treatment.state) reads at `handle`, with
---- `extra`'s args, in `before.state` and `after.state` of its answer.
+--- `name` (tanks.read, fixtures.state) reads at `handle`, with `extra`'s args, in `before.state`
+--- and `after.state` of its answer.
 function T.stateReads(name, handle, extra)
     return { state = { name = name, args = T.at(handle, extra) } }
 end

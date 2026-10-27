@@ -139,7 +139,7 @@ PZHarness.checkHandler("learning.lootRolls", function(expect, _, _, args, defer)
     end
     ItemPickerJava.Parse()
     local users = Loot.procListUsers()
-    local container = ItemContainer.new("crate", nil, nil)
+    local container = Loot.scratchContainer(nil)
     Loot.withMeasureOptions(rarities, function()
         for _, loot in ipairs(D.LOOT) do
             local function holdsItem(filled)

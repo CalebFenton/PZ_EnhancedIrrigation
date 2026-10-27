@@ -59,12 +59,8 @@ function Server.unlinkAt(x, y, z)
 end
 
 --- Builds the tile `args.sprite` on `square` as the build menu builds it (Build.tile), its record
---- of kind `kind` (the `records` test setting) made as `system`'s OnCreate makes it, which may
---- replace the object, and sends what stands there to the clients, as the build menu does after
---- the OnCreate. Then `prepare(record)`, if given, runs, and `args.fields` are set on the record and
---- its summary sent. Removed, with its links and record, when the test ends
---- (PZHarness.Records.track, for `player`). Returns the record; fails the test as missing what it
---- lacks.
+--- made by `system`'s OnCreate, which may replace the object. Removed, with its links and record,
+--- when the test ends.
 function Server.placeEntity(player, square, args, defer, kind, system, prepare)
     local at = { kind = kind, x = args.x, y = args.y, z = args.z }
     PZHarness.Records.track(defer, player, at)
@@ -72,14 +68,12 @@ function Server.placeEntity(player, square, args, defer, kind, system, prepare)
     local created = system.onCreate({ thumpable = built })
     local object = created and created.object or built
     object:transmitCompleteItemToClients()
-    local record = PZHarness.need(PZHarness.Records.kind(kind).owner().recordAt(at.x, at.y, at.z),
-        "the record of " .. tostring(args.sprite) .. " after its OnCreate")
+    local record = PZHarness.Records.at(at)
     if prepare then
         prepare(record)
     end
     PZHarness.Records.set(record, args.fields, nil, 0)
     record:sendSummary()
-    return record
 end
 
 -- The object as plain values: which of the mod's things it is, its tile and entity, and as a tank
