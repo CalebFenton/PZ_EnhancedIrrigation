@@ -70,13 +70,13 @@ T.test("irrigation_pump_house_power_refuses_the_grid_in_the_open", {
             accept = function(squares) return not besideRoom(squares[1]) end })
         if not spots then return end
         self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE))
-        T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
-        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "forced")
+        T.useMenu(self, self.house, "on", T.findJob("pump", PumpJobs.TURN_ON), false)
+        T.job(self, "pump", PumpJobs.TURN_ON, self.house, nil, "forced")
         update(self, self.house, "hour", { hoursAgo = 1, fields = { on = true }, tank = self.tank })
     end,
     validate = function(self)
         T.expectOptionRefused(self, "on", "IGUI_RadioRequiresPowerNearby")
-        expect(self.reads.forced.done == false, "the server switched the unpowered house on")
+        expect(self.reads.forced.ok == false, "the server switched the unpowered house on")
         local after = self.reads.hour.after
         expectNear("the tank after an hour unpowered", after.tank.litres, 0, T.LITRES)
         expect(not after.summary.running, "the unpowered house runs")
@@ -107,17 +107,17 @@ T.test("irrigation_pump_house_power_runs_on_the_grid_beside_a_room", {
         if not spots[3] then return end
         spots[3] = spots[3][1]
         self.house, self.tank = T.plumbedPump(self, spots, T.METAL, fitted(APPLIANCE))
-        T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), true)
+        T.useMenu(self, self.house, "on", T.findJob("pump", PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
-        T.waitForPumpSummary(self, self.house, function(summary) return summary.running end, "this client's summary of the running house")
+        T.waitForSummary(self, self.house, function(summary) return summary.running end, "this client's summary of the running house")
         T.waitFor(self, function()
             return EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum of the running house")
         update(self, self.house, "hour", { hoursAgo = 1, tank = self.tank })
         T.readMenu(self, function() return T.copyOf(self.house) end, "running")
-        T.useMenu(self, self.house, "off", T.job("pump", PumpJobs.TURN_OFF), true)
+        T.useMenu(self, self.house, "off", T.findJob("pump", PumpJobs.TURN_OFF), true)
         readUntil(self, self.house, "off", function(state) return not state.record.on end)
-        T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
+        T.waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
         T.waitFor(self, function()
             return not EnhancedIrrigation.PumpClient.isHumming(self.house.x, self.house.y, self.house.z)
         end, "this client's hum to stop")
@@ -156,7 +156,7 @@ T.test("irrigation_pump_house_power_runs_on_a_generator_and_burns_its_fuel", {
         self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(UTILITY))
         T.waitFor(self, function() return EnhancedIrrigation.Power.powered(T.copyOf(self.house)) end,
             "this client's power from the generator")
-        T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), true)
+        T.useMenu(self, self.house, "on", T.findJob("pump", PumpJobs.TURN_ON), true)
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         update(self, self.house, "hours", { hoursAgo = GENERATOR_HOURS, tank = self.tank, generator = self.generator })
     end,
@@ -200,7 +200,7 @@ T.test("irrigation_pump_house_power_pays_its_debt_switched_off", {
             "this client's power from the generator")
         update(self, self.house, "away", { hoursAgo = 1, generator = self.generator,
             fields = { on = true, payer = T.at(self.payer), payerFuel = PAYER_FUEL } })
-        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
+        T.job(self, "pump", PumpJobs.TURN_OFF, self.house, nil, "off")
         readUntil(self, self.house, "owing", function(state) return not state.record.on end)
         T.read(self, "pumpHouse.generator", T.at(self.payer, { fuel = PAYER_FUEL }), "payer")
         update(self, self.house, "paid", { generator = self.payer })
@@ -211,7 +211,7 @@ T.test("irrigation_pump_house_power_pays_its_debt_switched_off", {
             - (away.before.record.owedFuel or 0), burns(UTILITY, 1), FUEL_TOLERANCE)
         expectNear("the fuel of the generator in reach", away.after.generator.fuel, away.before.generator.fuel, FUEL_TOLERANCE)
         local owing = self.reads.owing.record
-        expect(self.reads.off.done and not owing.on, "Turn Off left the house switched on")
+        expect(self.reads.off.ok and not owing.on, "Turn Off left the house switched on")
         -- From the payer's fuel as set down: the house's next pass, its own or the test's, pays.
         local paid = self.reads.paid.after
         expectNear("the payer's fuel once the debt is paid", paid.generator.fuel,
@@ -237,7 +237,7 @@ T.test("irrigation_pump_house_power_stops_when_its_generator_is_spent", {
         T.server(self, "pumpHouse.generator", T.at(self.generator, { fuel = burns(APPLIANCE, FUEL_HOURS) }))
         self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE, { on = true }))
         update(self, self.house, "spent", { hoursAgo = 2 * FUEL_HOURS, tank = self.tank, generator = self.generator })
-        T.waitForPumpSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
+        T.waitForSummary(self, self.house, function(summary) return not summary.running end, "this client's summary of the stopped house")
         T.readMenu(self, function() return T.copyOf(self.house) end, "spent")
     end,
     validate = function(self)

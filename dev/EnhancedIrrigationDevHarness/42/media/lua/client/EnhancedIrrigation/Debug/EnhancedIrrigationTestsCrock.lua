@@ -10,7 +10,7 @@ require "EnhancedIrrigation/UI/TreatmentMenu"
 local T = EnhancedIrrigationTest
 local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
-local placeUnit, readUntil, run, waitForCopy = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitCopy
+local placeUnit, readUntil, run = T.placeUnit, T.readUnitUntil, T.runUnit
 local waitForServer, fillBasin, expectLine, expectBasin = T.waitForUnitServer, T.fillBasin, T.expectLine, T.expectBasin
 local clientBasin = T.clientBasin
 
@@ -63,7 +63,7 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
         if not self.unit then return end
         self.litres = 6
         fillBasin(self, self.unit, self.litres)
-        T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
+        T.useMenu(self, self.unit, "take down", T.findJob("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "taken", { Treatment.CROCK_ITEM, FORGED_BUCKET })
         T.readCarried(self, { FORGED_BUCKET }, nil, "bucket")
@@ -96,8 +96,8 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         self.unit = placeUnit(self, spots[1], CROCK)
         T.give(self, "carried", { { type = "Base.Bucket" } })
         T.fillCarried(self, "Base.Bucket", "TaintedWater", 10)
-        T.useMenu(self, self.unit, "scrub", T.job("treatment", TreatmentJobs.SCRUB_CROCK), false)
-        T.useMenu(self, self.unit, "pour", T.job("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
+        T.useMenu(self, self.unit, "scrub", T.findJob("treatment", TreatmentJobs.SCRUB_CROCK), false)
+        T.useMenu(self, self.unit, "pour", T.findJob("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
             true)
         readUntil(self, self.unit, "poured", function(state)
             return state.record and state.record.head + state.basin.litres > self.unit.spec.head - T.LITRES
@@ -143,10 +143,10 @@ T.test("irrigation_treatment_crock_clogged_until_scrubbed", {
         self.unit = placeUnit(self, spots[1], CROCK)
         self.hours = 12
         run(self, self.unit, "clogged", { self.hours }, { head = 8, headTainted = true, passed = self.unit.spec.clogLitres })
-        waitForCopy(self, self.unit, nil, function(summary) return summary.clogged end,
+        T.waitForSummary(self, self.unit, function(summary) return summary.clogged end,
             "this client's summary of the clogged crock")
         T.readMenu(self, function() return T.copyOf(self.unit) end, "clogged")
-        T.useMenu(self, self.unit, "scrub", T.job("treatment", TreatmentJobs.SCRUB_CROCK), true)
+        T.useMenu(self, self.unit, "scrub", T.findJob("treatment", TreatmentJobs.SCRUB_CROCK), true)
         readUntil(self, self.unit, "scrubbed", function(state) return not state.summary.clogged end)
         run(self, self.unit, "after", { self.hours })
     end,
@@ -178,14 +178,14 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.wet, "wet", { 1 }, { head = 5 })
         run(self, self.dry, "dry", { 1 }, { head = 0 })
-        waitForCopy(self, self.wet, nil, function(summary) return summary.cracked end,
+        T.waitForSummary(self, self.wet, function(summary) return summary.cracked end,
             "this client's summary of the cracked crock")
         waitForServer(self, self.dry, "dry", "cracked")
         T.readMenu(self, function() return T.copyOf(self.wet) end, "cracked")
         T.readMenu(self, function() return T.copyOf(self.dry) end, "dry")
         T.give(self, "carried", { { type = "Base.Bucket" } })
         T.fillCarried(self, "Base.Bucket", "TaintedWater", 5)
-        T.useMenu(self, self.wet, "pour", T.job("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
+        T.useMenu(self, self.wet, "pour", T.findJob("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
             false)
     end,
     validate = function(self)
@@ -212,7 +212,7 @@ T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", 
         fillBasin(self, self.unit, self.litres)
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.unit, "frozen", { 1 }, { head = self.unit.spec.head })
-        T.useMenu(self, self.unit, "take down", T.job("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
+        T.useMenu(self, self.unit, "take down", T.findJob("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
         readUntil(self, self.unit, "taken", function(state) return not state.found end)
         T.count(self, "back", { Treatment.CROCK_ITEM, Treatment.CROCK_BUCKET })
         T.readCarried(self, { Treatment.CROCK_BUCKET }, nil, "bucket")

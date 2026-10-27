@@ -1,10 +1,10 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/ServerFixtures"
+require "PZHarness/ServerRecords"
 require "PZHarness/Fixtures"
 require "PZHarness/ServerChecks"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Squares = require "cf_commonlib/Squares"
-local Jobs = require "cf_commonlib/Jobs"
-local Clock = require "cf_commonlib/Clock"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua; it returns
 -- what the other handler files share. Server Lua loads after shared, so the EnhancedIrrigation
@@ -13,43 +13,15 @@ local Clock = require "cf_commonlib/Clock"
 -- before the handler files, so that a --stay rerun loads it again (RELOAD_FILES) before the files
 -- that require it.
 --
--- What these place is removed by its square when the test ends, not by the object: the jobs under
--- test replace a stand's object with a barrel's and back, and the vanilla lid swaps it again.
+-- What these place is removed by its square when the test ends (PZHarness.trackSquare), not by
+-- the object: the jobs under test replace a stand's object with a barrel's and back, and the
+-- vanilla lid swaps it again. The `remove` test setting unlinks it first.
 
 local handler = PZHarness.serverHandler
 local Fixtures = PZHarness.Fixtures
 local EI = EnhancedIrrigation
 
 local Server = {}
-
---- The square at args' x, y, z, made where there is none, as on a floor above open ground, whose
---- square only comes to be with what stands there; with `withFloor`, on a floor laid for it if it
---- has none, taken away with it when the test ends. Fails the test as missing without one.
-function Server.squareFor(args, defer, withFloor)
-    local square = PZHarness.need(Fixtures.squareAt(args) or getCell():createNewGridSquare(args.x, args.y, args.z, true),
-        "a square at " .. args.x .. "," .. args.y .. "," .. args.z)
-    if withFloor and not square:getFloor() then
-        local floor = square:addFloor("carpentry_02_58")
-        defer(function()
-            if floor:getObjectIndex() ~= -1 then
-                square:transmitRemoveItemFromSquare(floor)
-            end
-            getCell():checkHaveRoof(args.x, args.y)
-        end)
-    end
-    return square
-end
-
---- Sets `fields` (saved fields) on `record` and, given `hoursAgo`, winds its clock to that many
---- hours ago (0: now), so only the hours a handler runs count.
-function Server.setFields(record, fields, hoursAgo)
-    for key, value in pairs(fields or {}) do
-        record[key] = value
-    end
-    if hoursAgo then
-        record.lastHour = Clock.now() - hoursAgo
-    end
-end
 
 --- The line record at `at`'s x, y, z; fails the test as missing without one.
 function Server.lineRecordAt(at)
@@ -86,36 +58,26 @@ function Server.unlinkAt(x, y, z)
     end
 end
 
---- Removes, when the test ends, whatever placed thing stands at args' x, y, z then, and its links.
-function Server.removeWhenDone(args, defer)
-    defer(function()
-        Server.unlinkAt(args.x, args.y, args.z)
-        Server.removeAt(args.x, args.y, args.z)
-    end)
-end
-
 --- Builds the tile `args.sprite` on `square` as the build menu builds it (Build.tile), its record
---- made as `system`'s OnCreate makes it, which may replace the object, and sends what stands there
---- to the clients, as the build menu does after the OnCreate. Then `prepare(record)`, if given,
---- runs, and `args.fields` are set on the record and its summary sent. Removed, with its links and
---- record, when the test ends. Returns the record; fails the test as missing what it lacks.
-function Server.placeEntity(square, args, defer, system, recordAt, prepare)
+--- of kind `kind` (the `records` test setting) made as `system`'s OnCreate makes it, which may
+--- replace the object, and sends what stands there to the clients, as the build menu does after
+--- the OnCreate. Then `prepare(record)`, if given, runs, and `args.fields` are set on the record and
+--- its summary sent. Removed, with its links and record, when the test ends
+--- (PZHarness.Records.track, for `player`). Returns the record; fails the test as missing what it
+--- lacks.
+function Server.placeEntity(player, square, args, defer, kind, system, prepare)
+    local at = { kind = kind, x = args.x, y = args.y, z = args.z }
+    PZHarness.Records.track(defer, player, at)
     local built = PZHarness.need(Build.tile(square, args.sprite))
-    Server.removeWhenDone(args, defer)
-    defer(function()
-        local record = recordAt(args)
-        if record then
-            system.System.instance:removeLuaObject(record)
-        end
-    end)
     local created = system.onCreate({ thumpable = built })
     local object = created and created.object or built
     object:transmitCompleteItemToClients()
-    local record = PZHarness.need(recordAt(args), "the record of " .. tostring(args.sprite) .. " after its OnCreate")
+    local record = PZHarness.need(PZHarness.Records.kind(kind).owner().recordAt(at.x, at.y, at.z),
+        "the record of " .. tostring(args.sprite) .. " after its OnCreate")
     if prepare then
         prepare(record)
     end
-    Server.setFields(record, args.fields, 0)
+    PZHarness.Records.set(record, args.fields, nil, 0)
     record:sendSummary()
     return record
 end
@@ -219,11 +181,11 @@ end
 -- sends it to the clients with its water: a sync sent after can reach a client before the object
 -- does, which drops it. Answers its state (Server.stateAt). Removed, its links and the floor laid
 -- for it with it, when the test ends.
-handler("tanks.place", function(_, args, defer)
-    local square = Server.squareFor(args, defer, true)
+handler("tanks.place", function(player, args, defer)
+    local square = PZHarness.squareFor(args, defer, true)
+    PZHarness.trackSquare(defer, player, args)
     local object = PZHarness.need(Build.tile(square, args.sprite, args.litres, args.tainted))
     object:transmitCompleteItemToClients()
-    Server.removeWhenDone(args, defer)
     return Server.stateAt(args)
 end)
 
@@ -231,42 +193,9 @@ handler("tanks.read", function(_, args)
     return Server.stateAt(args)
 end)
 
--- Removes, when the test ends, whatever placed thing stands at x, y, z then, and its links: for
--- what the test builds through the game.
-handler("tanks.track", function(_, args, defer)
-    Server.removeWhenDone(args, defer)
-    return {}
-end)
-
 handler("tanks.remove", function(_, args)
     Server.removeAt(args.x, args.y, args.z)
     return Server.stateAt(args)
-end)
-
--- Jobs ----------------------------------------------------------------------------------------------
-
--- The system whose site does each action feature's jobs; the line jobs have lines.perform.
-local SYSTEMS = { stand = "StandSystem", link = "LinkSystem", treatment = "TreatmentSystem", pump = "PumpSystem" }
-
--- Runs the job `args.job` of the action feature `args.feature` at the object at x, y, z through the
--- authority's own Jobs.perform on the feature's site (what the action's complete() calls), with
--- `args.with`, or with the first barrel moveable carried when `args.barrel`. Answers whether it was
--- done and the object's state after, so a test sees the server refuse what its menu would have
--- greyed out.
-handler("jobs.perform", function(player, args)
-    local square = Fixtures.squareAt(args)
-    local object = PZHarness.need(square and Squares.findObjectOn(square, Server.isPlaced),
-        "the server's object at " .. tostring(args.x) .. "," .. tostring(args.y))
-    local with = args.with
-    if args.barrel then
-        local carried = EI.Stands.barrelsCarried(player)[1]
-        with = carried and carried.item
-    end
-    local done = Jobs.perform(EnhancedIrrigationAction.jobsOf(args.feature), EI[SYSTEMS[args.feature]].site, player,
-        args.job, object, with)
-    local state = Server.stateAt(args)
-    state.done = done == true
-    return state
 end)
 
 -- Holds ---------------------------------------------------------------------------------------------

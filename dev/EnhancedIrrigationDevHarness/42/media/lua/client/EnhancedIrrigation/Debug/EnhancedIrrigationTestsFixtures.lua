@@ -62,14 +62,6 @@ local function clientState(handle)
     }
 end
 
--- Queues a wait until this client's copy of the fixture satisfies `holds(state)`.
-local function waitForCopy(self, handle, holds, what)
-    T.waitFor(self, function()
-        local state = clientState(handle)
-        return state ~= nil and holds(state)
-    end, what)
-end
-
 -- Queues the server's view of the fixture, with the tank's, into self.reads[label] once
 -- `done(state)` holds.
 local function readUntil(self, fixture, tank, label, done)
@@ -109,10 +101,12 @@ T.test("irrigation_fixtures_plumb_to_tank_fills_and_keeps_taint", {
         self.tank = T.placeTank(self, spots[2], "raised", TANK_LITRES, true)
         T.givePlumbing(self, 1)
         local with = Links.encode(T.at(self.tank), "iron")
-        T.useMenu(self, self.sink, "plumb", T.job("link", LinkJobs.PLUMB_FIXTURE, with), true)
+        T.useMenu(self, self.sink, "plumb", T.findJob("link", LinkJobs.PLUMB_FIXTURE, with), true)
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
-        waitForCopy(self, self.sink, function(state) return state.buffer and state.amount > sinkLitres() - T.LITRES end,
-            "this client's copy of the filled sink")
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.buffer and state.amount > sinkLitres() - T.LITRES
+        end, "this client's copy of the filled sink")
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
     end,
     validate = function(self)
@@ -140,13 +134,13 @@ T.test("irrigation_fixtures_need_a_tank_a_storey_up", {
         T.useMenu(self, self.sink, "ground barrel", function(context)
             return T.findNamed(context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
         end, false)
-        T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_FIXTURE,
-            with = Links.encode(T.at(self.tank), "iron") }), "forced")
+        T.job(self, "link", LinkJobs.PLUMB_FIXTURE, self.sink, Links.encode(T.at(self.tank), "iron"), "forced",
+            { reads = T.stateReads("fixtures.state", self.sink) })
     end,
     validate = function(self)
         T.expectOptionRefused(self, "ground barrel", "Tooltip_EnhancedIrrigation_FixtureNoPressure")
         local forced = self.reads.forced
-        expect(forced.done == false and not forced.linked, "the server plumbed a sink to a tank on its level")
+        expect(forced.ok == false and not forced.after.state.linked, "the server plumbed a sink to a tank on its level")
     end,
 })
 
@@ -191,12 +185,13 @@ T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
         T.waitFor(self, function() return #T.clientLinks(self.sink, "fixture") > 0 end, "this client's copy of the link")
         T.step(function() self.viewed = #T.clientLinks(self.sink, "fixture") > 0 end)
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
-        T.useMenu(self, self.sink, "unplumb", T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
+        T.useMenu(self, self.sink, "unplumb", T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
         readUntil(self, self.sink, nil, "unplumbed", function(state) return not state.linked end)
         T.count(self, "left", { "Base.MetalPipe" })
         T.read(self, "fixtures.refill", T.at(self.sink, { litres = sinkLitres(), passes = { 1 } }), "refill")
-        waitForCopy(self, self.sink, function(state)
-            return state.inBuffer < T.LITRES and math.abs(state.amount - sinkLitres()) < T.LITRES
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.inBuffer < T.LITRES and math.abs(state.amount - sinkLitres()) < T.LITRES
         end, "this client's copy of the drawn sink, its reserve back")
     end,
     validate = function(self)
@@ -240,11 +235,13 @@ T.test("irrigation_fixtures_vanilla_plumb_keeps_taint", {
     run = function(self)
         if not plumbUnderTank(self) then return end
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
-        waitForCopy(self, self.sink, function(state) return state.buffer and state.tainted end,
-            "this client's copy of the plumbed sink")
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.buffer and state.tainted
+        end, "this client's copy of the plumbed sink")
         T.useOption(self, function() return T.copyOf(self.sink) end, "plumb again", T.running(ISWorldObjectContextMenu.onPlumbItem), false)
         T.useOption(self, function() return T.copyOf(self.sink) end, "unplumb",
-            T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), false)
+            T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), false)
         T.count(self, "left", { "Base.PipeWrench" })
     end,
     validate = function(self)
@@ -267,7 +264,10 @@ T.test("irrigation_fixtures_vanilla_plumb_untouched_when_option_off", {
     run = function(self)
         if not plumbUnderTank(self) then return end
         readUntil(self, self.sink, nil, "plumbed", function(state) return state.external end)
-        waitForCopy(self, self.sink, function(state) return state.external end, "this client's copy of the plumbed sink")
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.external
+        end, "this client's copy of the plumbed sink")
     end,
     validate = function(self)
         T.expectOffered(self, "plumb")
@@ -330,9 +330,10 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
             self.farRefusal = LinkJobs.refusal(T.player(), LinkJobs.PLUMB_ABOVE, sink, self.toFar)
         end)
         T.batch(function()
-            T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_ABOVE, with = self.toFar }), "far")
-            T.read(self, "fixtures.perform", T.at(self.sink, { job = LinkJobs.PLUMB_ABOVE, with = self.toEmpty,
-                tank = T.at(self.empty) }), "plumbed")
+            T.job(self, "link", LinkJobs.PLUMB_ABOVE, self.sink, self.toFar, "far",
+                { reads = T.stateReads("fixtures.state", self.sink) })
+            T.job(self, "link", LinkJobs.PLUMB_ABOVE, self.sink, self.toEmpty, "plumbed",
+                { reads = T.stateReads("fixtures.state", self.sink, { tank = T.at(self.empty) }) })
             T.read(self, "tanks.read", T.at(self.full), "full")
         end)
     end,
@@ -345,10 +346,11 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
         expectEqual("Plumb Above toward a barrel two tiles off's refusal", self.farRefusal,
             "Tooltip_EnhancedIrrigation_OutOfReach")
         local far = self.reads.far
-        expect(far.done == false and not far.linked, "the server plumbed the sink to a barrel two tiles off")
+        expect(far.ok == false and not far.after.state.linked, "the server plumbed the sink to a barrel two tiles off")
         local plumbed = self.reads.plumbed
-        expect(plumbed.done and plumbed.linked, "the server refused to plumb the sink to the empty barrel")
-        expectEqual("the empty barrel's links", plumbed.tank and plumbed.tank.links, 1)
+        local after = plumbed.after.state
+        expect(plumbed.ok and after.linked, "the server refused to plumb the sink to the empty barrel")
+        expectEqual("the empty barrel's links", after.tank and after.tank.links, 1)
         expect(self.reads.full.links == 0, "the sink was plumbed to the barrel vanilla prefers, not the one chosen")
     end,
 })
@@ -362,14 +364,19 @@ local function placePlumbed(self)
     if not spots then return false end
     self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
     self.sink = T.placeFixture(self, spots[1], SINK, { plumbed = true, buffer = { litres = 0 } })
-    waitForCopy(self, self.sink, function(state) return state.external end, "this client's copy of the plumbed sink")
+    T.waitFor(self, function()
+        local state = clientState(self.sink)
+        return state ~= nil and state.external
+    end, "this client's copy of the plumbed sink")
     return true
 end
 
 local function readConverted(self)
     readUntil(self, self.sink, self.tank, "converted", function(state) return state.linked and state.buffer end)
-    waitForCopy(self, self.sink, function(state) return state.buffer and not state.external end,
-        "this client's copy of the converted sink")
+    T.waitFor(self, function()
+        local state = clientState(self.sink)
+        return state ~= nil and state.buffer and not state.external
+    end, "this client's copy of the converted sink")
 end
 
 local function expectConverted(self)
@@ -474,8 +481,10 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
         self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
         T.server(self, "fixtures.plumb", T.at(self.sink, { tank = T.at(self.tank) }))
         T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = 0, passes = { 1 } }), "refill")
-        waitForCopy(self, self.sink, function(state) return state.inBuffer < T.LITRES end,
-            "this client's copy of the emptied buffer")
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.inBuffer < T.LITRES
+        end, "this client's copy of the emptied buffer")
         T.goNextTo(self, spots[1].square)
         T.step(function()
             self.client = clientState(self.sink)
@@ -516,7 +525,10 @@ T.test("irrigation_fixtures_buffer_survives_reload", {
         self.sink = T.placeFixture(self, spots[1], SINK, { buffer = { litres = 12, tainted = true } })
         T.reloadChunk(self, T.at(self.sink))
         readUntil(self, self.sink, nil, "reloaded", function(state) return state.found ~= false end)
-        waitForCopy(self, self.sink, function(state) return state.buffer end, "this client's copy of the reloaded sink")
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.buffer
+        end, "this client's copy of the reloaded sink")
     end,
     validate = function(self)
         expectFixture("the server, reloaded", self.reads.reloaded, { litres = 12, tainted = true })

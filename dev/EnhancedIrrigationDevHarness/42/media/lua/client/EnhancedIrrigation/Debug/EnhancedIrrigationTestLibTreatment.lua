@@ -16,12 +16,13 @@ T.TREATMENT_SPRITES = { EnhancedIrrigation_BarrelFilter = Sprites.BARREL_FILTER,
     EnhancedIrrigation_BoilerStone = Sprites.BOILER_STONE, EnhancedIrrigation_BoilerWelded = Sprites.BOILER_WELDED }
 
 --- Queues placing the unit `entity` at `handle` (up `opts.up` storeys), with `opts.fields` on its
---- record, and a wait for this client's copy and its summary. Returns its handle, with `spec`.
+--- record, and a wait for this client's copy and its summary. Returns its handle, of kind
+--- "treatment", with `spec`.
 function T.placeUnit(self, handle, entity, opts)
     opts = opts or {}
     local up = opts.up or 0
-    local unit = { x = handle.x, y = handle.y, z = handle.z + up, sprite = T.TREATMENT_SPRITES[entity],
-        spec = Treatment.ENTITIES[entity], square = up == 0 and handle.square or nil }
+    local unit = { x = handle.x, y = handle.y, z = handle.z + up, kind = "treatment",
+        sprite = T.TREATMENT_SPRITES[entity], spec = Treatment.ENTITIES[entity], square = up == 0 and handle.square or nil }
     T.server(self, "treatment.place", T.at(unit, { sprite = unit.sprite, fields = opts.fields }))
     T.waitFor(self, function()
         unit.square = getSquare(unit.x, unit.y, unit.z)
@@ -36,7 +37,7 @@ end
 --- for this client's summary, and the names of its menu into self.names.built. Returns its handle,
 --- with `spec`, or nil.
 function T.buildUnit(self, entity, prefer)
-    local unit = T.buildTile(self, "Base." .. entity, T.TREATMENT_SPRITES[entity], prefer)
+    local unit = T.buildTile(self, "Base." .. entity, T.TREATMENT_SPRITES[entity], prefer, "treatment")
     if not unit then return nil end
     unit.spec = Treatment.ENTITIES[entity]
     T.readUnitUntil(self, unit, "built", function(state) return state.record ~= nil end)
@@ -64,17 +65,6 @@ end
 -- given, into self.reads[label] ({ before, steps }).
 function T.runUnit(self, unit, label, hours, fields, tank)
     T.read(self, "treatment.run", T.at(unit, { hours = hours, fields = fields, tank = tank and T.at(tank) }), label)
-end
-
--- Queues a wait until this client's copy of the unit holds `litres` in its basin, if given, and its
--- summary satisfies `holds(summary)`, if given.
-function T.waitForUnitCopy(self, unit, litres, holds, what)
-    T.waitFor(self, function()
-        local copy = T.copyOf(unit)
-        local summary = copy and Treatment.summaryOf(copy)
-        return summary ~= nil and (not litres or math.abs(copy:getFluidContainer():getAmount() - litres) < T.LITRES)
-            and (not holds or holds(summary))
-    end, what)
 end
 
 -- Queues a wait until this client's summary of the unit agrees on `key` with the server's in
@@ -120,7 +110,8 @@ function T.fillBasin(self, unit, litres, tainted)
     if spec.kind == "boiler" then
         T.setFire(self, unit, false)
     end
-    T.waitForUnitCopy(self, unit, litres, nil, "this client's copy of the filled basin")
+    T.waitForSummary(self, unit, function() return math.abs(T.clientBasin(unit).basin.litres - litres) < T.LITRES end,
+        "this client's copy of the filled basin")
 end
 
 function T.expectBasin(who, state, litres, tainted)

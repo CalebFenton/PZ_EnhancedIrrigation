@@ -25,31 +25,17 @@ T.PUMP_SPRITES = {
     [T.METAL] = Sprites.PUMP_HOUSE_METAL,
 }
 
---- This client's summary of the pump at `handle`, or nil.
-function T.pumpSummary(handle)
-    local copy = T.copyOf(handle)
-    return copy and Pumps.summaryOf(copy)
-end
-
---- Queues a wait until this client's summary of the pump at `handle` satisfies `holds(summary)`.
-function T.waitForPumpSummary(self, handle, holds, what)
-    T.waitFor(self, function()
-        local summary = T.pumpSummary(handle)
-        return summary ~= nil and holds(summary)
-    end, what)
-end
-
 --- Queues placing the pump `entity` (a T.PUMP_SPRITES key) at `handle`, with `with.part` fitted
 --- as Fit Pump fits it ({ type, condition, ceiling, fraction }) and `with.fields` on its record, if
 --- given, and a wait for this client's copy and its summary, with the seal of `with.fields` if
---- given. Returns its handle, with `spec` (Pumps.ENTITIES, nil for a Pump House).
+--- given. Returns its handle, of kind "pump", with `spec` (Pumps.ENTITIES, nil for a Pump House).
 function T.placePump(self, handle, entity, with)
-    local pump = { x = handle.x, y = handle.y, z = handle.z, sprite = T.PUMP_SPRITES[entity],
+    local pump = { x = handle.x, y = handle.y, z = handle.z, kind = "pump", sprite = T.PUMP_SPRITES[entity],
         spec = Pumps.ENTITIES[entity], square = handle.square }
     local seal = with and with.fields and with.fields.seal
     T.server(self, "pumps.place", T.at(pump, { sprite = pump.sprite, part = with and with.part,
         fields = with and with.fields }))
-    T.waitForPumpSummary(self, pump, function(summary) return seal == nil or summary.seal == seal end,
+    T.waitForSummary(self, pump, function(summary) return seal == nil or summary.seal == seal end,
         "this client's copy of the " .. entity)
     return pump
 end

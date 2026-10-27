@@ -1,11 +1,11 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/ServerRecords"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
-local Jobs = require "cf_commonlib/Jobs"
 
 -- Development only, not published. The authority's half of the line tests and of the line and
--- crop fixtures: line tiles and crops placed the way the authority places them, line jobs
--- performed, line records read, aged and run, and the frost.
+-- crop fixtures: line tiles and crops placed the way the authority places them, line records read,
+-- aged and run, and the frost.
 -- Only registers handlers, so a --stay rerun loads it again (RELOAD_FILES). Everything a handler
 -- places goes when its test ends, by its square, so a stale copy left by a reload is no matter. A
 -- tile is { x, y, z }; `args.tiles` lists them.
@@ -79,12 +79,6 @@ handler("lines.place", function(player, args, defer)
     return readTiles(args.tiles)
 end)
 
--- Takes away whatever line tile the test leaves on `args.tiles`, such as those its jobs lay.
-handler("lines.track", function(player, args, defer)
-    deferRemoval(args.tiles, defer)
-    return {}
-end)
-
 handler("lines.read", function(player, args)
     return readTiles(args.tiles)
 end)
@@ -98,7 +92,7 @@ handler("lines.age", function(player, args)
     local squaresBefore = Server.readSquares(args.squares)
     for _, at in ipairs(args.tiles) do
         local record = Server.lineRecordAt(at)
-        Server.setFields(record, nil, args.hours)
+        PZHarness.Records.set(record, nil, nil, args.hours)
         record.wetUntil = (record.wetUntil or 0) - args.hours
         record:update()
     end
@@ -127,44 +121,9 @@ handler("lines.flow", function(player, args)
     return reply
 end)
 
--- Runs the line job `args.job` with `args.with` at x, y, z through the authority's own Jobs.perform
--- on the line site (what the action's complete() calls): on the square's floor for Lay, else on the
--- line tile. Answers whether it was `done` and `args.tiles` after, so a test sees the server refuse
--- on its own.
-handler("lines.perform", function(player, args)
-    local square = Fixtures.squareAt(args)
-    local object
-    if args.job == EI.LineJobs.LAY then
-        object = square and square:getFloor()
-    else
-        object = EI.Lines.lineAt(args.x, args.y, args.z)
-    end
-    PZHarness.need(object, "the server's object for " .. tostring(args.job) .. " at " .. args.x .. "," .. args.y)
-    local done = Jobs.perform(EI.LineJobs, EI.LineSystem.site, player, args.job, object, args.with)
-    local reply = readTiles(args.tiles or { { x = args.x, y = args.y, z = args.z } })
-    reply.done = done == true
-    return reply
-end)
-
 -- Makes the air `args.celsius` wherever Frost reads it until the test ends.
 handler("lines.temperature", function(player, args, defer)
-    local Frost = EI.Frost
-    local before = Frost.celsiusAt
-    Frost.celsiusAt = function() return args.celsius end
-    defer(function() Frost.celsiusAt = before end)
-    return {}
-end)
-
--- Makes the next ZombRandFloat(min, max) on this side roll `min`, a sure hit for any "roll under
--- a chance" (such as a punched hole splitting brittle pipe), then puts the real one back; or puts
--- it back when the test ends, if nothing rolled.
-handler("lines.pinRoll", function(player, args, defer)
-    local real = ZombRandFloat
-    ZombRandFloat = function(min)
-        ZombRandFloat = real
-        return min
-    end
-    defer(function() ZombRandFloat = real end)
+    Fixtures.replace(defer, EI.Frost, "celsiusAt", function() return args.celsius end)
     return {}
 end)
 

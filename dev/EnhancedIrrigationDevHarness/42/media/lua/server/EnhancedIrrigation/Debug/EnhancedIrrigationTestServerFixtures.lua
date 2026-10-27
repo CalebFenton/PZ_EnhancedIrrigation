@@ -1,7 +1,6 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
-local Jobs = require "cf_commonlib/Jobs"
 
 -- Development only, not published. Test handlers for fixtures placed, read, plumbed and run on the
 -- authority. Only registers handlers, so a --stay rerun loads it again.
@@ -103,18 +102,6 @@ handler("fixtures.plumb", function(_, args)
     local tank = PZHarness.need(EI.Tanks.tankAt(args.tank.x, args.tank.y, args.tank.z), "the fixture's tank on the server")
     EI.FixtureSystem.plumb(fixture, tank, args.kind, args.lengths or 0, nil)
     return stateAt(args)
-end)
-
--- Runs the plumbing job `args.job` with `args.with` at the fixture at x, y, z through the
--- authority's own Jobs.perform on the link site (what the action's complete() calls). Answers
--- whether it was done and the fixture's state after, so a test sees the server refuse what its menu
--- would have greyed out.
-handler("fixtures.perform", function(player, args)
-    local fixture = PZHarness.need(fixtureAt(args), "the server's fixture at " .. tostring(args.x) .. "," .. tostring(args.y))
-    local done = Jobs.perform(EI.LinkJobs, EI.LinkSystem.site, player, args.job, fixture, args.with)
-    local state = stateAt(args)
-    state.done = done == true
-    return state
 end)
 
 -- Takes `args.litres` out of the fixture's buffer at x, y, z, as a drink or a wash does, then runs a

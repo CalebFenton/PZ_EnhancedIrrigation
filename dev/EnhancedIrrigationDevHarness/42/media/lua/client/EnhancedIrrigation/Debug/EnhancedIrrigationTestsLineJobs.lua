@@ -64,8 +64,8 @@ T.test("irrigation_lines_drill_holes_tool_gate", {
         T.goNextTo(self, clay.square)
         useDrill(self, iron, "awl on iron", false)
         useDrill(self, clay, "awl on clay", false)
-        -- A sure split for any tool that may split plastic.
-        T.server(self, "lines.pinRoll", {})
+        -- A sure split for any tool that may split plastic: the one roll a punch draws.
+        T.forceRoll(self, { 0 })
         useDrill(self, plastic, "awl on plastic", true)
         T.waitForLines(self, { plastic }, "this client's summary of the awl's hole", function(summary) return summary.holed end)
         T.give(self, "drill", { { type = "Base.HandDrill" } })
@@ -85,7 +85,7 @@ T.test("irrigation_lines_drill_holes_tool_gate", {
         expect(drilled[1].record.holed and drilled[3].record.holed, "the server has the iron or the plastic tile unholed")
         expect(not drilled[2].record.holed, "the clay tile was holed")
         expect(not drilled[3].record.cracked, "the awl split the plastic tile")
-        local described = LineMenu.describe(T.lineSummary(self.tiles[3]))
+        local described = LineMenu.describe(T.recordSummary(self.tiles[3]))
         expect(described:find(getText("IGUI_EnhancedIrrigation_Holed"), 1, true) ~= nil,
             "the menu doesn't say the tile is holed: " .. described)
     end,
@@ -110,7 +110,8 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
         T.placeLine(self, { tile }, "plastic")
         T.give(self, "tools", { { type = "Base.Hammer" }, { type = "Base.Nails", count = self.nails } })
         T.goNextTo(self, tile.square)
-        T.server(self, "lines.pinRoll", {})
+        -- A sure split: the one roll the punch draws.
+        T.forceRoll(self, { 0 })
         useDrill(self, tile, "nail", true)
         T.waitForLines(self, { tile }, "this client's summary of the nailed tile", function(summary)
             return summary.holed and summary.cracked
@@ -188,7 +189,7 @@ T.test("irrigation_lines_patch_crack", {
         readUntil(self, { tile }, "patched", function(tiles) return not tiles[1].record.cracked end)
         T.waitFor(self, function() return self.items.tape[1]:getCurrentUses() < self.usesBefore end, "this client's tape, used")
         T.waitForLines(self, { tile }, "this client's summary of the patch", function(summary) return not summary.cracked end)
-        T.step(function() self.described = LineMenu.describe(T.lineSummary(tile)) end)
+        T.step(function() self.described = LineMenu.describe(T.recordSummary(tile)) end)
         T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up", true)
         T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose the taken-up tile")
         T.count(self, "back", { Pipes.MATERIALS.plastic.item })
@@ -224,13 +225,13 @@ T.test("irrigation_lines_drain_from_the_middle", {
         T.placeLine(self, self.tiles, "lead")
         local tap = self.tiles[1]
         T.server(self, "valves.place", T.at(tap, { item = EnhancedIrrigation.Valves.WIND_UP }))
-        T.read(self, "lines.perform", T.at(tap, { job = LineJobs.WIND_VALVE, with = "60" }), "wound")
+        T.job(self, "line", LineJobs.WIND_VALVE, tap, "60", "wound")
         T.waitForLines(self, { tap }, "this client's copy of the tap its valve runs", function(summary)
             return summary.valveOpen
         end)
         T.goNextTo(self, self.tiles[2].square)
         T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain while the valve runs", false)
-        T.read(self, "lines.perform", T.at(tap, { job = LineJobs.WIND_VALVE, with = "0" }), "shut")
+        T.job(self, "line", LineJobs.WIND_VALVE, tap, "0", "shut")
         T.waitForLines(self, { tap }, "this client's copy of the tap its valve shut", function(summary)
             return not summary.valveOpen
         end)
@@ -309,7 +310,7 @@ T.test("irrigation_lines_take_up_keeps_the_pipes_condition", {
         local rows = T.row(self, 1)
         if not rows then return end
         local tile = rows[1][1]
-        T.trackLines(self, { tile })
+        T.trackSquare(self, tile)
         T.placeTank(self, tile, "above", 0)
         self.worn = math.floor(instanceItem(Pipes.MATERIALS.iron.item):getConditionMax() / 2)
         T.give(self, "pipe", { { type = Pipes.MATERIALS.iron.item, condition = self.worn }, { type = "Base.PipeWrench" } })
@@ -388,14 +389,14 @@ T.test("irrigation_lines_take_up_parts_the_line_at_once", {
         if not rows then return end
         self.tiles = rows[1]
         T.placeLine(self, self.tiles, "iron")
-        T.read(self, "lines.perform", T.at(self.tiles[2], { job = LineJobs.TAKE_UP, tiles = T.tiles(self.tiles) }),
-            "taken")
+        T.job(self, "line", LineJobs.TAKE_UP, self.tiles[2], nil, "taken", { reads = T.lineReads(self.tiles) })
     end,
     validate = function(self)
         local taken = self.reads.taken
-        expect(taken.done and taken.tiles[2].record == nil, "the server didn't take up the middle tile")
+        local tiles = taken.after.state.tiles
+        expect(taken.ok and tiles[2].record == nil, "the server didn't take up the middle tile")
         for _, i in ipairs({ 1, 3 }) do
-            local record = taken.tiles[i].record
+            local record = tiles[i].record
             expectEqual("the tiles in end " .. i .. "'s line", record and record.tiles, 1)
         end
     end,

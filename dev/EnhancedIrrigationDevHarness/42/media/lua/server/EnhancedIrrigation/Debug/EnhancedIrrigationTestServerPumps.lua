@@ -1,4 +1,6 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/ServerFixtures"
+require "PZHarness/ServerRecords"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 local Squares = require "cf_commonlib/Squares"
@@ -57,8 +59,8 @@ end
 -- there is none. A Pump House is given `args.part` ({ type, condition, ceiling, fraction }, each but
 -- the type as a new one's unless given) as Fit Pump fits that item. Answers its state.
 handler("pumps.place", function(player, args, defer)
-    local square = Server.squareFor(args, defer)
-    Server.placeEntity(square, args, defer, EI.PumpSystem, recordAt, function(placed)
+    local square = PZHarness.squareFor(args, defer)
+    Server.placeEntity(player, square, args, defer, "pump", EI.PumpSystem, function(placed)
         if not args.part then return end
         local item = PZHarness.need(instanceItem(args.part.type), "the part " .. tostring(args.part.type))
         if args.part.condition then
@@ -124,33 +126,15 @@ end)
 -- them, so the pump must catch them up. Answers the time and state before and after in one call.
 handler("pumps.update", function(player, args)
     local record = PZHarness.need(recordAt(args), "the record of the Pump House at " .. args.x .. "," .. args.y)
-    Server.setFields(record, args.fields, args.hoursAgo)
+    PZHarness.Records.set(record, args.fields, nil, args.hoursAgo)
     Server.setWater(args.squares, args.water)
     if args.lineHoursAgo then
         for _, at in ipairs(args.squares or {}) do
-            Server.setFields(Server.lineRecordAt(at), nil, args.lineHoursAgo)
+            PZHarness.Records.set(Server.lineRecordAt(at), nil, nil, args.lineHoursAgo)
         end
     end
     local reply = { now = Clock.now(), before = stateAt(player, args) }
     record:update()
     reply.after = stateAt(player, args)
     return reply
-end)
-
--- Sets the character's endurance to `args.value` and fatigue to `args.fatigue`, and tells its
--- client, until the test ends.
-handler("pumps.endurance", function(player, args, defer)
-    local stats = player:getStats()
-    local before = { endurance = stats:get(CharacterStat.ENDURANCE), fatigue = stats:get(CharacterStat.FATIGUE) }
-    local function set(values)
-        stats:set(CharacterStat.ENDURANCE, values.endurance)
-        stats:set(CharacterStat.FATIGUE, values.fatigue)
-        if isServer() then
-            syncPlayerStats(player, SyncPlayerStatsPacket.getBitMaskForStat(CharacterStat.ENDURANCE)
-                + SyncPlayerStatsPacket.getBitMaskForStat(CharacterStat.FATIGUE))
-        end
-    end
-    set({ endurance = args.value, fatigue = args.fatigue })
-    defer(function() set(before) end)
-    return { endurance = stats:get(CharacterStat.ENDURANCE) }
 end)

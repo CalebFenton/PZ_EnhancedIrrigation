@@ -7,7 +7,7 @@ require "EnhancedIrrigation/UI/LinkMenu"
 
 -- Pipe between tanks: plumbing tanks together from the right-click menu and taking the pipe out,
 -- how water moves through a link, and this client's copy of the list. What the menu greys out, the
--- server is also asked to do directly (jobs.perform), to show it refuses on its own. Link passes
+-- server is also asked to do directly (T.job), to show it refuses on its own. Link passes
 -- run on the server in one call, so the clock doesn't decide them.
 
 local T = EnhancedIrrigationTest
@@ -69,8 +69,8 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
             return T.findNamed(context, getText("ContextMenu_EnhancedIrrigation_PlumbToTank"))
         end, false)
         T.batch(function()
-            T.read(self, "jobs.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB,
-                with = Links.encode(T.at(self.high), "iron") }), "forced")
+            T.job(self, "link", LinkJobs.PLUMB, self.low, Links.encode(T.at(self.high), "iron"), "forced",
+                { reads = T.stateReads("tanks.read", self.low) })
             T.count(self, "left", { "Base.MetalPipe" })
         end)
     end,
@@ -78,8 +78,8 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
         T.expectOptionRefused(self, "plumb")
         expect(not (self.menu.plumb and self.menu.plumb.submenu), "Plumb to Tank lists tanks to a character who doesn't know how")
         local forced = self.reads.forced
-        expect(forced.done == false, "the server plumbed for a character who doesn't know how")
-        expectEqual("links the refused plumbing left", forced.links, 0)
+        expect(forced.ok == false, "the server plumbed for a character who doesn't know how")
+        expectEqual("links the refused plumbing left", forced.after.state.links, 0)
         expectEqual("iron pipe left after the refused plumbing", T.counted(self, "Base.MetalPipe"), self.pipes)
     end,
 })
@@ -94,7 +94,7 @@ T.test("irrigation_links_plumb_lists_no_well", {
         T.placeTank(self, spots[1], "wellAbove")
         self.barrel = T.placeTank(self, spots[2], "raisedLidded")
         T.givePlumbing(self, 4)
-        T.useMenu(self, self.barrel, "plumb to the well", T.job("link", LinkJobs.PLUMB), false)
+        T.useMenu(self, self.barrel, "plumb to the well", T.findJob("link", LinkJobs.PLUMB), false)
         T.useOption(self, function() return T.copyOf(self.barrel) end, "no tank in reach", function(context)
             return T.findNamed(context, getText("ContextMenu_EnhancedIrrigation_NoTankInReach"))
         end, false)
@@ -123,22 +123,22 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
         -- Iron needs no joint.
         T.givePlumbing(self, self.lengths * Pipes.MATERIALS.iron.perLength)
         local with, past = Links.encode(T.at(self.high), "iron"), Links.encode(T.at(self.far), "iron")
-        T.useMenu(self, self.low, "one tile past", T.job("link", LinkJobs.PLUMB, past), false)
-        T.read(self, "jobs.perform", T.at(self.low, { feature = "link", job = LinkJobs.PLUMB, with = past }), "forced")
+        T.useMenu(self, self.low, "one tile past", T.findJob("link", LinkJobs.PLUMB, past), false)
+        T.job(self, "link", LinkJobs.PLUMB, self.low, past, "forced", { reads = T.stateReads("tanks.read", self.low) })
         local low = function() return T.copyOf(self.low) end
-        T.useOption(self, low, "at the limit", T.job("link", LinkJobs.PLUMB, with), true)
+        T.useOption(self, low, "at the limit", T.findJob("link", LinkJobs.PLUMB, with), true)
         T.readUntil(self, "links.read", T.at(self.low), "links", function(reply) return #reply.links > 0 end)
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
         T.waitFor(self, function() return #T.clientLinks(self.low) > 0 end, "this client's copy of the link")
         T.step(function() self.viewed = #T.clientLinks(self.low) end)
-        T.useOption(self, low, "unplumb", T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.high))), false)
-        T.useOption(self, low, "plumb again", T.job("link", LinkJobs.PLUMB, with), false)
+        T.useOption(self, low, "unplumb", T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.high))), false)
+        T.useOption(self, low, "plumb again", T.findJob("link", LinkJobs.PLUMB, with), false)
     end,
     validate = function(self)
         expect(not self.menu["one tile past"].found, "Plumb to Tank lists a tank " .. (Links.MAX_TILES + 1) .. " tiles away")
         local forced = self.reads.forced
-        expect(forced.done == false, "the server plumbed to a tank out of reach")
-        expectEqual("links the refused plumbing left", forced.links, 0)
+        expect(forced.ok == false, "the server plumbed to a tank out of reach")
+        expectEqual("links the refused plumbing left", forced.after.state.links, 0)
         T.expectOffered(self, "at the limit")
         local links = self.reads.links.links
         if expectEqual("the server's links at the tank", #links, 1) then
@@ -173,7 +173,7 @@ T.test("irrigation_links_plumb_lays_the_pipe_chosen", {
         T.give(self, "tools", { { type = "Base.PipeWrench" }, { type = iron.item, count = self.ironCount },
             { type = lead.item, count = lengths * lead.perLength }, { type = plastic.item, count = lengths * plastic.perLength } })
         local function plumb(kind)
-            return T.job("link", LinkJobs.PLUMB, Links.encode(T.at(self.b), kind))
+            return T.findJob("link", LinkJobs.PLUMB, Links.encode(T.at(self.b), kind))
         end
         local a = function() return T.copyOf(self.a) end
         T.useMenu(self, self.a, "iron", plumb("iron"), false)
@@ -221,12 +221,12 @@ T.test("irrigation_links_unplumb_gives_back_the_pipe", {
         end
         T.knowRecipes(self, { LinkJobs.RECIPE }, true)
         T.give(self, "tools", items)
-        T.useMenu(self, self.a, "plumb", T.job("link", LinkJobs.PLUMB, Links.encode(T.at(self.b), "iron")), true)
+        T.useMenu(self, self.a, "plumb", T.findJob("link", LinkJobs.PLUMB, Links.encode(T.at(self.b), "iron")), true)
         T.waitFor(self, function() return #T.clientLinks(self.a) > 0 and #ironConditions() == 0 end,
             "this client's copy of the link, the pipe gone into it")
         T.step(function() self.viewedPlumbed = #T.clientLinks(self.a) end)
         T.useOption(self, function() return T.copyOf(self.a) end, "unplumb",
-            T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
+            T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
         T.readUntil(self, "links.read", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
         T.waitFor(self, function() return #ironConditions() == count end, "this client's copy of the pipe given back")
         T.waitFor(self, function() return #T.clientLinks(self.a) == 0 end, "this client to drop the link")
@@ -350,13 +350,12 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
         end)
         T.waitFor(self, function() return T.copyOf(self.b) == nil end, "this client to lose the tank taken away")
         T.givePlumbing(self, 2)
-        T.useMenu(self, self.a, "unplumb the bare end", T.job("link", LinkJobs.UNPLUMB, with), false)
+        T.useMenu(self, self.a, "unplumb the bare end", T.findJob("link", LinkJobs.UNPLUMB, with), false)
         self.again = T.placeTank(self, spots[2], "lidded")
         local plumbWith = Links.encode(T.at(self.b), "iron")
-        T.useOption(self, function() return T.copyOf(self.a) end, "plumb again", T.job("link", LinkJobs.PLUMB, plumbWith), false)
+        T.useOption(self, function() return T.copyOf(self.a) end, "plumb again", T.findJob("link", LinkJobs.PLUMB, plumbWith), false)
         T.batch(function()
-            T.read(self, "jobs.perform", T.at(self.a, { feature = "link", job = LinkJobs.PLUMB, with = plumbWith }),
-                "forced")
+            T.job(self, "link", LinkJobs.PLUMB, self.a, plumbWith, "forced", { reads = T.stateReads("tanks.read", self.a) })
             T.read(self, "links.pass", T.at(self.a, { litres = PASS_LITRES, other = T.at(self.again) }), "joined")
         end)
     end,
@@ -371,8 +370,8 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
         expectEqual("the name Unplumb gives the bare end", named, want)
         expect(not self.menu["plumb again"].found, "Plumb to Tank lists the tank set back on the plumbed square")
         local forced = self.reads.forced
-        expect(forced.done == false, "the server laid a second pipe between the same squares")
-        expectEqual("links between the same squares", forced.links, 1)
+        expect(forced.ok == false, "the server laid a second pipe between the same squares")
+        expectEqual("links between the same squares", forced.after.state.links, 1)
         local joined, moved = self.reads.joined, math.min(PASS_LITRES, self.start / 2)
         expectNear("the tank left, once a tank stands at the other end again", joined.litres, self.start - moved, T.LITRES)
         expectNear("the tank set on the bare end", joined.other.litres, moved, T.LITRES)
@@ -401,7 +400,7 @@ T.test("irrigation_links_unplumb_from_the_bare_floor", {
         T.give(self, "tools", { { type = "Base.PipeWrench" } })
         T.goNextTo(self, self.a.square)
         T.useOption(self, function() return self.a.square:getFloor() end, "unplumb",
-            T.job("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
+            T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.b))), true)
         T.readUntil(self, "links.read", T.at(self.a), "links", function(reply) return #reply.links == 0 end)
         self.count = lengths * Pipes.MATERIALS.iron.perLength
         T.waitFor(self, function() return #ironConditions() == self.count end, "this client's copy of the pipe given back")

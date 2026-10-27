@@ -1,7 +1,9 @@
 -- Development only, not published. The test library's settings, which the client and the
--- server both read (dev/harness/docs/adopting.md).
+-- server both read (dev/harness/docs/adopting.md). Shared Lua loads before the mod's server Lua,
+-- so the hooks look those modules up when they run.
 
 require "PZHarness/Fixtures"
+local Chance = require "cf_commonlib/Chance"
 
 PZHarness.registerTests({
     hour = 10,
@@ -11,10 +13,23 @@ PZHarness.registerTests({
         Perks.Electricity },
     sandbox = "EnhancedIrrigation",
     recipePrefix = "EnhancedIrrigation_",
-    -- The pottery wheel T.placeBench sets down for the crock's tests is one tile of vanilla's
-    -- two-tile wheel. The game's safe removal looks for its other tile, finds none and removes
-    -- nothing, so it goes by the plain removal.
     remove = function(object)
+        local EI = EnhancedIrrigation
+        if not isClient() then
+            -- A link the test made would outlive the thing at its end.
+            local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+            if Server.isPlaced(object) then
+                Server.unlinkAt(object:getX(), object:getY(), object:getZ())
+            end
+            -- With its record, and its neighbours reshaped.
+            if EI.Lines.isLine(object) then
+                EI.LineSystem.remove(object)
+                return true
+            end
+        end
+        -- The pottery wheel T.placeBench sets down for the crock's tests is one tile of vanilla's
+        -- two-tile wheel. The game's safe removal looks for its other tile, finds none and removes
+        -- nothing, so it goes by the plain removal.
         local script = object:getEntityScript()
         if not (script and script:getName() == "Pottery_Wheel") then
             return false
@@ -22,4 +37,11 @@ PZHarness.registerTests({
         object:getSquare():transmitRemoveItemFromSquare(object, false)
         return true
     end,
+    chance = function() return Chance end,
+    records = {
+        line = { owner = function() return EnhancedIrrigation.Lines end },
+        pump = { owner = function() return EnhancedIrrigation.Pumps end },
+        treatment = { owner = function() return EnhancedIrrigation.Treatment end },
+    },
+    jobAction = function() return EnhancedIrrigationAction end,
 })

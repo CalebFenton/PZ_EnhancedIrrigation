@@ -41,12 +41,12 @@ for _, case in ipairs({ { entity = T.WOOD, name = "wood" }, { entity = T.METAL, 
     T.test("irrigation_pump_house_" .. case.name .. "_built_from_build_menu", {
         instant = true,
         run = function(self)
-            self.house = T.buildTile(self, "Base." .. case.entity, T.PUMP_SPRITES[case.entity])
+            self.house = T.buildTile(self, "Base." .. case.entity, T.PUMP_SPRITES[case.entity], nil, "pump")
             if not self.house then return end
             readUntil(self, self.house, "built", function(state) return state.record ~= nil end)
-            T.waitForPumpSummary(self, self.house, function() return true end, "this client's summary of the built house")
+            T.waitForSummary(self, self.house, function() return true end, "this client's summary of the built house")
             T.readMenu(self, function() return T.copyOf(self.house) end, "built")
-            T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
+            T.useMenu(self, self.house, "on", T.findJob("pump", PumpJobs.TURN_ON), false)
         end,
         validate = function(self)
             local record = self.reads.built.record
@@ -80,9 +80,9 @@ T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
             return T.jobOption(context, "pump", PumpJobs.FIT_PUMP, self.items.parts[2])
         end, true)
         readUntil(self, self.house, "fitted", function(state) return state.record.part ~= nil end)
-        T.waitForPumpSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
+        T.waitForSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
         T.readMenu(self, function() return T.copyOf(self.house) end, "fitted")
-        T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
+        T.useMenu(self, self.house, "take out", T.findJob("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
         T.readCarried(self, { APPLIANCE })
         T.waitFor(self, function()
@@ -123,7 +123,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
         if not spots then return end
         self.house = T.placePump(self, spots[1], T.WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
-        T.useMenu(self, self.house, "take out", T.job("pump", PumpJobs.TAKE_OUT_PUMP), true)
+        T.useMenu(self, self.house, "take out", T.findJob("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
         T.readCarried(self, { APPLIANCE })
         T.waitFor(self, function()
@@ -190,16 +190,16 @@ T.test("irrigation_pump_house_burns_out_and_is_repaired", {
         self.house = T.placePump(self, spots[1], T.WOOD, fitted(APPLIANCE, { on = true },
             { condition = LAST_CONDITION, ceiling = CEILING }))
         update(self, self.house, "burnt", { hoursAgo = 1 })
-        T.waitForPumpSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
+        T.waitForSummary(self, self.house, function(summary) return summary.burntOut end, "this client's summary of the burnt-out part")
         T.readMenu(self, function() return T.copyOf(self.house) end, "burnt")
-        T.useMenu(self, self.house, "on", T.job("pump", PumpJobs.TURN_ON), false)
+        T.useMenu(self, self.house, "on", T.findJob("pump", PumpJobs.TURN_ON), false)
         T.setPerk(self, Perks.Electricity, 2)
         T.give(self, "kit", { { type = "Base.Screwdriver" }, { type = "Base.ElectronicsScrap" }, { type = "Base.TirePiece" } })
-        T.useMenu(self, self.house, "repair", T.job("pump", PumpJobs.REPAIR_PUMP), true)
+        T.useMenu(self, self.house, "repair", T.findJob("pump", PumpJobs.REPAIR_PUMP), true)
         readUntil(self, self.house, "repaired", function(state) return state.record.partCondition > 0 end)
-        T.waitForPumpSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
+        T.waitForSummary(self, self.house, function(summary) return not summary.burntOut end, "this client's summary of the repair")
         T.readMenu(self, function() return T.copyOf(self.house) end, "repaired")
-        T.useMenu(self, self.house, "again", T.job("pump", PumpJobs.REPAIR_PUMP), false)
+        T.useMenu(self, self.house, "again", T.findJob("pump", PumpJobs.REPAIR_PUMP), false)
         T.count(self, "used", { "Base.ElectronicsScrap", "Base.TirePiece", "Base.Screwdriver" })
     end,
     validate = function(self)
@@ -262,7 +262,7 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         if not spots then return end
         self.house, self.tank = T.plumbedPump(self, spots, T.METAL, fitted(APPLIANCE))
         T.give(self, "tools", { { type = "Base.Screwdriver" }, { type = Valves.TIMER } })
-        T.useMenu(self, self.house, "fit", T.job("pump", PumpJobs.FIT_TIMER), true)
+        T.useMenu(self, self.house, "fit", T.findJob("pump", PumpJobs.FIT_TIMER), true)
         readUntil(self, self.house, "fitted", function(state) return state.record.timer ~= nil end)
         T.waitFor(self, function() return T.hasOverlay(T.overlaysOf(T.copyOf(self.house)), Sprites.HOUSE_TIMER) end,
             "this client's copy of the house showing its timer")
@@ -279,10 +279,10 @@ T.test("irrigation_pump_house_timer_runs_it_in_its_window", {
         end)
         readUntil(self, self.house, "set", function(state) return state.record.timer.minutes == 30 end)
         update(self, self.house, "hours", { hoursAgo = 3, tank = self.tank })
-        T.waitForPumpSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
+        T.waitForSummary(self, self.house, function(summary) return summary.timer and summary.timer.minutes == 30 end,
             "this client's summary of the set timer")
         T.readMenu(self, function() return T.copyOf(self.house) end, "set")
-        T.useMenu(self, self.house, "take off", T.job("pump", PumpJobs.TAKE_OFF_TIMER), true)
+        T.useMenu(self, self.house, "take off", T.findJob("pump", PumpJobs.TAKE_OFF_TIMER), true)
         readUntil(self, self.house, "off", function(state) return state.record.timer == nil end)
         T.readCarried(self, { Valves.TIMER })
     end,
@@ -335,20 +335,20 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
         local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
         if not spots then return end
         self.house, self.barrel, self.tiles = houseLine(self, spots, T.METAL, UTILITY)
-        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_ON }), "turned on")
+        T.job(self, "pump", PumpJobs.TURN_ON, self.house, nil, "turned on")
         readUntil(self, self.house, "on", function(state) return state.record.running == true end)
         T.waitForLines(self, self.tiles, "this client's copy of the running line", function(summary) return summary.running end)
         T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain running", false)
         -- The crops dried in the same call, so the ten-minute passes since Turn On leave them room.
         update(self, self.house, "half", { hoursAgo = T.HALF_HOUR, squares = self.tiles, water = 0, tank = self.barrel })
-        T.read(self, "jobs.perform", T.at(self.house, { feature = "pump", job = PumpJobs.TURN_OFF }), "off")
+        T.job(self, "pump", PumpJobs.TURN_OFF, self.house, nil, "off")
         T.waitForLines(self, self.tiles, "this client's copy of the stopped line", function(summary)
             return not summary.running
         end)
         T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain stopped", false)
     end,
     validate = function(self)
-        expect(self.reads["turned on"].done and self.reads.on.record.running, "Turn On didn't run the house")
+        expect(self.reads["turned on"].ok and self.reads.on.record.running, "Turn On didn't run the house")
         T.expectOptionRefused(self, "drain running", "Tooltip_EnhancedIrrigation_LineRunning")
         local half = self.reads.half
         local each = Lines.HOLE_RATE * Pumps.PARTS[UTILITY].push * T.HALF_HOUR
@@ -359,7 +359,7 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
         expectNear("the barrel's water drawn", half.before.tank.litres - half.after.tank.litres, 2 * each, T.LITRES)
         expectNear("the part's wear", half.before.record.partCondition - half.after.record.partCondition,
             Pumps.PARTS[UTILITY].wearPerHour * T.HALF_HOUR, 0.001)
-        expect(self.reads.off.done, "Turn Off wasn't done")
+        expect(self.reads.off.ok, "Turn Off wasn't done")
         T.expectOffered(self, "drain stopped")
     end,
 })
@@ -379,7 +379,10 @@ T.test("irrigation_pump_house_budgets_after_line_freeze", {
             { source = "lidded", sourceLitres = self.litres })
         T.batch(function()
             T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 1 })
-            T.server(self, "lines.pinRoll", {})
+            -- Every roll a sure split. The full tile's is the pass's only one, as the drilled tile
+            -- catches up empty before the pump's water comes; what the passes after draw comes after
+            -- these reads.
+            T.forceRoll(self, 0)
             local args = T.pumpAt(self.house, { hoursAgo = T.HALF_HOUR, fields = { on = true },
                 squares = self.tiles, water = 0, tank = self.barrel })
             args.lineHoursAgo = 1

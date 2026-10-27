@@ -14,7 +14,7 @@ local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
 local Links, LinkJobs, Treatment = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Treatment
 local TreatmentJobs, LinkMenu = EnhancedIrrigation.TreatmentJobs, EnhancedIrrigation.LinkMenu
-local placeUnit, readUntil, run, waitForCopy = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitCopy
+local placeUnit, readUntil, run = T.placeUnit, T.readUnitUntil, T.runUnit
 local waitForServer, fillBasin, expectLine, expectBasin = T.waitForUnitServer, T.fillBasin, T.expectLine, T.expectBasin
 local clientBasin = T.clientBasin
 
@@ -57,8 +57,8 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
         T.fillCarried(self, "Base.PetrolCan", "Petrol", 5)
         local function bucket() return self.items.carried[1] end
         local function can() return self.items.carried[2] end
-        T.useMenu(self, self.unit, "petrol", T.job("treatment", TreatmentJobs.POUR_IN, can), false)
-        T.useMenu(self, self.unit, "pour", T.job("treatment", TreatmentJobs.POUR_IN, bucket), true)
+        T.useMenu(self, self.unit, "petrol", T.findJob("treatment", TreatmentJobs.POUR_IN, can), false)
+        T.useMenu(self, self.unit, "pour", T.findJob("treatment", TreatmentJobs.POUR_IN, bucket), true)
         readUntil(self, self.unit, "poured", function(state)
             return state.record and state.record.head + state.basin.litres > head - T.LITRES
         end)
@@ -67,7 +67,7 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
             local summary = Treatment.summaryOf(T.copyOf(self.unit))
             return summary ~= nil and summary.head > head - 1
         end, "this client's summary of the full head")
-        T.useMenu(self, self.unit, "full", T.job("treatment", TreatmentJobs.POUR_IN, bucket), false)
+        T.useMenu(self, self.unit, "full", T.findJob("treatment", TreatmentJobs.POUR_IN, bucket), false)
         run(self, self.unit, "hour", { 1 })
     end,
     validate = function(self)
@@ -98,7 +98,9 @@ T.test("irrigation_treatment_filter_unripe_passes_tainted_water", {
         self.hours = 2
         run(self, self.unit, "run", { self.hours }, { head = 20, headTainted = true, ripeHours = 0 })
         local litres = self.unit.spec.rate * self.hours
-        waitForCopy(self, self.unit, litres, nil, "this client's copy of the filled basin")
+        T.waitForSummary(self, self.unit, function()
+            return math.abs(clientBasin(self.unit).basin.litres - litres) < T.LITRES
+        end, "this client's copy of the filled basin")
     end,
     validate = function(self)
         local litres = self.unit.spec.rate * self.hours
@@ -121,9 +123,11 @@ T.test("irrigation_treatment_filter_ripe_passes_clean_water", {
         self.hours = 2
         run(self, self.unit, "run", { self.hours }, { head = 50, headTainted = true, ripeHours = Treatment.RIPE_HOURS })
         local litres = self.unit.spec.rate * self.hours
-        waitForCopy(self, self.unit, litres, nil, "this client's copy of the filled basin")
+        T.waitForSummary(self, self.unit, function()
+            return math.abs(clientBasin(self.unit).basin.litres - litres) < T.LITRES
+        end, "this client's copy of the filled basin")
         T.readMenu(self, function() return T.copyOf(self.unit) end, "ripe")
-        T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), false)
+        T.useMenu(self, self.unit, "clean", T.findJob("treatment", TreatmentJobs.CLEAN_FILTER), false)
     end,
     validate = function(self)
         local litres = self.unit.spec.rate * self.hours
@@ -208,11 +212,11 @@ T.test("irrigation_treatment_filter_clogged_trickles_until_cleaned", {
         local spec = self.unit.spec
         run(self, self.unit, "clogged", { 1 }, { head = 20, headTainted = true, ripeHours = Treatment.RIPE_HOURS,
             passed = spec.clogLitres })
-        waitForCopy(self, self.unit, nil, function(summary) return summary.clogged end,
+        T.waitForSummary(self, self.unit, function(summary) return summary.clogged end,
             "this client's summary of the clogged filter")
         T.readMenu(self, function() return T.copyOf(self.unit) end, "clogged")
         T.give(self, "tools", { { type = "Base.Shovel" } })
-        T.useMenu(self, self.unit, "clean", T.job("treatment", TreatmentJobs.CLEAN_FILTER), true)
+        T.useMenu(self, self.unit, "clean", T.findJob("treatment", TreatmentJobs.CLEAN_FILTER), true)
         readUntil(self, self.unit, "cleaned", function(state) return not state.summary.clogged end)
         waitForServer(self, self.unit, "cleaned", "clogged")
         T.readMenu(self, function() return T.copyOf(self.unit) end, "cleaned")
@@ -248,7 +252,7 @@ T.test("irrigation_treatment_filter_inlet_fills_the_head_from_a_tank", {
         self.unit = placeUnit(self, spots[1], BARREL_FILTER)
         self.tank = T.placeTank(self, spots[2], "lidded", 100, true)
         T.givePlumbing(self, 1)
-        T.useMenu(self, self.unit, "inlet", T.job("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
+        T.useMenu(self, self.unit, "inlet", T.findJob("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.inlet end)
         run(self, self.unit, "hour", { 1 }, nil, self.tank)
         T.count(self, "left", { "Base.MetalPipe" })
@@ -281,13 +285,13 @@ T.test("irrigation_treatment_filter_inlet_refuses_a_lower_tank", {
                 return option.name == label
             end)
         end, false)
-        T.read(self, "jobs.perform", T.at(self.unit, { feature = "link", job = LinkJobs.PLUMB_INLET,
-            with = Links.encode(T.at(self.tank), "iron") }), "forced")
+        T.job(self, "link", LinkJobs.PLUMB_INLET, self.unit, Links.encode(T.at(self.tank), "iron"), "forced",
+            { reads = T.stateReads("tanks.read", self.unit) })
     end,
     validate = function(self)
         T.expectOptionRefused(self, "lower tank", "Tooltip_EnhancedIrrigation_InletTankTooLow")
         local forced = self.reads.forced
-        expect(forced.done == false and forced.links == 0, "the server plumbed an inlet from a lower tank")
+        expect(forced.ok == false and forced.after.state.links == 0, "the server plumbed an inlet from a lower tank")
     end,
 })
 
@@ -312,7 +316,7 @@ T.test("irrigation_treatment_filter_outlet_fills_a_tank_no_higher", {
             end)
         end, false)
         T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
-            T.job("link", LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.tank), "iron")), true)
+            T.findJob("link", LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
         run(self, self.unit, "passed", { 1 }, nil, self.tank)
     end,

@@ -4,6 +4,8 @@ require "PZHarness/TestBuild"
 require "PZHarness/TestChunks"
 require "PZHarness/TestLearning"
 require "PZHarness/TestReads"
+require "PZHarness/TestRecords"
+require "PZHarness/TestJobs"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Links/Links"
@@ -12,10 +14,11 @@ require "EnhancedIrrigation/Tanks"
 
 -- Development only, not published. The mod's test library: PZHarness.Test with the waits, reads,
 -- menu helpers and fixtures the mod's tests share. Fixtures are placed by server handlers the way
--- the authority places them, and each waits for this client's copy. A tile handle is { x, y, z,
--- square }. The line, pump and treatment helpers extend it in EnhancedIrrigationTestLibLines,
--- TestLibPumps and TestLibTreatment, for the files that require them. A fixture only one test file
--- uses is that file's own.
+-- the authority places them, and each waits for this client's copy. A tile handle is a T.where
+-- handle; a record's has its `kind` (the `records` test setting: "line", "pump", "treatment"). The
+-- line, pump and treatment helpers extend it in EnhancedIrrigationTestLibLines, TestLibPumps and
+-- TestLibTreatment, for the files that require them. A fixture only one test file uses is that
+-- file's own.
 
 EnhancedIrrigationTest = EnhancedIrrigationTest or setmetatable({}, { __index = PZHarness.Test })
 local T = EnhancedIrrigationTest
@@ -67,10 +70,17 @@ end
 --- A `find` for T.useOption: the option queuing `job` of the action feature `feature`, with `with`
 --- if given (T.jobOption): an item or other value, or a function giving it when the menu is read,
 --- for an item a step before gives.
-function T.job(feature, job, with)
+function T.findJob(feature, job, with)
     return function(context)
         return T.jobOption(context, feature, job, type(with) == "function" and with() or with)
     end
+end
+
+--- The reads of a job done on the authority (T.job's opts.reads): what the dev mod's handler
+--- `name` (tanks.read, fixtures.state, pumps.state, treatment.state) reads at `handle`, with
+--- `extra`'s args, in `before.state` and `after.state` of its answer.
+function T.stateReads(name, handle, extra)
+    return { state = { name = name, args = T.at(handle, extra) } }
 end
 
 --- How many of `fullType` T.count noted as "left", 0 if it noted none.
@@ -81,14 +91,14 @@ end
 -- The build menu -------------------------------------------------------------------------------------
 
 --- Queues building `entity` (a full name) from the build menu on a T.buildSite (T.build, each
---- input the first of `prefer` it takes), the tile removed when the test ends (tanks.track), and
---- waits for this client's copy of the tile `sprite`. Returns the built tile's handle, or nil.
-function T.buildTile(self, entity, sprite, prefer)
+--- input the first of `prefer` it takes, which removes the tile when the test ends), and waits for
+--- this client's copy of the tile `sprite`. Returns the built tile's handle, of the record kind
+--- `kind` if given, or nil.
+function T.buildTile(self, entity, sprite, prefer, kind)
     local square = T.buildSite(self)
     if not square then return nil end
-    local handle = T.where(square)
-    local built = T.at(handle, { square = square, sprite = sprite })
-    T.server(self, "tanks.track", T.at(handle))
+    local built = T.where(square)
+    built.sprite, built.kind = sprite, kind
     if not T.build(self, entity, square, prefer, function() return T.copyOf(built) ~= nil end,
         "this client's copy of the built " .. entity) then
         return nil
@@ -139,8 +149,8 @@ end
 --- Handles of the squares at `offsets` ({ { dx, dy }, ... }) from an origin around the character,
 --- on its level, at least `opts.minDistance` (1 unless given) away: each fits (bare or able to take a
 --- line tile, indoors or out, as `opts` says), with `opts.joined` no wall between any two one step
---- apart, and with `opts.accept`, `opts.accept(squares)` holds of them. Nil, and missing, when there
---- is no such place.
+--- apart, and with `opts.accept`, `opts.accept(squares)` holds of them. Squares for line tiles (not
+--- bare) are line handles, of kind "line". Nil, and missing, when there is no such place.
 function T.layout(self, offsets, opts)
     opts = opts or {}
     local centre = T.player():getCurrentSquare()
@@ -161,6 +171,7 @@ function T.layout(self, offsets, opts)
                 for i, square in ipairs(squares) do
                     self.used[square] = true
                     handles[i] = T.where(square)
+                    handles[i].kind = not opts.bare and "line" or nil
                 end
                 return handles
             end
@@ -234,12 +245,6 @@ function T.placeTank(self, handle, kind, litres, tainted)
         return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < T.FINE_LITRES)
     end, "this client's copy of the " .. kind)
     return tank
-end
-
---- This client's copy of the object drawn as `sprite` (the handle's own unless given) on the
---- handle's square, or nil.
-function T.copyOf(handle, sprite)
-    return T.objectWithSprite(getSquare(handle.x, handle.y, handle.z), sprite or handle.sprite)
 end
 
 --- Whether the list of overlay names `names` (T.overlaysOf, or a server read's) holds `name`.

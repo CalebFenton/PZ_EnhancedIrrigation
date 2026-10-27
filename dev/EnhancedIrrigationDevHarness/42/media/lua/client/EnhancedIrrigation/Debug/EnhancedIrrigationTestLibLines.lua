@@ -15,12 +15,6 @@ function T.lineObject(handle)
     return Lines.lineAt(handle.x, handle.y, handle.z)
 end
 
---- This client's summary of the line tile at `handle`, or nil.
-function T.lineSummary(handle)
-    local line = T.lineObject(handle)
-    return line and Lines.summaryOf(line) or nil
-end
-
 --- The name of this client's sprite of the line tile at `handle`, or nil.
 function T.lineSprite(handle)
     local line = T.lineObject(handle)
@@ -36,12 +30,12 @@ function T.tapped(extra)
     return fields
 end
 
---- Queues a wait until this client has the line tile at every one of `handles` with its summary,
---- and `check(summary, handle)`, if given, holds for each.
+--- Queues a wait until this client has the line tile at every one of `handles` (line handles)
+--- with its summary, and `check(summary, handle)`, if given, holds for each.
 function T.waitForLines(self, handles, what, check)
     T.waitFor(self, function()
         for _, handle in ipairs(handles) do
-            local summary = T.lineSummary(handle)
+            local summary = T.recordSummary(handle)
             if not summary or (check and not check(summary, handle)) then
                 return false
             end
@@ -51,10 +45,12 @@ function T.waitForLines(self, handles, what, check)
 end
 
 --- Queues laying a line tile of `material` on each of `handles` as the authority lays one, each
---- with its handle's `fields` (saved fields) set, and a wait for this client's copies.
+--- with its handle's `fields` (saved fields) set, and a wait for this client's copies. The handles
+--- become line handles.
 function T.placeLine(self, handles, material, fields)
     local tiles = T.tiles(handles)
     for i, handle in ipairs(handles) do
+        handle.kind = "line"
         tiles[i].material = handle.material or material
         tiles[i].fields = handle.fields or fields
     end
@@ -75,16 +71,17 @@ function T.readLines(self, handles, label)
     T.read(self, "lines.read", { tiles = T.tiles(handles) }, label)
 end
 
+--- The reads of a line job (T.job's opts.reads): `handles`' tiles as T.readLines reads them, in
+--- `before.state.tiles` and `after.state.tiles` of its answer.
+function T.lineReads(handles)
+    return { state = { name = "lines.read", args = { tiles = T.tiles(handles) } } }
+end
+
 --- Queues running the line tapped at `tap` for `hours` on the server as the tap runs it; the reply,
 --- the litres `drawn` (nil when no tank fed it), why the water stops, `stopped`, if it does, and
 --- `handles`' tiles, lands in self.reads[label].
 function T.flow(self, tap, hours, handles, label)
     T.read(self, "lines.flow", T.at(tap, { hours = hours, tiles = T.tiles(handles) }), label)
-end
-
---- Queues taking away, when the test ends, any line tile on `handles`, such as those its jobs lay.
-function T.trackLines(self, handles)
-    T.server(self, "lines.track", { tiles = T.tiles(handles) })
 end
 
 --- The shape (Sprites.pipe) a pipe tile's name draws, or nil for any other name.
@@ -107,7 +104,7 @@ end
 
 --- Queues T.useOption on this client's copy of the line tile at `handle` for the line job `job`.
 function T.useLineJob(self, handle, job, label, choose)
-    T.useOption(self, function() return T.lineObject(handle) end, label, T.job("line", job), choose)
+    T.useOption(self, function() return T.lineObject(handle) end, label, T.findJob("line", job), choose)
 end
 
 --- Queues T.useOption on this client's copy of the tap tile at `handle` for Water from Tank.

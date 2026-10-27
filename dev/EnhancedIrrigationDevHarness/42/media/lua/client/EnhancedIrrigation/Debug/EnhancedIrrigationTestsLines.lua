@@ -29,7 +29,9 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
         if not rows then return end
         local tiles = rows[1]
         self.tiles = tiles
-        T.trackLines(self, tiles)
+        for _, tile in ipairs(tiles) do
+            T.trackSquare(self, tile)
+        end
         T.placeTank(self, tiles[1], "above", 0)
         T.give(self, "pipes", { { type = "Base.MetalPipe", count = #tiles } })
         T.goNextTo(self, tiles[2].square)
@@ -37,8 +39,7 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
             self.noWrench = T.layCursor(self, "iron"):refusal(tiles[1].square)
             getCell():setDrag(nil, T.player():getPlayerNum())
         end)
-        T.read(self, "lines.perform", T.at(tiles[1], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
-            "no wrench")
+        T.job(self, "line", LineJobs.LAY, tiles[1], "iron", "no wrench", { floor = true, reads = T.lineReads(tiles) })
         T.give(self, "wrench", { { type = "Base.PipeWrench" } })
         T.step(function()
             local context = T.need(self, T.worldMenu(tiles[1].square:getFloor()), "a world menu on the ground")
@@ -68,7 +69,8 @@ T.test("irrigation_lines_lay_costs_and_shapes", {
     validate = function(self)
         expectEqual("laying iron without a pipe wrench's refusal", self.noWrench, "Tooltip_EnhancedIrrigation_Short")
         local noWrench = self.reads["no wrench"]
-        expect(noWrench.done == false and noWrench.tiles[1].record == nil, "the server laid iron without a pipe wrench")
+        expect(noWrench.ok == false and noWrench.after.state.tiles[1].record == nil,
+            "the server laid iron without a pipe wrench")
         expectOffered(self, "lay")
         local shapes = { Sprites.EAST, Sprites.EAST + Sprites.WEST, Sprites.WEST }
         for i, tile in ipairs(self.tiles) do
@@ -92,7 +94,7 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         if not rows then return end
         local tile = rows[1][1]
         self.tile = tile
-        T.trackLines(self, { tile })
+        T.trackSquare(self, tile)
         T.placeTank(self, tile, "above", 0)
         T.give(self, "weak joints", { { type = "Base.Woodglue" }, { type = "Base.Scotchtape" } })
         T.give(self, "pipes", { { type = "Base.Pipe" } })
@@ -117,7 +119,7 @@ T.test("irrigation_lines_lay_plastic_uses_a_joint", {
         expect(self.valid, "the cursor refused a tile beside a tank")
         expectEqual("uses of glue the joint used", self.usesBefore - self.items.joint[1]:getCurrentUses(), 1)
         expect(T.counted(self, "Base.Pipe") == 0, "laying left the plastic pipe")
-        expect(T.lineSummary(self.tile).material == "plastic", "the tile isn't plastic")
+        expect(T.recordSummary(self.tile).material == "plastic", "the tile isn't plastic")
     end,
 })
 
@@ -162,7 +164,9 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
         if not rows then return end
         local tiles = rows[1]
         self.size = #tiles
-        T.trackLines(self, tiles)
+        for _, tile in ipairs(tiles) do
+            T.trackSquare(self, tile)
+        end
         tiles[1].fields = T.tapped()
         tiles[3].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
@@ -172,24 +176,24 @@ T.test("irrigation_lines_merging_two_tapped_lines_refused", {
             self.cursor = T.layCursor(self, "iron")
             self.twoTaps = self.cursor:refusal(tiles[2].square)
         end)
-        local lay = T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) })
-        T.read(self, "lines.perform", lay, "two taps")
+        local lay = { floor = true, reads = T.lineReads(tiles) }
+        T.job(self, "line", LineJobs.LAY, tiles[2], "iron", "two taps", lay)
         T.useLineJob(self, tiles[3], LineJobs.TAKE_UP, "take up the tap", true)
         T.waitFor(self, function() return T.lineObject(tiles[3]) == nil end, "this client to lose the taken-up tap")
         tiles[3].fields = nil
         T.placeLine(self, { tiles[3] }, "iron")
         T.waitForLines(self, { tiles[3] }, "this client's copy of the untapped line", function(summary) return not summary.tap end)
         T.step(function() self.oneTap = self.cursor:refusal(tiles[2].square) end)
-        T.read(self, "lines.perform", lay, "one tap")
+        T.job(self, "line", LineJobs.LAY, tiles[2], "iron", "one tap", lay)
     end,
     validate = function(self)
         expectEqual("a tile between two taps' refusal", self.twoTaps, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local twoTaps, oneTap = self.reads["two taps"], self.reads["one tap"]
-        expect(twoTaps.done == false and twoTaps.tiles[2].record == nil, "the server laid a tile between two taps")
+        expect(twoTaps.ok == false and twoTaps.after.state.tiles[2].record == nil, "the server laid a tile between two taps")
         expectEqual("a tile between a tapped and an untapped line's refusal", self.oneTap, nil)
         expectOffered(self, "take up the tap")
-        local joined = oneTap.tiles[2].record
-        expect(oneTap.done and joined and joined.tiles == self.size,
+        local joined = oneTap.after.state.tiles[2].record
+        expect(oneTap.ok and joined and joined.tiles == self.size,
             "the server didn't lay the tile joining a tapped and an untapped line")
     end,
 })
@@ -203,7 +207,8 @@ T.test("irrigation_lines_first_tile_beside_a_pump", {
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 2, 0 } }, { bare = true, minDistance = 2 })
         if not spots then return end
         local pump, beside, far = spots[1], spots[2], spots[3]
-        T.trackLines(self, { beside, far })
+        T.trackSquare(self, beside)
+        T.trackSquare(self, far)
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.placePump(self, pump, T.IRON)
         T.goNextTo(self, beside.square)
@@ -215,13 +220,13 @@ T.test("irrigation_lines_first_tile_beside_a_pump", {
             local cursor = T.layCursor(self, "iron")
             self.beside, self.far = cursor:refusal(beside.square), cursor:refusal(far.square)
         end)
-        T.read(self, "lines.perform", T.at(beside, { job = LineJobs.LAY, with = "iron" }), "laid")
+        T.job(self, "line", LineJobs.LAY, beside, "iron", "laid", { floor = true, reads = T.lineReads({ beside }) })
     end,
     validate = function(self)
         expectEqual("a first tile beside a pump's refusal", self.beside, nil)
         expectEqual("a first tile two squares off a pump's refusal", self.far, "Tooltip_EnhancedIrrigation_NoTankReach")
         local laid = self.reads.laid
-        expect(laid.done and laid.tiles[1].record ~= nil, "the server didn't lay the first tile beside the pump")
+        expect(laid.ok and laid.after.state.tiles[1].record ~= nil, "the server didn't lay the first tile beside the pump")
     end,
 })
 
@@ -236,7 +241,9 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         local tiles = rows[1]
-        T.trackLines(self, tiles)
+        for _, tile in ipairs(tiles) do
+            T.trackSquare(self, tile)
+        end
         tiles[1].fields = T.tapped()
         T.placeLine(self, { tiles[1], tiles[3] }, "iron")
         T.placePump(self, spots[1], T.IRON)
@@ -244,13 +251,13 @@ T.test("irrigation_lines_merging_a_tapped_and_a_pumped_line_refused", {
         T.give(self, "pipes", { { type = "Base.MetalPipe" }, { type = "Base.PipeWrench" } })
         T.goNextTo(self, tiles[2].square)
         T.step(function() self.refusal = T.layCursor(self, "iron"):refusal(tiles[2].square) end)
-        T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
-            "forced")
+        T.job(self, "line", LineJobs.LAY, tiles[2], "iron", "forced", { floor = true, reads = T.lineReads(tiles) })
     end,
     validate = function(self)
         expectEqual("a tile between a tap and a pump's refusal", self.refusal, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local forced = self.reads.forced
-        expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile between a tap and a pump")
+        expect(forced.ok == false and forced.after.state.tiles[2].record == nil,
+            "the server laid a tile between a tap and a pump")
     end,
 })
 
@@ -265,7 +272,9 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         local tiles = rows[1]
-        T.trackLines(self, tiles)
+        for _, tile in ipairs(tiles) do
+            T.trackSquare(self, tile)
+        end
         T.placeLine(self, { tiles[2] }, "iron")
         T.placePump(self, spots[1], T.IRON)
         T.linkPump(self, spots[1], tiles[2])
@@ -282,8 +291,7 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
             self.outlet = EnhancedIrrigation.Links.roleAt(T.at(spots[1]), "pump")
             self.refusal = T.layCursor(self, "iron"):refusal(tiles[2].square)
         end)
-        T.read(self, "lines.perform", T.at(tiles[2], { job = LineJobs.LAY, with = "iron", tiles = T.tiles(tiles) }),
-            "forced")
+        T.job(self, "line", LineJobs.LAY, tiles[2], "iron", "forced", { floor = true, reads = T.lineReads(tiles) })
     end,
     validate = function(self)
         expectOffered(self, "take up")
@@ -291,7 +299,8 @@ T.test("irrigation_lines_laying_on_a_pumps_outlet_beside_a_tap_refused", {
         expect(self.outlet ~= nil, "taking up the pump's tile took its outlet")
         expectEqual("a tile on a pump's outlet beside a tap's refusal", self.refusal, "Tooltip_EnhancedIrrigation_JoinsTwoFeeds")
         local forced = self.reads.forced
-        expect(forced.done == false and forced.tiles[2].record == nil, "the server laid a tile on a pump's outlet beside a tap")
+        expect(forced.ok == false and forced.after.state.tiles[2].record == nil,
+            "the server laid a tile on a pump's outlet beside a tap")
     end,
 })
 

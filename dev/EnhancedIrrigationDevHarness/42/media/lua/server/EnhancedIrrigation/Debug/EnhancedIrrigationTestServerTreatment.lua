@@ -1,4 +1,6 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/ServerFixtures"
+require "PZHarness/ServerRecords"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 local Clock = require "cf_commonlib/Clock"
 
@@ -13,8 +15,8 @@ local unitAt, recordAt, stateAt = Server.treatmentUnitAt, Server.treatmentRecord
 
 -- Places the unit as Server.placeEntity does (a boiler's OnCreate makes its fireplace), on a floor
 -- laid for it if the square has none (a unit on the storey above). Answers its state.
-handler("treatment.place", function(_, args, defer)
-    Server.placeEntity(Server.squareFor(args, defer, true), args, defer, EI.TreatmentSystem, recordAt)
+handler("treatment.place", function(player, args, defer)
+    Server.placeEntity(player, PZHarness.squareFor(args, defer, true), args, defer, "treatment", EI.TreatmentSystem)
     return stateAt(args)
 end)
 
@@ -27,7 +29,7 @@ end)
 -- each hour (`steps`).
 handler("treatment.run", function(_, args)
     local record = PZHarness.need(recordAt(args), "the record of the unit at " .. args.x .. "," .. args.y)
-    Server.setFields(record, args.fields, 0)
+    PZHarness.Records.set(record, args.fields, nil, 0)
     local reply = { before = stateAt(args), steps = {} }
     for _, hours in ipairs(args.hours or {}) do
         record:advance(hours)
@@ -42,7 +44,7 @@ end)
 -- ten-minute event runs in between.
 handler("treatment.update", function(_, args)
     local record = PZHarness.need(recordAt(args), "the record of the unit at " .. args.x .. "," .. args.y)
-    Server.setFields(record, nil, args.hoursAgo)
+    PZHarness.Records.set(record, nil, nil, args.hoursAgo)
     local reply = { now = Clock.now(), before = stateAt(args) }
     record:update()
     reply.after = stateAt(args)

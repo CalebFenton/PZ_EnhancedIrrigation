@@ -6,7 +6,7 @@ require "EnhancedIrrigation/UI/StandMenu"
 -- The Tank Stand: building it from the build menu, setting a barrel on it, the raised barrel through
 -- the vanilla lid, and taking the barrel down. Each job goes through the build menu or the
 -- right-click menu and its timed action; what the menu greys out, the server is also asked to do
--- directly (jobs.perform), to show it refuses on its own.
+-- directly (T.job), to show it refuses on its own.
 
 local T = EnhancedIrrigationTest
 local expect, expectNear, expectEqual = T.expect, T.expectNear, T.expectEqual
@@ -59,7 +59,7 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         if not spots then return end
         self.stand = T.placeTank(self, spots[1], "stand")
         pickUpVanillaBarrel(self, spots[2])
-        T.useMenu(self, self.stand, "set barrel", T.job("stand", StandJobs.SET_BARREL), true)
+        T.useMenu(self, self.stand, "set barrel", T.findJob("stand", StandJobs.SET_BARREL), true)
         T.waitFor(self, function() return T.copyOf(self.stand, Sprites.RAISED_BARREL_CLOSED) ~= nil end,
             "this client's copy of the barrel on the stand")
         T.batch(function()
@@ -87,19 +87,22 @@ T.test("irrigation_stands_set_barrel_refused_without_an_empty_barrel", {
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
         self.stand = T.placeTank(self, spots[1], "stand")
-        T.useMenu(self, self.stand, "no barrel", T.job("stand", StandJobs.SET_BARREL), false)
+        T.useMenu(self, self.stand, "no barrel", T.findJob("stand", StandJobs.SET_BARREL), false)
         -- A barrel vanilla would never let the character pick up: one holding water.
         T.server(self, "stands.giveBarrel", { barrel = BARREL, litres = 20 })
-        T.useOption(self, function() return T.copyOf(self.stand) end, "full barrel", T.job("stand", StandJobs.SET_BARREL), false)
-        T.read(self, "jobs.perform", T.at(self.stand, { feature = "stand", job = StandJobs.SET_BARREL, barrel = true }),
-            "forced")
+        T.useOption(self, function() return T.copyOf(self.stand) end, "full barrel", T.findJob("stand", StandJobs.SET_BARREL), false)
+        -- The barrel given, by the id this client has of it once given.
+        T.step(function()
+            T.job(self, "stand", StandJobs.SET_BARREL, self.stand, { id = self.items["stands.giveBarrel"][1]:getID() },
+                "forced", { reads = T.stateReads("tanks.read", self.stand) })
+        end)
     end,
     validate = function(self)
         T.expectOptionRefused(self, "no barrel", "Tooltip_EnhancedIrrigation_NoBarrel")
         T.expectOptionRefused(self, "full barrel", "Tooltip_EnhancedIrrigation_BarrelNotEmpty")
         local forced = self.reads.forced
-        expect(forced.done == false, "the server set a barrel holding water on the stand")
-        expect(forced.isStand, "the stand is gone after a refused Set Barrel on Stand")
+        expect(forced.ok == false, "the server set a barrel holding water on the stand")
+        expect(forced.after.state.isStand, "the stand is gone after a refused Set Barrel on Stand")
     end,
 })
 
@@ -144,18 +147,18 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         if not spots then return end
         self.litres = 5
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
-        T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), false)
+        T.useMenu(self, self.tank, "take down", T.findJob("stand", StandJobs.TAKE_DOWN), false)
         T.batch(function()
-            T.read(self, "jobs.perform", T.at(self.tank, { feature = "stand", job = StandJobs.TAKE_DOWN }), "forced")
+            T.job(self, "stand", StandJobs.TAKE_DOWN, self.tank, nil, "forced", { reads = T.stateReads("tanks.read", self.tank) })
             T.count(self, "left", { BARREL_HELD })
         end)
     end,
     validate = function(self)
         T.expectOptionRefused(self, "take down", "Tooltip_EnhancedIrrigation_EmptyBarrelFirst")
         local forced = self.reads.forced
-        expect(forced.done == false, "the server took down a barrel holding water")
-        expect(forced.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
-        expectNear("the refused barrel's water", forced.litres, self.litres, T.LITRES)
+        expect(forced.ok == false, "the server took down a barrel holding water")
+        expect(forced.after.state.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
+        expectNear("the refused barrel's water", forced.after.state.litres, self.litres, T.LITRES)
         expectEqual("barrels a refused Take Barrel Down gave", T.counted(self, BARREL_HELD), 0)
     end,
 })
@@ -177,7 +180,7 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
         end)
         T.waitFor(self, function() return T.carried(BARREL_HELD) == nil end,
             "this client to let go of vanilla's barrel")
-        T.useMenu(self, self.tank, "take down", T.job("stand", StandJobs.TAKE_DOWN), true)
+        T.useMenu(self, self.tank, "take down", T.findJob("stand", StandJobs.TAKE_DOWN), true)
         T.waitFor(self, function() return T.copyOf(self.tank, Sprites.TANK_STAND) ~= nil end, "this client's copy of the stand")
         T.batch(function()
             T.read(self, "tanks.read", T.at(self.tank), "stand")

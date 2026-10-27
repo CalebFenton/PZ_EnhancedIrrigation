@@ -1,4 +1,5 @@
 require "PZHarness/ServerHandlers"
+require "PZHarness/ServerFixtures"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 local Clock = require "cf_commonlib/Clock"
@@ -38,7 +39,7 @@ end)
 -- new square where there is none, as on a floor above open ground, whose square only comes to be
 -- with it. Answers its fuel. Switched off and taken away when the test ends.
 handler("pumpHouse.generator", function(_, args, defer)
-    local square = Server.squareFor(args, defer)
+    local square = PZHarness.squareFor(args, defer)
     local generator = IsoGenerator.new(instanceItem("Base.Generator"), square:getCell(), square)
     defer(function() PZHarness.Fixtures.removePlaced(generator) end)
     generator:setConnected(true)

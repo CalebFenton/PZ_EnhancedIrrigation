@@ -174,12 +174,12 @@ T.test("irrigation_water_one_person_per_tap", {
         T.server(self, "holds.lapse", T.at(tile, { feature = "line" }))
         T.quickRuns(self, "EnhancedIrrigationWaterAction", WATER_SPEED)
         T.waitFor(self, function()
-            local summary = T.lineSummary(tile)
+            local summary = T.recordSummary(tile)
             return summary ~= nil and summary.heldBy == nil
         end, "this client's summary of the tap, freed", WATER_MS)
         T.useWater(self, tile, "freed", false)
         walkOffOnceWaterRuns(self, self.tank, away[1][1], function()
-            local summary = T.lineSummary(tile)
+            local summary = T.recordSummary(tile)
             self.heldByMe = summary ~= nil and summary.heldBy == T.player():getUsername()
         end)
         -- An open tap the authority never closes holds the queue until the test runs out of time.
