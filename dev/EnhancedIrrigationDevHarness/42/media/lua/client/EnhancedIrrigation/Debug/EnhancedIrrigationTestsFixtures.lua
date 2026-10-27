@@ -354,13 +354,13 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
 
 -- Converting what vanilla plumbed ------------------------------------------------------------------
 
--- Queues a sink in a room plumbed the vanilla way, as a save from before the mod holds it, under a
--- barrel of tainted water one storey up. Sets self.sink and self.tank.
+-- Queues a sink with a retained EI buffer, replumbed the vanilla way, under a barrel of tainted
+-- water one storey up. Conversion must reclaim it too. Sets self.sink and self.tank.
 local function placePlumbed(self)
     local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
     if not spots then return false end
     self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
-    self.sink = T.placeFixture(self, spots[1], SINK, { plumbed = true })
+    self.sink = T.placeFixture(self, spots[1], SINK, { plumbed = true, buffer = { litres = 0 } })
     waitForCopy(self, self.sink, function(state) return state.external end, "this client's copy of the plumbed sink")
     return true
 end

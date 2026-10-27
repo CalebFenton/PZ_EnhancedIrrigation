@@ -59,7 +59,7 @@ end
 --- moved; the caller syncs what it moved between. Authority only.
 function Links.carry(from, to, litres)
     litres = math.min(litres, from:getAmount(), to:getFreeCapacity())
-    if litres < Links.LEAST_FLOW then
+    if litres < Links.LEAST_FLOW or not FluidContainer.CanTransfer(from, to) then
         return false
     end
     FluidContainer.Transfer(from, to, litres)

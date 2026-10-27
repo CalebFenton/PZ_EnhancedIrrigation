@@ -194,15 +194,13 @@ function PumpWater.draw(source, fluid, litres)
         end
         return Tanks.take(source.object, litres)
     end
-    if not source.object then
+    local before = fluid:getAmount()
+    if source.object then
+        source.object:transferFluidTo(fluid, litres)
+    else
         fluid:addFluid(FluidType.TaintedWater, litres)
-        return litres
     end
-    local moved = source.object:transferFluidTo(fluid, litres)
-    if not source.infinite then
-        source.object:sync()
-    end
-    return moved
+    return fluid:getAmount() - before
 end
 
 --- Lifts up to `litres` from `source` into the tank `into`, as far as its room and a finite

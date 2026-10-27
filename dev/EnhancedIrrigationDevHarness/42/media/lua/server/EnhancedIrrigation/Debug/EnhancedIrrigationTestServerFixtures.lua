@@ -73,12 +73,6 @@ handler("fixtures.place", function(_, args, defer)
         Server.unlinkAt(args.x, args.y, args.z)
         removeFixtureAt(args.x, args.y, args.z)
     end)
-    if args.plumbed then
-        fixture:getModData().canBeWaterPiped = false
-        fixture:setUsesExternalWaterSource(true)
-        fixture:transmitModData()
-        fixture:sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = true })
-    end
     if args.buffer then
         local buffer = EI.FixtureSystem.ensureBuffer(fixture)
         if buffer:getAmount() > 0 then
@@ -88,6 +82,12 @@ handler("fixtures.place", function(_, args, defer)
             buffer:addFluid(args.buffer.tainted and FluidType.TaintedWater or FluidType.Water, args.buffer.litres)
         end
         fixture:sync()
+    end
+    if args.plumbed then
+        fixture:getModData().canBeWaterPiped = false
+        fixture:setUsesExternalWaterSource(true)
+        fixture:transmitModData()
+        fixture:sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = true })
     end
     return stateAt(args)
 end)

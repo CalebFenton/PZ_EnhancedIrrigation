@@ -126,7 +126,7 @@ Right-click a sink, a bath, a shower, a toilet or a washing machine for **Plumb 
 
 - **Its water.** Where no town water reaches it, a plumbed fixture holds its own: 20 L for a sink, toilet, shower or washer, 100 L for a bath. It fills from the tank, then refills by up to 20 L every ten minutes while the tank has water and the height. Drink, fill, wash and the washer use vanilla's own actions on it, with vanilla's taint warning.
 - **The town's water wins while it runs.** Until the shutoff, a plumbed fixture in a room that nobody has moved gives clean town water and leaves the tank alone, then switches to the tank within ten minutes of the shutoff, so plumbing early costs nothing. A fixture outside any room, such as one in a cabin you built, or one you carried in, draws from its tank at once. The water vanilla leaves in a fixture's pipes after the shutoff is set aside while it's plumbed, and comes back when you unplumb it.
-- **Vanilla's Plumb** still works on a fixture in a room under a barrel one storey up, without learning and without pipe. It makes the same connection, so the barrel's taint comes through.
+- **Vanilla's Plumb** still works on a fixture in a room under a barrel one storey up, without learning and without pipe. It makes the same connection, so the barrel's taint comes through, including after Unplumb and replumbing.
 - **A washing machine** keeps its **Turn On** switch. It needs power, and draws about a litre a minute while it runs, which the tank keeps up with.
 
 **Unplumb** from the fixture, the tank or the bare floor where the tank stood gives every length back; vanilla's Plumb laid none.
@@ -252,7 +252,7 @@ Stand at the pump and **Pump**; only one person can work a pump at a time. A 600
 | Tarp Piece | 1200 L |
 | A Plunger's cup | 600 L |
 
-**Replace Seal** takes 10 minutes and a screwdriver, and throws the old seal away. The Plunger only goes in this way. The pump itself wears 1% every 300 L in wood and every 1500 L in iron, about 30,000 L and 150,000 L in all. Worn out, it lifts nothing: knock it down with a sledgehammer and build another.
+**Replace Seal** takes 10 minutes and a screwdriver, and throws the old seal away. The Plunger only goes in this way. The pump itself wears 1% every 300 L in wood and every 1500 L in iron, about 30,000 L and 150,000 L in all. Only water actually delivered counts toward seal and body wear. Worn out, it lifts nothing: knock it down with a sledgehammer and build another.
 
 ### Pump Houses
 

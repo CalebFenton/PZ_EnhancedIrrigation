@@ -25,6 +25,10 @@ local Fixtures, Tanks, Links = EnhancedIrrigation.Fixtures, EnhancedIrrigation.T
 --- once given: a client copy is told of a container added (IsoObject.syncFluidContainerSend),
 --- never of one taken away.
 function FixtureSystem.ensureBuffer(fixture)
+    if fixture:getUsesExternalWaterSource() then
+        fixture:setUsesExternalWaterSource(false)
+        fixture:sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = false })
+    end
     local buffer = fixture:getFluidContainer()
     if buffer then
         return buffer
@@ -32,10 +36,6 @@ function FixtureSystem.ensureBuffer(fixture)
     buffer = ComponentType.FluidContainer:CreateComponent()
     buffer:setCapacity(Fixtures.capacityOf(fixture))
     GameEntityFactory.AddComponent(fixture, true, buffer)
-    if fixture:getUsesExternalWaterSource() then
-        fixture:setUsesExternalWaterSource(false)
-        fixture:sendObjectChange(IsoObjectChange.USES_EXTERNAL_WATER_SOURCE, { value = false })
-    end
     fixture:sync()
     return buffer
 end

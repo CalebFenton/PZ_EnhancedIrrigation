@@ -268,6 +268,24 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
     end,
 })
 
+T.test("irrigation_pumps_rejected_delivery_does_not_wear_the_seal_or_body", {
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
+        if not spots then return end
+        self.pump, self.tank = T.plumbedPump(self, spots, T.IRON, SEALED,
+            { source = "ground", sourceLitres = SOURCE_LITRES, litres = 1 })
+        T.read(self, "pumps.blockedDelivery", T.at(self.pump, { tank = T.at(self.tank) }), "blocked")
+    end,
+    validate = function(self)
+        local result = self.reads.blocked
+        expectEqual("the rejected link transfer's success", result.carried, false)
+        expectNear("the source after rejected delivery", result.after.source.litres, result.before.source.litres, T.LITRES)
+        expectNear("the outlet after rejected delivery", result.after.tank.litres, result.before.tank.litres, T.LITRES)
+        expectEqual("seal wear after rejected delivery", result.after.record.sealWear, result.before.record.sealWear)
+        expectEqual("body condition after rejected delivery", result.after.record.condition, result.before.record.condition)
+    end,
+})
+
 -- A square of river water two tiles from the iron pump, in its hose's reach, with no well or tank
 -- beside it but its outlet's: the menu names the river, and a minute's work lifts the pump's rate,
 -- tainted, into the tank. Catches a hose that can't find the river, or river water that comes out

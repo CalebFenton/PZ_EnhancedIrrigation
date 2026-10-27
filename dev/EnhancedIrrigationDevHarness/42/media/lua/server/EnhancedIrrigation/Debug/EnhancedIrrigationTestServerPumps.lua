@@ -103,6 +103,20 @@ handler("pumps.run", function(player, args)
     return reply
 end)
 
+-- A native input lock refuses water without removing the source or filling the outlet. Exercise
+-- both link delivery's success result and the hand pump's delivery-based wear on that boundary.
+handler("pumps.blockedDelivery", function(player, args)
+    local pump = PZHarness.need(pumpAt(args), "the hand pump")
+    local into, source = EI.PumpWater.handDeliveryOf(pump)
+    PZHarness.need(into, "the pump's outlet")
+    local fluid = into:getFluidContainer()
+    fluid:setInputLocked(true)
+    local before = stateAt(player, args)
+    local carried = EI.Links.carry(source.object:getFluidContainer(), fluid, 2)
+    EI.PumpSystem.run(player, pump, 0.5)
+    return { before = before, after = stateAt(player, args), carried = carried }
+end)
+
 -- Sets `args.fields` on the Pump House's record, winds its clock back `args.hoursAgo` hours, if
 -- given, sets the crops of `args.squares` to `args.water` (Server.setWater), and runs its
 -- ten-minute pass (PumpObject.update). `lineHoursAgo` dates those line tiles back without running
