@@ -13,18 +13,7 @@ local Lines = EnhancedIrrigation.Lines
 local LineClient = {}
 EnhancedIrrigation.LineClient = LineClient
 
-local function nothingToAdopt() end
-
-ClientObjects.define({
-    prefix = "EnhancedIrrigation_",
-    name = "Line",
-    owner = Lines,
-    isObject = Lines.isLine,
-    sprites = EnhancedIrrigation.Sprites.pipeNames(),
-    adoptCopy = nothingToAdopt,
-    adoptContainer = nothingToAdopt,
-    loadPriority = EnhancedIrrigation.Sprites.LOAD_PRIORITY,
-})
+ClientObjects.define(Lines)
 
 --- Whether this client plays the running water of the valve on the tap at x, y, z.
 LineClient.isRunningWater = EnhancedIrrigation.SquareSounds.follow({

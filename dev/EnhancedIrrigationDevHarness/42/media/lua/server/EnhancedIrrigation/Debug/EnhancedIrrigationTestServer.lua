@@ -4,6 +4,7 @@ require "PZHarness/ServerChecks"
 local Build = require "EnhancedIrrigation/Debug/EnhancedIrrigationDebugBuild"
 local Squares = require "cf_commonlib/Squares"
 local Jobs = require "cf_commonlib/Jobs"
+local Clock = require "cf_commonlib/Clock"
 
 -- Development only, not published. The server's half of EnhancedIrrigationTestLib.lua; it returns
 -- what the other handler files share. Server Lua loads after shared, so the EnhancedIrrigation
@@ -46,7 +47,7 @@ function Server.setFields(record, fields, hoursAgo)
         record[key] = value
     end
     if hoursAgo then
-        record.lastHour = EI.now() - hoursAgo
+        record.lastHour = Clock.now() - hoursAgo
     end
 end
 

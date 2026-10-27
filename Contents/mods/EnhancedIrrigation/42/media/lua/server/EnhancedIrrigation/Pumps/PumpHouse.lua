@@ -17,6 +17,8 @@ require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Timers"
 require "EnhancedIrrigation/Power"
 require "EnhancedIrrigation/Pumps/HousePower"
+local Clock = require "cf_commonlib/Clock"
+local GeneratorReach = require "cf_commonlib/GeneratorReach"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpHouse = {}
@@ -142,7 +144,7 @@ function PumpHouse.settle(record, pump)
         record.on = nil
     end
     local part = Pumps.partSpec(record.part)
-    local wanted = record.on == true or timerOpen(record, EnhancedIrrigation.now())
+    local wanted = record.on == true or timerOpen(record, Clock.now())
     local running = part ~= nil and not record:isBurntOut() and wanted and Power.powered(pump)
     if running and not record.grid then
         local fuel = HousePower.fuelLeft(record)
@@ -174,7 +176,7 @@ end)
 
 -- Renewable Energy -----------------------------------------------------------------------------------
 
---- What the Pump House `object` draws from a Renewable Energy bank now, as its Loads.addConsumer
+--- What the Pump House `object` draws from a Renewable Energy bank now, as GeneratorReach.addDraw
 --- asks: the kind its status lists it as and the generator fuel an hour its part burns in vanilla's
 --- units, while it would run if powered (a sound part, switched on or its timer open) with no
 --- vanilla generator paying for it, as one in reach pays first (HousePower); else nil. As a
@@ -190,18 +192,13 @@ function PumpHouse.bankDraw(object)
     local record = Pumps.recordOf(object)
     local part = record and not HousePower.generatorPays(record) and not record:isBurntOut()
         and Pumps.partSpec(record.part)
-    if not (part and (record.on or timerOpen(record, EnhancedIrrigation.now()))) then
+    if not (part and (record.on or timerOpen(record, Clock.now()))) then
         return nil
     end
     return "IGUI_EnhancedIrrigation_PumpHouseLoad", part.fuel
 end
 
--- Renewable Energy's server files have all loaded by the world's start, whatever the mod order.
-Events.OnInitGlobalModData.Add(function()
-    local RE = _G["RenewableEnergy"]
-    if RE and RE.Loads and RE.Loads.addConsumer then
-        RE.Loads.addConsumer(PumpHouse.bankDraw)
-    end
-end)
+-- A bank's scan asks it, whether or not Renewable Energy is loaded.
+GeneratorReach.addDraw(PumpHouse.bankDraw)
 
 return PumpHouse

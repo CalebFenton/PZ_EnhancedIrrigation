@@ -6,6 +6,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Sprites"
 local Materials = require "cf_commonlib/Materials"
+local Chance = require "cf_commonlib/Chance"
 local Items = require "cf_commonlib/Items"
 local LibObjectSystem = require "cf_commonlib/ObjectSystem"
 require "EnhancedIrrigation/Pipes"
@@ -17,6 +18,8 @@ require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Lines/LineObject"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Lines/ValveSystem"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LineSystem = {}
@@ -29,13 +32,7 @@ local Pipes = EnhancedIrrigation.Pipes
 local Parts, Sprinklers = EnhancedIrrigation.Parts, EnhancedIrrigation.Sprinklers
 local Valves, ValveSystem = EnhancedIrrigation.Valves, EnhancedIrrigation.ValveSystem
 
-LineSystem.System = EnhancedIrrigation.ObjectSystem.define({
-    name = "Line",
-    sprites = Sprites.pipeNames(),
-    owner = Lines,
-    Object = EnhancedIrrigation.LineObject,
-    isObject = Lines.isLine,
-})
+LineSystem.System = LibObjectSystem.define(Lines, { Object = EnhancedIrrigation.LineObject })
 
 -- The name a line tile's object carries; nothing shows it, and the server has no translations.
 local OBJECT_NAME = "EnhancedIrrigationLine"
@@ -134,7 +131,7 @@ local DO = {
     [LineJobs.DRILL] = function(character, record)
         record.holed = true
         if LineJobs.mayCrack(LineJobs.holeTool(character, record.material), record.material)
-                and ZombRandFloat(0, 1) < Lines.PUNCH_CRACK_CHANCE then
+                and Chance.hit(Lines.PUNCH_CRACK_CHANCE) then
             record.cracked = true
         end
         return true
@@ -161,7 +158,7 @@ local DO = {
             end
         end
         record.full = false
-        record.wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
+        record.wetUntil = Clock.now() + Lines.WET_HOURS
         return true
     end,
     -- Each item comes back as it went in. A length still cracked is scrap. The tap's length, its
@@ -225,5 +222,6 @@ LineSystem.site = {
     end,
     tell = tileSite.tell,
 }
+EnhancedIrrigationAction.serve({ line = LineSystem.site })
 
 return LineSystem

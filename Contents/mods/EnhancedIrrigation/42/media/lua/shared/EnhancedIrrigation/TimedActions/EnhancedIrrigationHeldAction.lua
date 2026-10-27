@@ -38,7 +38,7 @@ end
 
 -- Runs it for the world time since the last run (`lastHour`, set once it opens). Authority only.
 function Action:run()
-    local hours = Clock.hoursSince(self, EnhancedIrrigation.LONGEST_PASS)
+    local hours = Clock.hoursSince(self)
     if self.finished then
         return
     end
@@ -68,7 +68,7 @@ function Action:open()
     if not (self:atTarget() and not self:refusal() and self:hold()) then
         return false
     end
-    self.lastHour = EnhancedIrrigation.now()
+    self.lastHour = Clock.now()
     return true
 end
 
@@ -131,7 +131,7 @@ function Action:update()
         self:playSounds()
     end
     if not isClient() and self.lastHour and not self.finished
-            and (EnhancedIrrigation.now() - self.lastHour) * 60 >= self.RUN_MINUTES then
+            and (Clock.now() - self.lastHour) * 60 >= self.RUN_MINUTES then
         self:runHeld()
     end
 end
@@ -194,9 +194,9 @@ end
 --- only.
 function Action:queueAt(playerNum, target)
     local character = getSpecificPlayer(playerNum)
-    if luautils.walkAdj(character, target:getSquare(), true) then
+    Squares.queueBeside(character, target:getSquare(), function()
         ISTimedActionQueue.add(self:new(character, target))
-    end
+    end)
 end
 
 return Action

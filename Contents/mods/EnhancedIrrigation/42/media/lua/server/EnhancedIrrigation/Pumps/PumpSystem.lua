@@ -15,6 +15,8 @@ require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Pumps/PumpObject"
 require "EnhancedIrrigation/Lines/Flow"
 require "EnhancedIrrigation/Pumps/PumpHouse"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpSystem = {}
@@ -23,13 +25,7 @@ EnhancedIrrigation.PumpSystem = PumpSystem
 local Pumps, PumpJobs, PumpWater = EnhancedIrrigation.Pumps, EnhancedIrrigation.PumpJobs, EnhancedIrrigation.PumpWater
 local Links, Flow = EnhancedIrrigation.Links, EnhancedIrrigation.Flow
 
-PumpSystem.System = EnhancedIrrigation.ObjectSystem.define({
-    name = "Pump",
-    sprites = Pumps.SPRITES,
-    owner = Pumps,
-    Object = EnhancedIrrigation.PumpObject,
-    isObject = Pumps.isPump,
-})
+PumpSystem.System = LibObjectSystem.define(Pumps, { Object = EnhancedIrrigation.PumpObject })
 
 -- A pump taken away, smashed or by another mod, no longer runs the line its outlet fed.
 function PumpSystem.System:OnObjectAboutToBeRemoved(isoObject)
@@ -77,7 +73,7 @@ local DO = {
     -- The time before it was switched on did nothing, so it counts from now.
     [PumpJobs.TURN_ON] = function(character, record, row, pump)
         record.on = true
-        record.lastHour = EnhancedIrrigation.now()
+        record.lastHour = Clock.now()
         EnhancedIrrigation.PumpHouse.settle(record, pump)
         return true
     end,
@@ -112,6 +108,7 @@ local DO = {
 
 --- The authority's side of the pump jobs (a site of Jobs.perform).
 PumpSystem.site = LibObjectSystem.jobSite(Pumps, DO)
+EnhancedIrrigationAction.serve({ pump = PumpSystem.site })
 
 -- Pumping --------------------------------------------------------------------------------------------
 

@@ -6,6 +6,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Pumps/Pumps"
+local Squares = require "cf_commonlib/Squares"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local PumpWater = {}
@@ -96,7 +97,7 @@ function PumpWater.sourceOf(pump, intake, outletEnd)
                 local trough = troughOf(object)
                 local tank = Tanks.isTank(object) and object or nil
                 local holder = tank or trough
-                if holder and not (tank and outletEnd and EnhancedIrrigation.sameSquare(at, outletEnd)) then
+                if holder and not (tank and outletEnd and Squares.samePosition(at, outletEnd)) then
                     local litres = holder:getFluidContainer():getAmount()
                     local entry = { kind = tank and "tank" or "trough", object = holder,
                         at = EnhancedIrrigation.squareOf(holder), litres = litres }

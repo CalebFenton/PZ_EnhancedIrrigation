@@ -95,9 +95,4 @@ Sprites.TAP_VALVES = {
 }
 Sprites.HOUSE_TIMER = tile(147)
 
--- The priority every loader of the mod's tiles passes to MapObjects.OnLoadWithSprite. MapObjects
--- keeps one function per sprite and priority, a later one silently replacing an earlier
--- (MapObjects.java), so a second loader of the same tiles on one side needs a priority of its own.
-Sprites.LOAD_PRIORITY = 6
-
 return Sprites

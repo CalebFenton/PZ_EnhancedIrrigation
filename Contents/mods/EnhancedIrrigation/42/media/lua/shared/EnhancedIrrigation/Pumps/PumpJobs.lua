@@ -95,13 +95,11 @@ PumpJobs.JOBS = {
     -- The old seal is worn to nothing, so it doesn't come back.
     [PumpJobs.REPLACE_SEAL] = {
         minutes = SEAL_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
-        blocker = function(character, pump, item)
+        with = isSeal, withMissing = "Tooltip_EnhancedIrrigation_NoSeal",
+        blocker = function(character, pump)
             local spec = Pumps.specOf(pump)
             if not (spec and spec.kind == "hand") then
                 return UNKNOWN
-            end
-            if not Jobs.carries(character, item, isSeal) then
-                return "Tooltip_EnhancedIrrigation_NoSeal"
             end
             local summary = Pumps.currentSummary(pump)
             return summary and summary.wornOut and "Tooltip_EnhancedIrrigation_PumpWornOut" or nil
@@ -118,15 +116,13 @@ PumpJobs.JOBS = {
     -- rather than any of its type.
     [PumpJobs.FIT_PUMP] = {
         minutes = FIT_MINUTES, position = "Low", sound = "Screwdriver", equip = screwdriver,
-        blocker = function(character, pump, item)
+        with = isPart, withMissing = "Tooltip_EnhancedIrrigation_NoPumpPart",
+        blocker = function(character, pump)
             local summary = houseSummary(pump)
             if not summary then
                 return UNKNOWN
             end
-            if summary.part then
-                return "Tooltip_EnhancedIrrigation_PumpFitted"
-            end
-            return not Jobs.carries(character, item, isPart) and "Tooltip_EnhancedIrrigation_NoPumpPart" or nil
+            return summary.part and "Tooltip_EnhancedIrrigation_PumpFitted" or nil
         end,
         materials = { SCREWDRIVER },
     },
@@ -138,7 +134,7 @@ PumpJobs.JOBS = {
     -- Like a washer's switch (ISWorldObjectContextMenuLogic.toggleClothingWasher), greyed out
     -- without power.
     [PumpJobs.TURN_ON] = {
-        minutes = SWITCH_MINUTES, position = "Mid",
+        minutes = SWITCH_MINUTES, position = "Mid", label = "ContextMenu_Turn_On",
         blocker = function(character, pump)
             local blocker, summary = fittedBlocker(pump)
             if blocker then
@@ -154,7 +150,7 @@ PumpJobs.JOBS = {
         end,
     },
     [PumpJobs.TURN_OFF] = {
-        minutes = SWITCH_MINUTES, position = "Mid",
+        minutes = SWITCH_MINUTES, position = "Mid", label = "ContextMenu_Turn_Off",
         blocker = function(character, pump)
             local summary = houseSummary(pump)
             return not (summary and summary.on) and UNKNOWN or nil
@@ -182,15 +178,13 @@ PumpJobs.JOBS = {
     -- The timer goes in as the item carried, taken by the job itself.
     [PumpJobs.FIT_TIMER] = {
         minutes = TIMER_MINUTES, position = "Mid", sound = "Screwdriver", equip = screwdriver,
-        blocker = function(character, pump, item)
+        with = isHouseTimer, withMissing = "Tooltip_EnhancedIrrigation_NoTimer",
+        blocker = function(character, pump)
             local summary = houseSummary(pump)
             if not summary then
                 return UNKNOWN
             end
-            if summary.timer then
-                return "Tooltip_EnhancedIrrigation_HasTimer"
-            end
-            return not Jobs.carries(character, item, isHouseTimer) and "Tooltip_EnhancedIrrigation_NoTimer" or nil
+            return summary.timer and "Tooltip_EnhancedIrrigation_HasTimer" or nil
         end,
         materials = { SCREWDRIVER },
     },

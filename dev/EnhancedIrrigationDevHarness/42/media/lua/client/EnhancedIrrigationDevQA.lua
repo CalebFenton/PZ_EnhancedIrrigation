@@ -82,29 +82,31 @@ local Pipes, LineJobs, Valves = EnhancedIrrigation.Pipes, EnhancedIrrigation.Lin
 local PIPES = {}
 for _, material in ipairs(EnhancedIrrigation.Sprites.PIPE_MATERIALS) do
     local spec = Pipes.MATERIALS[material]
-    table.insert(PIPES, { spec.item, spec.perLength })
+    table.insert(PIPES, { type = spec.item, count = spec.perLength * LENGTHS })
 end
 -- What joins plastic, and what joins clay; enough of each one alone for every length.
 local JOINTS = { "Base.Glue", "Base.Epoxy", "Base.DuctTape", "Base.BucketConcreteFull", "Base.BucketClayCement" }
 -- The pipe wrench and everything each hole tool takes, what it uses up enough for every tile's
 -- hole, and the saw the Tank Stand keeps besides the hammer among them.
-local TOOLS = { { Pipes.WRENCH.item, 1 } }
+local TOOLS = { { type = Pipes.WRENCH.item, count = 1 } }
 for _, tool in ipairs(LineJobs.HOLE_TOOLS) do
     for _, material in ipairs(tool.materials) do
-        table.insert(TOOLS, { material.item, material.need and material.need * LINE_TILES or 1 })
+        table.insert(TOOLS, { type = material.item, count = material.need and material.need * LINE_TILES or 1 })
     end
 end
-table.insert(TOOLS, { "Base.Saw", 1 })
-local READING = { { "EnhancedIrrigation.CisternsForKentucky", 1 }, { "Base.WateredCan", 1, FluidType.Water } }
+table.insert(TOOLS, { type = "Base.Saw", count = 1 })
+local READING = {
+    { type = "EnhancedIrrigation.CisternsForKentucky", count = 1 }, { type = "Base.WateredCan", count = 1, fluid = FluidType.Water },
+}
 -- One of each valve, to fit to the lines' taps.
-local VALVES = { { Valves.WIND_UP, 1 }, { Valves.TIMER, 1 }, { Valves.SPRINKLER_TIMER, 1 } }
+local VALVES = { { type = Valves.WIND_UP, count = 1 }, { type = Valves.TIMER, count = 1 }, { type = Valves.SPRINKLER_TIMER, count = 1 } }
 
 -- What the build-menu recipes use up (PZHarness.QA.materials); their tools are among TOOLS.
 local function standMaterials()
     local materials = {}
     for _, need in ipairs(HarnessQA.materials(PZHarness.Test.buildRecipeNames())) do
         if need.used > 0 then
-            table.insert(materials, { need.type, need.used, need.fluid })
+            table.insert(materials, { type = need.type, count = need.used, fluid = need.fluid })
         end
     end
     return materials
@@ -116,39 +118,23 @@ local function itemsFor(fullType, uses)
     return item and math.ceil(uses / item:getCurrentUses()) or 0
 end
 
--- The item groups, in order, each a list of { type, count, fluid }.
+-- The item groups, in order, as PZHarness.QA.layGroups takes them.
 local function itemGroups()
-    local pipes, joints = {}, {}
-    for _, pipe in ipairs(PIPES) do
-        table.insert(pipes, { pipe[1], pipe[2] * LENGTHS })
-    end
+    local joints = {}
     for _, joint in ipairs(JOINTS) do
-        table.insert(joints, { joint, itemsFor(joint, LENGTHS) })
+        table.insert(joints, { type = joint, count = itemsFor(joint, LENGTHS) })
     end
-    return { pipes, joints, TOOLS, standMaterials(), READING, VALVES }
+    return {
+        { name = "pipes", items = PIPES }, { name = "joints", items = joints }, { name = "tools", items = TOOLS },
+        { name = "stand", items = standMaterials() }, { name = "reading", items = READING }, { name = "valves", items = VALVES },
+    }
 end
 
--- Lays each group on its own row of the lot, a square to each item type, scattered over it so
--- they show.
-local function layItems(lot, groups, summary)
-    for row, group in ipairs(groups) do
-        local y = FIRST_ITEM_ROW + (row - 1) * 2
-        for column, entry in ipairs(group) do
-            local fullType, count, fluid = entry[1], entry[2], entry[3]
-            local square = column <= AREA.w and Harness.lotSquare(lot, column - 1, y)
-            if not HarnessQA.isKnown(fullType) then
-                table.insert(summary.unknown, fullType)
-            elseif not square then
-                table.insert(summary.unplaced, fullType)
-            else
-                for _ = 1, count do
-                    square:AddWorldInventoryItem(HarnessQA.newItem(fullType, fluid), ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0)
-                    summary.items = summary.items + 1
-                end
-                summary.types = summary.types + 1
-            end
-        end
-    end
+-- Lays each group on its own row of the lot from FIRST_ITEM_ROW, a square to each item type, in
+-- rows enough for that alone: a group longer than the lot is wide leaves the last items unplaced.
+local function layItems(lot, summary)
+    local groups = itemGroups()
+    HarnessQA.layGroups(Harness.lotSquare(lot, 0, FIRST_ITEM_ROW), AREA.w, groups, summary, { maxRows = 2 * #groups - 1 })
 end
 
 -- The vanilla build-menu entity of `tile` ({ sprite, nSprite }) built at the lot's x, y, `up`
@@ -227,10 +213,10 @@ function QA.setup(player)
             .. Harness.SEARCH_RADIUS .. " squares")
         return
     end
-    local summary = { types = 0, items = 0, unknown = {}, unplaced = {} }
+    local summary = HarnessQA.newSummary()
     Harness.clearLot(lot, MARGIN)
     summary.missing = placeBeds(player, lot)
-    layItems(lot, itemGroups(), summary)
+    layItems(lot, summary)
     PZHarness.Fixtures.teleportToMiddle(player, lot.x + ARRIVE.x, lot.y + ARRIVE.y, lot.z)
     HarnessQA.printSummary(MARK, string.format("laid out %d beds, %d tanks and %d items of %d types on the lot at %d,%d",
         #BEDS, #TANKS, summary.items, summary.types, lot.x, lot.y), summary, { "missing", "unknown", "unplaced" })

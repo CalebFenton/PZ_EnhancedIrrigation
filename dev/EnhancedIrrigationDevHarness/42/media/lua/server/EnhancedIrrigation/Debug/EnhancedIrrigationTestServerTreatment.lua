@@ -1,5 +1,6 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+local Clock = require "cf_commonlib/Clock"
 
 -- Development only, not published. Time runs here through the record's own advance, or its update
 -- after a set gap, all in one call, so the clock and the ten-minute event don't decide what a test
@@ -42,7 +43,7 @@ end)
 handler("treatment.update", function(_, args)
     local record = PZHarness.need(recordAt(args), "the record of the unit at " .. args.x .. "," .. args.y)
     Server.setFields(record, nil, args.hoursAgo)
-    local reply = { now = EI.now(), before = stateAt(args) }
+    local reply = { now = Clock.now(), before = stateAt(args) }
     record:update()
     reply.after = stateAt(args)
     return reply

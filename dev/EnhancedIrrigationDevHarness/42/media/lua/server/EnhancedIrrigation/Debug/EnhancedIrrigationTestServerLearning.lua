@@ -32,7 +32,7 @@ local function distributions(expect)
     end
     local listed = {}
     for _, loot in ipairs(D.LOOT) do
-        listed[loot.item] = true
+        listed[loot.fullType] = true
     end
     for _, item in ipairs({ D.PAMPHLET, mod.Pumps.UTILITY_PUMP, mod.Sprinklers.ITEM, mod.Valves.SPRINKLER_TIMER,
             mod.Valves.WATER_VALVE }) do
@@ -59,6 +59,11 @@ local function lootOptionSetter(D, defer)
     end, restore
 end
 
+-- The ProceduralDistributions list a Distributions.LOOT entry names ("proc:<list>").
+local function procName(entry)
+    return string.match(entry[2], "^proc:(.+)$")
+end
+
 -- Every list each item of Distributions.LOOT goes into is one a room picks from, and holds the item
 -- once, at its weight times the save's value of its option, since the merge at load. Each of
 -- `args.multipliers` scales every weight, applied twice as a second load applies it; at 0 the item
@@ -70,12 +75,12 @@ PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, arg
     end
     local users = PZHarness.Loot.procListUsers()
     local function checkAt(loot, multiplier, label)
-        for _, entry in ipairs(loot.lists) do
-            local name, weight = entry[1], entry[2]
+        for _, entry in ipairs(loot.entries) do
+            local name, weight = procName(entry), entry[1]
             local list = ProceduralDistributions.list[name]
-            local where = label .. ": " .. loot.item .. " in " .. name
+            local where = label .. ": " .. loot.fullType .. " in " .. name
             if expect(list ~= nil and list.items ~= nil, where .. ": no such list") then
-                local count, got = Fixtures.countPairs(list.items, loot.item)
+                local count, got = Fixtures.countPairs(list.items, loot.fullType)
                 if multiplier == 0 then
                     expect(count == 0, where .. " " .. count .. " times")
                 elseif expect(count == 1, where .. " " .. count .. " times") then
@@ -90,7 +95,7 @@ PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, arg
         end
         if multiplier == 0 then
             PZHarness.Loot.forEachItemsList(function(items, path)
-                expect(Fixtures.countPairs(items, loot.item) == 0, label .. ": " .. loot.item .. " is still in " .. path)
+                expect(Fixtures.countPairs(items, loot.fullType) == 0, label .. ": " .. loot.fullType .. " is still in " .. path)
             end)
         end
     end
@@ -123,8 +128,8 @@ PZHarness.checkHandler("learning.lootRolls", function(expect, _, _, args, defer)
     end
     local rarities = {}
     for _, loot in ipairs(D.LOOT) do
-        local name, option = Loot.rarityOf(loot.item)
-        if expect(name ~= nil, loot.item .. ": no loot rarity option for its loot type " .. tostring(option)) then
+        local name, option = Loot.rarityOf(loot.fullType)
+        if expect(name ~= nil, loot.fullType .. ": no loot rarity option for its loot type " .. tostring(option)) then
             rarities[name] = HIGHEST
         end
     end
@@ -138,10 +143,10 @@ PZHarness.checkHandler("learning.lootRolls", function(expect, _, _, args, defer)
     Loot.withMeasureOptions(rarities, function()
         for _, loot in ipairs(D.LOOT) do
             local function holdsItem(filled)
-                return filled:getFirstTypeRecurse(loot.item) ~= nil
+                return filled:getFirstTypeRecurse(loot.fullType) ~= nil
             end
-            for _, entry in ipairs(loot.lists) do
-                local name = entry[1]
+            for _, entry in ipairs(loot.entries) do
+                local name = procName(entry)
                 local list = Loot.proceduralList(name, users)
                 if expect(list ~= nil, name .. ": no parsed list to roll") then
                     local fill, found = Loot.rollFill(list), false
@@ -151,7 +156,7 @@ PZHarness.checkHandler("learning.lootRolls", function(expect, _, _, args, defer)
                             break
                         end
                     end
-                    expect(found, name .. " never handed out " .. loot.item .. " in " .. args.fills .. " fills")
+                    expect(found, name .. " never handed out " .. loot.fullType .. " in " .. args.fills .. " fills")
                 end
             end
         end

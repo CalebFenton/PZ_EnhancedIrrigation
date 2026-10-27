@@ -13,7 +13,9 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Lines/Plants"
 require "EnhancedIrrigation/ObjectSystem"
+local Chance = require "cf_commonlib/Chance"
 local Tiles = require "cf_commonlib/Tiles"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
@@ -27,7 +29,8 @@ local Plants = EnhancedIrrigation.Plants
 local LineObject = EnhancedIrrigation.ObjectSystem.Object:derive("EnhancedIrrigation_Line")
 EnhancedIrrigation.LineObject = LineObject
 
--- The world's save format: renaming a field loses it from saves.
+-- The world's save format: renaming a field loses it from saves. cf_commonlib's ObjectSystem adds
+-- lastHour, when time last reached it.
 LineObject.SAVED_FIELDS = {
     "material", -- the pipe's kind
     "holed",
@@ -40,7 +43,6 @@ LineObject.SAVED_FIELDS = {
     "tapConditions", -- that pipe's, as `conditions`
     "wetUntil", -- the hour its soil stops showing wet
     "exterior", -- whether it lies outdoors, as last seen loaded
-    "lastHour", -- when time last reached it
     "sprinkler", -- { condition, ceiling } of the Lawn Sprinkler set on it, as its item had them
     -- The soak of squares with no line tile that its sprinkler soaked, by Sprinklers.offsetKey from
     -- it; a square's on one record only (addSprinklerSoak).
@@ -59,7 +61,6 @@ function LineObject:initNew()
     self.tap = false
     self.wetUntil = 0
     self.exterior = true
-    self.lastHour = EnhancedIrrigation.now()
 end
 
 -- A tile without a record: a fresh one, or one whose record was lost with the system's save file.
@@ -78,7 +79,7 @@ function LineObject:stateToIsoObject(isoObject)
 end
 
 function LineObject:isWet()
-    return self.soak >= Lines.DAMP or EnhancedIrrigation.now() < (self.wetUntil or 0)
+    return self.soak >= Lines.DAMP or Clock.now() < (self.wetUntil or 0)
 end
 
 function LineObject:addSoak(points)
@@ -148,9 +149,7 @@ function LineObject:freeze(hours)
     if not self.full or self.cracked or not Frost.isHard(self) then
         return
     end
-    local perHour = Pipes.MATERIALS[self.material].frostPerHour
-    local chance = 1 - (1 - perHour) ^ hours
-    if ZombRandFloat(0, 1) < chance then
+    if Chance.hit(Chance.overHours(Pipes.MATERIALS[self.material].frostPerHour, hours)) then
         self.cracked = true
     end
 end

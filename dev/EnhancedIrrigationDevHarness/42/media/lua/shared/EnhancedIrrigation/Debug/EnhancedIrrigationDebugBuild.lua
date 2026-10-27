@@ -14,12 +14,10 @@ Build.FULL = math.huge
 --- water (tainted when `tainted`), without its OnCreate and unsent to the clients. Returns it, or
 --- nil and what is missing.
 function Build.tile(square, sprite, litres, tainted)
-    local script = Tiles.tileEntity(sprite)
-    if not script then
+    local thumpable = Tiles.newEntity(square, sprite)
+    if not thumpable then
         return nil, "the entity of the tile " .. tostring(sprite)
     end
-    local thumpable = IsoThumpable.new(getCell(), square, sprite, false, nil)
-    GameEntityFactory.CreateIsoObjectEntity(thumpable, script, true)
     if (litres or 0) > 0 then
         thumpable:getFluidContainer():addFluid(tainted and FluidType.TaintedWater or FluidType.Water, litres)
     end

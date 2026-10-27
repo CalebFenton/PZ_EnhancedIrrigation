@@ -13,6 +13,7 @@ require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Frost"
 require "EnhancedIrrigation/ObjectSystem"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
@@ -32,10 +33,10 @@ local EMPTY_HEAD = 0.001
 -- cleaning; ripeHours: wet hours the sand's film has grown; dryHours: hours since the head ran dry;
 -- cracked: a crock frost split; bucket: the full type of the bucket a crock stands in; hotHours: a
 -- boiler drum's heat, as hours of fire; condition and ceiling: its drum's condition and what it was
--- last built or patched up to; fireLit and fuel: its fire as it was at lastHour, whether lit and
--- its fuel's minutes; lastHour: when time last reached it.
+-- last built or patched up to; fireLit and fuel: its fire as it was at lastHour (which cf_commonlib's
+-- ObjectSystem saves), whether lit and its fuel's minutes.
 TreatmentObject.SAVED_FIELDS = { "unit", "head", "headTainted", "passed", "ripeHours", "dryHours", "cracked",
-    "bucket", "hotHours", "condition", "ceiling", "fireLit", "fuel", "lastHour" }
+    "bucket", "hotHours", "condition", "ceiling", "fireLit", "fuel" }
 
 function TreatmentObject:initNew()
     self.head = 0
@@ -44,7 +45,6 @@ function TreatmentObject:initNew()
     self.ripeHours = 0
     self.dryHours = 0
     self.cracked = false
-    self.lastHour = EnhancedIrrigation.now()
 end
 
 -- A unit without a record: a fresh one, or one whose record was lost with the system's save file.

@@ -16,17 +16,15 @@ local function isStandOrRaised(object)
     return Stands.isStand(object) or Stands.isRaised(object)
 end
 
-JobOptions.onWorldMenu(isStandOrRaised, function(context, playerNum, character, object)
+JobOptions.onWorldMenu(JobOptions.clicked(isStandOrRaised), function(context, playerNum, character, object)
     if Stands.isStand(object) then
         local barrels = {}
         for _, entry in ipairs(Stands.barrelsCarried(character)) do
             table.insert(barrels, entry.item)
         end
-        JobOptions.addEach(context, playerNum, EnhancedIrrigationAction, "stand", StandJobs.SET_BARREL, object, barrels,
-            getText("ContextMenu_EnhancedIrrigation_SetBarrel"))
+        JobOptions.addEach(context, playerNum, StandJobs, StandJobs.SET_BARREL, object, barrels)
     else
-        JobOptions.add(context, playerNum, EnhancedIrrigationAction, "stand", StandJobs.TAKE_DOWN, object, nil,
-            getText("ContextMenu_EnhancedIrrigation_TakeBarrelDown"))
+        JobOptions.add(context, playerNum, StandJobs, StandJobs.TAKE_DOWN, object)
     end
 end)
 

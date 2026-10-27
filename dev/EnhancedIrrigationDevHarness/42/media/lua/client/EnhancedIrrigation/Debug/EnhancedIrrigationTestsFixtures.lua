@@ -5,6 +5,7 @@ require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/FixtureMenu"
+local Squares = require "cf_commonlib/Squares"
 
 -- Plumbed fixtures: plumbing a sink to a tank from its menu and through vanilla's own Plumb, the
 -- buffer that tank refills and the engine serves vanilla's drink, fill and wash from, taint and all,
@@ -338,7 +339,7 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
     validate = function(self)
         -- Unless vanilla prefers the full barrel, plumbing to the empty one can't show the job
         -- accepts a barrel other than vanilla's choice.
-        expect(self.preferred and EnhancedIrrigation.sameSquare(self.preferred, T.at(self.full)),
+        expect(self.preferred and Squares.samePosition(self.preferred, T.at(self.full)),
             "vanilla's plumbing doesn't prefer the barrel holding water")
         expectEqual("Plumb Above toward the empty barrel's refusal", self.emptyRefusal, nil)
         expectEqual("Plumb Above toward a barrel two tiles off's refusal", self.farRefusal,

@@ -58,20 +58,17 @@ local function pourLitres(unit, item)
     return fluid and math.min(fluid:getAmount(), headRoom(unit)) or 0
 end
 
---- Each kind's own jobs, with the ContextMenu key naming each, in menu order.
+--- Each kind's own jobs, in menu order.
 TreatmentJobs.KIND_JOBS = {
-    sand = { { job = TreatmentJobs.CLEAN_FILTER, nameKey = "ContextMenu_EnhancedIrrigation_CleanFilter" } },
-    crock = {
-        { job = TreatmentJobs.SCRUB_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_ScrubCrock" },
-        { job = TreatmentJobs.TAKE_DOWN_CROCK, nameKey = "ContextMenu_EnhancedIrrigation_TakeDownCrock" },
-    },
-    boiler = { { job = TreatmentJobs.PATCH_DRUM, nameKey = "ContextMenu_EnhancedIrrigation_PatchDrum" } },
+    sand = { TreatmentJobs.CLEAN_FILTER },
+    crock = { TreatmentJobs.SCRUB_CROCK, TreatmentJobs.TAKE_DOWN_CROCK },
+    boiler = { TreatmentJobs.PATCH_DRUM },
 }
 
 local KIND_OF_JOB = {}
-for kind, entries in pairs(TreatmentJobs.KIND_JOBS) do
-    for _, entry in ipairs(entries) do
-        KIND_OF_JOB[entry.job] = kind
+for kind, jobs in pairs(TreatmentJobs.KIND_JOBS) do
+    for _, job in ipairs(jobs) do
+        KIND_OF_JOB[job] = kind
     end
 end
 
@@ -92,16 +89,9 @@ TreatmentJobs.JOBS = {
         end,
         position = "Mid", sound = "PourWaterIntoObject",
         equip = function(character, unit, item) return item end,
-        blocker = function(character, unit, item)
+        blocker = function(character, unit)
             if not Treatment.isUnit(unit) then
                 return UNKNOWN
-            end
-            local fluid = Jobs.carries(character, item) and item:getFluidContainer()
-            if not fluid or fluid:isEmpty() then
-                return "Tooltip_EnhancedIrrigation_NoWaterCarried"
-            end
-            if not Treatment.isWater(fluid) then
-                return "Tooltip_EnhancedIrrigation_OnlyWater"
             end
             local summary = Treatment.currentSummary(unit)
             if summary and summary.cracked then
@@ -114,6 +104,15 @@ TreatmentJobs.JOBS = {
                 return "Tooltip_EnhancedIrrigation_HeadFull"
             end
             return nil
+        end,
+        -- A carried container with something in it, which must be water.
+        with = function(item)
+            local fluid = item:getFluidContainer()
+            return fluid ~= nil and not fluid:isEmpty()
+        end,
+        withMissing = "Tooltip_EnhancedIrrigation_NoWaterCarried",
+        withRefusal = function(character, unit, item)
+            return not Treatment.isWater(item:getFluidContainer()) and "Tooltip_EnhancedIrrigation_OnlyWater" or nil
         end,
     },
     [TreatmentJobs.CLEAN_FILTER] = {

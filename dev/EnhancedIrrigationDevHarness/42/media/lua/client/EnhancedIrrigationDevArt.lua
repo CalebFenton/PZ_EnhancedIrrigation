@@ -13,7 +13,6 @@ local Capture = require "PZHarness/Capture"
 local Art = {}
 
 local Sprites = EnhancedIrrigation.Sprites
-local MARK = "EIArt"
 
 local WALL_NORTH = "walls_exterior_house_01_1"
 local WALL_WEST = "walls_exterior_house_01_0"
@@ -92,7 +91,7 @@ for _, shot in ipairs({
     -- hide the character's legs, then east of the row again at night, by the fires' light.
     { name = "boilers", x = 7, y = BOILER_ROW, zoomSteps = 0 },
     { name = "boilers_behind", x = 2, y = BOILER_ROW - 1, zoomSteps = 0 },
-    { name = "boilers_night", x = 7, y = BOILER_ROW, zoomSteps = 0, night = true },
+    { name = "boilers_night", x = 7, y = BOILER_ROW, zoomSteps = 0, hour = MIDNIGHT },
 }) do
     table.insert(SHOTS, shot)
 end
@@ -182,31 +181,16 @@ local function buildStage(lot)
     Harness.recalcLot(lot)
 end
 
--- The shots have no regions: --art writes no JSON, only the screenshots.
-local function noRegions()
-    return {}
-end
-
--- The steps that turn the clock to midnight for a night shot, walk the character to the shot's
--- spot, let it see around, zoom and save.
-local function addShot(run, player, lot, shot)
-    if shot.night then
-        Harness.addHour(run, MIDNIGHT)
-    end
-    Harness.addGoTo(run, player, { lotSquare(lot, shot.x, shot.y) }, shot.zoomSteps)
-    run:addOpaque(shot.name, noRegions)
-end
-
 --- Shoots the stage and calls onDone; --art has no groups to select.
 function Art.capture(_, onDone)
-    local run = Capture.new(MARK)
+    local run = Capture.new()
     local player = getPlayer()
     local lot = findStageLot(player)
     if not lot then
         run:fail("no open lot within " .. Harness.SEARCH_RADIUS .. " squares")
         return
     end
-    print(string.format("%s stage at %d,%d natural=%s", MARK, lot.x, lot.y, tostring(lot.natural)))
+    print(string.format("%s stage at %d,%d natural=%s", run.mark, lot.x, lot.y, tostring(lot.natural)))
     -- Hides the HUD, the debug console and the character window, which the shots don't need.
     ISUIHandler.setVisibleAllUI(false)
     run:add(function()
@@ -217,7 +201,7 @@ function Art.capture(_, onDone)
         end
     end)
     for _, shot in ipairs(SHOTS) do
-        addShot(run, player, lot, shot)
+        Harness.addSpotShot(run, player, lot, shot)
     end
     run:run(nil, onDone)
 end

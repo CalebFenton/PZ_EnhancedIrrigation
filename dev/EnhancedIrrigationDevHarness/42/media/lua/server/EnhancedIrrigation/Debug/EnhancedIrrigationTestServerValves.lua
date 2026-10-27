@@ -1,5 +1,6 @@
 require "PZHarness/ServerHandlers"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+local Clock = require "cf_commonlib/Clock"
 
 -- Development only, not published. A valve's clock is wound back as though the hours had gone by,
 -- then run by its own pass (ValveSystem.update), and the crops and tank read after in the same call
@@ -16,7 +17,7 @@ local function valveOf(record)
         return { open = record.valveOpen == true }
     end
     return { item = valve.item, start = valve.start, minutes = valve.minutes, untilHour = valve.untilHour,
-        open = record.valveOpen == true, now = EnhancedIrrigation.now() }
+        open = record.valveOpen == true, now = Clock.now() }
 end
 
 -- The water of the crop on each of `tiles`, nil where there is none, and the litres of the tank on
@@ -52,7 +53,7 @@ end)
 handler("valves.age", function(_, args)
     local record = Server.lineRecordAt(args)
     local valve = PZHarness.need(record.valve, "a valve on the tap at " .. args.x .. "," .. args.y)
-    valve.lastHour = (valve.lastHour or EnhancedIrrigation.now()) - args.hours
+    valve.lastHour = (valve.lastHour or Clock.now()) - args.hours
     if valve.untilHour then
         valve.untilHour = valve.untilHour - args.hours
     end

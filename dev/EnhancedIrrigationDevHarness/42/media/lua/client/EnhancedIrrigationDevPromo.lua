@@ -26,7 +26,6 @@ local Promo = {}
 
 local EI = EnhancedIrrigation
 local Sprites = EI.Sprites
-local MARK = "EIPromo"
 
 local NOON = 12
 -- Late enough for the sky to have gone dark in any season, so that the boilers' fires read.
@@ -45,12 +44,7 @@ for _, material in ipairs(EI.Sprites.PIPE_MATERIALS) do
     table.insert(ITEMS, EI.Pipes.MATERIALS[material].item)
 end
 table.insert(ITEMS, EI.Pipes.WRENCH.item)
--- Inputs that take any item with a tag show this one.
-local PREFER = { "Base.Hammer", "Base.Screwdriver", "Base.Saw", "Base.PipeWrench", "Base.Wrench", "Base.HandDrill",
-    "Base.BlowTorch", "Base.WeldingMask", "Base.KitchenKnife", "Base.Bucket", "Base.Shovel2", "Base.MasonsTrowel",
-    "Base.BucketConcreteFull", "Base.Matches", "Base.Charcoal" }
 local FLUID_CONTAINERS = { Water = "Base.WaterBottle" }
-local LITERATURE = { "EnhancedIrrigation.CisternsForKentucky" }
 
 -- The lots, each its own patch of open soil or grass, in (east, south) squares from its north-west
 -- corner, at least LOT_GAP apart so that no shot shows another's things. `player` is where the
@@ -154,37 +148,21 @@ local TIMER_START, TIMER_MINUTES = 6, 30
 
 -- The run whose steps are being added; Promo.capture makes it.
 local run
--- The lots found, by name.
+-- The lots found, by name: places (PZHarness/StageLots.lua) whose positions are (east, south)
+-- squares from their north-west corner.
 local lots = {}
-
--- Positions --------------------------------------------------------------------------------------
-
-local function at(lot, position)
-    return Harness.lotSquare(lot, position[1], position[2])
-end
-
--- The squares of `lot` at each list of positions given, in order.
-local function squaresAt(lot, ...)
-    local squares = {}
-    for i = 1, select("#", ...) do
-        for _, position in ipairs((select(i, ...))) do
-            table.insert(squares, at(lot, position))
-        end
-    end
-    return squares
-end
 
 -- Building ---------------------------------------------------------------------------------------
 
 -- Logs what the staging couldn't do; the shot goes on without it, and the eye catches the gap.
 local function report(what)
-    print(MARK .. " no " .. what)
+    print(run.mark .. " no " .. what)
 end
 
 -- The tile `sprite` built at `position` of `lot` as the build menu builds it, `full` of water if
 -- asked.
 local function build(lot, position, sprite, full)
-    local object, missing = Build.tile(at(lot, position), sprite, full and Build.FULL)
+    local object, missing = Build.tile(Harness.at(lot, position), sprite, full and Build.FULL)
     if not object then
         report(missing)
     end
@@ -237,9 +215,9 @@ local function buildHomestead(lot)
     end
     build(lot, spec.filter, spec.filter.sprite)
     local LineSystem = EI.LineSystem
-    LineSystem.place(at(lot, spec.tap), spec.material, { tap = true })
+    LineSystem.place(Harness.at(lot, spec.tap), spec.material, { tap = true })
     for _, position in ipairs(spec.branch) do
-        LineSystem.place(at(lot, position), spec.material)
+        LineSystem.place(Harness.at(lot, position), spec.material)
     end
     for _, bed in ipairs(spec.beds) do
         for x = bed.from, bed.to do
@@ -259,12 +237,12 @@ end
 local function buildPumps(lot)
     local spec = lot.spec
     Harness.clearLotForShots(lot, MARGIN)
-    Harness.placeTile(at(lot, spec.well), Stage.VANILLA_WELL)
+    Harness.placeTile(Harness.at(lot, spec.well), Stage.VANILLA_WELL)
     placePump(lot, spec.wooden, Sprites.WOODEN_HAND_PUMP)
     placePump(lot, spec.iron, Sprites.IRON_HAND_PUMP)
     local barrel = build(lot, spec.barrel, Sprites.RAISED_BARREL)
     local house, record = placePump(lot, spec.house, Sprites.PUMP_HOUSE_METAL)
-    local generatorSquare = at(lot, spec.generator)
+    local generatorSquare = Harness.at(lot, spec.generator)
     local generator = IsoGenerator.new(instanceItem(GENERATOR), getCell(), generatorSquare)
     generator:setConnected(true)
     generator:setCondition(100)
@@ -282,7 +260,7 @@ end
 local function buildSprinklers(lot)
     local spec = lot.spec
     Harness.clearLotForShots(lot, MARGIN)
-    Harness.placeTile(at(lot, spec.well), Stage.VANILLA_WELL)
+    Harness.placeTile(Harness.at(lot, spec.well), Stage.VANILLA_WELL)
     local pump = placePump(lot, spec.pump, Sprites.IRON_HAND_PUMP)
     local LineSystem = EI.LineSystem
     local isSprinkler = {}
@@ -333,19 +311,42 @@ local function buildFilters(lot)
     Harness.recalcLot(lot)
 end
 
--- The lots each group needs, and what builds each lot, in the order they are looked for.
-local LOTS = {
-    { name = "homestead", spec = HOMESTEAD, build = buildHomestead },
-    { name = "pumps", spec = PUMPS, build = buildPumps },
-    { name = "sprinklers", spec = SPRINKLERS, build = buildSprinklers },
-    { name = "filters", spec = FILTERS, build = buildFilters },
-}
+-- What builds each lot.
+local BUILDS = { homestead = buildHomestead, pumps = buildPumps, sprinklers = buildSprinklers, filters = buildFilters }
+
+-- A lot `spec` as a PZHarness.Stage.findPlaces spec: the closest open soil or grass, LOT_GAP from
+-- the lots found before it, as clear around as it can be (CLEARANCES).
+local function lotSpec(name, spec)
+    return {
+        name = name,
+        label = name,
+        missing = "open soil or grass " .. spec.w .. "x" .. spec.h .. " for the " .. name,
+        find = function(player, found)
+            for _, clearance in ipairs(CLEARANCES) do
+                local lot = Harness.findLot(player, spec.w, spec.h,
+                    { floor = Harness.NATURAL_FLOOR, trees = true, others = found, gap = LOT_GAP, clearance = clearance })
+                if lot then
+                    lot.spec, lot.clearance = spec, clearance
+                    return lot
+                end
+            end
+            return nil
+        end,
+        detail = function(lot)
+            return " clear " .. lot.clearance
+        end,
+    }
+end
+
+-- The lots, in the order they are looked for.
+local LOTS = { lotSpec("homestead", HOMESTEAD), lotSpec("pumps", PUMPS), lotSpec("sprinklers", SPRINKLERS),
+    lotSpec("filters", FILTERS) }
 
 -- Shots ------------------------------------------------------------------------------------------
 
 local function goToLot(name, stepsOut)
     local lot = lots[name]
-    Harness.addGoTo(run, getPlayer(), { at(lot, lot.spec.scout), at(lot, lot.spec.player) }, stepsOut)
+    Harness.addGoTo(run, getPlayer(), { Harness.at(lot, lot.spec.scout), Harness.at(lot, lot.spec.player) }, stepsOut)
 end
 
 local function addWorld()
@@ -355,9 +356,9 @@ local function addWorld()
     end)
     -- The banner, a step further out, has its title over the left half: the barrels, the tap and
     -- the near end of the beds stand against its right edge, the beds running on past it.
-    Harness.addGoTo(run, getPlayer(), { at(lots.homestead, HOMESTEAD.bannerPlayer) }, 2)
+    Harness.addGoTo(run, getPlayer(), { Harness.at(lots.homestead, HOMESTEAD.bannerPlayer) }, 2)
     run:addOpaque("banner", function()
-        return { Harness.rightAligned("banner", squaresAt(lots.homestead, HOMESTEAD.banner)) }
+        return { Harness.rightAligned("banner", Harness.squaresAt(lots.homestead, HOMESTEAD.banner)) }
     end)
 end
 
@@ -389,7 +390,7 @@ end
 local function addMenu()
     local carried = {}
     local lot = lots.homestead
-    Harness.addGoTo(run, getPlayer(), { at(lot, HOMESTEAD.player) }, 1)
+    Harness.addGoTo(run, getPlayer(), { Harness.at(lot, HOMESTEAD.player) }, 1)
     run:add(function()
         local inventory = getPlayer():getInventory()
         for _, fullType in ipairs(MENU_ITEMS) do
@@ -444,7 +445,7 @@ local function addMenu()
             return EI.ValveUI.open(getPlayer(), function() return EI.LineMenu.valvePanel(tap) end)
         end,
         close = function(panel)
-            panel:destroy()
+            panel:close()
         end,
     })
     -- The poster and a rerun of the world show the tap bare, as the menu found it.
@@ -458,60 +459,34 @@ end
 -- The garden close in, at the closest zoom, so that it reads where Steam shows it smallest.
 local function addPoster()
     local lot = lots.homestead
-    Harness.addGoTo(run, getPlayer(), { at(lot, HOMESTEAD.scout), at(lot, HOMESTEAD.posterPlayer) }, 0)
+    Harness.addGoTo(run, getPlayer(), { Harness.at(lot, HOMESTEAD.scout), Harness.at(lot, HOMESTEAD.posterPlayer) }, 0)
     run:addOpaque("poster", function()
-        return { Harness.squareRegion("poster", squaresAt(lot, HOMESTEAD.poster, { HOMESTEAD.posterPlayer })) }
+        return { Harness.squareRegion("poster", Harness.squaresAt(lot, HOMESTEAD.poster, { HOMESTEAD.posterPlayer })) }
     end)
 end
 
--- The groups of dev/harness.conf's MODE_GROUPS_promo, and the lots each needs.
+-- The groups of dev/harness.conf's MODE_GROUPS_promo but the harness's `icons`, and the lots each
+-- needs.
 local GROUPS = {
-    icons = { lots = {} },
-    world = { lots = { "homestead" }, add = addWorld },
-    water = { lots = { "pumps", "sprinklers", "filters" }, add = addWater },
-    menu = { lots = { "homestead" }, add = addMenu },
-    poster = { lots = { "homestead" }, add = addPoster },
+    world = { places = { "homestead" }, add = addWorld },
+    water = { places = { "pumps", "sprinklers", "filters" }, add = addWater },
+    menu = { places = { "homestead" }, add = addMenu },
+    poster = { places = { "homestead" }, add = addPoster },
 }
 
--- Finds the lots `chosen` groups need, each apart from those found before it, and adds the step
--- that builds them at noon. Returns nil, or what it couldn't find.
-local function prepare(chosen)
-    local LineSystem = EI.LineSystem
-    if not LineSystem or not SFarmingSystem or not EI.PumpSystem then
+-- Adds the step that builds the lots found, `found` by name, at noon. Returns nil, or what it
+-- needs and hasn't.
+local function prepare(_, found, origins)
+    if not EI.LineSystem or not SFarmingSystem or not EI.PumpSystem then
         return "the authority's systems; --promo runs in single player only"
     end
-    local needs = Harness.groupNeeds(GROUPS, chosen, "lots")
-    local found, origins, logged = {}, {}, {}
-    for _, entry in ipairs(LOTS) do
-        if needs[entry.name] then
-            local lot, clearance
-            for _, c in ipairs(CLEARANCES) do
-                lot = Harness.findLot(getPlayer(), entry.spec.w, entry.spec.h,
-                    { floor = Harness.NATURAL_FLOOR, trees = true, others = found, gap = LOT_GAP, clearance = c })
-                clearance = c
-                if lot then
-                    break
-                end
-            end
-            if not lot then
-                return "open soil or grass " .. entry.spec.w .. "x" .. entry.spec.h .. " for the " .. entry.name
-                    .. " within " .. Harness.SEARCH_RADIUS .. " squares"
-            end
-            lot.spec = entry.spec
-            lots[entry.name] = lot
-            table.insert(found, lot)
-            table.insert(origins, Harness.lotSquare(lot, 0, 0))
-            table.insert(logged, string.format("%s %d,%d clear %d", entry.name, lot.x, lot.y, clearance))
-        end
-    end
-    if #logged > 0 then
-        print(MARK .. " lots " .. table.concat(logged, "; "))
-    end
+    lots = found
     Harness.addWorldSettings(run, { hour = NOON, origins = origins })
     run:add(function()
         for _, entry in ipairs(LOTS) do
-            if needs[entry.name] then
-                entry.build(lots[entry.name])
+            local lot = lots[entry.name]
+            if lot then
+                BUILDS[entry.name](lot)
             end
         end
         return Capture.DRAW_FRAMES
@@ -521,22 +496,15 @@ end
 --- Shoots the groups named in `selection`, which run-client.sh gives every group of
 --- MODE_GROUPS_promo when PROMO names none, and calls onDone.
 function Promo.capture(selection, onDone)
-    run = Capture.new(MARK)
-    local catalog = Capture.newCatalog({ prefer = PREFER, fluidContainers = FLUID_CONTAINERS, literature = LITERATURE })
-    -- The names come with every run, since they cost no shot.
-    local data = {
-        items = catalog:items(ITEMS),
-        recipes = catalog:recipes(),
-        strings = { modName = getText("Sandbox_EnhancedIrrigation") },
-    }
-    local adders = {}
-    for name, group in pairs(GROUPS) do
-        adders[name] = group.add
-    end
-    adders.icons = function()
-        run:addIconSheet("icons", catalog:iconList())
-    end
-    Harness.runGroups(run, selection, adders, prepare, data, onDone)
+    run = Capture.new()
+    Harness.runGroups(run, selection, {
+        groups = GROUPS,
+        places = LOTS,
+        catalog = Capture.newCatalog({ fluidContainers = FLUID_CONTAINERS }),
+        items = ITEMS,
+        data = { strings = { modName = getText("Sandbox_EnhancedIrrigation") } },
+        prepare = prepare,
+    }, onDone)
 end
 
 return Promo

@@ -19,13 +19,11 @@ StandJobs.TAKE_DOWN = "TakeBarrelDown"
 StandJobs.JOBS = {
     [StandJobs.SET_BARREL] = {
         minutes = 5, position = "Mid", metabolics = Metabolics.HeavyWork,
-        blocker = function(character, object, barrel)
-            if not Stands.isStand(object) then
-                return "Tooltip_EnhancedIrrigation_NotAStand"
-            end
-            if not Jobs.carries(character, barrel, Stands.barrelSpec) then
-                return "Tooltip_EnhancedIrrigation_NoBarrel"
-            end
+        blocker = function(character, object)
+            return not Stands.isStand(object) and "Tooltip_EnhancedIrrigation_NotAStand" or nil
+        end,
+        with = Stands.barrelSpec, withMissing = "Tooltip_EnhancedIrrigation_NoBarrel",
+        withRefusal = function(character, object, barrel)
             return not Stands.isEmptyBarrel(barrel) and "Tooltip_EnhancedIrrigation_BarrelNotEmpty" or nil
         end,
     },

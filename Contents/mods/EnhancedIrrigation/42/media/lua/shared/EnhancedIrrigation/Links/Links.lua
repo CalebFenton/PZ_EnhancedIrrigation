@@ -12,6 +12,7 @@
 -- a pump has that role (ROLE_END) set true; one between two tanks has none.
 
 require "EnhancedIrrigation/Utilities"
+local Squares = require "cf_commonlib/Squares"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Links = {}
@@ -129,7 +130,7 @@ end
 function Links.roleAt(at, role)
     local side = ROLE_END[role]
     for _, link in ipairs(Links.all()) do
-        if link[role] and EnhancedIrrigation.sameSquare(link[side], at) then
+        if link[role] and Squares.samePosition(link[side], at) then
             return link
         end
     end
@@ -144,9 +145,9 @@ end
 
 --- The other end of `link` from the square `at`, or nil when `at` is neither end.
 function Links.otherEnd(link, at)
-    if EnhancedIrrigation.sameSquare(link.a, at) then
+    if Squares.samePosition(link.a, at) then
         return link.b
-    elseif EnhancedIrrigation.sameSquare(link.b, at) then
+    elseif Squares.samePosition(link.b, at) then
         return link.a
     end
     return nil
@@ -167,7 +168,7 @@ end
 function Links.find(p, q)
     for _, link in ipairs(Links.all()) do
         local other = Links.otherEnd(link, p)
-        if other and EnhancedIrrigation.sameSquare(other, q) then
+        if other and Squares.samePosition(other, q) then
             return link
         end
     end
@@ -185,7 +186,7 @@ function Links.inReach(object, find)
         for dx = -across, across do
             for dy = -across, across do
                 local at = { x = here.x + dx, y = here.y + dy, z = here.z + dz }
-                if not EnhancedIrrigation.sameSquare(at, here) and Links.distance(here, at) <= Links.MAX_TILES then
+                if not Squares.samePosition(at, here) and Links.distance(here, at) <= Links.MAX_TILES then
                     local other = find(at.x, at.y, at.z)
                     if other then
                         table.insert(found, { found = other, at = at, distance = Links.distance(here, at) })

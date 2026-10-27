@@ -10,9 +10,9 @@ PZHarness.register({
     scenario = "EnhancedIrrigationScenario",
     prefix = "irrigation_",
     modes = {
-        -- They wait on the lighting, the zoom and the UI rather than on frame counts, so they draw
-        -- uncapped, and they shoot a clear day.
-        art = { uncapped = true, clearWeather = true, fastUI = true, run = Art.capture },
-        promo = { uncapped = true, clearWeather = true, fastUI = true, run = Promo.capture },
+        -- They wait on the lighting, the zoom and the UI rather than on frame counts, and they
+        -- shoot a clear day.
+        art = { capture = true, run = Art.capture },
+        promo = { capture = true, run = Promo.capture },
     },
 })

@@ -1,8 +1,8 @@
 -- Garden lines on the right-click menu: Lay Line on the ground, by the pipe the character carries,
 -- and on a line tile one submenu with what the tile is and the jobs it takes.
 
-require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
+local Items = require "cf_commonlib/Items"
 local Materials = require "cf_commonlib/Materials"
 local Needs = require "cf_commonlib/Needs"
 local JobOptions = require "cf_commonlib/JobOptions"
@@ -52,10 +52,6 @@ end
 
 -- Options -------------------------------------------------------------------------------------------
 
-local function addJob(menu, playerNum, nameKey, job, object, with)
-    return JobOptions.add(menu, playerNum, EnhancedIrrigationAction, "line", job, object, with, getText(nameKey))
-end
-
 -- The Lawn Sprinkler carried in the best condition, or nil.
 local function bestSprinkler(character)
     local items = character:getInventory():getAllTypeRecurse(EnhancedIrrigation.Sprinklers.ITEM)
@@ -71,19 +67,18 @@ end
 
 local function addSprinkler(menu, playerNum, character, line, state)
     if state.sprinkler then
-        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeSprinkler", LineJobs.TAKE_SPRINKLER, line)
+        JobOptions.add(menu, playerNum, LineJobs, LineJobs.TAKE_SPRINKLER, line)
         return
     end
     local sprinkler = bestSprinkler(character)
-    local option = addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_SetSprinkler",
-        LineJobs.SET_SPRINKLER, line, sprinkler)
+    local option = JobOptions.add(menu, playerNum, LineJobs, LineJobs.SET_SPRINKLER, line, sprinkler)
     option.itemForTexture = sprinkler
 end
 
 -- Drill Holes uses the first tool carried that gets into the pipe (LineJobs.holeTool), which its
 -- needs name; one that punches warns that it may split brittle pipe.
 local function addDrill(menu, playerNum, character, line, state)
-    local option = addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_DrillHoles", LineJobs.DRILL, line)
+    local option = JobOptions.add(menu, playerNum, LineJobs, LineJobs.DRILL, line)
     local tool = LineJobs.holeTool(character, state.material)
     if tool and option.toolTip and LineJobs.mayCrack(tool, state.material) then
         option.toolTip.description = option.toolTip.description .. " " .. getText("Tooltip_EnhancedIrrigation_MayCrack")
@@ -108,15 +103,14 @@ local function addValve(menu, playerNum, character, line, state)
         local windUp = Valves.kindOf(state.valve.item) == "windup"
         local name = windUp and "ContextMenu_EnhancedIrrigation_WindValve" or "ContextMenu_EnhancedIrrigation_SetTimer"
         menu:addOption(getText(name), character, LineMenu.openValve, line)
-        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeOffValve", LineJobs.TAKE_OFF_VALVE, line)
+        JobOptions.add(menu, playerNum, LineJobs, LineJobs.TAKE_OFF_VALVE, line)
         return
     end
-    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "line", LineJobs.FIT_VALVE, line,
-        JobOptions.firstOfEach(character, Valves.ORDER), getText("ContextMenu_EnhancedIrrigation_FitValve"))
+    JobOptions.addEach(menu, playerNum, LineJobs, LineJobs.FIT_VALVE, line, Items.firstOfEach(character, Valves.ORDER))
 end
 
 local function addLineOptions(context, playerNum, character, line, state)
-    local menu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_GardenLine"))
+    local menu = JobOptions.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_GardenLine"))
     menu:addOption(LineMenu.describe(state)).notAvailable = true
     if state.tap then
         local water = menu:addOption(getText("ContextMenu_EnhancedIrrigation_WaterFromTank"), playerNum,
@@ -124,22 +118,22 @@ local function addLineOptions(context, playerNum, character, line, state)
         Needs.refuse(water, LineJobs.refusal(character, LineJobs.WATER, line))
         addValve(menu, playerNum, character, line, state)
     else
-        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_FitTap", LineJobs.TAP, line)
+        JobOptions.add(menu, playerNum, LineJobs, LineJobs.TAP, line)
     end
     if not state.holed then
         addDrill(menu, playerNum, character, line, state)
     end
     if state.cracked then
-        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_PatchCrack", LineJobs.PATCH, line)
+        JobOptions.add(menu, playerNum, LineJobs, LineJobs.PATCH, line)
     end
-    addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_DrainLine", LineJobs.DRAIN, line)
+    JobOptions.add(menu, playerNum, LineJobs, LineJobs.DRAIN, line)
     addSprinkler(menu, playerNum, character, line, state)
-    addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeUpPipe", LineJobs.TAKE_UP, line)
+    JobOptions.add(menu, playerNum, LineJobs, LineJobs.TAKE_UP, line)
 end
 
 -- The cursor lives with the server's Lua, which loads after this file, so it's looked up here.
 local function addLay(context, playerNum, character, materials)
-    local menu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_LayLine"))
+    local menu = JobOptions.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_LayLine"))
     for _, material in ipairs(materials) do
         local option = menu:addOption(getItemNameFromFullType(Pipes.MATERIALS[material].item), playerNum,
             EnhancedIrrigation.LineCursor.start, material)
@@ -157,29 +151,26 @@ local function clickedFloorSquare(worldobjects)
     return nil
 end
 
-function LineMenu.onFill(playerNum, context, worldobjects, test)
-    local character = getSpecificPlayer(playerNum)
-    if not character or character:getVehicle() then
-        return
-    end
-    local line = Needs.findClicked(worldobjects, Lines.isLine)
+-- What a click offers garden-line options for: the line tile clicked, with its state, and the pipe
+-- carried to lay when a floor was clicked.
+local function clickedLine(worldobjects, character)
+    local line = JobOptions.findClicked(worldobjects, Lines.isLine)
     local state = line and Lines.stateOf(line)
     local materials = Pipes.materialsCarried(character)
-    local square = clickedFloorSquare(worldobjects)
-    if not state and not (square and #materials > 0) then
-        return
+    local lays = clickedFloorSquare(worldobjects) ~= nil and #materials > 0
+    if not (state or lays) then
+        return nil
     end
-    if test then
-        return ISWorldObjectContextMenu.setTest()
-    end
-    if state then
-        addLineOptions(context, playerNum, character, line, state)
-    end
-    if square and #materials > 0 then
-        addLay(context, playerNum, character, materials)
-    end
+    return { line = line, state = state, materials = lays and materials or nil }
 end
 
-Events.OnFillWorldObjectContextMenu.Add(LineMenu.onFill)
+LineMenu.onFill = JobOptions.onWorldMenu(clickedLine, function(context, playerNum, character, clicked)
+    if clicked.state then
+        addLineOptions(context, playerNum, character, clicked.line, clicked.state)
+    end
+    if clicked.materials then
+        addLay(context, playerNum, character, clicked.materials)
+    end
+end)
 
 return LineMenu

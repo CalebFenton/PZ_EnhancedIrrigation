@@ -279,14 +279,12 @@ LineJobs.JOBS = {
     -- than any of its type. A tap's riser takes the tile's fitting.
     [LineJobs.SET_SPRINKLER] = {
         minutes = 5, sound = "RepairWithWrench", equip = holdWrench,
-        blocker = atLine(function(character, object, state, item)
+        with = isSprinkler, withMissing = "Tooltip_EnhancedIrrigation_NoSprinkler",
+        blocker = atLine(function(character, object, state)
             if state.tap then
                 return "Tooltip_EnhancedIrrigation_TapAndSprinkler"
             end
-            if state.sprinkler then
-                return "Tooltip_EnhancedIrrigation_HasSprinkler"
-            end
-            return not Jobs.carries(character, item, isSprinkler) and "Tooltip_EnhancedIrrigation_NoSprinkler" or nil
+            return state.sprinkler and "Tooltip_EnhancedIrrigation_HasSprinkler" or nil
         end),
         materials = { Pipes.WRENCH },
     },
@@ -301,14 +299,12 @@ LineJobs.JOBS = {
     -- job itself.
     [LineJobs.FIT_VALVE] = {
         minutes = 5, sound = "RepairWithWrench", equip = holdWrench,
-        blocker = atLine(function(character, object, state, item)
+        with = isValve, withMissing = "Tooltip_EnhancedIrrigation_NoValve",
+        blocker = atLine(function(character, object, state)
             if not state.tap then
                 return "Tooltip_EnhancedIrrigation_NoTap"
             end
-            if state.valve then
-                return "Tooltip_EnhancedIrrigation_HasValve"
-            end
-            return not Jobs.carries(character, item, isValve) and "Tooltip_EnhancedIrrigation_NoValve" or nil
+            return state.valve and "Tooltip_EnhancedIrrigation_HasValve" or nil
         end),
         materials = { Pipes.WRENCH },
     },

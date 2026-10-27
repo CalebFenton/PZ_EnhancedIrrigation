@@ -3,13 +3,13 @@
 -- runs, so the run is picked from the knob's few stops; and for a timer the hour it starts, stepped
 -- up and down as vanilla's alarm clock sets its hour (ISAlarmClockDialog). Its button queues the
 -- job, which turns the knob there, greyed out saying why while the job would be refused. It closes
--- once the character walks off or the valve is gone.
+-- once the character walks off (cf_commonlib's OpenAction.inReach), the valve is gone or its job
+-- changed.
 
 require "ISUI/ISPanelJoypad"
 require "ISUI/ISButton"
 require "ISUI/Fireplace/ISKnob"
 require "EnhancedIrrigation/Utilities"
-local Squares = require "cf_commonlib/Squares"
 local OpenAction = require "cf_commonlib/OpenAction"
 require "EnhancedIrrigation/Valves"
 require "EnhancedIrrigation/Timers"
@@ -26,10 +26,8 @@ local FONT_HGT_SMALL = getTextManager():getFontHeight(UIFont.Small)
 local PAD = 10
 local BUTTON_HGT = math.max(25, FONT_HGT_SMALL + 6)
 local BUTTON_WID = 100
--- How far, in squares, the character may stand from the valve with its panel open, as the oven's.
-local REACH = 3
 
--- The panel open for each player, by player number.
+-- The panel open for each player, by player number (cf_commonlib's OpenAction.show).
 ValveUI.instances = {}
 
 function ValveUI:initialise()
@@ -66,21 +64,21 @@ function ValveUI:initialise()
     y = y + FONT_HGT_SMALL + PAD
     self.ok = ISButton:new(PAD, y, BUTTON_WID, BUTTON_HGT, getText(self.spec.okKey), self, ValveUI.onClick)
     self.ok.internal = "OK"
-    self.close = ISButton:new(self.width - BUTTON_WID - PAD, y, BUTTON_WID, BUTTON_HGT, getText("UI_Close"), self,
+    self.closeButton = ISButton:new(self.width - BUTTON_WID - PAD, y, BUTTON_WID, BUTTON_HGT, getText("UI_Close"), self,
         ValveUI.onClick)
-    self.close.internal = "CLOSE"
-    for _, button in ipairs({ self.ok, self.close }) do
+    self.closeButton.internal = "CLOSE"
+    for _, button in ipairs({ self.ok, self.closeButton }) do
         button:initialise()
         button:instantiate()
         button.borderColor = { r = 1, g = 1, b = 1, a = 0.1 }
         self:addChild(button)
     end
-    self:setHeight(self.close:getBottom() + PAD)
+    self:setHeight(self.closeButton:getBottom() + PAD)
     if self.spec.timer then
         self:insertNewLineOfButtons(self.hourUp, self.hourDown)
     end
     self:insertNewLineOfButtons(self.knob)
-    self:insertNewLineOfButtons(self.ok, self.close)
+    self:insertNewLineOfButtons(self.ok, self.closeButton)
 end
 
 --- The job's setting the panel shows now: the knob's minutes, and for a timer its hour first.
@@ -108,13 +106,13 @@ end
 function ValveUI:update()
     ISPanelJoypad.update(self)
     local object, job = self.spec.object, self.spec.job
-    local now = Squares.onSquare(object) and self.makeSpec()
-    if not (now and now.job == job) or self.character:DistTo(object:getX(), object:getY()) > REACH then
-        self:destroy()
+    local now = OpenAction.inReach(self.playerNum, object) and self.makeSpec()
+    if not (now and now.job == job) then
+        self:close()
         return
     end
     local jobs = EnhancedIrrigationAction.jobsOf(self.spec.feature)
-    self.blocker = jobs.blocker(self.character, job, object, self:setting())
+    self.blocker = jobs.verdict(self.character, job, object, self:setting()).blocker
     self.ok:setEnable(self.blocker == nil)
 end
 
@@ -125,9 +123,9 @@ function ValveUI:onClick(button)
         self.hour = (self.hour + 23) % 24
     elseif button.internal == "OK" and self.blocker == nil then
         EnhancedIrrigationAction.queue(self.playerNum, self.spec.feature, self.spec.job, self.spec.object, self:setting())
-        self:destroy()
+        self:close()
     elseif button.internal == "CLOSE" then
-        self:destroy()
+        self:close()
     end
 end
 
@@ -143,25 +141,19 @@ end
 
 function ValveUI:onJoypadDown(button)
     local focused = self.joypadButtons and self.joypadButtons[self.joypadIndex]
-    local presses = focused == self.hourUp or focused == self.hourDown or focused == self.close
+    local presses = focused == self.hourUp or focused == self.hourDown or focused == self.closeButton
     if button == Joypad.AButton and not presses then
         self:onClick(self.ok)
     elseif button == Joypad.BButton then
-        self:onClick(self.close)
+        self:onClick(self.closeButton)
     else
         ISPanelJoypad.onJoypadDown(self, button)
     end
 end
 
-function ValveUI:destroy()
+function ValveUI:close()
     self:setVisible(false)
-    self:removeFromUIManager()
-    if ValveUI.instances[self.playerNum] == self then
-        ValveUI.instances[self.playerNum] = nil
-    end
-    if JoypadState.players[self.playerNum + 1] then
-        setJoypadFocus(self.playerNum, nil)
-    end
+    OpenAction.close(ValveUI.instances, self.playerNum, self)
 end
 
 function ValveUI:new(character, spec, makeSpec)
@@ -211,17 +203,9 @@ function ValveUI.open(character, makeSpec)
     if not spec then
         return nil
     end
-    local playerNum = character:getPlayerNum()
-    if ValveUI.instances[playerNum] then
-        ValveUI.instances[playerNum]:destroy()
-    end
     local panel = ValveUI:new(character, spec, makeSpec)
     panel:initialise()
-    panel:addToUIManager()
-    ValveUI.instances[playerNum] = panel
-    if JoypadState.players[playerNum + 1] then
-        setJoypadFocus(playerNum, panel)
-    end
+    OpenAction.show(ValveUI.instances, character:getPlayerNum(), panel)
     return panel
 end
 

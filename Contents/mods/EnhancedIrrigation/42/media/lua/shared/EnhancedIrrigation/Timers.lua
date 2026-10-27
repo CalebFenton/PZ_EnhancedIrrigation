@@ -2,6 +2,7 @@
 -- menus write its hour.
 
 require "EnhancedIrrigation/Utilities"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Timers = {}
@@ -15,7 +16,7 @@ end
 -- The hour of the day, 0 up to 24, at the world hour `worldHour` (EnhancedIrrigation.now). The
 -- world's age doesn't start at midnight, so it is read off the clock now.
 local function hourOfDay(worldHour)
-    local back = EnhancedIrrigation.now() - worldHour
+    local back = Clock.now() - worldHour
     return (getGameTime():getTimeOfDay() - back) % 24
 end
 

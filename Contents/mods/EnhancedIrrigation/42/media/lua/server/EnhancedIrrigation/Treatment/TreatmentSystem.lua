@@ -11,6 +11,7 @@ require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/ObjectSystem"
 require "EnhancedIrrigation/Treatment/TreatmentObject"
 require "EnhancedIrrigation/Treatment/Boiler"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local TreatmentSystem = {}
@@ -18,13 +19,7 @@ EnhancedIrrigation.TreatmentSystem = TreatmentSystem
 
 local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
 
-TreatmentSystem.System = EnhancedIrrigation.ObjectSystem.define({
-    name = "Treatment",
-    sprites = Treatment.SPRITES,
-    owner = Treatment,
-    Object = EnhancedIrrigation.TreatmentObject,
-    isObject = Treatment.isUnit,
-})
+TreatmentSystem.System = LibObjectSystem.define(Treatment, { Object = EnhancedIrrigation.TreatmentObject })
 
 -- Swaps the built `thumpable` for a vanilla fireplace of its tile, given its entity's components
 -- (its basin, and the name that makes it a unit), as vanilla's Barrel Oven's OnCreate makes one
@@ -103,5 +98,6 @@ local DO = {
 
 --- The authority's side of the treatment jobs (a site of Jobs.perform).
 TreatmentSystem.site = LibObjectSystem.jobSite(Treatment, DO)
+EnhancedIrrigationAction.serve({ treatment = TreatmentSystem.site })
 
 return TreatmentSystem

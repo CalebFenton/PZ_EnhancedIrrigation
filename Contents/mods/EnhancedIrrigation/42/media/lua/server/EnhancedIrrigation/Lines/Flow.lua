@@ -16,6 +16,7 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Lines/Sprinklers"
 require "EnhancedIrrigation/Lines/Plants"
 require "EnhancedIrrigation/Pumps/Pumps"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Flow = {}
@@ -101,7 +102,7 @@ function Flow.run(flow, hours)
     local touched = {}
     if drawn > 0 then
         local share = drawn / (flow.asked * hours)
-        local wetUntil = EnhancedIrrigation.now() + Lines.WET_HOURS
+        local wetUntil = Clock.now() + Lines.WET_HOURS
         for _, outlet in ipairs(flow.outlets) do
             deliver(outlet.record, outlet.holes * hours * share)
             if outlet.spray > 0 then

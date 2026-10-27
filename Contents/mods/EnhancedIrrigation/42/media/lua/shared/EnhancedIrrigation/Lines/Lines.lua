@@ -257,6 +257,9 @@ function Lines.wetterKey(a, b)
 end
 
 -- A line tile has no containers, so a summary needs nothing added on read.
-GlobalObjects.addAccessors(Lines, function() end)
+GlobalObjects.declare(Lines, {
+    prefix = EnhancedIrrigation.CLASS_PREFIX, name = "Line", isObject = Lines.isLine,
+    sprites = Sprites.pipeNames(),
+})
 
 return Lines

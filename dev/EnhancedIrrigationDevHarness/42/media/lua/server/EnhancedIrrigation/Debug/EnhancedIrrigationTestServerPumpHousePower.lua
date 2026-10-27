@@ -1,6 +1,7 @@
 require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+local Clock = require "cf_commonlib/Clock"
 
 -- Development only, not published. Only registers handlers, so a --stay rerun loads it again.
 
@@ -59,6 +60,6 @@ handler("pumpHouse.shutoff", function(_, args, defer)
     local days = getGameTime():getWorldAgeDaysSinceBegin()
     local shutDay = math.floor(days) - 1
     option:setValue(shutDay)
-    local now = EI.now()
+    local now = Clock.now()
     return { shutoff = now - (days - shutDay) * 24, now = now, grid = getSandboxOptions():doesPowerGridExist() }
 end)

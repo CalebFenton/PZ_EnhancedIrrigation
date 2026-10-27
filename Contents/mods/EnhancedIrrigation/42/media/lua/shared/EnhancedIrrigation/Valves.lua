@@ -4,6 +4,7 @@
 
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Timers"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local Valves = {}
@@ -74,7 +75,7 @@ end
 
 --- The minutes left on the wound valve of `valve` (a summary's), rounded up; 0 when run down.
 function Valves.minutesLeft(valve)
-    local left = (valve.untilHour or 0) - EnhancedIrrigation.now()
+    local left = (valve.untilHour or 0) - Clock.now()
     return left > 0 and math.ceil(left * 60 - 0.001) or 0
 end
 

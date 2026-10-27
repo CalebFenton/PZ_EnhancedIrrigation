@@ -29,13 +29,11 @@ local function isFloor(object)
     return square ~= nil and square:getFloor() == object
 end
 
--- Each feature's job module and its system's site, looked up when a job completes, since server
--- files load after shared ones (JobAction.forFeatures).
+-- Each feature's job module; each system's server file serves its site (Action.serve).
 local FEATURES = {
     stand = {
         isTarget = function(object) return Stands.isStand(object) or Stands.isRaised(object) end,
         jobs = EnhancedIrrigation.StandJobs,
-        site = function() return EnhancedIrrigation.StandSystem.site end,
     },
     -- Plumbing works at a tank, a fixture, a treatment unit or a pump; Unplumb also at the floor of
     -- an end whose tank, fixture, unit or pump is gone.
@@ -45,28 +43,14 @@ local FEATURES = {
                 or Treatment.isUnit(object) or Pumps.isPump(object) or isFloor(object)
         end,
         jobs = EnhancedIrrigation.LinkJobs,
-        site = function() return EnhancedIrrigation.LinkSystem.site end,
     },
     line = {
         isTarget = function(object) return EnhancedIrrigation.Lines.isLine(object) or isFloor(object) end,
         jobs = LineJobs,
-        site = function() return EnhancedIrrigation.LineSystem.site end,
     },
-    treatment = {
-        isTarget = Treatment.isUnit,
-        jobs = EnhancedIrrigation.TreatmentJobs,
-        site = function() return EnhancedIrrigation.TreatmentSystem.site end,
-    },
-    pump = {
-        isTarget = Pumps.isPump,
-        jobs = EnhancedIrrigation.PumpJobs,
-        site = function() return EnhancedIrrigation.PumpSystem.site end,
-    },
-    appliance = {
-        isTarget = EnhancedIrrigation.Appliances.hasPumpTile,
-        jobs = EnhancedIrrigation.ApplianceJobs,
-        site = function() return EnhancedIrrigation.ApplianceSystem.site end,
-    },
+    treatment = { isTarget = Treatment.isUnit, jobs = EnhancedIrrigation.TreatmentJobs },
+    pump = { isTarget = Pumps.isPump, jobs = EnhancedIrrigation.PumpJobs },
+    appliance = { isTarget = EnhancedIrrigation.Appliances.hasPumpTile, jobs = EnhancedIrrigation.ApplianceJobs },
 }
 
 -- How far from the middle of the object's square, on each axis in squares, the character may work
@@ -74,5 +58,10 @@ local FEATURES = {
 Action.REACH = 2.6
 
 JobAction.forFeatures(Action, FEATURES)
+
+--- The translation key of `job`'s name in a menu, where its row has no `label`.
+function Action.labelKey(job)
+    return "ContextMenu_EnhancedIrrigation_" .. job
+end
 
 return Action

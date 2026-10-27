@@ -14,6 +14,7 @@ require "EnhancedIrrigation/ObjectSystem"
 local Tiles = require "cf_commonlib/Tiles"
 require "EnhancedIrrigation/Lines/LineSystem"
 require "EnhancedIrrigation/Pumps/PumpHouse"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
@@ -33,13 +34,12 @@ EnhancedIrrigation.PumpObject = PumpObject
 -- at its last pass; grid: whether the grid powered it then; payer: { x, y, z } of the generator
 -- that pays for its power, payerFuel: that generator's fuel when last seen, and owedFuel: what it
 -- burned since its square was last loaded.
-PumpObject.SAVED_FIELDS = { "unit", "seal", "sealWear", "condition", "intake", "lastHour", "part", "partCondition",
+PumpObject.SAVED_FIELDS = { "unit", "seal", "sealWear", "condition", "intake", "part", "partCondition",
     "partCeiling", "on", "timer", "running", "grid", "payer", "payerFuel", "owedFuel" }
 
 function PumpObject:initNew()
     self.sealWear = 0
     self.condition = Pumps.BODY_CONDITION
-    self.lastHour = EnhancedIrrigation.now()
 end
 
 -- A pump without a record: a fresh one, or one whose record was lost with the system's save file,
@@ -164,7 +164,7 @@ function PumpObject:advance(hours)
     if not (pump and self:isHouse()) then
         return
     end
-    local from = EnhancedIrrigation.now() - hours
+    local from = Clock.now() - hours
     while hours > 0 do
         local step = math.min(1, hours)
         EnhancedIrrigation.PumpHouse.step(self, pump, step, from)

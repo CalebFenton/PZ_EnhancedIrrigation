@@ -4,6 +4,9 @@
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 
+-- Saves keep the mod's Global Object System classes by names that start with this.
+EnhancedIrrigation.CLASS_PREFIX = "EnhancedIrrigation_"
+
 --- The key of the square x, y, z in a table, and how a job's `with` names a square: a string, which
 --- a multiplayer action's arguments can carry.
 function EnhancedIrrigation.squareKey(x, y, z)
@@ -13,10 +16,6 @@ end
 --- The square { x, y, z } of `isoObject`.
 function EnhancedIrrigation.squareOf(isoObject)
     return { x = isoObject:getX(), y = isoObject:getY(), z = isoObject:getZ() }
-end
-
-function EnhancedIrrigation.sameSquare(p, q)
-    return p.x == q.x and p.y == q.y and p.z == q.z
 end
 
 --- Whether the chunk of the square x, y, z is loaded on this side. Above the ground a loaded chunk
@@ -37,17 +36,6 @@ function EnhancedIrrigation.loadedAround(x, y, z)
     end
     return true
 end
-
---- The world's clock in game hours, which every elapsed time in the mod is measured on, so a pass
---- comes out the same at any game speed or tick rate.
-function EnhancedIrrigation.now()
-    return getGameTime():getWorldAgeHours()
-end
-
--- A pass longer than this (a save loaded after the clock jumped) counts as this long
--- (Clock.hoursSince). Line records run while unloaded, so it is long enough for drying and frost to
--- catch up; tanks settle sooner.
-EnhancedIrrigation.LONGEST_PASS = 24 * 7
 
 --- The refusals every job module gives (Jobs.define): `unknown`, of a job no row has or a `with`
 --- no menu offers, which only a client that made one up asks for; `short`, while a need is unmet.

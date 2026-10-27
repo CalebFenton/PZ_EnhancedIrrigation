@@ -78,8 +78,8 @@ function ValveSystem.update(record)
     if not (tap and EnhancedIrrigation.loadedAround(record.x, record.y, record.z)) then
         return
     end
-    local now = EnhancedIrrigation.now()
-    local from = now - Clock.hoursSince(valve, EnhancedIrrigation.LONGEST_PASS)
+    local now = Clock.now()
+    local from = now - Clock.hoursSince(valve)
     if not record.holder then
         for _, hours in ipairs(openHours(record, tap, from, now)) do
             if hours > 0 and TapSystem.run(tap, hours) then
@@ -102,7 +102,7 @@ end
 --- Fits the valve `item` to the tap of `record`, with nothing set: a wind-up run down, a timer at
 --- no minutes. Authority only.
 function ValveSystem.fit(record, item)
-    record.valve = { item = item:getFullType(), lastHour = EnhancedIrrigation.now() }
+    record.valve = { item = item:getFullType(), lastHour = Clock.now() }
     record.valveOpen = nil
     valved[record] = true
 end
@@ -122,7 +122,7 @@ end
 function ValveSystem.wind(record, minutes)
     ValveSystem.update(record)
     local valve = record.valve
-    valve.untilHour = minutes > 0 and EnhancedIrrigation.now() + minutes / 60 or nil
+    valve.untilHour = minutes > 0 and Clock.now() + minutes / 60 or nil
     ValveSystem.update(record)
 end
 

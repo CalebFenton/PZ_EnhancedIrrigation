@@ -7,6 +7,7 @@ if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
 local Squares = require "cf_commonlib/Squares"
+local Tiles = require "cf_commonlib/Tiles"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Tanks"
 require "EnhancedIrrigation/Links/Links"
@@ -177,9 +178,11 @@ local function convertPending()
 end
 
 for _, range in ipairs(FIXTURE_TILES) do
+    local names = {}
     for i = range[2], range[3] do
-        MapObjects.OnLoadWithSprite(range[1] .. i, queuePlumbed, EnhancedIrrigation.Sprites.LOAD_PRIORITY)
+        table.insert(names, range[1] .. i)
     end
+    Tiles.onLoad(names, queuePlumbed)
 end
 Events.OnTick.Add(convertPending)
 

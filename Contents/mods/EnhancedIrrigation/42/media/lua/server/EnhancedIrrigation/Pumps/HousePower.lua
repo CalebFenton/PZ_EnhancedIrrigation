@@ -10,6 +10,7 @@ if isClient() then return end
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Power"
 local GeneratorReach = require "cf_commonlib/GeneratorReach"
+local Clock = require "cf_commonlib/Clock"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local HousePower = {}
@@ -17,17 +18,11 @@ EnhancedIrrigation.HousePower = HousePower
 
 local Power = EnhancedIrrigation.Power
 
--- Whether `generator` is a Renewable Energy battery bank, which is a generator too; none without
--- that mod.
-local function isBank(generator)
-    local RE = _G["RenewableEnergy"]
-    return RE ~= nil and RE.PowerBank ~= nil and RE.PowerBank.isBank(generator)
-end
-
--- The running vanilla generator on `square`, or nil.
+-- The running vanilla generator on `square`, or nil: a Renewable Energy bank is a generator too,
+-- which that mod tells apart (GeneratorReach.excludeGenerators).
 local function runningGenerator(square)
     local generator = square and square:getGenerator()
-    return generator and generator:isActivated() and not isBank(generator) and generator or nil
+    return GeneratorReach.isVanillaGenerator(generator) and generator:isActivated() and generator or nil
 end
 
 -- The nearest running vanilla generator whose reach covers the record's square, among the loaded
@@ -92,7 +87,7 @@ local function payerOf(record)
         end
         record.payer, record.payerFuel = nil, nil
     end
-    local now = EnhancedIrrigation.now()
+    local now = Clock.now()
     if record.foundNoPayerAt == now then
         return nil
     end

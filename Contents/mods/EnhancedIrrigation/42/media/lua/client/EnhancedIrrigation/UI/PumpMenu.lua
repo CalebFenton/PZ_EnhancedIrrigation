@@ -1,7 +1,6 @@
 -- The right-click options of pumps: one submenu named for the pump, with a line saying where it
 -- draws, how it stands and what it fills, then its own jobs and its outlet's plumbing.
 
-require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
 require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
@@ -11,6 +10,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Pumps/PumpWater"
 require "EnhancedIrrigation/Pumps/PumpJobs"
 require "EnhancedIrrigation/Valves"
+local Items = require "cf_commonlib/Items"
 local Needs = require "cf_commonlib/Needs"
 local JobOptions = require "cf_commonlib/JobOptions"
 require "EnhancedIrrigation/UI/LinkMenu"
@@ -90,10 +90,6 @@ function PumpMenu.describe(pump, summary)
     return table.concat(words, ", ")
 end
 
-local function addJob(menu, playerNum, nameKey, job, pump, with)
-    return JobOptions.add(menu, playerNum, EnhancedIrrigationAction, "pump", job, pump, with, getText(nameKey))
-end
-
 -- The full type of each seal, in Pumps.SEALS' order.
 local SEAL_TYPES = {}
 for _, seal in ipairs(Pumps.SEALS) do
@@ -101,8 +97,7 @@ for _, seal in ipairs(Pumps.SEALS) do
 end
 
 local function addReplaceSeal(menu, playerNum, character, pump)
-    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "pump", PumpJobs.REPLACE_SEAL, pump,
-        JobOptions.firstOfEach(character, SEAL_TYPES), getText("ContextMenu_EnhancedIrrigation_ReplaceSeal"))
+    JobOptions.addEach(menu, playerNum, PumpJobs, PumpJobs.REPLACE_SEAL, pump, Items.firstOfEach(character, SEAL_TYPES))
 end
 
 -- The pump parts in the inventory, bags included, each one, as each is as worn as it is.
@@ -124,8 +119,7 @@ local function partName(item)
 end
 
 local function addFitPump(menu, playerNum, character, pump)
-    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "pump", PumpJobs.FIT_PUMP, pump,
-        partsCarried(character), getText("ContextMenu_EnhancedIrrigation_FitPump"), partName)
+    JobOptions.addEach(menu, playerNum, PumpJobs, PumpJobs.FIT_PUMP, pump, partsCarried(character), nil, partName)
 end
 
 local function addHandOptions(menu, playerNum, character, pump)
@@ -149,33 +143,28 @@ end
 local function addTimer(menu, playerNum, character, pump, summary)
     if summary and summary.timer then
         menu:addOption(getText("ContextMenu_EnhancedIrrigation_SetTimer"), character, PumpMenu.openTimer, pump)
-        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeOffTimer", PumpJobs.TAKE_OFF_TIMER, pump)
+        JobOptions.add(menu, playerNum, PumpJobs, PumpJobs.TAKE_OFF_TIMER, pump)
         return
     end
-    local carried = JobOptions.firstOfEach(character, Valves.ORDER, function(fullType)
+    local carried = Items.firstOfEach(character, Valves.ORDER, function(fullType)
         return Valves.ITEMS[fullType].house
     end)
-    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "pump", PumpJobs.FIT_TIMER, pump, carried,
-        getText("ContextMenu_EnhancedIrrigation_FitTimer"))
+    JobOptions.addEach(menu, playerNum, PumpJobs, PumpJobs.FIT_TIMER, pump, carried)
 end
 
 local function addHouseOptions(menu, playerNum, character, pump, summary)
     if summary and summary.part then
-        addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_TakeOutPump", PumpJobs.TAKE_OUT_PUMP, pump)
+        JobOptions.add(menu, playerNum, PumpJobs, PumpJobs.TAKE_OUT_PUMP, pump)
     else
         addFitPump(menu, playerNum, character, pump)
     end
-    if summary and summary.on then
-        addJob(menu, playerNum, "ContextMenu_Turn_Off", PumpJobs.TURN_OFF, pump)
-    else
-        addJob(menu, playerNum, "ContextMenu_Turn_On", PumpJobs.TURN_ON, pump)
-    end
-    addJob(menu, playerNum, "ContextMenu_EnhancedIrrigation_RepairPump", PumpJobs.REPAIR_PUMP, pump)
+    JobOptions.add(menu, playerNum, PumpJobs, summary and summary.on and PumpJobs.TURN_OFF or PumpJobs.TURN_ON, pump)
+    JobOptions.add(menu, playerNum, PumpJobs, PumpJobs.REPAIR_PUMP, pump)
     addTimer(menu, playerNum, character, pump, summary)
 end
 
-JobOptions.onWorldMenu(Pumps.isPump, function(context, playerNum, character, pump)
-    local menu = Needs.addSubMenu(context, LinkMenu.objectName(pump))
+JobOptions.onWorldMenu(JobOptions.clicked(Pumps.isPump), function(context, playerNum, character, pump)
+    local menu = JobOptions.addSubMenu(context, LinkMenu.objectName(pump))
     local summary = Pumps.currentSummary(pump)
     if summary then
         menu:addOption(PumpMenu.describe(pump, summary)).notAvailable = true

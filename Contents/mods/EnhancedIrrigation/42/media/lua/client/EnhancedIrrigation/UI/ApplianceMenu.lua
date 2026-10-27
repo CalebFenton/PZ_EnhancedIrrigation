@@ -35,12 +35,11 @@ local function refuseSwitches(context, menu)
     end
 end
 
-JobOptions.onWorldMenu(Appliances.hasPumpTile, function(context, playerNum, character, appliance)
+JobOptions.onWorldMenu(JobOptions.clicked(Appliances.hasPumpTile), function(context, playerNum, character, appliance)
     if Appliances.refusesSwitchOn(appliance) then
         refuseSwitches(context, context)
     end
-    JobOptions.add(context, playerNum, EnhancedIrrigationAction, "appliance", ApplianceJobs.SALVAGE_PUMP, appliance,
-        nil, getText("ContextMenu_EnhancedIrrigation_SalvagePump"))
+    JobOptions.add(context, playerNum, ApplianceJobs, ApplianceJobs.SALVAGE_PUMP, appliance)
 end)
 
 return ApplianceMenu

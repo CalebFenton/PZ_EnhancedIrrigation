@@ -133,6 +133,9 @@ function Treatment.canPlaceBoiler(params)
 end
 
 -- A unit's basin is its own container, which every side holds, so a summary needs nothing added.
-GlobalObjects.addAccessors(Treatment, function() end)
+GlobalObjects.declare(Treatment, {
+    prefix = EnhancedIrrigation.CLASS_PREFIX, name = "Treatment", isObject = Treatment.isUnit,
+    sprites = Treatment.SPRITES,
+})
 
 return Treatment

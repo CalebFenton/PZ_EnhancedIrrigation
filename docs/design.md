@@ -263,7 +263,7 @@ Upkeep lands in batches: feed and clean the filter, check the tanks, drain the p
 The mod stands alone. With Renewable Energy:
 
 - A bank in reach powers Pump Houses and Timer Valves through `square:haveElectricity()`, as it powers any appliance.
-- **Change to RE (done):** `RenewableEnergy.Loads.addConsumer(fn)`, which `Loads.scan` asks of otherwise-unhandled placed objects in a bank's reach, including floor tiles but not dropped inventory items; a running Pump House answers its part's draw under its own label (`PumpHouse.bankDraw`) unless a vanilla generator in reach already pays for it. Timers draw too little to bill.
+- **Change to RE (done):** cf_commonlib's `GeneratorReach.addDraw(fn)`, which RE's `Loads.scan` asks of otherwise-unhandled placed objects in a bank's reach, including floor tiles but not dropped inventory items; a running Pump House answers its part's draw under its own label (`PumpHouse.bankDraw`) unless a vanilla generator in reach already pays for it. Timers draw too little to bill.
 - RE's pasture stock-tank solar sites gain a worn Utility Pump by the tank.
 - Later: a windmill pump, and a solar pasteurizer (a black drum in a glazed box: clean water on sunny days only).
 

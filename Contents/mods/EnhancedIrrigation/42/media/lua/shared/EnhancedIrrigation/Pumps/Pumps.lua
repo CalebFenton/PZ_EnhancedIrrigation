@@ -185,6 +185,9 @@ function Pumps.perHour(spec)
 end
 
 -- A pump holds no water of its own, so a summary needs nothing added.
-GlobalObjects.addAccessors(Pumps, function() end)
+GlobalObjects.declare(Pumps, {
+    prefix = EnhancedIrrigation.CLASS_PREFIX, name = "Pump", isObject = Pumps.isPump,
+    sprites = Pumps.SPRITES,
+})
 
 return Pumps

@@ -10,6 +10,7 @@ require "EnhancedIrrigation/UI/LinkMenu"
 require "EnhancedIrrigation/UI/PumpMenu"
 require "EnhancedIrrigation/UI/LineMenu"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationPumpAction"
+local Squares = require "cf_commonlib/Squares"
 
 -- Pumps are placed, read and worked for set hours by server handlers, so the clock doesn't decide
 -- the sums; the Pump action itself runs at a raised clock speed.
@@ -359,7 +360,7 @@ local function plumbToLine(context, tiles)
             return false
         end
         for _, tile in ipairs(tiles) do
-            if EnhancedIrrigation.sameSquare(at, tile) then
+            if Squares.samePosition(at, tile) then
                 return true
             end
         end

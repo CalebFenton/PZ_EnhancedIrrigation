@@ -2,6 +2,7 @@ require "PZHarness/ServerHandlers"
 require "PZHarness/Fixtures"
 local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
 local Squares = require "cf_commonlib/Squares"
+local Clock = require "cf_commonlib/Clock"
 
 -- Development only, not published. Pumping for set hours runs the authority's own sums
 -- (PumpSystem.run, a Pump House's ten-minute pass) in one call, so the clock doesn't decide them.
@@ -130,7 +131,7 @@ handler("pumps.update", function(player, args)
             Server.setFields(Server.lineRecordAt(at), nil, args.lineHoursAgo)
         end
     end
-    local reply = { now = EI.now(), before = stateAt(player, args) }
+    local reply = { now = Clock.now(), before = stateAt(player, args) }
     record:update()
     reply.after = stateAt(player, args)
     return reply

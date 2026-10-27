@@ -2,7 +2,6 @@
 -- to Tank and Unplumb. The floor where a plumbed tank stood, or a pump's line tile, also offers
 -- Unplumb, so pipe whose tanks are both gone is found where it was laid.
 
-require "ISUI/ISWorldObjectContextMenu"
 require "EnhancedIrrigation/Utilities"
 local Materials = require "cf_commonlib/Materials"
 local Needs = require "cf_commonlib/Needs"
@@ -101,7 +100,7 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
         Needs.show(context:addOption(name), tools)
         return
     end
-    local submenu = Needs.addSubMenu(context, name)
+    local submenu = JobOptions.addSubMenu(context, name)
     local materials = Pipes.materialsCarried(character)
     local ends = {}
     for _, entry in ipairs(Links.inReach(object, Tanks.tankAt)) do
@@ -118,10 +117,10 @@ function LinkMenu.addPlumbOptions(context, playerNum, character, object, spec)
         if refusal then
             Needs.refuse(submenu:addOption(entry.label), refusal)
         else
-            local pipes = Needs.addSubMenu(submenu, entry.label)
+            local pipes = JobOptions.addSubMenu(submenu, entry.label)
             for _, material in ipairs(materials) do
                 local with = Links.encode(entry.at, material)
-                JobOptions.add(pipes, playerNum, EnhancedIrrigationAction, "link", spec.job, object, with,
+                JobOptions.add(pipes, playerNum, LinkJobs, spec.job, object, with,
                     getItemNameFromFullType(Pipes.MATERIALS[material].item))
             end
         end
@@ -137,12 +136,11 @@ function LinkMenu.addUnplumbOptions(context, playerNum, character, object)
     local here = EnhancedIrrigation.squareOf(object)
     local links = Links.linksAt(here)
     if #links == 0 then return end
-    local submenu = Needs.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_Unplumb"))
+    local submenu = JobOptions.addSubMenu(context, getText("ContextMenu_EnhancedIrrigation_Unplumb"))
     for _, link in ipairs(links) do
         local there = Links.otherEnd(link, here)
         local with = Links.encode(there)
-        JobOptions.add(submenu, playerNum, EnhancedIrrigationAction, "link", LinkJobs.UNPLUMB, object, with,
-            LinkMenu.linkLabel(here, there))
+        JobOptions.add(submenu, playerNum, LinkJobs, LinkJobs.UNPLUMB, object, with, LinkMenu.linkLabel(here, there))
     end
 end
 
@@ -160,27 +158,22 @@ local function bareEnd(worldobjects)
     return nil
 end
 
-function LinkMenu.onFill(playerNum, context, worldobjects, test)
-    local character = getSpecificPlayer(playerNum)
-    if not character or character:getVehicle() then return end
-    local tank = Needs.findClicked(worldobjects, Tanks.isTank)
-    local floor = not tank and bareEnd(worldobjects)
-    if not (tank or floor) then return end
-    if test then return ISWorldObjectContextMenu.setTest() end
-    if tank then
-        local here = EnhancedIrrigation.squareOf(tank)
-        LinkMenu.addPlumbOptions(context, playerNum, character, tank, {
+-- A tank clicked, else the floor of a bare end.
+local function clickedEnd(worldobjects)
+    return JobOptions.findClicked(worldobjects, Tanks.isTank) or bareEnd(worldobjects)
+end
+
+LinkMenu.onFill = JobOptions.onWorldMenu(clickedEnd, function(context, playerNum, character, object)
+    if Tanks.isTank(object) then
+        local here = EnhancedIrrigation.squareOf(object)
+        LinkMenu.addPlumbOptions(context, playerNum, character, object, {
             nameKey = "ContextMenu_EnhancedIrrigation_PlumbToTank",
             job = LinkJobs.PLUMB,
             skip = function(at) return Links.find(here, at) ~= nil end,
             noneKey = "ContextMenu_EnhancedIrrigation_NoTankInReach",
         })
-        LinkMenu.addUnplumbOptions(context, playerNum, character, tank)
-    elseif floor then
-        LinkMenu.addUnplumbOptions(context, playerNum, character, floor)
     end
-end
-
-Events.OnFillWorldObjectContextMenu.Add(LinkMenu.onFill)
+    LinkMenu.addUnplumbOptions(context, playerNum, character, object)
+end)
 
 return LinkMenu

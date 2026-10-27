@@ -14,6 +14,7 @@ require "EnhancedIrrigation/Lines/Lines"
 require "EnhancedIrrigation/Fixtures/Fixtures"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Pumps/Pumps"
+local Squares = require "cf_commonlib/Squares"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkJobs = {}
@@ -64,7 +65,7 @@ local function endsOf(object, with)
         return nil
     end
     local here = EnhancedIrrigation.squareOf(object)
-    if EnhancedIrrigation.sameSquare(here, other) then
+    if Squares.samePosition(here, other) then
         return nil
     end
     return here, other

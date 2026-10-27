@@ -7,15 +7,4 @@ require "EnhancedIrrigation/Treatment/Treatment"
 
 local Treatment = EnhancedIrrigation.Treatment
 
-local function nothingToAdopt() end
-
-ClientObjects.define({
-    prefix = "EnhancedIrrigation_",
-    name = "Treatment",
-    owner = Treatment,
-    isObject = Treatment.isUnit,
-    sprites = Treatment.SPRITES,
-    adoptCopy = nothingToAdopt,
-    adoptContainer = nothingToAdopt,
-    loadPriority = EnhancedIrrigation.Sprites.LOAD_PRIORITY,
-})
+ClientObjects.define(Treatment)

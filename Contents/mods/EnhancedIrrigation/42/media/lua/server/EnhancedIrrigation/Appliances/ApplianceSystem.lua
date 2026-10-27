@@ -10,6 +10,7 @@ require "EnhancedIrrigation/Pumps/Pumps"
 require "EnhancedIrrigation/Appliances/Appliances"
 require "EnhancedIrrigation/Appliances/ApplianceJobs"
 require "EnhancedIrrigation/Valves"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local ApplianceSystem = {}
@@ -19,7 +20,7 @@ local Appliances, ApplianceJobs = EnhancedIrrigation.Appliances, EnhancedIrrigat
 
 -- What each job does at `appliance`.
 local DO = {
-    [ApplianceJobs.SALVAGE_PUMP] = function(character, record, row, appliance)
+    [ApplianceJobs.SALVAGE_PUMP] = function(character, row, appliance)
         local pump = instanceItem(EnhancedIrrigation.Pumps.APPLIANCE_PUMP)
         local least, most = ApplianceJobs.SALVAGED_CONDITION[1], ApplianceJobs.SALVAGED_CONDITION[2]
         pump:setCondition(ZombRand(least, most + 1))
@@ -32,5 +33,6 @@ local DO = {
 
 --- The authority's side of the appliance jobs (a site of Jobs.perform).
 ApplianceSystem.site = Jobs.targetSite(DO)
+EnhancedIrrigationAction.serve({ appliance = ApplianceSystem.site })
 
 return ApplianceSystem

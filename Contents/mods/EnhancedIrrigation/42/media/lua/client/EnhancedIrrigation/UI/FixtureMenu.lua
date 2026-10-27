@@ -93,7 +93,7 @@ local function addLinkOptions(context, playerNum, character, fixture)
     })
 end
 
-JobOptions.onWorldMenu(Fixtures.isFixture, function(context, playerNum, character, fixture, worldobjects)
+JobOptions.onWorldMenu(JobOptions.clicked(Fixtures.isFixture), function(context, playerNum, character, fixture, worldobjects)
     if Links.roleAt(EnhancedIrrigation.squareOf(fixture), "fixture") then
         removeVanillaPlumb(context)
     end

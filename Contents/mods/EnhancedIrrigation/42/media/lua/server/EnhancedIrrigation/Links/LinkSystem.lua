@@ -22,6 +22,7 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Fixtures/FixtureSystem"
 require "EnhancedIrrigation/Lines/LineSystem"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local LinkSystem = SGlobalObjectSystem:derive("EnhancedIrrigation_LinkSystem")
@@ -96,7 +97,7 @@ end
 
 -- Lays the pipe a job's `with` names from `object` to the square it names, as a link of `role`.
 local function layPipe(role)
-    return function(character, record, row, object, with, materials)
+    return function(character, row, object, with, materials)
         local material, lengths = LinkJobs.pipeFor(object, with)
         LinkSystem.instance:addLink(EnhancedIrrigation.squareOf(object), Links.decode(with), material, lengths,
             Materials.conditions(character, materials), role)
@@ -108,14 +109,14 @@ end
 local DO = {
     [LinkJobs.PLUMB] = layPipe(nil),
     -- The tank the fixture's pipe runs to, as LinkJobs.fixtureBlocker found it before the job.
-    [LinkJobs.PLUMB_FIXTURE] = function(character, record, row, fixture, with, materials)
+    [LinkJobs.PLUMB_FIXTURE] = function(character, row, fixture, with, materials)
         local material, lengths = LinkJobs.pipeFor(fixture, with)
         local other = Links.decode(with)
         FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), material, lengths,
             Materials.conditions(character, materials))
         return true
     end,
-    [LinkJobs.PLUMB_ABOVE] = function(character, record, row, fixture, with)
+    [LinkJobs.PLUMB_ABOVE] = function(character, row, fixture, with)
         local other = Links.decode(with)
         FixtureSystem.plumb(fixture, Tanks.tankAt(other.x, other.y, other.z), nil, 0, nil)
         return true
@@ -124,7 +125,7 @@ local DO = {
     [LinkJobs.PLUMB_OUTLET] = layPipe("outlet"),
     [LinkJobs.PLUMB_PUMP] = layPipe("pump"),
     -- Every length comes back as it went in; the joints and the time are what plumbing cost.
-    [LinkJobs.UNPLUMB] = function(character, record, row, object, with)
+    [LinkJobs.UNPLUMB] = function(character, row, object, with)
         local link = Links.find(EnhancedIrrigation.squareOf(object), Links.decode(with))
         LinkSystem.instance:removeLink(link)
         if link.kind then
@@ -140,6 +141,7 @@ local DO = {
 --- The authority's side of the link jobs (a site of Jobs.perform), at `object` (a tank, a fixture,
 --- a unit, a pump, or for Unplumb the floor of a bare end) toward the square `with` names.
 LinkSystem.site = Jobs.targetSite(DO)
+EnhancedIrrigationAction.serve({ link = LinkSystem.site })
 
 -- Flow ------------------------------------------------------------------------------------------
 
@@ -203,7 +205,7 @@ end
 
 local function everyTenMinutes()
     local self = LinkSystem.instance
-    local hours = Clock.hoursSince(self, EnhancedIrrigation.LONGEST_PASS)
+    local hours = Clock.hoursSince(self)
     if hours > 0 then
         self:pass(hours)
     end

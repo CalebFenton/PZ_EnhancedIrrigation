@@ -12,6 +12,7 @@ local Jobs = require "cf_commonlib/Jobs"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Stands/Stands"
 require "EnhancedIrrigation/Stands/StandJobs"
+require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 
 EnhancedIrrigation = EnhancedIrrigation or {}
 local StandSystem = {}
@@ -38,21 +39,20 @@ end
 --- .TransferComponents). The water container among them is empty.
 function StandSystem.barrelItem(spec, square)
     local item = instanceItem(spec.item)
-    local fresh = IsoThumpable.new(getCell(), square, spec.barrel, false, nil)
-    GameEntityFactory.CreateIsoObjectEntity(fresh, Tiles.tileEntity(spec.barrel), true)
+    local fresh = Tiles.newEntity(square, spec.barrel)
     GameEntityFactory.TransferComponents(fresh, item)
     return item
 end
 
 -- What each job does at the stand `object`; Set Barrel's `with` is the barrel.
 local DO = {
-    [StandJobs.SET_BARREL] = function(character, record, row, stand, barrel)
+    [StandJobs.SET_BARREL] = function(character, row, stand, barrel)
         local spec = Stands.barrelSpec(barrel)
         Items.takeItem(character, barrel)
         replace(stand, spec.entity, spec.sprite)
         return true
     end,
-    [StandJobs.TAKE_DOWN] = function(character, record, row, raised)
+    [StandJobs.TAKE_DOWN] = function(character, row, raised)
         local spec = Stands.raisedSpec(raised)
         local item = StandSystem.barrelItem(spec, raised:getSquare())
         replace(raised, Stands.STAND_ENTITY, Sprites.TANK_STAND)
@@ -63,5 +63,6 @@ local DO = {
 
 --- The authority's side of the Tank Stand jobs (a site of Jobs.perform).
 StandSystem.site = Jobs.targetSite(DO)
+EnhancedIrrigationAction.serve({ stand = StandSystem.site })
 
 return StandSystem

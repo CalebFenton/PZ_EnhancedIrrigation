@@ -12,18 +12,7 @@ local Pumps = EnhancedIrrigation.Pumps
 local PumpClient = {}
 EnhancedIrrigation.PumpClient = PumpClient
 
-local function nothingToAdopt() end
-
-ClientObjects.define({
-    prefix = "EnhancedIrrigation_",
-    name = "Pump",
-    owner = Pumps,
-    isObject = Pumps.isPump,
-    sprites = Pumps.SPRITES,
-    adoptCopy = nothingToAdopt,
-    adoptContainer = nothingToAdopt,
-    loadPriority = EnhancedIrrigation.Sprites.LOAD_PRIORITY,
-})
+ClientObjects.define(Pumps)
 
 -- The running Pump House's loop (Sounds.txt).
 PumpClient.RUNNING_SOUND = "EnhancedIrrigationPumpHouseRunning"

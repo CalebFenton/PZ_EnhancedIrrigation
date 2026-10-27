@@ -8,7 +8,6 @@ require "EnhancedIrrigation/Links/Links"
 require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
-local Needs = require "cf_commonlib/Needs"
 local JobOptions = require "cf_commonlib/JobOptions"
 require "EnhancedIrrigation/TimedActions/EnhancedIrrigationAction"
 require "EnhancedIrrigation/UI/LinkMenu"
@@ -87,8 +86,7 @@ local function containersCarried(character)
 end
 
 local function addPourIn(menu, playerNum, character, unit)
-    JobOptions.addEach(menu, playerNum, EnhancedIrrigationAction, "treatment", TreatmentJobs.POUR_IN, unit,
-        containersCarried(character), getText("ContextMenu_EnhancedIrrigation_PourIn"))
+    JobOptions.addEach(menu, playerNum, TreatmentJobs, TreatmentJobs.POUR_IN, unit, containersCarried(character))
 end
 
 local function addPlumbing(menu, playerNum, character, unit)
@@ -106,11 +104,11 @@ end
 -- The submenu for `unit`: for a fireplace, the one vanilla's fire menu, which the game fills before
 -- this event, made under the name it gives the fireplace (ISBBQMenu, getTileName); else a new one.
 local function unitMenu(context, unit)
-    local submenu = unit:isFireInteractionObject() and Needs.subMenuOf(context, unit:getTileName())
-    return submenu or Needs.addSubMenu(context, LinkMenu.objectName(unit))
+    local submenu = unit:isFireInteractionObject() and JobOptions.subMenuOf(context, unit:getTileName())
+    return submenu or JobOptions.addSubMenu(context, LinkMenu.objectName(unit))
 end
 
-JobOptions.onWorldMenu(Treatment.isUnit, function(context, playerNum, character, unit)
+JobOptions.onWorldMenu(JobOptions.clicked(Treatment.isUnit), function(context, playerNum, character, unit)
     local spec = Treatment.specOf(unit)
     local menu = unitMenu(context, unit)
     local summary = Treatment.currentSummary(unit)
@@ -118,8 +116,8 @@ JobOptions.onWorldMenu(Treatment.isUnit, function(context, playerNum, character,
         menu:addOption(TreatmentMenu.describe(unit, spec, summary)).notAvailable = true
     end
     addPourIn(menu, playerNum, character, unit)
-    for _, entry in ipairs(TreatmentJobs.KIND_JOBS[spec.kind]) do
-        JobOptions.add(menu, playerNum, EnhancedIrrigationAction, "treatment", entry.job, unit, nil, getText(entry.nameKey))
+    for _, job in ipairs(TreatmentJobs.KIND_JOBS[spec.kind]) do
+        JobOptions.add(menu, playerNum, TreatmentJobs, job, unit)
     end
     if spec.plumbed then
         addPlumbing(menu, playerNum, character, unit)
