@@ -5,6 +5,7 @@
 - After every change: `dev/static-check.sh`, which compiles every Lua file with the game's compiler and cross-checks scripts, translations, textures and API names in seconds. After a change to `Contents/`, also `dev/validate-server.sh`.
 - Each in-game test run pays for a game start, so batch: commit each logical change on its own, then run `dev/run-debug-client.sh --test --changed` once per batch, not after each edit, and don't follow it with the server check and both suites by habit. To rerun the same tests while fixing them, `--test --stay` keeps the game open. Before pushing or merging: `dev/run-debug-client.sh --test`. Before a release, also `dev/run-debug-client.sh --test --mp`.
 - When agents work in parallel, they don't run the game; whoever merges their work runs the batch.
+- After committing a change to `Contents/` or the dev mod: `dev/package.sh`, which rebuilds `~/Nextcloud/ProjectZomboid/mods.zip`, every mod beside this one with its libraries and dev mods, which the user tests with. Never zip mods by hand.
 - A test that takes over half a second is waiting on something it could skip: read each run's `timing:` and `SLOWEST` lines.
 - After `art/models/make.sh`, run `dev/run-debug-client.sh --art` and look at every screenshot it saves; the run prints the folder.
 - After a change to what the Workshop images show, reshoot with `dev/run-debug-client.sh --promo` (`PROMO=<group>,...` for some groups), then lay them out with `art/promo/compose.py`. Look at every capture, and at each image at the size Steam shows it.
