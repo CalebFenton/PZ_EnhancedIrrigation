@@ -8,6 +8,7 @@
 if isClient() then return end
 
 require "EnhancedIrrigation/Utilities"
+require "TimedActions/ISActivateGenerator"
 require "EnhancedIrrigation/Power"
 local GeneratorReach = require "cf_commonlib/GeneratorReach"
 local Clock = require "cf_commonlib/Clock"
@@ -43,6 +44,23 @@ local function nearestGenerator(record)
     return best
 end
 
+-- A search that found no payer stands this long, unless a player starts a generator first: it
+-- walks every square in reach, and a house a bank powers would otherwise make one every pass. A
+-- generator started some other way pays from the next search.
+local SEARCH_AGAIN_HOURS = 10 / 60
+
+-- Counts the generators players have started, so a search that found none before is made again.
+local generatorsStarted = 0
+
+local vanillaComplete = ISActivateGenerator.complete
+function ISActivateGenerator:complete()
+    local result = vanillaComplete(self)
+    if self.generator and self.generator:isActivated() then
+        generatorsStarted = generatorsStarted + 1
+    end
+    return result
+end
+
 -- The generator's fuel an hour of `part` running burns.
 local function fuelPerHour(part)
     return part.fuel * SandboxVars.GeneratorFuelConsumption
@@ -67,7 +85,7 @@ end
 -- Who pays for the record's power now: { generator } when its payer is loaded, settling what it was
 -- owed; { away = true } when the payer it last had stands on a square that isn't loaded; or nil when
 -- no vanilla generator pays (a bank's power, or a generator it never saw). A search that found none
--- isn't made again within the pass, whose hours all stand as now.
+-- stands for SEARCH_AGAIN_HOURS.
 local function payerOf(record)
     if record.payer then
         local square = getCell():getGridSquare(record.payer.x, record.payer.y, record.payer.z)
@@ -88,12 +106,13 @@ local function payerOf(record)
         record.payer, record.payerFuel = nil, nil
     end
     local now = Clock.now()
-    if record.foundNoPayerAt == now then
+    local last = record.noPayerSearch
+    if last and last.started == generatorsStarted and now >= last.at and now - last.at < SEARCH_AGAIN_HOURS then
         return nil
     end
     local generator = nearestGenerator(record)
     if not generator then
-        record.foundNoPayerAt = now
+        record.noPayerSearch = { at = now, started = generatorsStarted }
         return nil
     end
     record.payer = { x = generator:getX(), y = generator:getY(), z = generator:getZ() }
