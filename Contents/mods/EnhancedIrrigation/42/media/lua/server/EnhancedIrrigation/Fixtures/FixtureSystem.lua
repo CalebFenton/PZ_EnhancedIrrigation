@@ -53,13 +53,19 @@ local function standBy(fixture)
 end
 
 -- Holds back `fixture`'s vanilla reserve, which the engine would serve clean once its buffer ran
--- dry. Returns the litres held, for the link to give back on Unplumb, or nil with none.
+-- dry. Returns the litres held, for the link to give back on Unplumb, or nil with none. Records what
+-- the reserve held as its size first, as vanilla does on its first draw
+-- (IsoObject.setReserveWaterAmount), so the emptied reserve doesn't read as the fixture's size.
 local function holdReserve(fixture)
     local reserve = Fixtures.reserveOf(fixture)
     if reserve <= 0 then
         return nil
     end
-    fixture:getModData().waterAmount = 0
+    local data = fixture:getModData()
+    if data.waterMaxAmount == nil then
+        data.waterMaxAmount = reserve
+    end
+    data.waterAmount = 0
     fixture:transmitModData()
     return reserve
 end

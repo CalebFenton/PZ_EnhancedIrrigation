@@ -26,21 +26,33 @@ local TANK_LITRES = 50
 -- A bath facing east, its two tiles west to east (their SpriteGridPos 0,0 and 1,0).
 local BATH = { "fixtures_bathroom_01_26", "fixtures_bathroom_01_27" }
 
--- Vanilla's reserve for a fixture's tile, which its buffer holds: the tile's waterMaxAmount, else its
--- waterAmount (IsoObject.getReserveWaterMax).
-local function tileReserve(sprite)
-    local props = getSprite(sprite):getProperties()
-    return tonumber(props:get("waterMaxAmount") or props:get("waterAmount"))
+-- What vanilla gives from a fixture of `sprite` after the shutoff, which its buffer holds: its
+-- reserve's capacity and litres, with `reserve` = { max, left } as vanilla records it on a first
+-- draw. The engine's own reading, of a copy on no square, where neither the town's water nor a
+-- buffer comes before the reserve (IsoObject.getFluidCapacity, getFluidAmount).
+local function vanillaReserve(sprite, reserve)
+    local fixture = IsoObject.new(getCell(), nil, getSprite(sprite))
+    if reserve then
+        fixture:getModData().waterMaxAmount = reserve.max
+        fixture:getModData().waterAmount = reserve.left
+    end
+    return fixture:getFluidCapacity(), fixture:getFluidAmount()
 end
 
 -- A sink's buffer. Vanilla's sink holds what Fixtures falls back to for a tile without a reserve, so
 -- only the bath, which holds more, shows the tile's reserve read.
 local function sinkLitres()
-    return tileReserve(SINK)
+    return (vanillaReserve(SINK))
 end
 
 local function bathLitres()
-    return tileReserve(BATH[1])
+    return (vanillaReserve(BATH[1]))
+end
+
+-- A sink's reserve as vanilla records it on its first draw, smaller than its tile's, as a save keeps
+-- it once an update changes the tile's (as vanilla's CustomTileProps did the baths').
+local function recordedReserve()
+    return { max = sinkLitres() / 2, left = sinkLitres() / 4 }
 end
 
 -- Fixtures ------------------------------------------------------------------------------------------
@@ -91,16 +103,19 @@ end
 -- out of it, and the server refuses it on its own. To a raised barrel it plumbs, and the sink fills
 -- at once with the barrel's tainted water, which this client's copy serves as tainted; the sink
 -- stands in no room, as vanilla's plumbing needs. Unplumb then leaves the buffer, which the tank
--- refills no more, and gives the sink back the vanilla reserve plumbing held back, clean. Catches a
+-- refills no more, and gives the sink back the vanilla reserve plumbing held back, clean. The sink is
+-- one vanilla drew on, whose recorded reserve sizes its buffer as it sizes vanilla's. Catches a
 -- fixture plumbed to a tank with no head, a buffer that cleans the water, plumbing that needs a
--- room, a refill through a link that's gone, or the reserve lost. The pipe each job takes and gives
--- back is the links' tests'.
+-- room, a buffer sized from the tile over what vanilla recorded, a refill through a link that's
+-- gone, or the reserve lost. The pipe each job takes and gives back is the links' tests'.
 T.test("irrigation_fixtures_plumbed_to_a_raised_tank_and_unplumbed", {
     instant = true,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
-        self.sink = T.placeFixture(self, spots[1], SINK)
+        self.reserve = recordedReserve()
+        self.capacity, self.left = vanillaReserve(SINK, self.reserve)
+        self.sink = T.placeFixture(self, spots[1], SINK, { reserve = self.reserve })
         self.tank = T.placeTank(self, spots[2], "raised", TANK_LITRES, true)
         self.ground = T.placeTank(self, spots[3], "ground", TANK_LITRES)
         T.givePlumbing(self, 1)
@@ -114,18 +129,19 @@ T.test("irrigation_fixtures_plumbed_to_a_raised_tank_and_unplumbed", {
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
         T.waitFor(self, function()
             local state = clientState(self.sink)
-            return state ~= nil and state.buffer and state.amount > sinkLitres() - T.LITRES
+            return state ~= nil and state.buffer and state.amount > self.capacity - T.LITRES
                 and #T.clientLinks(self.sink, "fixture") > 0
         end, "this client's copy of the filled sink and its link")
         T.step(function() self.plumbedClient = clientState(self.sink) end)
         T.useOption(self, function() return T.copyOf(self.sink) end, "unplumb",
             T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
         readUntil(self, self.sink, nil, "unplumbed", function(state) return not state.linked end)
-        T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = sinkLitres(), passes = { 1 } }),
+        -- Drawn dry: the barrel's water is more than any sink holds.
+        T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = TANK_LITRES, passes = { 1 } }),
             "refill")
         T.waitFor(self, function()
             local state = clientState(self.sink)
-            return state ~= nil and state.inBuffer < T.LITRES and math.abs(state.amount - sinkLitres()) < T.LITRES
+            return state ~= nil and state.inBuffer < T.LITRES and math.abs(state.amount - self.left) < T.LITRES
         end, "this client's copy of the drawn sink, its reserve back")
     end,
     validate = function(self)
@@ -134,17 +150,17 @@ T.test("irrigation_fixtures_plumbed_to_a_raised_tank_and_unplumbed", {
         expect(forced.ok == false and not forced.after.state.linked, "the server plumbed a sink to a tank on its level")
         T.expectOffered(self, "plumb")
         local plumbed = self.reads.plumbed
-        expectFixture("the server", plumbed, { litres = sinkLitres(), tainted = true })
-        expectFixture("this client", self.plumbedClient, { litres = sinkLitres(), tainted = true })
-        expectTankLitres("the server", plumbed.tank, TANK_LITRES - sinkLitres())
+        expectFixture("the server", plumbed, { litres = self.capacity, tainted = true })
+        expectFixture("this client", self.plumbedClient, { litres = self.capacity, tainted = true })
+        expectTankLitres("the server", plumbed.tank, TANK_LITRES - self.capacity)
         T.expectOffered(self, "unplumb")
         local after = self.reads.refill.passes[1]
         expect(after.buffer, "the unplumbed sink lost its buffer")
         expectNear("the unplumbed sink's buffer after a pass", after.inBuffer, 0, T.LITRES)
-        expectTankLitres("the server, unplumbed", after.tank, TANK_LITRES - sinkLitres())
+        expectTankLitres("the server, unplumbed", after.tank, TANK_LITRES - self.capacity)
         for who, state in pairs({ ["the server"] = after, ["this client"] = clientState(self.sink) }) do
             if expect(state ~= nil, who .. " has no sink") then
-                expectNear(who .. ": the unplumbed sink's reserve", state.amount, sinkLitres(), T.LITRES)
+                expectNear(who .. ": the unplumbed sink's reserve", state.amount, self.left, T.LITRES)
                 expect(not state.tainted, who .. ": the unplumbed sink's reserve is tainted")
             end
         end

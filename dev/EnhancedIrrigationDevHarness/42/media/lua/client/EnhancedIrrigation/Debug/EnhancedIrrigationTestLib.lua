@@ -297,8 +297,8 @@ function T.clientLinks(handle, role)
 end
 
 --- Queues placing the fixture tile `sprite` at `handle` (fixtures.place, with `extra`'s args:
---- washer, combo, plumbed, buffer) and a wait for this client's copy, with the buffer's litres if
---- given. Returns its handle.
+--- washer, combo, reserve, plumbed, buffer) and a wait for this client's copy, with the buffer's
+--- litres if given. Returns its handle.
 function T.placeFixture(self, handle, sprite, extra)
     local fixture = { x = handle.x, y = handle.y, z = handle.z, sprite = sprite, square = handle.square }
     local args = T.at(fixture, extra)

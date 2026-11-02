@@ -17,6 +17,8 @@ local Tanks = EnhancedIrrigation.Tanks
 
 -- Litres a buffer holds when its tile names no reserve: washers and showers have none in vanilla.
 local DEFAULT_LITRES = 20
+-- A tile's waterAmount from which vanilla treats its water as endless (IsoObject.isWaterInfinite).
+local INFINITE_LITRES = 9999
 -- Litres an hour a tank refills a buffer: a sink's reserve every ten minutes, so a bath refills in
 -- under an hour and a running washer, which draws a litre a minute, never runs dry while the tank
 -- holds out.
@@ -39,31 +41,53 @@ function Fixtures.fixtureAt(x, y, z)
     return Fixtures.fixtureOn(getCell():getGridSquare(x, y, z))
 end
 
+-- The reads below mirror IsoObject's getReserveWaterMax, getReserveWaterAmount and isWaterInfinite,
+-- which are private, so Lua can't call them. The public getFluidCapacity and getFluidAmount reach
+-- them only for a fixture without a buffer, and read the buffer first once it has one.
+
 local function tileNumber(isoObject, name)
     local value = isoObject:getSprite():getProperties():get(name)
     return value and tonumber(value) or nil
 end
 
---- The litres `fixture`'s buffer holds: vanilla's reserve for its tile.
+-- What vanilla wrote into `fixture`'s modData under `key` (IsoObject.setReserveWaterAmount), or nil.
+local function recorded(fixture, key)
+    return fixture:hasModData() and fixture:getModData()[key] or nil
+end
+
+--- The litres `fixture`'s buffer holds: vanilla's reserve for it (IsoObject.getReserveWaterMax), what
+--- vanilla recorded on its first draw before what its tile says.
 function Fixtures.capacityOf(fixture)
-    return tileNumber(fixture, "waterMaxAmount") or tileNumber(fixture, "waterAmount") or DEFAULT_LITRES
+    return recorded(fixture, "waterMaxAmount") or tileNumber(fixture, "waterMaxAmount")
+        or recorded(fixture, "waterAmount") or tileNumber(fixture, "waterAmount") or DEFAULT_LITRES
 end
 
---- The litres left in `fixture`'s vanilla reserve, the water its pipes hold after the shutoff:
---- modData.waterAmount once vanilla has drawn on it, else its tile's (IsoObject.getReserveWaterAmount).
+--- The litres left in `fixture`'s vanilla reserve, the water its pipes hold after the shutoff
+--- (IsoObject.getReserveWaterAmount): none on a square the map cuts off from the water, else
+--- modData.waterAmount once vanilla has drawn on it, else its tile's.
 function Fixtures.reserveOf(fixture)
-    local drawn = fixture:hasModData() and fixture:getModData().waterAmount
-    return drawn or tileNumber(fixture, "waterAmount") or 0
+    local square = fixture:getSquare()
+    if square ~= nil and square:isNoWater() then
+        return 0
+    end
+    return recorded(fixture, "waterAmount") or tileNumber(fixture, "waterAmount") or 0
 end
 
---- Whether the town's water runs to `fixture`, as vanilla decides for an unplumbed one
---- (IsoObject.isWaterInfinite): before the shutoff, in a room, on a square with water, and never
---- moved, since a fixture set down by a player is flagged canBeWaterPiped and draws none.
+--- Whether endless water runs to `fixture`, as vanilla decides (IsoObject.isWaterInfinite): a tile
+--- that says so, or the town's water, before the shutoff, in a room, on a square the map doesn't cut
+--- off, to a fixture not drawing on vanilla's rooftop plumbing and never moved, since one set down by
+--- a player is flagged canBeWaterPiped and draws none.
 function Fixtures.townWaterRuns(fixture)
+    local tile = tileNumber(fixture, "waterAmount")
+    if tile and tile >= INFINITE_LITRES then
+        return true
+    end
     local square = fixture:getSquare()
-    return not (fixture:hasModData() and fixture:getModData().canBeWaterPiped == true)
-        and square ~= nil and square:getRoom() ~= nil and not square:isNoWater()
+    return square ~= nil and square:getRoom() ~= nil
+        and fixture:getSprite():getProperties():has(IsoFlagType.waterPiped)
+        and not fixture:getUsesExternalWaterSource() and not square:isNoWater()
         and getGameTime():getWorldAgeDaysSinceBegin() < getSandboxOptions():getWaterShutModifier()
+        and recorded(fixture, "canBeWaterPiped") ~= true
 end
 
 --- Whether vanilla's Plumb makes this mod's link, keeping the tank's taint (the PlumbingKeepsTaint

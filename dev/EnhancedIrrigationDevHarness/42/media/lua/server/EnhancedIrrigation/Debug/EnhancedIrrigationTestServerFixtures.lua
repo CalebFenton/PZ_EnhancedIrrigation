@@ -51,9 +51,11 @@ end
 
 -- Places the fixture tile `args.sprite` at x, y, z: a washer as the game makes one
 -- (IsoClothingWasher), with `args.combo` a washer-dryer (IsoCombinationWasherDryer), anything else
--- a plain object. With `args.plumbed`, plumbed the vanilla way (ISPlumbItem:complete), as a save
--- from before the mod holds it; with `args.buffer` = { litres, tainted }, given a buffer holding
--- that much. Answers its state. Removed, with its links, when the test ends.
+-- a plain object. With `args.reserve` = { max, left }, its reserve as vanilla records it on a first
+-- draw (IsoObject.setReserveWaterAmount); with `args.plumbed`, plumbed the vanilla way
+-- (ISPlumbItem:complete), as a save from before the mod holds it; with `args.buffer` = { litres,
+-- tainted }, given a buffer holding that much. Answers its state. Removed, with its links, when the
+-- test ends.
 handler("fixtures.place", function(_, args, defer)
     local square = PZHarness.need(PZHarness.Fixtures.squareAt(args), "a loaded square for " .. tostring(args.sprite))
     local fixture
@@ -72,6 +74,11 @@ handler("fixtures.place", function(_, args, defer)
         Server.unlinkAt(args.x, args.y, args.z)
         removeFixtureAt(args.x, args.y, args.z)
     end)
+    if args.reserve then
+        fixture:getModData().waterMaxAmount = args.reserve.max
+        fixture:getModData().waterAmount = args.reserve.left
+        fixture:transmitModData()
+    end
     if args.buffer then
         local buffer = EI.FixtureSystem.ensureBuffer(fixture)
         if buffer:getAmount() > 0 then
