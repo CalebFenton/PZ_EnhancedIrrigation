@@ -25,6 +25,10 @@ local WASHER = "appliances_laundry_01_0"
 local TANK_LITRES = 50
 -- A bath facing east, its two tiles west to east (their SpriteGridPos 0,0 and 1,0).
 local BATH = { "fixtures_bathroom_01_26", "fixtures_bathroom_01_27" }
+-- Another sink, which a test gives the endless water of a well's tile; sprites share properties,
+-- so never SINK.
+local ENDLESS_SINK = "fixtures_sinks_01_1"
+local WELL = "camping_01_16"
 
 -- What vanilla gives from a fixture of `sprite` after the shutoff, which its buffer holds: its
 -- reserve's capacity and litres, with `reserve` = { max, left } as vanilla records it on a first
@@ -94,6 +98,16 @@ end
 local function expectTankLitres(who, state, litres)
     if expect(state and state.found, who .. ": no tank") then
         expectNear(who .. ": the tank's water", state.litres, litres, T.LITRES)
+    end
+end
+
+-- The fixture gives the town's water, endless and clean, and its buffer waits empty.
+local function expectTownWater(who, state)
+    if expect(state ~= nil, who .. " has no fixture") then
+        expect(state.amount > TANK_LITRES and state.hasWater and not state.tainted,
+            who .. ": the fixture doesn't give the town's clean water (" .. state.amount .. " L"
+            .. (state.tainted and ", tainted)" or ")"))
+        expectNear(who .. ": the fixture's buffer", state.inBuffer, 0, T.LITRES)
     end
 end
 
@@ -168,20 +182,33 @@ T.test("irrigation_fixtures_plumbed_to_a_raised_tank_and_unplumbed", {
 })
 
 -- Every ten minutes the tank refills the buffer at Fixtures.REFILL_RATE, to its capacity and no
--- further; drawn dry, the sink gives nothing, its vanilla reserve held back. Catches a refill all at
--- once, one that overfills, none, or the reserve served clean between refills.
+-- further; drawn dry, the sink gives nothing, its vanilla reserve held back. A sink whose tile gives
+-- endless water, as a well's does, gives it outside a room too, and plumbing takes nothing from its
+-- tank of tainted water. Catches a refill all at once, one that overfills, none, the reserve served
+-- clean between refills, or an endless tile's buffer filled from the tank, which drains it and
+-- taints the endless water.
 T.test("irrigation_fixtures_refill_from_the_tank", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 }, { 2, 0 }, { 0, 1 }, { 2, 1 } }, { bare = true })
         if not spots then return end
         self.sink = T.placeFixture(self, spots[1], SINK)
         self.tank = T.placeTank(self, spots[2], "raised", 4 * TANK_LITRES)
         T.server(self, "fixtures.plumb", T.at(self.sink, { tank = T.at(self.tank) }))
+        T.setTileProperty(self, ENDLESS_SINK, "waterAmount", getSprite(WELL):getProperties():get("waterAmount"))
+        self.endless = T.placeFixture(self, spots[3], ENDLESS_SINK)
+        self.endlessTank = T.placeTank(self, spots[4], "raised", TANK_LITRES, true)
+        T.server(self, "fixtures.plumb", T.at(self.endless, { tank = T.at(self.endlessTank) }))
         -- Emptied, then a pass that refills half the sink, then one long enough for more than the rest.
         self.firstHours = sinkLitres() / 2 / Fixtures.REFILL_RATE
         T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = sinkLitres(),
             passes = { self.firstHours, 1 } }), "refill")
+        readUntil(self, self.endless, self.endlessTank, "endless", function(state) return state.linked end)
+        T.waitFor(self, function()
+            local state = clientState(self.endless)
+            return state ~= nil and state.buffer
+        end, "this client's copy of the plumbed endless sink")
+        T.step(function() self.endlessClient = clientState(self.endless) end)
     end,
     validate = function(self)
         local refill = self.reads.refill
@@ -191,6 +218,10 @@ T.test("irrigation_fixtures_refill_from_the_tank", {
         expectTankLitres("after a short pass", half.tank, 4 * TANK_LITRES - sinkLitres() - sinkLitres() / 2)
         expectNear("the sink's water after a long pass", full.amount, sinkLitres(), T.LITRES)
         expectTankLitres("after a long pass", full.tank, 4 * TANK_LITRES - 2 * sinkLitres())
+        local endless = self.reads.endless
+        expectTownWater("the server, endless", endless)
+        expectTownWater("this client, endless", self.endlessClient)
+        expectTankLitres("the server, endless", endless.tank, TANK_LITRES)
     end,
 })
 
@@ -472,35 +503,41 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
 
 -- Before the water shutoff the town's water wins at a plumbed sink in a room: it runs clean and
 -- endless from a tank of tainted water, which it doesn't draw, and a pass empties what was poured
--- into its buffer, whose taint the engine reads first. Catches plumbing that cuts a house off the
--- town's water before the shutoff, or a town tap reading tainted.
+-- into its buffer, whose taint the engine reads first. In the same room, a sink on a square the map
+-- cuts off from the water gets none of the town's: plumbing fills its buffer from its tank, tainted,
+-- and a pass keeps it. Catches plumbing that cuts a house off the town's water before the shutoff,
+-- a town tap reading tainted, or a cut-off sink left waiting dry for town water that never comes.
 T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
     instant = true,
     sandbox = { WaterShutModifier = 30 },
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true, indoors = true })
         if not spots then return end
         self.sink = T.placeFixture(self, spots[1], SINK, { buffer = { litres = 5, tainted = true } })
         self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
         T.server(self, "fixtures.plumb", T.at(self.sink, { tank = T.at(self.tank) }))
+        T.cutOffWater(self, { spots[2] })
+        self.cutOff = T.placeFixture(self, spots[2], SINK)
+        self.cutOffTank = T.placeTank(self, spots[2], "above", TANK_LITRES, true)
+        T.server(self, "fixtures.plumb", T.at(self.cutOff, { tank = T.at(self.cutOffTank) }))
         T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = 0, passes = { 1 } }), "refill")
+        readUntil(self, self.cutOff, self.cutOffTank, "cutOff", function(state) return state.linked end)
         T.waitFor(self, function()
-            local state = clientState(self.sink)
+            local state, cutOff = clientState(self.sink), clientState(self.cutOff)
             return state ~= nil and state.inBuffer < T.LITRES
-        end, "this client's copy of the emptied buffer")
-        T.step(function() self.client = clientState(self.sink) end)
+                and cutOff ~= nil and cutOff.inBuffer > sinkLitres() - T.LITRES
+        end, "this client's copies of the emptied buffer and the filled cut-off sink")
+        T.step(function() self.client, self.cutOffClient = clientState(self.sink), clientState(self.cutOff) end)
     end,
     validate = function(self)
         local after = self.reads.refill.passes[1]
-        for who, state in pairs({ ["the server"] = after, ["this client"] = self.client }) do
-            if expect(state ~= nil, who .. " has no sink") then
-                expect(state.amount > TANK_LITRES and state.hasWater and not state.tainted,
-                    who .. ": the plumbed sink doesn't give the town's clean water (" .. state.amount .. " L"
-                    .. (state.tainted and ", tainted)" or ")"))
-                expectNear(who .. ": the plumbed sink's buffer", state.inBuffer, 0, T.LITRES)
-            end
-        end
+        expectTownWater("the server", after)
+        expectTownWater("this client", self.client)
         expectTankLitres("the server", after.tank, TANK_LITRES)
+        local cutOff = self.reads.cutOff
+        expectFixture("the server, cut off", cutOff, { litres = sinkLitres(), tainted = true })
+        expectFixture("this client, cut off", self.cutOffClient, { litres = sinkLitres(), tainted = true })
+        expectTankLitres("the server, cut off", cutOff.tank, TANK_LITRES - sinkLitres())
     end,
 })
 
