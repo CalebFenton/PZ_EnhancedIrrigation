@@ -1,11 +1,9 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLib"
 require "EnhancedIrrigation/Sprites"
 require "EnhancedIrrigation/Lines/Lines"
-local Squares = require "cf_commonlib/Squares"
 
 -- Development only, not published. The line tile helpers of the mod's test library
--- (EnhancedIrrigationTestLib), for the tests that lay, read and run lines, and vanilla's
--- sledgehammer, which smashes line tiles and pumps alike.
+-- (EnhancedIrrigationTestLib), for the tests that lay, read and run lines.
 
 local T = EnhancedIrrigationTest
 
@@ -113,31 +111,6 @@ end
 function T.useWater(self, handle, label, choose)
     T.useOption(self, function() return T.lineObject(handle) end, label, T.running(EnhancedIrrigationWaterAction.queue),
         choose)
-end
-
---- Queues giving the character a sledgehammer and smashing the object on `handle`'s square that
---- `isTarget(object)` picks, through vanilla's Destroy cursor and action, as a player does; then a
---- wait for this client to lose it. `what` names it in the waits.
-function T.smash(self, handle, isTarget, what)
-    T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
-    T.goNextTo(self, handle.square)
-    local cursor
-    -- The cursor lists what it can smash on the square it hovers, once the character sees it.
-    T.waitFor(self, function()
-        cursor = cursor or ISDestroyCursor:new(T.player(), false, self.items.sledge[1])
-        cursor:isValid(handle.square)
-        for i, object in ipairs(cursor:getObjectList()) do
-            if isTarget(object) then
-                cursor.objectIndex = i
-                return true
-            end
-        end
-        return false
-    end, "the Destroy cursor offering " .. what)
-    T.step(function() cursor:create(handle.x, handle.y, handle.z) end)
-    T.waitFor(self, function()
-        return Squares.findObjectOn(getSquare(handle.x, handle.y, handle.z), isTarget) == nil
-    end, "this client to lose the smashed " .. what)
 end
 
 return T
