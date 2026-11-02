@@ -14,28 +14,21 @@ PZHarness.registerTests({
     sandbox = "EnhancedIrrigation",
     recipePrefix = "EnhancedIrrigation_",
     remove = function(object)
-        local EI = EnhancedIrrigation
-        if not isClient() then
-            -- A link the test made would outlive the thing at its end.
-            local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
-            if Server.isPlaced(object) then
-                Server.unlinkAt(object:getX(), object:getY(), object:getZ())
-            end
-            -- With its record, and its neighbours reshaped.
-            if EI.Lines.isLine(object) then
-                EI.LineSystem.remove(object)
-                return true
-            end
-        end
-        -- The pottery wheel T.placeBench sets down for the crock's tests is one tile of vanilla's
-        -- two-tile wheel. The game's safe removal looks for its other tile, finds none and removes
-        -- nothing, so it goes by the plain removal.
-        local script = object:getEntityScript()
-        if not (script and script:getName() == "Pottery_Wheel") then
+        if isClient() then
             return false
         end
-        object:getSquare():transmitRemoveItemFromSquare(object, false)
-        return true
+        -- A link the test made would outlive the thing at its end.
+        local Server = require "EnhancedIrrigation/Debug/EnhancedIrrigationTestServer"
+        if Server.isPlaced(object) then
+            Server.unlinkAt(object:getX(), object:getY(), object:getZ())
+        end
+        -- With its record, and its neighbours reshaped.
+        local EI = EnhancedIrrigation
+        if EI.Lines.isLine(object) then
+            EI.LineSystem.remove(object)
+            return true
+        end
+        return false
     end,
     chance = function() return Chance end,
     records = {

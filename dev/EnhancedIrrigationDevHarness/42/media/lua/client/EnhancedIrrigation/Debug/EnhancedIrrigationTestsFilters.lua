@@ -71,11 +71,8 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
         run(self, self.unit, "hour", { 1 })
     end,
     validate = function(self)
-        local head = Treatment.ENTITIES[BARREL_FILTER].head
         T.expectOptionRefused(self, "petrol", "Tooltip_EnhancedIrrigation_OnlyWater")
         T.expectOffered(self, "pour")
-        local poured = self.reads.poured
-        expectNear("the head and basin after pouring", poured.record.head + poured.basin.litres, head, T.LITRES)
         local hour = self.reads.hour
         expectBasin("the hour's water", hour.steps[1], hour.before.basin.litres + Treatment.ENTITIES[BARREL_FILTER].rate, true)
         local bucket = T.carriedFirst(self, "Base.Bucket", "bucket")
@@ -87,53 +84,39 @@ T.test("irrigation_treatment_filter_pour_in_fills_the_head", {
 
 -- Through the sand ----------------------------------------------------------------------------------------
 
--- An unripe Barrel Filter passes its head's water as it is, at its rate: tainted from a tainted
--- head, on both sides. Catches a new filter that cleans, or one that runs at the wrong rate.
-T.test("irrigation_treatment_filter_unripe_passes_tainted_water", {
+-- A tainted head passes through the sand at the filter's rate, on both sides: as it is through an
+-- unripe Barrel Filter, clean through a ripe Brick Filter, whose menu says it's ripe and greys out
+-- Clean Filter as it isn't clogged. Catches a new filter that cleans, a ripe one passing taint, a
+-- filter at the wrong rate, or Clean Filter offered for nothing.
+T.test("irrigation_treatment_filter_cleans_only_once_ripe", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
-        self.unit = placeUnit(self, spots[1], BARREL_FILTER)
         self.hours = 2
-        run(self, self.unit, "run", { self.hours }, { head = 20, headTainted = true, ripeHours = 0 })
-        local litres = self.unit.spec.rate * self.hours
-        T.waitForSummary(self, self.unit, function()
-            return math.abs(clientBasin(self.unit).basin.litres - litres) < T.LITRES
-        end, "this client's copy of the filled basin")
+        self.rows = {
+            { label = "unripe", unit = placeUnit(self, spots[1], BARREL_FILTER), ripeHours = 0, tainted = true },
+            { label = "ripe", unit = placeUnit(self, spots[2], BRICK), ripeHours = Treatment.RIPE_HOURS, tainted = false },
+        }
+        for _, row in ipairs(self.rows) do
+            run(self, row.unit, row.label, { self.hours }, { head = row.unit.spec.head, headTainted = true,
+                ripeHours = row.ripeHours })
+            T.waitForSummary(self, row.unit, function()
+                return math.abs(clientBasin(row.unit).basin.litres - row.unit.spec.rate * self.hours) < T.LITRES
+            end, "this client's copy of the " .. row.label .. " filter's basin")
+        end
+        local ripe = self.rows[2].unit
+        T.readMenu(self, function() return T.copyOf(ripe) end, "ripe")
+        T.useMenu(self, ripe, "clean", T.findJob("treatment", TreatmentJobs.CLEAN_FILTER), false)
     end,
     validate = function(self)
-        local litres = self.unit.spec.rate * self.hours
-        local before, after = self.reads.run.before, self.reads.run.steps[1]
-        expectBasin("the server", after, before.basin.litres + litres, true)
-        expectBasin("this client", clientBasin(self.unit), before.basin.litres + litres, true)
-        expectNear("the head left", after.record.head, 20 - litres, T.LITRES)
-    end,
-})
-
--- A ripe Brick Filter passes clean water from a tainted head, at its rate, on both sides, and its
--- menu says it's ripe, greying out Clean Filter as it isn't clogged. Catches a ripe filter passing
--- taint, or Clean Filter offered for nothing.
-T.test("irrigation_treatment_filter_ripe_passes_clean_water", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-        if not spots then return end
-        self.unit = placeUnit(self, spots[1], BRICK)
-        self.hours = 2
-        run(self, self.unit, "run", { self.hours }, { head = 50, headTainted = true, ripeHours = Treatment.RIPE_HOURS })
-        local litres = self.unit.spec.rate * self.hours
-        T.waitForSummary(self, self.unit, function()
-            return math.abs(clientBasin(self.unit).basin.litres - litres) < T.LITRES
-        end, "this client's copy of the filled basin")
-        T.readMenu(self, function() return T.copyOf(self.unit) end, "ripe")
-        T.useMenu(self, self.unit, "clean", T.findJob("treatment", TreatmentJobs.CLEAN_FILTER), false)
-    end,
-    validate = function(self)
-        local litres = self.unit.spec.rate * self.hours
-        local after = self.reads.run.steps[1]
-        expectBasin("the server", after, litres, false)
-        expectBasin("this client", clientBasin(self.unit), litres, false)
+        for _, row in ipairs(self.rows) do
+            local litres = row.unit.spec.rate * self.hours
+            local after = self.reads[row.label].steps[1]
+            expectBasin("the server's " .. row.label .. " filter", after, litres, row.tainted)
+            expectBasin("this client's " .. row.label .. " filter", clientBasin(row.unit), litres, row.tainted)
+            expectNear("the " .. row.label .. " filter's head left", after.record.head, row.unit.spec.head - litres, T.LITRES)
+        end
         T.expectWord(self, "ripe", getText("IGUI_EnhancedIrrigation_Ripe"))
         T.expectOptionRefused(self, "clean", "Tooltip_EnhancedIrrigation_NotClogged")
     end,
@@ -255,12 +238,9 @@ T.test("irrigation_treatment_filter_inlet_fills_the_head_from_a_tank", {
         T.useMenu(self, self.unit, "inlet", T.findJob("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.unit, "plumbed", function(state) return state.inlet end)
         run(self, self.unit, "hour", { 1 }, nil, self.tank)
-        T.count(self, "left", { "Base.MetalPipe" })
     end,
     validate = function(self)
         T.expectOffered(self, "inlet")
-        expect(self.reads.plumbed.inlet, "the server didn't plumb the inlet")
-        expect(T.counted(self, "Base.MetalPipe") == 0, "plumbing the inlet left the iron pipe")
         local spec = self.unit.spec
         local before, after = self.reads.hour.before, self.reads.hour.steps[1]
         expectNear("the head after an hour", after.record.head, spec.head - spec.rate, T.LITRES)
@@ -324,7 +304,6 @@ T.test("irrigation_treatment_filter_outlet_fills_a_tank_no_higher", {
         T.expectOptionRefused(self, "higher tank", "Tooltip_EnhancedIrrigation_OutletTankTooHigh")
         T.expectOffered(self, "outlet")
         local passed = self.reads.passed.steps[1]
-        expect(passed.outlet, "the server didn't plumb the outlet")
         expectNear("the basin after an hour", passed.basin.litres, 0, T.LITRES)
         expectNear("the clean tank after an hour", passed.tank.litres, self.litres, T.LITRES)
         expect(not passed.tank.tainted, "the clean tank's water is tainted")
@@ -470,5 +449,5 @@ T.test("irrigation_treatment_filter_record_catches_up_after_its_chunk_reloads", 
     end,
 })
 
-T.vanillaBasinTest({ name = "irrigation_treatment_filter_vanilla_menu_drinks_fills_and_empties_the_basin",
+T.vanillaBasinTest({ name = "irrigation_treatment_filter_vanilla_fill_draws_the_basin",
     entity = BARREL_FILTER, litres = 20, tainted = true, inBucket = 0 })

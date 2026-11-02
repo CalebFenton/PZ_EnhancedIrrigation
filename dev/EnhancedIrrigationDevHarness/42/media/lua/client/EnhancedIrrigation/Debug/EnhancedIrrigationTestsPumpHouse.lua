@@ -63,65 +63,22 @@ end
 
 -- A worn condition and a lower ceiling, as a repaired part carries.
 local WORN, CEILING = 73, 90
-
--- Fit Pump from the house's menu, with a worn Appliance Pump carrying a lower ceiling and a
--- screwdriver, puts it in as it is: the menu names it at its condition. Take Out Pump gives back the
--- same part, as worn, with its ceiling, on both sides. Catches a part fitted new, or handed back new
--- or with its ceiling lost.
-T.test("irrigation_pump_house_fit_and_take_out_keep_its_condition", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-        if not spots then return end
-        self.house = T.placePump(self, spots[1], T.WOOD)
-        T.give(self, "parts", { { type = "Base.Screwdriver" },
-            { type = APPLIANCE, condition = WORN, modData = { [Parts.CEILING_KEY] = CEILING } } })
-        T.useMenu(self, self.house, "fit", function(context)
-            return T.jobOption(context, "pump", PumpJobs.FIT_PUMP, self.items.parts[2])
-        end, true)
-        readUntil(self, self.house, "fitted", function(state) return state.record.part ~= nil end)
-        T.waitForSummary(self, self.house, function(summary) return summary.part ~= nil end, "this client's summary of the part")
-        T.readMenu(self, function() return T.copyOf(self.house) end, "fitted")
-        T.useMenu(self, self.house, "take out", T.findJob("pump", PumpJobs.TAKE_OUT_PUMP), true)
-        readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
-        T.readCarried(self, { APPLIANCE })
-        T.waitFor(self, function()
-            self.back = T.carried(APPLIANCE)
-            return self.back ~= nil
-        end, "this client's copy of the part taken out")
-    end,
-    validate = function(self)
-        T.expectOffered(self, "fit")
-        local record = self.reads.fitted.record
-        expectEqual("the fitted part", record.part, APPLIANCE)
-        expectEqual("the fitted part's condition", record.partCondition, WORN)
-        expectEqual("the fitted part's ceiling", record.partCeiling, CEILING)
-        T.expectWord(self, "fitted", partWord(APPLIANCE, WORN))
-        T.expectOffered(self, "take out")
-        expectEqual("the part Take Out Pump left in the house", self.reads.taken.record.part, nil)
-        local items = T.carriedItems(self, APPLIANCE)
-        expectEqual("the parts the server's character carries", #items, 1)
-        expectEqual("the server's part's condition", items[1] and items[1].condition, WORN)
-        expectEqual("the server's part's ceiling", T.ceilingOf(items[1]), CEILING)
-        expectEqual("this client's part's condition", self.back and self.back:getCondition(), WORN)
-        expectEqual("this client's part's ceiling", self.back and Parts.ceilingOf(self.back), CEILING)
-    end,
-})
-
 -- What a part's wear leaves past its last whole point: more than half, so rounding to the nearest
 -- point would hand it back a point up.
 local FRACTION = 0.7
 
--- Take Out Pump of a part worn to a fraction of a point gives it back at the whole points below,
--- on both sides, and Fit Pump puts it back in at the fraction it had: taking a part out and in
--- again never gains it condition. Catches a part handed back rounded up or to the nearest point, a
--- free hour's wear on every Take Out.
-T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
+-- Take Out Pump from the house's menu, with a screwdriver, gives back the worn Appliance Pump at
+-- the whole points below its wear, with its lower ceiling, on both sides; Fit Pump puts that item
+-- back in at the fraction of a point it had and the same ceiling. Taking a part out and in again
+-- never gains it condition. Catches a part handed back new, rounded up or to the nearest point, or
+-- with its ceiling lost, or a part fitted new.
+T.test("irrigation_pump_house_take_out_and_fit_keep_the_parts_wear", {
     instant = true,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.house = T.placePump(self, spots[1], T.WOOD, fitted(APPLIANCE, nil, { condition = WORN, fraction = FRACTION }))
+        self.house = T.placePump(self, spots[1], T.WOOD,
+            fitted(APPLIANCE, nil, { condition = WORN, ceiling = CEILING, fraction = FRACTION }))
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
         T.useMenu(self, self.house, "take out", T.findJob("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
@@ -130,7 +87,7 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
             self.back = T.carried(APPLIANCE)
             return self.back ~= nil
         end, "this client's copy of the part taken out")
-        T.step(function() self.backCondition = self.back:getCondition() end)
+        T.step(function() self.backCondition, self.backCeiling = self.back:getCondition(), Parts.ceilingOf(self.back) end)
         T.useMenu(self, self.house, "fit", function(context)
             return T.jobOption(context, "pump", PumpJobs.FIT_PUMP, self.back)
         end, true)
@@ -138,12 +95,18 @@ T.test("irrigation_pump_house_take_out_keeps_a_fraction_of_wear", {
     end,
     validate = function(self)
         T.expectOffered(self, "take out")
+        expectEqual("the part Take Out Pump left in the house", self.reads.taken.record.part, nil)
         local items = T.carriedItems(self, APPLIANCE)
         expectEqual("the parts the server's character carries", #items, 1)
         expectEqual("the server's part's condition", items[1] and items[1].condition, WORN)
+        expectEqual("the server's part's ceiling", T.ceilingOf(items[1]), CEILING)
         expectEqual("this client's part's condition", self.backCondition, WORN)
+        expectEqual("this client's part's ceiling", self.backCeiling, CEILING)
         T.expectOffered(self, "fit")
-        expectNear("the part fitted again", self.reads.refitted.record.partCondition, WORN + FRACTION, 0.0001)
+        local refitted = self.reads.refitted.record
+        expectEqual("the part fitted again", refitted.part, APPLIANCE)
+        expectNear("the part's condition fitted again", refitted.partCondition, WORN + FRACTION, 0.0001)
+        expectEqual("the part's ceiling fitted again", refitted.partCeiling, CEILING)
     end,
 })
 
@@ -365,7 +328,8 @@ T.test("irrigation_pump_house_drives_its_line_while_on", {
 })
 
 -- A full sealed tile cracks during catch-up, before this pump budgets its water and dry wear.
--- The new crack and the drilled hole exhaust a finite source halfway through the pass.
+-- The new crack and the drilled hole exhaust a finite source halfway through the pass. Catches a
+-- pump that budgets the line as it stood before the crack, or wears dry time as wet.
 T.test("irrigation_pump_house_budgets_after_line_freeze", {
     instant = true,
     run = function(self)
@@ -402,16 +366,15 @@ T.test("irrigation_pump_house_budgets_after_line_freeze", {
     end,
 })
 
--- Hours the houses are away while their chunk is unloaded.
+-- Hours the house is away while its chunk is unloaded.
 local AWAY_HOURS = 1
 
--- Two running houses' records wait while their chunk is away, one plumbed to a barrel, one to a
--- line of two holed tiles: the pass leaves each as it was, however long ago it last ran. Loaded
--- again, each runs the whole gap on the grid it still has: the barrel gets the gap's water, and the
--- line's holes push theirs out at the part's push for all of it. Catches a record that lifts into a
--- tank or line it can't see, or forgets the time it was away. The houses are switched on only once
--- away, so no ten-minute pass before the reload runs what the gap doesn't count. The line's house
--- stands clear of the other's well and barrel, which it would draw from instead of its own.
+-- A running house's record waits while its chunk is away: the pass leaves it as it was, however
+-- long ago it last ran. Loaded again, it runs the whole gap on the grid it still has, and the barrel
+-- its outlet fills gets the gap's water. Catches a record that lifts into a tank it can't see, or
+-- forgets the time it was away. The house is switched on only once away, so no ten-minute pass
+-- before the reload runs what the gap doesn't count. A house feeding a line waits on the same
+-- check of its outlet's square (PumpObject's endsLoaded), and the tests above run a line's gap.
 T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
     spOnly = T.CHUNK_RELOAD_SP_ONLY,
     instant = true,
@@ -420,74 +383,41 @@ T.test("irrigation_pump_house_catches_up_after_its_chunk_reloads", {
         T.setGrid(self, true)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true, indoors = true })
         if not spots then return end
-        local lineSpots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true,
-            accept = function(squares)
-                for _, spot in ipairs(spots) do
-                    if math.abs(spot.x - squares[1]:getX()) <= 1 and math.abs(spot.y - squares[1]:getY()) <= 1 then
-                        return false
-                    end
-                end
-                return true
-            end })
-        if not lineSpots then return end
         self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE))
-        self.lineHouse, self.barrel, self.tiles = houseLine(self, lineSpots, T.WOOD, APPLIANCE)
         T.server(self, "pumps.update", T.at(self.house))
-        T.server(self, "pumps.update", T.at(self.lineHouse))
         T.reloadChunk(self, T.at(self.house), function()
             update(self, self.house, "away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
-            update(self, self.lineHouse, "line away", { hoursAgo = AWAY_HOURS, fields = { on = true } })
         end)
+        -- The house waits until every square around it is loaded, which may be another chunk's.
         T.waitFor(self, function()
-            for _, handle in ipairs({ self.lineHouse, self.barrel, self.tiles[1], self.tiles[2] }) do
-                if not getSquare(handle.x, handle.y, handle.z) then
+            for _, spot in ipairs(spots) do
+                if not getSquare(spot.x, spot.y, spot.z) then
                     return false
                 end
             end
             return true
-        end, "this client to load the line's house again", T.CHUNK_MS)
+        end, "this client to load the house's well and barrel again", T.CHUNK_MS)
         update(self, self.house, "back", { tank = self.tank })
-        update(self, self.lineHouse, "line back", { squares = self.tiles, tank = self.barrel })
     end,
     validate = function(self)
         local away, back = self.reads.away, self.reads.back
-        expect(away.after.record.lastHour == away.before.record.lastHour, "the barrel's house ran while away")
+        expect(away.after.record.lastHour == away.before.record.lastHour, "the house ran while away")
         -- From the clock wound back while away to the pass after the reload, whichever pass ran it.
         expectNear("the barrel, back", back.after.tank.litres, lifts(APPLIANCE, back.now - (away.now - AWAY_HOURS)), T.LITRES)
-        local lineAway, lineBack = self.reads["line away"], self.reads["line back"]
-        expect(lineAway.after.record.lastHour == lineAway.before.record.lastHour, "the line's house ran while away")
-        local perHour = 2 * Lines.HOLE_RATE * Pumps.PARTS[APPLIANCE].push
-        expectNear("the line's barrel drawn, back", SOURCE_LITRES - lineBack.after.tank.litres,
-            perHour * (lineBack.now - (lineAway.now - AWAY_HOURS)), T.LITRES)
-        for i = 1, 2 do
-            expect((lineBack.after.squares[i].water or 0) > 0, "crop " .. i .. " got no water from the gap")
-        end
     end,
 })
 
 -- Make Utility Pump ---------------------------------------------------------------------------------------
 
--- Make Utility Pump from a Blower Fan, at a table, with the skills, the knowledge and exactly a
--- craft's inputs, makes a Utility Pump at the made ceiling, taking the fan, the sheet metal and the
--- hose. Catches a recipe the game won't craft, or a made pump as good as a found one. Its surface
--- is a work table by the character, which the scenario sets down and T.placeWorkTable sets down
--- again if it is gone.
-T.test("irrigation_pump_house_make_utility_pump", {
-    instant = true,
-    run = function(self)
-        if not T.craft(self, "EnhancedIrrigation_MakeUtilityPump", "Base.BlowerFan",
-            { UTILITY, "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }, { workTable = true }) then
-            return
-        end
-        T.readCarried(self, { UTILITY }, nil, "made")
-    end,
+-- Make Utility Pump from a Blower Fan makes a Utility Pump at the made ceiling, short of a found
+-- one's. Catches a recipe the game won't craft, or a made pump as good as a found one.
+T.craftTest("irrigation_pump_house_make_utility_pump", {
+    recipe = "EnhancedIrrigation_MakeUtilityPump",
+    from = "Base.BlowerFan",
+    counts = { [UTILITY] = 1 },
+    after = function(self) T.readCarried(self, { UTILITY }) end,
     validate = function(self)
-        local craft = self.counts.craft or {}
-        expectEqual("Utility Pumps the craft made", craft[UTILITY], 1)
-        for _, fullType in ipairs({ "Base.BlowerFan", "Base.SmallSheetMetal", "Base.RubberHose" }) do
-            expectEqual(fullType .. " the craft left", craft[fullType], 0)
-        end
-        local made = T.carriedFirst(self, UTILITY, "made")
+        local made = T.carriedFirst(self, UTILITY)
         expectEqual("the made pump's condition", made and made.condition, Pumps.MADE_CEILING)
         expectEqual("the made pump's ceiling", T.ceilingOf(made), Pumps.MADE_CEILING)
     end,

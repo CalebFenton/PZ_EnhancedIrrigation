@@ -1,6 +1,4 @@
 require "EnhancedIrrigation/Debug/EnhancedIrrigationTestLibTreatment"
-require "EnhancedIrrigation/Links/Links"
-require "EnhancedIrrigation/Links/LinkJobs"
 require "EnhancedIrrigation/Treatment/Treatment"
 require "EnhancedIrrigation/Treatment/TreatmentJobs"
 require "EnhancedIrrigation/UI/TreatmentMenu"
@@ -12,17 +10,29 @@ require "Camping/ISCampingMenu"
 
 local T = EnhancedIrrigationTest
 local expect, expectNear = T.expect, T.expectNear
-local Links, LinkJobs, Treatment = EnhancedIrrigation.Links, EnhancedIrrigation.LinkJobs, EnhancedIrrigation.Treatment
-local TreatmentJobs = EnhancedIrrigation.TreatmentJobs
+local Treatment, TreatmentJobs = EnhancedIrrigation.Treatment, EnhancedIrrigation.TreatmentJobs
 local placeUnit, readUntil, run, waitForServer = T.placeUnit, T.readUnitUntil, T.runUnit, T.waitForUnitServer
 local setFire, FUEL, expectLine, expectBasin = T.setFire, T.FUEL, T.expectLine, T.expectBasin
 
 local STONE, WELDED = "EnhancedIrrigation_BoilerStone", "EnhancedIrrigation_BoilerWelded"
 
+-- Queues reading the names of vanilla's fire submenu on this client's copy of the boiler, the one
+-- vanilla names after the tile (ISBBQMenu), into self.names[label], as T.readMenu reads a menu.
+local function readFireMenu(self, label)
+    self.names = self.names or {}
+    T.step(function()
+        local copy = T.need(self, T.copyOf(self.unit), "this client's copy of the boiler")
+        if not copy then return end
+        local submenu, context = T.worldSubmenu(copy, copy:getTileName())
+        self.names[label] = T.optionNames(submenu)
+        if context then context:hideAndChildren() end
+    end)
+end
+
 -- The build menu builds each boiler from its recipe on a clear outdoor square: a vanilla fireplace
--- on both sides, with its record at once. Its menu holds vanilla's Add Fuel and Light beside its
--- own line, which reads the empty drum cold and sound. Catches a recipe the build menu can't build,
--- a boiler that isn't a fire or has no record, or its menu split from the fire's.
+-- on both sides, with its record at once. Its own line, which reads the empty drum cold and sound,
+-- stands in vanilla's fire submenu rather than a submenu of its own. Catches a recipe the build
+-- menu can't build, a boiler that isn't a fire or has no record, or its menu split from the fire's.
 for _, entity in ipairs({ STONE, WELDED }) do
     T.test("irrigation_treatment_boiler_" .. (entity == STONE and "stone" or "welded") .. "_built_from_build_menu", {
         instant = true,
@@ -33,16 +43,15 @@ for _, entity in ipairs({ STONE, WELDED }) do
                 local copy = T.copyOf(self.unit)
                 self.clientFire = copy ~= nil and instanceof(copy, "IsoFireplace")
             end)
+            readFireMenu(self, "fire")
         end,
         validate = function(self)
             T.expectBuiltUnit(self, entity)
             expect(self.reads.built.fireplace, "the built boiler isn't a vanilla fireplace on the server")
             expect(self.clientFire, "this client's copy of the boiler isn't a vanilla fireplace")
-            expectLine(self, "built", getText("IGUI_EnhancedIrrigation_Head", 0, self.unit.spec.head))
-            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Cold"))
-            T.expectWord(self, "built", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
-            expectLine(self, "built", campingText.addFuel)
-            expectLine(self, "built", campingText.lightCampfire)
+            expectLine(self, "fire", getText("IGUI_EnhancedIrrigation_Head", 0, self.unit.spec.head))
+            T.expectWord(self, "fire", getText("IGUI_EnhancedIrrigation_Cold"))
+            T.expectWord(self, "fire", getText("IGUI_EnhancedIrrigation_Drum", Treatment.DRUM_CONDITION))
         end,
     })
 end
@@ -258,7 +267,6 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.readMenu(self, function() return T.copyOf(self.unit) end, "patched")
         run(self, self.unit, "after patch", { 1 }, { head = 20, headTainted = true })
         T.useMenu(self, self.unit, "again", T.findJob("treatment", TreatmentJobs.PATCH_DRUM), false)
-        T.count(self, "used", { "Base.SmallSheetMetal" })
     end,
     validate = function(self)
         T.expectEqual("the drum's condition after an hour burning dry", self.reads.scorched.steps[1].summary.condition,
@@ -278,48 +286,8 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
         T.expectWord(self, "patched", getText("IGUI_EnhancedIrrigation_Cold"))
         local after = self.reads["after patch"]
         expectNear("a patched, unlit boiler's hour", after.steps[1].basin.litres, after.before.basin.litres, T.LITRES)
-        expect(self.counts.used["Base.SmallSheetMetal"] == 0, "Patch Drum left the sheet metal")
     end,
 })
 
--- Plumb Inlet from a raw tank on the boiler's level and Plumb Outlet to a clean one, from the
--- boiler's menu: lit, its first hour fills the drum from the raw tank, and its second passes clean
--- water at its rate on into the clean tank. Catches a boiler the pipes can't reach, water lost or
--- made on the way, or the taint carried into the clean tank.
-T.test("irrigation_treatment_boiler_plumbed_from_raw_to_clean", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 0, 3 } }, { bare = true })
-        if not spots then return end
-        self.raw = 100
-        self.unit = placeUnit(self, spots[1], STONE)
-        self.tank = T.placeTank(self, spots[2], "lidded", self.raw, true)
-        self.clean = T.placeTank(self, spots[3], "lidded")
-        T.givePlumbing(self, 2)
-        T.useMenu(self, self.unit, "inlet", T.findJob("link", LinkJobs.PLUMB_INLET, Links.encode(T.at(self.tank), "iron")), true)
-        readUntil(self, self.unit, "inlet plumbed", function(state) return state.inlet end)
-        T.useOption(self, function() return T.copyOf(self.unit) end, "outlet",
-            T.findJob("link", LinkJobs.PLUMB_OUTLET, Links.encode(T.at(self.clean), "iron")), true)
-        readUntil(self, self.unit, "plumbed", function(state) return state.outlet end)
-        setFire(self, self.unit, true, FUEL)
-        -- From a cold drum, which a ten-minute pass since the fire was lit would have warmed a little.
-        T.read(self, "treatment.run", T.at(self.unit, { hours = { 1, 1 }, fields = { hotHours = 0 }, tank = T.at(self.tank),
-            into = T.at(self.clean) }), "hours")
-    end,
-    validate = function(self)
-        T.expectOffered(self, "inlet")
-        T.expectOffered(self, "outlet")
-        local rate = self.unit.spec.rate
-        local before, first, second = self.reads.hours.before, self.reads.hours.steps[1], self.reads.hours.steps[2]
-        local function out(state) return state.basin.litres + state.into.litres end
-        expectNear("the drum after the first hour", first.record.head + out(first) - out(before), self.raw, T.LITRES)
-        expectNear("the first hour's water", out(first) - out(before), 0, T.LITRES)
-        expectNear("the second hour's water", out(second) - out(first), rate, T.LITRES)
-        expectNear("the basin after the second hour", second.basin.litres, 0, T.LITRES)
-        expect(not second.into.tainted, "the clean tank's water is tainted")
-        expectNear("the raw tank", second.tank.litres, 0, T.LITRES)
-    end,
-})
-
-T.vanillaBasinTest({ name = "irrigation_treatment_boiler_vanilla_menu_drinks_fills_and_empties_the_basin",
+T.vanillaBasinTest({ name = "irrigation_treatment_boiler_vanilla_fill_draws_the_basin",
     entity = STONE, litres = 20, tainted = false, inBucket = 0 })

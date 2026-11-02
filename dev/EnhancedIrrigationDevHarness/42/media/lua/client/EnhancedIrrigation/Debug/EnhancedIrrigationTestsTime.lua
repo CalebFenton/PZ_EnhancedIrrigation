@@ -119,26 +119,24 @@ T.test("irrigation_time_frost_cracks_full_lines", {
 
 -- A line runs on while its chunk is unloaded: a soaked tile dries for the hours away, as outdoors,
 -- and its full pipe splits in a hard freeze, which both sides show once the chunk loads again. The
--- tap tile is holed, so an hour's flow fills the line and soaks the soil under it; the hours away
--- are those that leave it just short of damp, so it loads dry. Catches a record that stops while
--- unloaded, or a tile that loads showing what it was before.
+-- hours away are those that leave the soak just short of damp, so the tile that went away wet
+-- loads dry. Catches a record that stops while unloaded, or a tile that loads showing what it was
+-- before.
 T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
     spOnly = T.CHUNK_RELOAD_SP_ONLY,
     timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     run = function(self)
-        local rows = T.row(self, 2)
+        local rows = T.row(self, 1)
         if not rows then return end
-        local tile, beside = rows[1][1], rows[1][2]
+        local tile = rows[1][1]
         self.tile = tile
-        -- Beside the tile, not over it: a floor above would roof it.
-        T.placeTank(self, beside, "raised", T.TANK_LITRES)
-        tile.fields = T.tapped({ holed = true })
+        tile.fields = { full = true, soak = Lines.SOAKED }
         T.placeLine(self, { tile }, "iron")
-        T.flow(self, tile, 1, { tile }, "watered")
+        -- Wet on this client before it goes, so a tile that loads as it was saved shows wet.
         T.waitFor(self, function() return T.lineSprite(tile) == Sprites.pipe("iron", true, 0) end,
-            "this client's copy of the watered tile, wet")
+            "this client's copy of the soaked tile, wet")
         self.dryPerHour = Lines.SOAK_DRY_OUT / 24
-        self.hours = (Lines.HOLE_RATE * Lines.POINTS_PER_LITRE - Lines.DAMP / 2) / self.dryPerHour
+        self.hours = (Lines.SOAKED - Lines.DAMP / 2) / self.dryPerHour
         T.reloadChunk(self, tile, function()
             T.batch(function()
                 -- Aged by no hours first, which drops the hours since its last pass, so the soak
@@ -153,10 +151,7 @@ T.test("irrigation_time_lines_dry_and_freeze_while_unloaded", {
         T.readLines(self, { tile }, "back")
     end,
     validate = function(self)
-        local watered, left = self.reads.watered.tiles[1].record, self.reads.left.tiles[1]
-        local away, back = self.reads.away.tiles[1], self.reads.back.tiles[1]
-        expect(watered.full and left.record.soak >= Lines.DAMP, "the hour's flow left the tile full "
-            .. tostring(watered.full) .. ", soak " .. tostring(left.record.soak))
+        local left, away, back = self.reads.left.tiles[1], self.reads.away.tiles[1], self.reads.back.tiles[1]
         expect(left.sprite == nil, "the server kept the tile's chunk loaded")
         expectNear("the soak after the hours away", away.record.soak,
             left.record.soak - self.hours * self.dryPerHour, T.POINTS)

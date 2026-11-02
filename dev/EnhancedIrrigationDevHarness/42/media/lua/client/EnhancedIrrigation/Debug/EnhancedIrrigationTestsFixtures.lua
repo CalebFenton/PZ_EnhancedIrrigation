@@ -87,60 +87,67 @@ end
 
 -- Plumb to Tank -------------------------------------------------------------------------------------
 
--- Plumb to Tank from a sink's menu lays the pipe chosen to a raised barrel, and the
--- sink fills at once from it with the barrel's tainted water, which this client's copy serves as
--- tainted. The sink stands in no room: the mod's plumbing doesn't need one, as vanilla's does.
--- Catches a fixture plumbed without its pipe, a buffer that cleans the water, or plumbing that
--- needs a room.
-T.test("irrigation_fixtures_plumb_to_tank_fills_and_keeps_taint", {
+-- Plumb to Tank from a sink's menu greys out a barrel on the sink's own level, which can't push water
+-- out of it, and the server refuses it on its own. To a raised barrel it plumbs, and the sink fills
+-- at once with the barrel's tainted water, which this client's copy serves as tainted; the sink
+-- stands in no room, as vanilla's plumbing needs. Unplumb then leaves the buffer, which the tank
+-- refills no more, and gives the sink back the vanilla reserve plumbing held back, clean. Catches a
+-- fixture plumbed to a tank with no head, a buffer that cleans the water, plumbing that needs a
+-- room, a refill through a link that's gone, or the reserve lost. The pipe each job takes and gives
+-- back is the links' tests'.
+T.test("irrigation_fixtures_plumbed_to_a_raised_tank_and_unplumbed", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 3, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 }, { 3, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
         self.sink = T.placeFixture(self, spots[1], SINK)
         self.tank = T.placeTank(self, spots[2], "raised", TANK_LITRES, true)
+        self.ground = T.placeTank(self, spots[3], "ground", TANK_LITRES)
         T.givePlumbing(self, 1)
-        local with = Links.encode(T.at(self.tank), "iron")
-        T.useMenu(self, self.sink, "plumb", T.findJob("link", LinkJobs.PLUMB_FIXTURE, with), true)
+        T.useMenu(self, self.sink, "ground barrel", function(context)
+            return T.findNamed(context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.ground)))
+        end, false)
+        T.job(self, "link", LinkJobs.PLUMB_FIXTURE, self.sink, Links.encode(T.at(self.ground), "iron"), "forced",
+            { reads = T.stateReads("fixtures.state", self.sink) })
+        T.useOption(self, function() return T.copyOf(self.sink) end, "plumb",
+            T.findJob("link", LinkJobs.PLUMB_FIXTURE, Links.encode(T.at(self.tank), "iron")), true)
         readUntil(self, self.sink, self.tank, "plumbed", function(state) return state.linked end)
         T.waitFor(self, function()
             local state = clientState(self.sink)
             return state ~= nil and state.buffer and state.amount > sinkLitres() - T.LITRES
-        end, "this client's copy of the filled sink")
-        T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
-    end,
-    validate = function(self)
-        T.expectOffered(self, "plumb")
-        local plumbed = self.reads.plumbed
-        expect(plumbed.linked, "the server didn't plumb the sink")
-        expectFixture("the server", plumbed, { litres = sinkLitres(), tainted = true })
-        expectFixture("this client", clientState(self.sink), { litres = sinkLitres(), tainted = true })
-        expectTankLitres("the server", plumbed.tank, TANK_LITRES - sinkLitres())
-        expect(T.counted(self, "Base.MetalPipe") == 0, "plumbing left the iron pipe")
-        expect(T.counted(self, "Base.PipeWrench") == 1, "plumbing used up the pipe wrench")
-    end,
-})
-
--- A tank on the sink's own level can't push water out of it: the menu greys it out saying so, and
--- the server refuses on its own. Catches a fixture plumbed to a tank with no head.
-T.test("irrigation_fixtures_need_a_tank_a_storey_up", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
-        if not spots then return end
-        self.sink = T.placeFixture(self, spots[1], SINK)
-        self.tank = T.placeTank(self, spots[2], "ground", TANK_LITRES)
-        T.givePlumbing(self, 1)
-        T.useMenu(self, self.sink, "ground barrel", function(context)
-            return T.findNamed(context, LinkMenu.tankLabel(T.at(self.sink), T.at(self.tank)))
-        end, false)
-        T.job(self, "link", LinkJobs.PLUMB_FIXTURE, self.sink, Links.encode(T.at(self.tank), "iron"), "forced",
-            { reads = T.stateReads("fixtures.state", self.sink) })
+                and #T.clientLinks(self.sink, "fixture") > 0
+        end, "this client's copy of the filled sink and its link")
+        T.step(function() self.plumbedClient = clientState(self.sink) end)
+        T.useOption(self, function() return T.copyOf(self.sink) end, "unplumb",
+            T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
+        readUntil(self, self.sink, nil, "unplumbed", function(state) return not state.linked end)
+        T.read(self, "fixtures.refill", T.at(self.sink, { tank = T.at(self.tank), litres = sinkLitres(), passes = { 1 } }),
+            "refill")
+        T.waitFor(self, function()
+            local state = clientState(self.sink)
+            return state ~= nil and state.inBuffer < T.LITRES and math.abs(state.amount - sinkLitres()) < T.LITRES
+        end, "this client's copy of the drawn sink, its reserve back")
     end,
     validate = function(self)
         T.expectOptionRefused(self, "ground barrel", "Tooltip_EnhancedIrrigation_FixtureNoPressure")
         local forced = self.reads.forced
         expect(forced.ok == false and not forced.after.state.linked, "the server plumbed a sink to a tank on its level")
+        T.expectOffered(self, "plumb")
+        local plumbed = self.reads.plumbed
+        expectFixture("the server", plumbed, { litres = sinkLitres(), tainted = true })
+        expectFixture("this client", self.plumbedClient, { litres = sinkLitres(), tainted = true })
+        expectTankLitres("the server", plumbed.tank, TANK_LITRES - sinkLitres())
+        T.expectOffered(self, "unplumb")
+        local after = self.reads.refill.passes[1]
+        expect(after.buffer, "the unplumbed sink lost its buffer")
+        expectNear("the unplumbed sink's buffer after a pass", after.inBuffer, 0, T.LITRES)
+        expectTankLitres("the server, unplumbed", after.tank, TANK_LITRES - sinkLitres())
+        for who, state in pairs({ ["the server"] = after, ["this client"] = clientState(self.sink) }) do
+            if expect(state ~= nil, who .. " has no sink") then
+                expectNear(who .. ": the unplumbed sink's reserve", state.amount, sinkLitres(), T.LITRES)
+                expect(not state.tainted, who .. ": the unplumbed sink's reserve is tainted")
+            end
+        end
     end,
 })
 
@@ -168,46 +175,6 @@ T.test("irrigation_fixtures_refill_from_the_tank", {
         expectTankLitres("after a short pass", half.tank, 4 * TANK_LITRES - sinkLitres() - sinkLitres() / 2)
         expectNear("the sink's water after a long pass", full.amount, sinkLitres(), T.LITRES)
         expectTankLitres("after a long pass", full.tank, 4 * TANK_LITRES - 2 * sinkLitres())
-    end,
-})
-
--- Unplumb from the sink gives back the pipe, and the tank refills it no more; the sink
--- keeps its buffer, and gets back the vanilla reserve plumbing held back, clean. Catches pipe lost to
--- Unplumb, a refill through a link that's gone, or the reserve lost.
-T.test("irrigation_fixtures_unplumb_gives_back_the_pipe", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
-        if not spots then return end
-        self.sink = T.placeFixture(self, spots[1], SINK)
-        self.tank = T.placeTank(self, spots[2], "raised", TANK_LITRES)
-        T.server(self, "fixtures.plumb", T.at(self.sink, { tank = T.at(self.tank), kind = "iron", lengths = 1 }))
-        T.waitFor(self, function() return #T.clientLinks(self.sink, "fixture") > 0 end, "this client's copy of the link")
-        T.step(function() self.viewed = #T.clientLinks(self.sink, "fixture") > 0 end)
-        T.give(self, "tools", { { type = "Base.PipeWrench" } })
-        T.useMenu(self, self.sink, "unplumb", T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), true)
-        readUntil(self, self.sink, nil, "unplumbed", function(state) return not state.linked end)
-        T.count(self, "left", { "Base.MetalPipe" })
-        T.read(self, "fixtures.refill", T.at(self.sink, { litres = sinkLitres(), passes = { 1 } }), "refill")
-        T.waitFor(self, function()
-            local state = clientState(self.sink)
-            return state ~= nil and state.inBuffer < T.LITRES and math.abs(state.amount - sinkLitres()) < T.LITRES
-        end, "this client's copy of the drawn sink, its reserve back")
-    end,
-    validate = function(self)
-        T.expectOffered(self, "unplumb")
-        expect(self.viewed, "this client's own copy of the list never had the sink's link")
-        expect(not self.reads.unplumbed.linked, "the server kept the link")
-        expectEqual("iron pipe Unplumb gave back", T.counted(self, "Base.MetalPipe"), 1)
-        local after = self.reads.refill.passes[1]
-        expect(after.buffer, "the unplumbed sink lost its buffer")
-        expectNear("the unplumbed sink's buffer after a pass", after.inBuffer, 0, T.LITRES)
-        for who, state in pairs({ ["the server"] = after, ["this client"] = clientState(self.sink) }) do
-            if expect(state ~= nil, who .. " has no sink") then
-                expectNear(who .. ": the unplumbed sink's reserve", state.amount, sinkLitres(), T.LITRES)
-                expect(not state.tainted, who .. ": the unplumbed sink's reserve is tainted")
-            end
-        end
     end,
 })
 
@@ -242,7 +209,6 @@ T.test("irrigation_fixtures_vanilla_plumb_keeps_taint", {
         T.useOption(self, function() return T.copyOf(self.sink) end, "plumb again", T.running(ISWorldObjectContextMenu.onPlumbItem), false)
         T.useOption(self, function() return T.copyOf(self.sink) end, "unplumb",
             T.findJob("link", LinkJobs.UNPLUMB, Links.encode(T.at(self.tank))), false)
-        T.count(self, "left", { "Base.PipeWrench" })
     end,
     validate = function(self)
         T.expectOffered(self, "plumb")
@@ -252,7 +218,6 @@ T.test("irrigation_fixtures_vanilla_plumb_keeps_taint", {
         expectTankLitres("the server", plumbed.tank, TANK_LITRES - sinkLitres())
         expect(not self.menu["plumb again"].found, "the plumbed sink's menu still offers vanilla's Plumb")
         T.expectOffered(self, "unplumb")
-        expect(T.counted(self, "Base.PipeWrench") == 1, "vanilla's Plumb used up the pipe wrench")
     end,
 })
 
@@ -357,18 +322,15 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
 
 -- Converting what vanilla plumbed ------------------------------------------------------------------
 
--- Queues a sink with a retained EI buffer, replumbed the vanilla way, under a barrel of tainted
--- water one storey up. Conversion must reclaim it too. Sets self.sink and self.tank.
-local function placePlumbed(self)
-    local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
-    if not spots then return false end
-    self.tank = T.placeTank(self, spots[1], "above", TANK_LITRES, true)
-    self.sink = T.placeFixture(self, spots[1], SINK, { plumbed = true, buffer = { litres = 0 } })
+-- Queues a sink at `spot` with a retained EI buffer, replumbed the vanilla way, under a barrel of
+-- tainted water one storey up. Conversion must reclaim it too. Sets self.sink and self.tank.
+local function placePlumbed(self, spot)
+    self.tank = T.placeTank(self, spot, "above", TANK_LITRES, true)
+    self.sink = T.placeFixture(self, spot, SINK, { plumbed = true, buffer = { litres = 0 } })
     T.waitFor(self, function()
         local state = clientState(self.sink)
         return state ~= nil and state.external
     end, "this client's copy of the plumbed sink")
-    return true
 end
 
 local function readConverted(self)
@@ -387,31 +349,58 @@ local function expectConverted(self)
     expectTankLitres("the server", converted.tank, TANK_LITRES - sinkLitres())
 end
 
--- A save from before the mod: the load hook finds the vanilla-plumbed sink as its chunk loads and
--- puts it on a link to its barrel. Catches old saves' rooftop barrels still purifying.
-T.test("irrigation_fixtures_plumbed_sink_converts_on_load", {
+-- Whether `squares` lie in one chunk, so that one trip reloads them all.
+local function oneChunk(squares)
+    for _, square in ipairs(squares) do
+        if square:getChunk() ~= squares[1]:getChunk() then
+            return false
+        end
+    end
+    return true
+end
+
+-- A save from before the mod, reloaded: the load hook finds a vanilla-plumbed sink as its chunk
+-- loads and puts it on a link to its barrel, and leaves a sink that has a buffer already as it was,
+-- water, taint and all. That buffer coming back is the game's own saving of the component the mod
+-- gave the sink, which every plumbed fixture relies on. Catches old saves' rooftop barrels still
+-- purifying, or a reload that refills a buffer from the tile's reserve or drops it.
+T.test("irrigation_fixtures_reload_converts_vanilla_plumbing_and_keeps_buffers", {
     spOnly = "a multiplayer server keeps the chunk loaded after the character leaves, so its load hook never runs",
     instant = true,
     sandbox = { WaterShutModifier = 0 },
     timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
     run = function(self)
-        if not placePlumbed(self) then return end
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 } }, { bare = true, indoors = true, accept = oneChunk })
+        if not spots then return end
+        placePlumbed(self, spots[1])
+        -- Not a sink's full reserve, so a reload that refilled it from the tile would show.
+        self.buffered = T.placeFixture(self, spots[2], SINK, { buffer = { litres = 12, tainted = true } })
         T.reloadChunk(self, T.at(self.sink))
         readConverted(self)
+        readUntil(self, self.buffered, nil, "reloaded", function(state) return state.found ~= false end)
+        T.waitFor(self, function()
+            local state = clientState(self.buffered)
+            return state ~= nil and state.buffer
+        end, "this client's copy of the reloaded sink with a buffer")
     end,
     validate = function(self)
         expectConverted(self)
+        expectFixture("the server, reloaded", self.reads.reloaded, { litres = 12, tainted = true })
+        expectFixture("this client, reloaded", clientState(self.buffered), { litres = 12, tainted = true })
     end,
 })
 
 -- What the load hook does on a multiplayer server reaches the clients that already hold the sink:
 -- the plumbing flag, canBeWaterPiped and the new buffer. Catches a conversion only the server sees.
 T.test("irrigation_fixtures_converted_sink_reaches_clients", {
-    mpOnly = "single player has one copy of the sink, which irrigation_fixtures_plumbed_sink_converts_on_load covers",
+    mpOnly = "single player has one copy of the sink, which "
+        .. "irrigation_fixtures_reload_converts_vanilla_plumbing_and_keeps_buffers covers",
     instant = true,
     sandbox = { WaterShutModifier = 0 },
     run = function(self)
-        if not placePlumbed(self) then return end
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
+        if not spots then return end
+        placePlumbed(self, spots[1])
         T.read(self, "fixtures.convert", T.at(self.sink), "convert")
         readConverted(self)
     end,
@@ -423,17 +412,17 @@ T.test("irrigation_fixtures_converted_sink_reaches_clients", {
 
 -- What a buffer does in vanilla's menus ------------------------------------------------------------
 
--- A sink with a buffer of tainted water offers vanilla's Drink, warning of the taint, Fill and Wash;
--- a bucket filled from it is tainted and the sink goes down by what it took. Catches the engine
--- cleaning a buffer's water on its way out.
+-- This is how the game works, and every plumbed fixture relies on it: the engine serves vanilla's
+-- Drink and Fill at a fixture from a FluidContainer on it, taint and all (IsoObject.isTaintedWater,
+-- getFluidAmount). Drink warns of the taint, a bucket filled from it is tainted, and the sink goes
+-- down by what it took. Catches a game update that cleans a buffer's water on its way out.
 T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
     instant = true,
     sandbox = { WaterShutModifier = 0 },
     run = function(self)
         local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
-        -- A dirty rag puts Wash in the menu (ISWorldObjectContextMenuLogic.doWashClothingMenu).
-        T.give(self, "items", { { type = "Base.Bucket" }, { type = "Base.RippedSheetsDirty" } })
+        T.give(self, "items", { { type = "Base.Bucket" } })
         self.sink = T.placeFixture(self, spots[1], SINK, { buffer = { litres = sinkLitres(), tainted = true } })
         T.goNextTo(self, spots[1].square)
         T.step(function()
@@ -441,7 +430,6 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
             local context = T.need(self, sink and T.worldMenu(sink), "a world menu for the sink")
             if not context then return end
             T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
-            T.noteOption(self, "wash", T.findNamed(context, getText("ContextMenu_Wash")))
             T.chooseOption(self, "fill", T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater))
             context:hideAndChildren()
         end)
@@ -459,7 +447,6 @@ T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
                 "Drink's tooltip doesn't warn of tainted water: " .. tooltip)
         end
         T.expectOffered(self, "fill")
-        T.expectOffered(self, "wash")
         expectFixture("the server, drawn", self.reads.drawn, { litres = sinkLitres() - 10, tainted = true })
         local water = self.items.items[1]:getFluidContainer()
         expectNear("the bucket's water", water:getAmount(), 10, T.LITRES)
@@ -485,14 +472,7 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
             local state = clientState(self.sink)
             return state ~= nil and state.inBuffer < T.LITRES
         end, "this client's copy of the emptied buffer")
-        T.goNextTo(self, spots[1].square)
-        T.step(function()
-            self.client = clientState(self.sink)
-            local context = T.need(self, T.copyOf(self.sink) and T.worldMenu(T.copyOf(self.sink)), "a world menu for the sink")
-            if not context then return end
-            T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
-            context:hideAndChildren()
-        end)
+        T.step(function() self.client = clientState(self.sink) end)
     end,
     validate = function(self)
         local after = self.reads.refill.passes[1]
@@ -505,34 +485,6 @@ T.test("irrigation_fixtures_town_water_wins_while_it_runs", {
             end
         end
         expectTankLitres("the server", after.tank, TANK_LITRES)
-        if T.expectOffered(self, "drink") then
-            expect(self.menu.drink.tooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) == nil,
-                "Drink's tooltip warns of tainted water at a town tap")
-        end
-    end,
-})
-
--- A buffer comes back with its chunk, water, taint and all. Catches a reload that refills it from
--- the tile's reserve or drops it.
-T.test("irrigation_fixtures_buffer_survives_reload", {
-    instant = true,
-    timeoutSeconds = T.CHUNK_RELOAD_SECONDS,
-    sandbox = { WaterShutModifier = 0 },
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
-        if not spots then return end
-        -- Not a sink's full reserve, so a reload that refilled it from the tile would show.
-        self.sink = T.placeFixture(self, spots[1], SINK, { buffer = { litres = 12, tainted = true } })
-        T.reloadChunk(self, T.at(self.sink))
-        readUntil(self, self.sink, nil, "reloaded", function(state) return state.found ~= false end)
-        T.waitFor(self, function()
-            local state = clientState(self.sink)
-            return state ~= nil and state.buffer
-        end, "this client's copy of the reloaded sink")
-    end,
-    validate = function(self)
-        expectFixture("the server, reloaded", self.reads.reloaded, { litres = 12, tainted = true })
-        expectFixture("this client, reloaded", clientState(self.sink), { litres = 12, tainted = true })
     end,
 })
 

@@ -34,31 +34,21 @@ local function clientLevel(handle)
     return tank and Tanks.levelOf(tank) or nil
 end
 
--- The build menu builds a Tank Stand from its recipe on a bare square. Catches a recipe or entity
--- the build menu can't place.
-T.test("irrigation_stands_stand_built_from_build_menu", {
+-- The build menu builds a Tank Stand on a bare square. Set Barrel on Stand turns the empty barrel
+-- vanilla's pickup gave into a tank a level up, on both sides; Take Barrel Down leaves the stand
+-- and gives back the very item vanilla's pickup gave. Catches a stand the build menu can't place, a
+-- barrel kept in hand, a raised barrel at ground level, or a barrel item vanilla wouldn't recognise
+-- as its own.
+T.test("irrigation_stands_built_and_a_barrel_set_on_it_and_taken_down", {
     instant = true,
     run = function(self)
         self.stand = T.buildTile(self, "Base." .. Stands.STAND_ENTITY, Sprites.TANK_STAND)
         if not self.stand then return end
         T.read(self, "tanks.read", T.at(self.stand), "built")
-    end,
-    validate = function(self)
-        local built = self.reads.built
-        expect(built.isStand, "the build menu built " .. tostring(built.entity) .. ", not a Tank Stand")
-        expectEqual("the built stand's sprite", built.sprite, Sprites.TANK_STAND)
-    end,
-})
-
--- Set Barrel on Stand turns an empty barrel carried into a tank a level up, on both sides. Catches
--- a barrel kept in hand, or a raised barrel at ground level.
-T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
         if not spots then return end
-        self.stand = T.placeTank(self, spots[1], "stand")
-        pickUpVanillaBarrel(self, spots[2])
+        pickUpVanillaBarrel(self, spots[1])
+        T.read(self, "stands.barrels", {}, "vanilla")
         T.useMenu(self, self.stand, "set barrel", T.findJob("stand", StandJobs.SET_BARREL), true)
         T.waitFor(self, function() return T.copyOf(self.stand, Sprites.RAISED_BARREL_CLOSED) ~= nil end,
             "this client's copy of the barrel on the stand")
@@ -67,8 +57,18 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
             T.count(self, "left", { BARREL_HELD })
         end)
         T.step(function() self.clientLevel = clientLevel(self.stand) end)
+        T.useOption(self, function() return T.copyOf(self.stand, Sprites.RAISED_BARREL_CLOSED) end, "take down",
+            T.findJob("stand", StandJobs.TAKE_DOWN), true)
+        T.waitFor(self, function() return T.copyOf(self.stand, Sprites.TANK_STAND) ~= nil end,
+            "this client's copy of the stand again")
+        T.batch(function()
+            T.read(self, "tanks.read", T.at(self.stand), "stand")
+            -- A barrel too heavy to carry lands at the character's feet (Actions.addOrDropItem).
+            T.read(self, "stands.barrels", { dropped = true }, "after")
+        end)
     end,
     validate = function(self)
+        expect(self.reads.built.isStand, "the build menu built " .. tostring(self.reads.built.entity) .. ", not a Tank Stand")
         T.expectOffered(self, "set barrel")
         local raised, z = self.reads.raised, self.stand.z
         expect(raised.isRaised and raised.isTank, "the barrel on the stand isn't a raised tank")
@@ -76,6 +76,17 @@ T.test("irrigation_stands_barrel_set_on_stand_from_menu", {
         expectNear("the raised barrel's water", raised.litres, 0, T.LITRES)
         expectEqual("barrels carried after setting the barrel on the stand", T.counted(self, BARREL_HELD), 0)
         expectEqual("the raised barrel's level on this client", self.clientLevel, z + 1)
+        T.expectOffered(self, "take down")
+        expect(self.reads.stand.isStand, "taking the barrel down left " .. tostring(self.reads.stand.entity))
+        local vanilla, after = self.reads.vanilla.barrels, self.reads.after.barrels
+        if not (expectEqual("barrels vanilla's pickup gave", #vanilla, 1)
+                and expectEqual("barrels Take Barrel Down gave", #after, 1)) then
+            return
+        end
+        for _, key in ipairs({ "fullType", "worldSprite", "hasFluid", "containerName" }) do
+            expectEqual("a carried barrel's " .. key .. " against vanilla's", after[1][key], vanilla[1][key])
+        end
+        expectNear("a carried barrel's water", after[1].litres, 0, T.LITRES)
     end,
 })
 
@@ -160,47 +171,5 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
         expect(forced.after.state.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
         expectNear("the refused barrel's water", forced.after.state.litres, self.litres, T.LITRES)
         expectEqual("barrels a refused Take Barrel Down gave", T.counted(self, BARREL_HELD), 0)
-    end,
-})
-
--- Take Barrel Down leaves the stand and gives the very item vanilla's own pickup gives. Catches a
--- barrel item vanilla wouldn't recognise as its own.
-T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
-        if not spots then return end
-        self.tank = T.placeTank(self, spots[1], "raisedLidded")
-        -- Vanilla's own item for the same barrel, which the one taken down should match. Then it
-        -- goes, as two barrels are more than a character carries.
-        pickUpVanillaBarrel(self, spots[2])
-        T.batch(function()
-            T.read(self, "stands.barrels", {}, "vanilla")
-            T.server(self, "stands.dropBarrels", {})
-        end)
-        T.waitFor(self, function() return T.carried(BARREL_HELD) == nil end,
-            "this client to let go of vanilla's barrel")
-        T.useMenu(self, self.tank, "take down", T.findJob("stand", StandJobs.TAKE_DOWN), true)
-        T.waitFor(self, function() return T.copyOf(self.tank, Sprites.TANK_STAND) ~= nil end, "this client's copy of the stand")
-        T.batch(function()
-            T.read(self, "tanks.read", T.at(self.tank), "stand")
-            T.read(self, "stands.barrels", { dropped = true }, "after")
-        end)
-    end,
-    validate = function(self)
-        T.expectOffered(self, "take down")
-        local stand = self.reads.stand
-        expect(stand.isStand, "taking the barrel down left " .. tostring(stand.entity))
-        expectEqual("the sprite of what taking the barrel down left", stand.sprite, Sprites.TANK_STAND)
-        local vanilla, after = self.reads.vanilla.barrels, self.reads.after.barrels
-        if not (expectEqual("barrels vanilla's pickup gave", #vanilla, 1)
-                and expectEqual("barrels Take Barrel Down gave", #after, 1)) then
-            return
-        end
-        local barrel = after[1]
-        for _, key in ipairs({ "fullType", "worldSprite", "hasFluid", "containerName" }) do
-            expectEqual("a carried barrel's " .. key .. " against vanilla's", barrel[key], vanilla[1][key])
-        end
-        expectNear("a carried barrel's water", barrel.litres, 0, T.LITRES)
     end,
 })

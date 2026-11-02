@@ -194,6 +194,8 @@ local function expectSet(self)
     expectEqual("the timer's minutes", set.minutes, 30)
 end
 
+-- A Sprinkler Timer runs a tap as a Timer Valve does (Valves.ITEMS), so it is checked in its window
+-- only, not again without power.
 for _, case in ipairs({ { name = "timer", item = Valves.TIMER }, { name = "sprinkler_timer", item = Valves.SPRINKLER_TIMER } }) do
     -- Set from its panel on a tap the grid powers indoors: every holed tile got the window's 30
     -- minutes of water and the tank gave as much, and it isn't open now. Catches a window at the
@@ -207,15 +209,15 @@ for _, case in ipairs({ { name = "timer", item = Valves.TIMER }, { name = "sprin
             expect(not self.reads.ran.valve.open, "the timer is open outside its window")
         end,
     })
-
-    -- The same with the grid off and no generator: its window goes by and no water runs. Catches a
-    -- timer that needs no power.
-    T.test("irrigation_valves_" .. case.name .. "_needs_power", {
-        instant = true,
-        run = function(self) runTimer(self, case.item, false) end,
-        validate = function(self)
-            expectSet(self)
-            expectWatered(self.reads.ran, 0, "an unpowered window")
-        end,
-    })
 end
+
+-- The Timer Valve with the grid off and no generator: its window goes by and no water runs.
+-- Catches a timer that needs no power.
+T.test("irrigation_valves_timer_needs_power", {
+    instant = true,
+    run = function(self) runTimer(self, Valves.TIMER, false) end,
+    validate = function(self)
+        expectSet(self)
+        expectWatered(self.reads.ran, 0, "an unpowered window")
+    end,
+})

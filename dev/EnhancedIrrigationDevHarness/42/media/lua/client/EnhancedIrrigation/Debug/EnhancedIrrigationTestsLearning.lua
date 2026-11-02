@@ -24,7 +24,8 @@ local CROCK, BOILERS = Recipes.RESEARCH["Base.ClayJar"], Recipes.RESEARCH["Base.
 -- which may register after this file loads.
 local RECIPES = T.learnableRecipeNames("EnhancedIrrigation_")
 
--- The pamphlet's LearnedRecipes, as its script states them.
+-- The pamphlet's LearnedRecipes, as its script states them: which recipes it teaches is the
+-- script's to say, so they are the input of the reading test, not what it checks.
 local PAMPHLET_RECIPES = {}
 do
     local pamphlet = getScriptManager():getItem(PAMPHLET)
@@ -34,19 +35,23 @@ do
     end
 end
 
--- Each of `names` marked true.
-local function marked(names)
+-- Each name of each of the lists `...` marked true.
+local function marked(...)
     local set = {}
-    for _, name in ipairs(names) do
-        set[name] = true
+    for _, names in ipairs({ ... }) do
+        for _, name in ipairs(names) do
+            set[name] = true
+        end
     end
     return set
 end
 
 -- Knowledge ---------------------------------------------------------------------------------------
 
--- Reading the pamphlet through vanilla's action teaches its recipes, on the authority too, whose
--- copy the builds and the plumbing ask, and none of the mod's others.
+-- This is how the game works, and the pamphlet relies on it: reading literature through vanilla's
+-- action teaches its LearnedRecipes, build recipes as well as craftRecipes, on the authority too,
+-- whose copy the builds and the plumbing ask, and nothing else. A build recipe's AutoLearn, by
+-- contrast, does nothing (RecipeLearning stands in for it), so this isn't to be taken on trust.
 test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
     instant = true,
     run = function(self)
@@ -72,52 +77,41 @@ test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
 })
 
 -- Queues giving the character a `fullType`, as self.items[label], and choosing Research from its
--- right-click menu, noted as self.menu.research; `name` names the item.
+-- right-click menu, noted as self.menu[label]; `name` names the item.
 local function research(self, label, fullType, name)
     T.give(self, label, { { type = fullType } })
     T.step(function()
         local context = T.inventoryMenu(self.items[label][1])
         if not T.need(self, context, "the " .. name .. "'s right-click menu") then return end
-        T.chooseOption(self, "research", T.findNamed(context, getText("ContextMenu_ResearchCraft")))
+        T.chooseOption(self, label, T.findNamed(context, getText("ContextMenu_ResearchCraft")))
         context:hideAndChildren()
     end)
 end
 
--- A potter at the research level of Shape Filter Crock right-clicks a Clay Jar, which vanilla's
--- script doesn't make researchable, and Research teaches the crock's three recipes, on both sides,
--- and nothing else. Catches the jar's research added on one side only, or not at all.
-test("irrigation_learning_researching_a_clay_jar_teaches_the_crock", {
+-- Researching a vanilla item that vanilla's script doesn't make researchable, by a character at the
+-- research level of each recipe Recipes.RESEARCH adds to it, teaches exactly those recipes, on both
+-- sides: a potter's Clay Jar the crock's three, a Metal Drum both boilers (Masonry for the stone
+-- firebox, MetalWelding for the welded). Catches an item's research added on one side only, or not
+-- at all.
+test("irrigation_learning_researching_a_clay_jar_or_a_metal_drum_teaches_its_recipes", {
     instant = true,
     hour = 12,
     run = function(self)
         T.knowRecipes(self, RECIPES, false)
         T.setPerk(self, Perks.Pottery, 3)
-        research(self, "jar", "Base.ClayJar", "Clay Jar")
-        T.waitForKnown(self, RECIPES, marked(CROCK))
-    end,
-    validate = function(self)
-        T.expectOffered(self, "research")
-        T.expectKnown(self, RECIPES, "researching a Clay Jar", marked(CROCK))
-    end,
-})
-
--- A character at the research level of both boilers (Masonry for the stone firebox, MetalWelding
--- for the welded) researches a Metal Drum, which vanilla's script doesn't make researchable, and
--- learns both boilers, on both sides, and nothing else. Catches the drum's research added on one
--- side only, or not at all.
-test("irrigation_learning_researching_a_metal_drum_teaches_the_boilers", {
-    instant = true,
-    hour = 12,
-    run = function(self)
-        T.knowRecipes(self, RECIPES, false)
         T.setPerk(self, Perks.Masonry, 1)
         T.setPerk(self, Perks.MetalWelding, 2)
+        research(self, "jar", "Base.ClayJar", "Clay Jar")
+        T.waitForKnown(self, RECIPES, marked(CROCK))
+        T.step(function() self.afterJar = self.known end)
         research(self, "drum", "Base.MetalDrum", "Metal Drum")
-        T.waitForKnown(self, RECIPES, marked(BOILERS))
+        T.waitForKnown(self, RECIPES, marked(CROCK, BOILERS))
     end,
     validate = function(self)
-        T.expectOffered(self, "research")
-        T.expectKnown(self, RECIPES, "researching a Metal Drum", marked(BOILERS))
+        T.expectOffered(self, "jar")
+        T.expectKnown({ known = self.afterJar }, RECIPES, "researching a Clay Jar", marked(CROCK))
+        T.expectOffered(self, "drum")
+        T.expectKnown(self, RECIPES, "researching a Metal Drum after it", marked(CROCK, BOILERS))
     end,
 })
 
@@ -188,13 +182,18 @@ local function expectShown(shown, name, want, where)
     end
 end
 
--- The crafting window lists every recipe ("*", as its button and the magazines' recipe lists open
--- it) but never Plumb to Tank: not by default, not searched for by name, not with every recipe
--- shown. Its logic does hold it, so OnAddToMenu is what keeps it out.
-test("irrigation_learning_plumb_to_tank_in_no_crafting_list", {
+-- Plumb to Tank is knowledge with nothing to craft, kept out of crafting by its OnAddToMenu. The
+-- crafting window listing every recipe ("*", as its button and the magazines' recipe lists open it)
+-- never shows it: not by default, not searched for by name, not with every recipe shown, though its
+-- logic holds it. Picked from the pamphlet's own recipe list (its right-click "Show Known
+-- Recipes"), it opens the crafting window on it, which can't craft it, then or once the window has
+-- refreshed as it does when the inventory changes (ISHandCraftPanel:update, drawDirty). Catches
+-- the recipe listed or craftable by any way into the window.
+test("irrigation_learning_plumb_to_tank_never_craftable", {
     run = function(self)
         T.knowRecipes(self, RECIPES, true)
         T.defer(self, function() ISEntityUI.CloseWindows() end)
+        T.give(self, "pamphlet", { { type = PAMPHLET } })
         T.step(function()
             ISEntityUI.OpenHandcraftWindow(T.player(), nil, "*")
             local panel = openPanel("handCraftPanel")
@@ -209,29 +208,9 @@ test("irrigation_learning_plumb_to_tank_in_no_crafting_list", {
             panel:setRecipeFilter(Translator.getRecipeName(PLUMB), nil)
             self.all = shownBy(panel)
             self.logicHadAll = logicHolds(panel, PLUMB)
+            -- So that the window the pamphlet opens is the only one.
+            ISEntityUI.CloseWindows()
         end)
-    end,
-    validate = function(self)
-        -- An empty list would show nothing to drop.
-        for mode, count in pairs(self.counts or {}) do
-            expect(count > 0, "the crafting window shows no recipe in " .. mode .. " mode")
-        end
-        expectShown(self.default, PLUMB, false, "the crafting window")
-        expectShown(self.searched, PLUMB, false, "the crafting window searched for it")
-        expectShown(self.all, PLUMB, false, "the crafting window showing every recipe")
-        expect(self.logicHad or self.logicHadAll, "the crafting window's search never found Plumb to Tank to drop")
-    end,
-})
-
--- The pamphlet's own recipe list (its right-click "Show Known Recipes") names each recipe it
--- teaches, and picking Plumb to Tank opens the crafting window on it, which can't craft it, then or
--- once the window has refreshed as it does when the inventory changes (ISHandCraftPanel:update,
--- drawDirty).
-test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
-    run = function(self)
-        T.knowRecipes(self, RECIPES, true)
-        T.defer(self, function() ISEntityUI.CloseWindows() end)
-        T.give(self, "pamphlet", { { type = PAMPHLET } })
         local function craftable()
             local panel = openPanel("handCraftPanel")
             local recipe = panel and panel.logic:getRecipe()
@@ -246,12 +225,6 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
             local context = T.inventoryMenu(self.items.pamphlet[1])
             if not T.need(self, context, "the pamphlet's right-click menu") then return end
             local plumb = T.findNamed(context, Translator.getRecipeName(PLUMB))
-            self.unlisted = {}
-            for _, name in ipairs(PAMPHLET_RECIPES) do
-                if not T.findNamed(context, Translator.getRecipeName(name)) then
-                    table.insert(self.unlisted, name)
-                end
-            end
             self.listsPlumb = plumb ~= nil
             if plumb then
                 T.choose(plumb)
@@ -271,8 +244,14 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
         T.step(function() self.craftableLater = craftable() end)
     end,
     validate = function(self)
-        expect(self.unlisted and #self.unlisted == 0,
-            "the pamphlet's recipe list doesn't name " .. table.concat(self.unlisted or PAMPHLET_RECIPES, ", "))
+        -- An empty list would show nothing to drop.
+        for mode, count in pairs(self.counts or {}) do
+            expect(count > 0, "the crafting window shows no recipe in " .. mode .. " mode")
+        end
+        expectShown(self.default, PLUMB, false, "the crafting window")
+        expectShown(self.searched, PLUMB, false, "the crafting window searched for it")
+        expectShown(self.all, PLUMB, false, "the crafting window showing every recipe")
+        expect(self.logicHad or self.logicHadAll, "the crafting window's search never found Plumb to Tank to drop")
         expect(self.listsPlumb, "the pamphlet's recipe list doesn't name " .. PLUMB)
         expect(not self.listsPlumb or self.opened, "picking Plumb to Tank in the pamphlet's list opened no crafting window")
         expect(not self.craftableAtOnce, "the crafting window the pamphlet opened can craft Plumb to Tank")
@@ -282,7 +261,8 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
 
 -- Loot ----------------------------------------------------------------------------------------------
 
--- Each item of the server's Distributions.LOOT sits once in each list it names for the item, as
--- loaded and at each value of its option, at its weight times the option, and nowhere at 0.
+-- Every list each item of the server's Distributions.LOOT names is one the game has and a room
+-- picks from, and holds the item once, at its weight times the save's value of its option; another
+-- value scales it, and 0 takes the item out of every loot list.
 T.serverCheck("irrigation_loot_items_in_their_lists_scaled_by_the_option", "learning.lootLists",
-    { multipliers = { 2.5, 0, 1 } })
+    { multipliers = { 2.5, 0 } })

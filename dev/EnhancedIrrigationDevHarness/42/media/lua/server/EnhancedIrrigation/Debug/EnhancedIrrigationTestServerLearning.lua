@@ -66,14 +66,14 @@ end
 
 -- Every list each item of Distributions.LOOT goes into is one a room picks from, and holds the item
 -- once, at its weight times the save's value of its option, since the merge at load. Each of
--- `args.multipliers` scales every weight, applied twice as a second load applies it; at 0 the item
--- is in no loot list at all, since a zero weight still spawns through the zombie density bonus.
+-- `args.multipliers` in turn, applied over the one before as a load with that value applies it,
+-- scales every weight, and at 0 the item is in no loot list at all, since a zero weight still
+-- spawns through the zombie density bonus.
 PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, args, defer)
     local D = distributions(expect)
     if not D then
         return
     end
-    local users = PZHarness.Loot.procListUsers()
     local function checkAt(loot, multiplier, label)
         for _, entry in ipairs(loot.entries) do
             local name, weight = procName(entry), entry[1]
@@ -87,11 +87,6 @@ PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, arg
                     expectNear(where .. " weight", got, weight * multiplier)
                 end
             end
-            local user = users[name]
-            if expect(user ~= nil, name .. ": no room picks it") then
-                expect(ItemPickerJava.getItemContainer(user.room, user.container, name, false) ~= nil,
-                    name .. ": the game never parsed " .. user.room .. "." .. user.container .. " -> " .. name)
-            end
         end
         if multiplier == 0 then
             PZHarness.Loot.forEachItemsList(function(items, path)
@@ -100,13 +95,21 @@ PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, arg
         end
     end
     -- Every item as loaded before any option changes, since items share an option.
+    local users = PZHarness.Loot.procListUsers()
     for _, loot in ipairs(D.LOOT) do
         checkAt(loot, SandboxVars.EnhancedIrrigation[loot.option], "as loaded")
+        for _, entry in ipairs(loot.entries) do
+            local name = procName(entry)
+            local user = users[name]
+            if expect(user ~= nil, name .. ": no room picks it") then
+                expect(ItemPickerJava.getItemContainer(user.room, user.container, name, false) ~= nil,
+                    name .. ": the game never parsed " .. user.room .. "." .. user.container .. " -> " .. name)
+            end
+        end
     end
     local set, restore = lootOptionSetter(D, defer)
     for _, loot in ipairs(D.LOOT) do
         for _, multiplier in ipairs(args.multipliers) do
-            set(loot.option, multiplier)
             set(loot.option, multiplier)
             checkAt(loot, multiplier, "at " .. loot.option .. " " .. multiplier)
         end

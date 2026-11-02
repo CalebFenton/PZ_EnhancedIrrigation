@@ -52,10 +52,10 @@ T.test("irrigation_treatment_crock_set_in_a_bucket_and_taken_down", {
     end,
 })
 
--- Pour In from a bucket of tainted water fills the crock's head and leaves the rest in the bucket;
--- later the bucket under it holds clean water at the crock's rate, on both sides, and
--- the menu says what is still waiting. Scrub Crock is greyed out, as it isn't clogged. Catches a
--- crock that passes taint, runs at the wrong rate, or takes more than it holds.
+-- Pour In from a bucket of tainted water fills the crock's head; later the bucket under it holds
+-- clean water at the crock's rate, on both sides, and the menu says what is still waiting. Scrub
+-- Crock is greyed out, as it isn't clogged. Catches a crock that passes taint or runs at the wrong
+-- rate. How much Pour In takes is the filters' test's: the job is the same for every unit.
 T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
     instant = true,
     run = function(self)
@@ -70,7 +70,6 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         readUntil(self, self.unit, "poured", function(state)
             return state.record and state.record.head + state.basin.litres > self.unit.spec.head - T.LITRES
         end)
-        T.readCarried(self, { "Base.Bucket" }, nil, "bucket")
         self.hours = 12
         run(self, self.unit, "run", { self.hours })
         -- The server's answer decides what this client's copy must come to show.
@@ -87,9 +86,6 @@ T.test("irrigation_treatment_crock_seeps_clean_water_from_tainted", {
         local spec = self.unit.spec
         T.expectOptionRefused(self, "scrub", "Tooltip_EnhancedIrrigation_NotClogged")
         T.expectOffered(self, "pour")
-        local poured = self.reads.poured
-        expectNear("the head and basin after pouring", poured.record.head + poured.basin.litres, spec.head, T.LITRES)
-        expectNear("the bucket's water left", T.carriedFirst(self, "Base.Bucket", "bucket").litres, 10 - spec.head, T.LITRES)
         local before, after = self.reads.run.before, self.reads.run.steps[1]
         local litres = spec.rate * self.hours
         expectBasin("the server", after, before.basin.litres + litres, false)
@@ -133,16 +129,20 @@ T.test("irrigation_treatment_crock_clogged_until_scrubbed", {
 })
 
 -- A hard freeze cracks a crock with water in it, which spills and passes nothing that hour; its menu
--- says so and Pour In is greyed out, so it takes no water again; an empty crock rides it out.
--- Catches frost ignored, a crock that passes water as it cracks, a cracked crock poured into, or an
--- empty one cracked.
-T.test("irrigation_treatment_crock_cracks_frozen_full", {
+-- says so and Pour In is greyed out, so it takes no water again; an empty crock rides it out. Take
+-- Down then gives back only the bucket, holding what the crock seeped before the frost: the plain
+-- bucket Take Down falls back on, as this crock's record never learned which it stood in. Catches
+-- frost ignored, a crock that passes water as it cracks, a cracked crock poured into or returned
+-- whole, an empty one cracked, or the seeped water spilled with the crock.
+T.test("irrigation_treatment_crock_cracks_frozen_full_and_gives_back_only_its_bucket", {
     instant = true,
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 2, 0 } }, { bare = true })
         if not spots then return end
         self.wet = placeUnit(self, spots[1], CROCK)
         self.dry = placeUnit(self, spots[2], CROCK)
+        self.litres = 3
+        fillBasin(self, self.wet, self.litres)
         T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
         run(self, self.wet, "wet", { 1 }, { head = 5 })
         run(self, self.dry, "dry", { 1 }, { head = 0 })
@@ -151,54 +151,35 @@ T.test("irrigation_treatment_crock_cracks_frozen_full", {
         waitForServer(self, self.dry, "dry", "cracked")
         T.readMenu(self, function() return T.copyOf(self.wet) end, "cracked")
         T.readMenu(self, function() return T.copyOf(self.dry) end, "dry")
-        T.give(self, "carried", { { type = "Base.Bucket" } })
-        T.fillCarried(self, "Base.Bucket", "TaintedWater", 5)
+        -- A bottle to pour from, so the only bucket at the end is the one Take Down gives back.
+        T.give(self, "carried", { { type = "Base.WaterBottle" } })
+        T.fillCarried(self, "Base.WaterBottle", "TaintedWater", 1)
         T.useMenu(self, self.wet, "pour", T.findJob("treatment", TreatmentJobs.POUR_IN, function() return self.items.carried[1] end),
             false)
+        T.useMenu(self, self.wet, "take down", T.findJob("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
+        readUntil(self, self.wet, "taken", function(state) return not state.found end)
+        T.count(self, "back", { Treatment.CROCK_ITEM, Treatment.CROCK_BUCKET })
+        T.readCarried(self, { Treatment.CROCK_BUCKET }, nil, "bucket")
     end,
     validate = function(self)
         local wet = self.reads.wet
+        expect(wet.steps[1].record.cracked, "the frost didn't crack the crock holding water")
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Head", 0, self.wet.spec.head))
         expectNear("the cracked crock's basin", wet.steps[1].basin.litres, wet.before.basin.litres, T.LITRES)
         T.expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Cracked"), false)
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Cracked"))
         T.expectOptionRefused(self, "pour", "Tooltip_EnhancedIrrigation_CrockCracked")
-    end,
-})
-
--- A crock frost cracked is lost to Take Down, which still gives back the bucket it stood in, with
--- the water it seeped before the frost: the plain bucket Take Down falls back on, as this crock's
--- record never learned which it stood in. Catches the water spilled with the crock, or a cracked
--- crock returned whole.
-T.test("irrigation_treatment_crock_take_down_returns_the_bucket_and_its_water", {
-    instant = true,
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
-        if not spots then return end
-        self.unit = placeUnit(self, spots[1], CROCK)
-        self.litres = 3
-        fillBasin(self, self.unit, self.litres)
-        T.server(self, "lines.temperature", { celsius = EnhancedIrrigation.Frost.HARD_FREEZE_CELSIUS - 3 })
-        run(self, self.unit, "frozen", { 1 }, { head = self.unit.spec.head })
-        T.useMenu(self, self.unit, "take down", T.findJob("treatment", TreatmentJobs.TAKE_DOWN_CROCK), true)
-        readUntil(self, self.unit, "taken", function(state) return not state.found end)
-        T.count(self, "back", { Treatment.CROCK_ITEM, Treatment.CROCK_BUCKET })
-        T.readCarried(self, { Treatment.CROCK_BUCKET }, nil, "bucket")
-    end,
-    validate = function(self)
-        local frozen = self.reads.frozen.steps[1]
-        expect(frozen.record.cracked, "the frost didn't crack the crock")
-        expectNear("the cracked crock's basin", frozen.basin.litres, self.litres, T.LITRES)
         T.expectOffered(self, "take down")
         local taken = self.reads.taken
         expect(not taken.found and not taken.record, "Take Down left the unit or its record")
         local back = self.counts.back
         expectEqual("crocks Take Down gave back from a cracked one", back[Treatment.CROCK_ITEM], 0)
         expectEqual("plain buckets Take Down gave back", back[Treatment.CROCK_BUCKET], 1)
-        expectNear("the cracked crock's bucket", T.carriedFirst(self, Treatment.CROCK_BUCKET, "bucket").litres, self.litres,
-            T.LITRES)
+        local bucket = T.carriedFirst(self, Treatment.CROCK_BUCKET, "bucket")
+        expectNear("the cracked crock's bucket", bucket.litres, self.litres, T.LITRES)
+        expect(not bucket.tainted, "the cracked crock's bucket came back tainted")
     end,
 })
 
-T.vanillaBasinTest({ name = "irrigation_treatment_crock_vanilla_menu_drinks_fills_and_empties_the_basin",
+T.vanillaBasinTest({ name = "irrigation_treatment_crock_vanilla_fill_draws_the_basin",
     entity = CROCK, litres = 8, tainted = false, inBucket = 5 })

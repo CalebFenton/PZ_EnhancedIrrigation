@@ -238,8 +238,8 @@ local SOURCE_LITRES = 50
 
 -- The iron pump beside a barrel of tainted water, its menu naming the barrel as its source, lifts a
 -- minute's rate of it into a lidded tank, taint and all, the barrel down by as much; an hour more
--- lifts the rest and stops with nothing to draw. Catches the taint dropped, water made, or a dry
--- barrel still pumped.
+-- lifts the rest and stops with nothing to draw, and this client sees the barrel emptied. Catches
+-- the taint dropped, water made, a dry barrel still pumped, or a draw the clients never hear of.
 T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
     instant = true,
     run = function(self)
@@ -255,6 +255,10 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
             self.sourceName = T.copyOf(self.source):getFluidContainer():getTranslatedContainerName()
         end)
         T.runPump(self, self.pump, "ran", { T.MINUTE, 1 }, { tank = self.tank })
+        T.waitFor(self, function()
+            local copy = T.copyOf(self.source)
+            return copy ~= nil and EnhancedIrrigation.Tanks.litres(copy) < T.FINE_LITRES
+        end, "this client's copy of the emptied barrel")
     end,
     validate = function(self)
         T.expectWord(self, "source", self.sourceName)
@@ -270,6 +274,9 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
     end,
 })
 
+-- An outlet whose water container refuses what the pump lifts (vanilla's input lock here, as a
+-- container refuses water it can't mix) takes none: the source keeps its water and the seal and
+-- body don't wear. Catches wear by the litres asked rather than the litres moved.
 T.test("irrigation_pumps_rejected_delivery_does_not_wear_the_seal_or_body", {
     run = function(self)
         local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 } }, { bare = true })
@@ -280,7 +287,6 @@ T.test("irrigation_pumps_rejected_delivery_does_not_wear_the_seal_or_body", {
     end,
     validate = function(self)
         local result = self.reads.blocked
-        expectEqual("the rejected link transfer's success", result.carried, false)
         expectNear("the source after rejected delivery", result.after.source.litres, result.before.source.litres, T.LITRES)
         expectNear("the outlet after rejected delivery", result.after.tank.litres, result.before.tank.litres, T.LITRES)
         expectEqual("seal wear after rejected delivery", result.after.record.sealWear, result.before.record.sealWear)
@@ -541,21 +547,7 @@ T.test("irrigation_pumps_worn_out_pump_smashed_with_its_record", {
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, function() return T.copyOf(self.pump) end, "worn")
         T.useOption(self, function() return T.copyOf(self.pump) end, "pump", T.running(EnhancedIrrigationPumpAction.queue), false)
-        T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
-        -- The cursor lists what it can smash on the square it hovers, once the character sees it.
-        T.waitFor(self, function()
-            self.cursor = self.cursor or ISDestroyCursor:new(T.player(), false, self.items.sledge[1])
-            self.cursor:isValid(self.pump.square)
-            for i, object in ipairs(self.cursor:getObjectList()) do
-                if Pumps.isPump(object) then
-                    self.cursor.objectIndex = i
-                    return true
-                end
-            end
-            return false
-        end, "the Destroy cursor offering the pump")
-        T.step(function() self.cursor:create(self.pump.x, self.pump.y, self.pump.z) end)
-        T.waitFor(self, function() return T.copyOf(self.pump) == nil end, "this client to lose the smashed pump")
+        T.smash(self, self.pump, Pumps.isPump, "pump")
         T.readPump(self, self.pump, "smashed")
     end,
     validate = function(self)

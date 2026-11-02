@@ -320,22 +320,16 @@ T.test("irrigation_sprinklers_soil_word_outlasts_the_sprinkler", {
 
 -- Making --------------------------------------------------------------------------------------------
 
--- Make Pipe Sprinkler from an iron pipe, in hand, with the skill, the knowledge and exactly a
--- craft's inputs, makes one Lawn Sprinkler at the made ceiling (its OnCreate). Catches a recipe the
--- game won't craft, or a made sprinkler as good as a found one.
-T.test("irrigation_sprinklers_make_pipe_sprinkler", {
-    instant = true,
-    run = function(self)
-        if not T.craft(self, "EnhancedIrrigation_MakePipeSprinkler", "Base.MetalPipe", { Sprinklers.ITEM },
-            { prefer = { "Base.Pliers" } }) then
-            return
-        end
-        T.readCarried(self, { Sprinklers.ITEM }, nil, "made")
-    end,
+-- Make Pipe Sprinkler from an iron pipe makes one Lawn Sprinkler at the made ceiling (its
+-- OnCreate). Catches a recipe the game won't craft, or a made sprinkler as good as a found one.
+T.craftTest("irrigation_sprinklers_make_pipe_sprinkler", {
+    recipe = "EnhancedIrrigation_MakePipeSprinkler",
+    from = "Base.MetalPipe",
+    prefer = { "Base.Pliers" },
+    counts = { [Sprinklers.ITEM] = 1 },
+    after = function(self) T.readCarried(self, { Sprinklers.ITEM }) end,
     validate = function(self)
-        local craft = self.counts.craft or {}
-        expectEqual("sprinklers the craft made", craft[Sprinklers.ITEM], 1)
-        local made = T.carriedFirst(self, Sprinklers.ITEM, "made")
+        local made = T.carriedFirst(self, Sprinklers.ITEM)
         expectEqual("the made sprinkler's condition", made and made.condition, Sprinklers.MADE_CEILING)
         expectEqual("the made sprinkler's ceiling", T.ceilingOf(made), Sprinklers.MADE_CEILING)
     end,

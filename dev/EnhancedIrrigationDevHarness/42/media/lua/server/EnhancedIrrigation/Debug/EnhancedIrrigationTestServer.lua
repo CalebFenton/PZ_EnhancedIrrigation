@@ -269,10 +269,7 @@ function Server.treatmentStateAt(args)
         if state.fireplace then
             state.lit, state.fuel = unit:isLit(), unit:getFuelAmount()
         end
-        state.basin = {
-            litres = basin:getAmount(), capacity = basin:getCapacity(), tainted = basin:isTainted(),
-            locked = basin:isInputLocked(),
-        }
+        state.basin = { litres = basin:getAmount(), capacity = basin:getCapacity(), tainted = basin:isTainted() }
     end
     state.tank = args.tank and Server.stateAt(args.tank) or nil
     state.into = args.into and Server.stateAt(args.into) or nil

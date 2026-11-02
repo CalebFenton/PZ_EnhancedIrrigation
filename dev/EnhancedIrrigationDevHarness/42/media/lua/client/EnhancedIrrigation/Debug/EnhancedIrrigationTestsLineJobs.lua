@@ -281,16 +281,20 @@ T.test("irrigation_lines_take_up_returns_items", {
         T.waitFor(self, function() return T.lineObject(tapTile) == nil end, "this client to lose the tap tile")
         T.waitFor(self, function() return T.lineSprite(cracked) == Sprites.pipe("iron", false, Sprites.EAST) end,
             "this client's copy of the cracked tile, reshaped")
-        for _, tile in ipairs({ cracked, clay, whole }) do
-            T.goNextTo(self, tile.square)
-            T.useLineJob(self, tile, LineJobs.TAKE_UP, "take up the " .. tile.material, true)
-            T.waitFor(self, function() return T.lineObject(tile) == nil end, "this client to lose a taken-up tile")
+        for _, case in ipairs({ { tile = cracked, name = "cracked" }, { tile = clay, name = "clay" },
+            { tile = whole, name = "whole" } }) do
+            T.goNextTo(self, case.tile.square)
+            T.useLineJob(self, case.tile, LineJobs.TAKE_UP, "take up the " .. case.name, true)
+            T.waitFor(self, function() return T.lineObject(case.tile) == nil end,
+                "this client to lose the " .. case.name .. " tile")
         end
         T.readLines(self, self.tiles, "gone")
         T.count(self, "back", { Pipes.MATERIALS.iron.item, Pipes.MATERIALS.clay.item })
     end,
     validate = function(self)
-        expectOffered(self, "take up the tap")
+        for _, label in ipairs({ "take up the tap", "take up the cracked", "take up the clay", "take up the whole" }) do
+            expectOffered(self, label)
+        end
         local iron, clay = Pipes.MATERIALS.iron, Pipes.MATERIALS.clay
         -- The tap tile's length, its tap's and the whole tile's.
         local ironWanted = 3 * iron.perLength
@@ -345,22 +349,7 @@ T.test("irrigation_lines_sledgehammer_reshapes_neighbours", {
         self.tiles = { west, middle, east }
         middle.fields = T.tapped()
         T.placeLine(self, self.tiles, "iron")
-        T.give(self, "sledge", { { type = "Base.Sledgehammer" } })
-        T.goNextTo(self, middle.square)
-        -- The cursor lists what it can smash on the square it hovers, once the character sees it.
-        T.waitFor(self, function()
-            self.cursor = self.cursor or ISDestroyCursor:new(T.player(), false, self.items.sledge[1])
-            self.cursor:isValid(middle.square)
-            for i, object in ipairs(self.cursor:getObjectList()) do
-                if Lines.isLine(object) then
-                    self.cursor.objectIndex = i
-                    return true
-                end
-            end
-            return false
-        end, "the Destroy cursor offering the line tile")
-        T.step(function() self.cursor:create(middle.x, middle.y, middle.z) end)
-        T.waitFor(self, function() return T.lineObject(middle) == nil end, "this client to lose the smashed tile")
+        T.smash(self, middle, Lines.isLine, "line tile")
         T.waitFor(self, function()
             return T.shapeOf(T.lineSprite(west)) == 0 and T.shapeOf(T.lineSprite(east)) == 0
         end, "this client's copies of the neighbours, reshaped")

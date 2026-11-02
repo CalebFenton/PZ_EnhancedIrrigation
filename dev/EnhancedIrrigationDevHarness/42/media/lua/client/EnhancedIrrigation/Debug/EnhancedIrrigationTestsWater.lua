@@ -203,10 +203,11 @@ T.test("irrigation_water_one_person_per_tap", {
 
 -- Each time the water runs, the tap draws on the highest tank reaching it that holds water, the
 -- fuller of two on one level: an empty barrel two storeys up, a fuller one a storey up and a full
--- one on the ground give none, and the one two storeys up holding less gives it all, at its head.
--- A second tap with two tanks a storey up draws on the fuller. Catches a tap tied to one tank, an
--- empty tank chosen, the fullest tank chosen whatever its level, or a tank without the head
--- drawn on.
+-- one on the ground give none, and the one two storeys up holding less gives it all, at its head:
+-- the square root of two times a storey's (Torricelli). A second tap with two tanks a storey up
+-- draws on the fuller. Catches a tap tied to one tank, an empty tank chosen, the fullest tank
+-- chosen whatever its level, a tank without the head drawn on, or the head ignored or taken
+-- linearly.
 T.test("irrigation_water_tap_draws_from_the_highest_tank_holding_water", {
     run = function(self)
         -- The second tap stands out of reach of the first's tanks, and the first out of the second's.
@@ -289,32 +290,6 @@ T.test("irrigation_water_points_per_litre", {
         expectNear("the full crop's water", full.plant.water, Lines.PLANT_FULL, T.CROP_POINTS)
         expectNear("the soak under the full crop", full.record.soak, each * Lines.POINTS_PER_LITRE, T.CROP_POINTS)
         expect(thirsty.record.full and full.record.full, "the line isn't full")
-    end,
-})
-
--- A tank two storeys over a line pushes each hole's water out the square root of two times as fast
--- as one a storey over it (Torricelli). Catches the head ignored, or taken linearly.
-T.test("irrigation_water_higher_tank_waters_faster", {
-    run = function(self)
-        local tiles = T.layout(self, { { 0, 0 }, { 2, 0 } }, { indoors = true })
-        if not tiles then return end
-        self.low = T.placeTank(self, tiles[1], "above", T.TANK_LITRES)
-        self.high = T.placeTank(self, tiles[2], "raisedAbove", T.TANK_LITRES)
-        tiles[1].fields = T.tapped({ holed = true })
-        tiles[2].fields = T.tapped({ holed = true })
-        T.placeLine(self, tiles, "iron")
-        T.batch(function()
-            T.flow(self, tiles[1], 1, {}, "low hour")
-            T.flow(self, tiles[2], 1, {}, "high hour")
-            T.read(self, "tanks.read", T.at(self.low), "low tank")
-            T.read(self, "tanks.read", T.at(self.high), "high tank")
-        end)
-    end,
-    validate = function(self)
-        local low = T.TANK_LITRES - self.reads["low tank"].litres
-        local high = T.TANK_LITRES - self.reads["high tank"].litres
-        expectNear("the litres a storey of head gives in an hour", low, Lines.HOLE_RATE, T.FINE_LITRES)
-        expectNear("the litres two storeys of head give in an hour", high, Lines.HOLE_RATE * math.sqrt(2), T.FINE_LITRES)
     end,
 })
 

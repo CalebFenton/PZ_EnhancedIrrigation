@@ -47,18 +47,17 @@ function T.buildUnit(self, entity, prefer)
     return unit
 end
 
---- Expects what T.buildUnit read: the unit `entity`, with its record, nothing in its head and its
---- basin empty and locked.
+--- Expects what T.buildUnit read: the unit `entity`, with its record and nothing in its head or
+--- its basin.
 function T.expectBuiltUnit(self, entity)
     local built = self.reads.built
     T.expectEqual("the entity the build menu built", built.entity, entity)
     T.expect(built.record and built.record.head == 0, "the built " .. entity .. " has no record, or water in its head")
-    T.expect(built.basin and built.basin.litres == 0 and built.basin.locked,
-        "the built " .. entity .. "'s basin isn't empty and locked")
+    T.expect(built.basin and built.basin.litres == 0, "the built " .. entity .. "'s basin isn't empty")
 end
 
-function T.readUnitUntil(self, unit, label, done, tank)
-    T.readUntil(self, "treatment.state", T.at(unit, { tank = tank and T.at(tank) }), label, done)
+function T.readUnitUntil(self, unit, label, done)
+    T.readUntil(self, "treatment.state", T.at(unit), label, done)
 end
 
 -- Queues `fields` set on the unit's record and a run of each of `hours`, with the tank's state if
@@ -129,14 +128,13 @@ function T.clientBasin(unit)
     return basin and { basin = { litres = basin:getAmount(), tainted = basin:isTainted() } } or nil
 end
 
--- The basin offers vanilla's Drink, Fill and Empty, but no pour into it, though the character
--- carries water; a bucket filled from it holds its water as it was. A Barrel Filter's basin holds
--- tainted water, and Drink warns of it; a crock's or a boiler's, clean, and Drink doesn't; the
--- boiler is a vanilla fireplace, whose fire menu stands beside the fluid menu. Catches a basin
--- vanilla can't reach, one it can pour into past the sand, the clay or the fire, or a taint lost or
--- made up. The crock's bucket holds no more than the one carried, so that one starts part full: a
--- Fill that empties its source ends in an invalid action on a multiplayer client, which clears the
--- queue.
+-- What a player gets from a unit: vanilla's Fill draws the basin into a carried bucket, which holds
+-- the water as the unit made it, and vanilla's menu offers no pour into the basin though the
+-- character carries water, as the basin is input-locked. Catches a basin vanilla's menu can't
+-- reach, one it can pour into past the sand, the clay or the fire, or a taint lost or made up on
+-- the way out. The crock's basin holds no more than a bucket, so that bucket starts part full: a
+-- Fill that empties its source ends in an invalid action on a multiplayer client, which clears
+-- the queue.
 --
 -- `case`: the test's `name`, the unit's `entity`, the `litres` its basin is filled with and whether
 -- they are `tainted`, and the litres already `inBucket`.
@@ -149,7 +147,8 @@ function T.vanillaBasinTest(case)
             self.unit = T.placeUnit(self, spots[1], case.entity)
             T.fillBasin(self, self.unit, case.litres, case.tainted)
             T.give(self, "items", { { type = "Base.Bucket" }, { type = "Base.WaterBottle" } })
-            -- Full, so vanilla's Fill lists only the bucket.
+            -- Water carried, which vanilla would offer to pour into an unlocked basin; full, so
+            -- vanilla's Fill lists only the bucket.
             T.fillCarried(self, "Base.WaterBottle", "Water", 10)
             if case.inBucket > 0 then
                 T.fillCarried(self, "Base.Bucket", "Water", case.inBucket)
@@ -159,8 +158,6 @@ function T.vanillaBasinTest(case)
                 local copy = T.copyOf(self.unit)
                 local context = T.need(self, copy and T.worldMenu(copy), "a world menu for the unit")
                 if not context then return end
-                T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
-                T.noteOption(self, "empty", T.optionRunning(context, ISWorldObjectContextMenu.onFluidEmpty))
                 self.pour = T.findNamed(context, getText("ContextMenu_AddFluidFromItem")) ~= nil
                 T.chooseOption(self, "fill", T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater))
                 context:hideAndChildren()
@@ -169,15 +166,8 @@ function T.vanillaBasinTest(case)
             T.readCarried(self, { "Base.Bucket" }, nil, "bucket")
         end,
         validate = function(self)
-            if T.expectOffered(self, "drink") then
-                local tooltip = self.menu.drink.tooltip
-                local warns = tooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil
-                T.expect(warns == case.tainted, "Drink's tooltip " .. (warns and "warns" or "doesn't warn")
-                    .. " of tainted water: " .. tooltip)
-            end
-            T.expectOffered(self, "fill")
-            T.expectOffered(self, "empty")
             T.expect(not self.pour, "the menu offers vanilla's pour into the basin")
+            T.expectOffered(self, "fill")
             local bucket = T.carriedFirst(self, "Base.Bucket", "bucket")
             T.expect(bucket.litres > case.inBucket + 1, "Fill took nothing from the basin")
             T.expectNear("the basin and bucket", self.reads.drawn.basin.litres + bucket.litres, case.litres + case.inBucket,
