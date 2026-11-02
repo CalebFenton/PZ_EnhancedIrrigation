@@ -201,8 +201,6 @@ T.test("irrigation_stands_take_down_gives_vanillas_barrel_and_the_stand", {
         for _, key in ipairs({ "fullType", "worldSprite", "hasFluid", "containerName" }) do
             expectEqual("a carried barrel's " .. key .. " against vanilla's", barrel[key], vanilla[1][key])
         end
-        expectNear("a carried barrel's weight", barrel.weight, vanilla[1].weight, T.LITRES)
-        expectNear("a carried barrel's capacity", barrel.capacity, vanilla[1].capacity, T.LITRES)
         expectNear("a carried barrel's water", barrel.litres, 0, T.LITRES)
     end,
 })

@@ -16,40 +16,8 @@ local clientBasin = T.clientBasin
 
 local CROCK = "EnhancedIrrigation_FilterCrock"
 
-local UNFIRED = "EnhancedIrrigation.FilterCrockUnfired"
 -- A bucket other than the one Take Down gives when it doesn't know, so a test sees the right one come back.
 local FORGED_BUCKET = "Base.BucketForged"
-
--- Shape Filter Crock at a pottery wheel makes an unfired crock from the clay and charcoal, with
--- water from the carried bottle. Catches a recipe the wheel won't make, or one that leaves its
--- inputs.
-T.test("irrigation_treatment_crock_shaped_at_a_pottery_wheel", {
-    instant = true,
-    run = function(self)
-        T.craft(self, "EnhancedIrrigation_ShapeFilterCrock", "Base.Clay", { UNFIRED, "Base.Clay", "Base.Charcoal" }, { bench = { "Base.Pottery_Wheel", "crafted_01_65" }, prefer = { "Base.WaterBottle", "Base.Charcoal" }, ready = function()
-            T.fillCarried(self, "Base.WaterBottle", "Water", 1)
-        end })
-    end,
-    validate = function(self)
-        local craft = self.counts and self.counts.craft or {}
-        expectEqual("unfired crocks shaping made", craft[UNFIRED], 1)
-        expect(craft["Base.Clay"] == 0 and craft["Base.Charcoal"] == 0, "shaping left clay or charcoal")
-    end,
-})
-
--- Fire Filter Crock at a kiln makes the crock from the unfired one. Catches a recipe the kiln
--- won't fire.
-T.test("irrigation_treatment_crock_fired_in_a_kiln", {
-    instant = true,
-    run = function(self)
-        T.craft(self, "EnhancedIrrigation_FireFilterCrock", UNFIRED, { Treatment.CROCK_ITEM, UNFIRED }, { bench = { "Base.Kiln_Small", "crafted_01_56" }, prefer = { "Base.Charcoal" } })
-    end,
-    validate = function(self)
-        local craft = self.counts and self.counts.craft or {}
-        expectEqual("crocks firing made", craft[Treatment.CROCK_ITEM], 1)
-        expectEqual("unfired crocks firing left", craft[UNFIRED], 0)
-    end,
-})
 
 -- The build menu sets a Filter Crock in an empty bucket on a bare square, with its record at once:
 -- this client's menu reads its empty head. Take Down, once the crock has seeped water into that

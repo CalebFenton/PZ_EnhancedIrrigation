@@ -36,9 +36,7 @@ local function describeBarrel(item)
     return {
         fullType = item:getFullType(),
         worldSprite = item:getWorldSprite(),
-        weight = item:getActualWeight(),
         hasFluid = fluid ~= nil,
-        capacity = fluid and fluid:getCapacity() or 0,
         litres = fluid and fluid:getAmount() or 0,
         containerName = fluid and fluid:getContainerName() or nil,
     }

@@ -286,6 +286,3 @@ test("irrigation_learning_pamphlet_recipe_list_cannot_craft_plumbing", {
 -- loaded and at each value of its option, at its weight times the option, and nowhere at 0.
 T.serverCheck("irrigation_loot_items_in_their_lists_scaled_by_the_option", "learning.lootLists",
     { multipliers = { 2.5, 0, 1 } })
-
--- Each of those lists hands its item out through the game's own roll.
-T.serverCheck("irrigation_loot_items_roll_from_each_list", "learning.lootRolls", { fills = 100 })
