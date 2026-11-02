@@ -67,11 +67,12 @@ local WORN, CEILING = 73, 90
 -- point would hand it back a point up.
 local FRACTION = 0.7
 
--- Take Out Pump from the house's menu, with a screwdriver, gives back the worn Appliance Pump at
--- the whole points below its wear, with its lower ceiling, on both sides; Fit Pump puts that item
--- back in at the fraction of a point it had and the same ceiling. Taking a part out and in again
--- never gains it condition. Catches a part handed back new, rounded up or to the nearest point, or
--- with its ceiling lost, or a part fitted new.
+-- The house's menu shows the worn Appliance Pump at the condition Take Out gives it. Take Out Pump
+-- from that menu, with a screwdriver, gives back the part at the whole points below its wear, with
+-- its lower ceiling, on both sides; Fit Pump puts that item back in at the fraction of a point it
+-- had and the same ceiling. Taking a part out and in again never gains it condition. Catches a menu
+-- that rounds the part up from what comes out, a part handed back new, rounded up or to the nearest
+-- point, or with its ceiling lost, or a part fitted new.
 T.test("irrigation_pump_house_take_out_and_fit_keep_the_parts_wear", {
     instant = true,
     run = function(self)
@@ -80,6 +81,10 @@ T.test("irrigation_pump_house_take_out_and_fit_keep_the_parts_wear", {
         self.house = T.placePump(self, spots[1], T.WOOD,
             fitted(APPLIANCE, nil, { condition = WORN, ceiling = CEILING, fraction = FRACTION }))
         T.give(self, "tools", { { type = "Base.Screwdriver" } })
+        T.waitForSummary(self, self.house, function(summary) return summary.part ~= nil end,
+            "this client's summary of the fitted house")
+        T.goNextTo(self, spots[1].square)
+        T.readMenu(self, function() return T.copyOf(self.house) end, "fitted")
         T.useMenu(self, self.house, "take out", T.findJob("pump", PumpJobs.TAKE_OUT_PUMP), true)
         readUntil(self, self.house, "taken", function(state) return state.record.part == nil end)
         T.readCarried(self, { APPLIANCE })
@@ -94,6 +99,7 @@ T.test("irrigation_pump_house_take_out_and_fit_keep_the_parts_wear", {
         readUntil(self, self.house, "refitted", function(state) return state.record.part ~= nil end)
     end,
     validate = function(self)
+        T.expectWord(self, "fitted", partWord(APPLIANCE, WORN))
         T.expectOffered(self, "take out")
         expectEqual("the part Take Out Pump left in the house", self.reads.taken.record.part, nil)
         local items = T.carriedItems(self, APPLIANCE)

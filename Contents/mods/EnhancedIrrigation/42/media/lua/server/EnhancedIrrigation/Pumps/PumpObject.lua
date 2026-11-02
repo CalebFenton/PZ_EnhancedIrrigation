@@ -229,12 +229,14 @@ end
 -- What every client keeps, as the menu words it, rounded, so wear that changes nothing a player
 -- sees sends nothing: a hand pump's seal and body, and who works it now; a Pump House's part, its
 -- condition and ceiling, its switch, its timer and whether it runs now; and where the hose drinks.
+-- The part's condition is the whole points Take Out gives the item, as vanilla truncates a condition
+-- it carries from one item to another (InventoryItem.setConditionFrom).
 function PumpObject:buildSummary()
     if self:isHouse() then
         local timer = self.timer
         return {
             part = self.part,
-            partCondition = self.part and math.ceil(self.partCondition) or nil,
+            partCondition = self.part and math.floor(self.partCondition) or nil,
             partCeiling = self.partCeiling,
             burntOut = self:isBurntOut(),
             on = self.on == true,
