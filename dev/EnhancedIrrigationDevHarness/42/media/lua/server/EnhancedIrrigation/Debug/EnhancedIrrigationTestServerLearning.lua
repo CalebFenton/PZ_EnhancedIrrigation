@@ -10,13 +10,29 @@ require "PZHarness/Loot"
 local handler = PZHarness.serverHandler
 local Fixtures = PZHarness.Fixtures
 
--- Forgets that the character read the title (modData literatureTitle) of its carried `args.type`,
--- whose cooldown would make reading it again teach nothing (ISReadABook:complete).
-handler("learning.forgetLiterature", function(player, args)
+-- Forgets that the character read its carried `args.type`, by both of vanilla's records: the title
+-- (modData literatureTitle), whose cooldown would make reading it again teach nothing
+-- (ISReadABook:complete), and the read item, by which RecipeLearning's catch-up teaches what it
+-- lists. Both go back as they were when the test ends, so a read in one test teaches no later
+-- test's catch-up.
+handler("learning.forgetLiterature", function(player, args, defer)
     local item = player:getInventory():getFirstTypeRecurse(args.type)
     local title = PZHarness.need(item and item:getModData().literatureTitle,
         "a titled " .. tostring(args.type) .. " in the character's inventory on the server")
-    player:getReadLiterature():remove(title)
+    local titles, books = player:getReadLiterature(), player:getAlreadyReadBook()
+    local day, hadBook = titles:get(title), books:contains(args.type)
+    titles:remove(title)
+    books:remove(args.type)
+    defer(function()
+        titles:remove(title)
+        books:remove(args.type)
+        if day then
+            player:addReadLiterature(title, day)
+        end
+        if hadBook then
+            books:add(args.type)
+        end
+    end)
     return {}
 end)
 

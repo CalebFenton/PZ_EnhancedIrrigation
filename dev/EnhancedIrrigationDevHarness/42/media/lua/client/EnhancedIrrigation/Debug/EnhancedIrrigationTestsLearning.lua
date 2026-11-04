@@ -48,6 +48,25 @@ end
 
 -- Knowledge ---------------------------------------------------------------------------------------
 
+-- Queues the character forgetting the mod's recipes, then reading the pamphlet through vanilla's
+-- action until both sides know what it teaches.
+local function readPamphlet(self)
+    T.knowRecipes(self, RECIPES, false)
+    T.give(self, "pamphlet", { { type = PAMPHLET } })
+    -- A title read within the literature cooldown teaches nothing (ISReadABook:complete), and
+    -- every copy shares its title, so a rerun in the same world would read nothing.
+    T.server(self, "learning.forgetLiterature", { type = PAMPHLET })
+    T.step(function()
+        local p, item = T.player(), self.items.pamphlet[1]
+        local title = item:getModData().literatureTitle
+        if title then
+            p:getReadLiterature():remove(title)
+        end
+        ISTimedActionQueue.add(ISReadABook:new(p, item))
+    end)
+    T.waitForKnown(self, RECIPES, marked(PAMPHLET_RECIPES))
+end
+
 -- This is how the game works, and the pamphlet relies on it: reading literature through vanilla's
 -- action teaches its LearnedRecipes, build recipes as well as craftRecipes, on the authority too,
 -- whose copy the builds and the plumbing ask, and nothing else. A build recipe's AutoLearn, by
@@ -56,23 +75,36 @@ test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
     instant = true,
     run = function(self)
         if not T.need(self, #PAMPHLET_RECIPES > 0, "the LearnedRecipes of " .. PAMPHLET) then return end
-        T.knowRecipes(self, RECIPES, false)
-        T.give(self, "pamphlet", { { type = PAMPHLET } })
-        -- A title read within the literature cooldown teaches nothing (ISReadABook:complete), and
-        -- every copy shares its title, so a rerun in the same world would read nothing.
-        T.server(self, "learning.forgetLiterature", { type = PAMPHLET })
+        readPamphlet(self)
+    end,
+    validate = function(self)
+        T.expectKnown(self, RECIPES, "reading Cisterns for Kentucky", marked(PAMPHLET_RECIPES))
+    end,
+})
+
+-- Reading a title again teaches nothing (ISReadABook:complete), so a recipe a mod adds to literature
+-- after a character read it comes from RecipeLearning's catch-up as the character enters the world:
+-- on both sides, the pamphlet's first recipe, forgotten after the read as if added to its list since.
+test("irrigation_learning_catch_up_teaches_what_a_read_pamphlet_lists_now", {
+    instant = true,
+    run = function(self)
+        if not T.need(self, #PAMPHLET_RECIPES > 0, "the LearnedRecipes of " .. PAMPHLET) then return end
+        readPamphlet(self)
+        local rest = marked(PAMPHLET_RECIPES)
+        rest[PAMPHLET_RECIPES[1]] = nil
+        T.knowRecipes(self, { PAMPHLET_RECIPES[1] }, false)
+        T.waitForKnown(self, RECIPES, rest)
+        T.step(function() self.forgotten = self.known end)
         T.step(function()
-            local p, item = T.player(), self.items.pamphlet[1]
-            local title = item:getModData().literatureTitle
-            if title then
-                p:getReadLiterature():remove(title)
-            end
-            ISTimedActionQueue.add(ISReadABook:new(p, item))
+            sendClientCommand(T.player(), RecipeLearning.COMMAND_MODULE, RecipeLearning.CATCH_UP, {})
         end)
         T.waitForKnown(self, RECIPES, marked(PAMPHLET_RECIPES))
     end,
     validate = function(self)
-        T.expectKnown(self, RECIPES, "reading Cisterns for Kentucky", marked(PAMPHLET_RECIPES))
+        local rest = marked(PAMPHLET_RECIPES)
+        rest[PAMPHLET_RECIPES[1]] = nil
+        T.expectKnown({ known = self.forgotten }, RECIPES, "forgetting " .. PAMPHLET_RECIPES[1], rest)
+        T.expectKnown(self, RECIPES, "catching up a reader of Cisterns for Kentucky", marked(PAMPHLET_RECIPES))
     end,
 })
 
