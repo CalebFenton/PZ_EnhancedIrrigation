@@ -236,7 +236,7 @@ function T.placeTank(self, handle, kind, litres, tainted)
         square = up == 0 and handle.square or nil }
     T.server(self, "tanks.place", T.at(tank, { sprite = spec.sprite, litres = litres, tainted = tainted }), function()
         local square = getSquare(tank.x, tank.y, tank.z)
-        local copy = T.objectWithSprite(square, tank.sprite)
+        local copy = PZHarness.Fixtures.objectWithSprite(square, tank.sprite)
         tank.square = square
         return copy ~= nil and (not Tanks.isTank(copy) or math.abs(Tanks.litres(copy) - (litres or 0)) < T.FINE_LITRES)
     end, "this client's copy of the " .. kind)

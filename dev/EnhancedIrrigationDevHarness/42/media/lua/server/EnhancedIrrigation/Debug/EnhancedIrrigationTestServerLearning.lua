@@ -85,7 +85,7 @@ end
 -- `args.multipliers` in turn, applied over the one before as a load with that value applies it,
 -- scales every weight, and at 0 the item is in no loot list at all, since a zero weight still
 -- spawns through the zombie density bonus.
-PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, args, defer)
+PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, expectEqual, _, args, defer)
     local D = distributions(expect)
     if not D then
         return
@@ -98,15 +98,15 @@ PZHarness.checkHandler("learning.lootLists", function(expect, expectNear, _, arg
             if expect(list ~= nil and list.items ~= nil, where .. ": no such list") then
                 local count, got = Fixtures.countPairs(list.items, loot.fullType)
                 if multiplier == 0 then
-                    expect(count == 0, where .. " " .. count .. " times")
-                elseif expect(count == 1, where .. " " .. count .. " times") then
+                    expectEqual(where .. ", times listed", count, 0)
+                elseif expectEqual(where .. ", times listed", count, 1) then
                     expectNear(where .. " weight", got, weight * multiplier)
                 end
             end
         end
         if multiplier == 0 then
             PZHarness.Loot.forEachItemsList(function(items, path)
-                expect(Fixtures.countPairs(items, loot.fullType) == 0, label .. ": " .. loot.fullType .. " is still in " .. path)
+                expectEqual(label .. ": times " .. loot.fullType .. " is in " .. path, Fixtures.countPairs(items, loot.fullType), 0)
             end)
         end
     end
