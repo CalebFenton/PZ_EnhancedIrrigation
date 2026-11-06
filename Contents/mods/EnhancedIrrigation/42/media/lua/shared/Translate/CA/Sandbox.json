@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Botí de Cisternes per a Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Amb quina freqüència apareix el fullet Cisternes per a Kentucky en magatzems de granja, botigues de jardineria i ferreteries, biblioteques i oficines de correus, com a múltiple de la seua probabilitat normal.<br>0 el trau del botí; Fusteria, Mamposteria i Metal·listeria continuen ensenyant-ne els altres plànols i la fontaneria, però les casetes de bomba aleshores només s'obtenen investigant una peça de bomba.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Botí de bombes, aspersors i vàlvules",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Amb quina freqüència apareix com a botí una bomba elèctrica, un aspersor de gespa, un programador de reg o una electrovàlvula d'aigua, com a múltiple de la seua probabilitat normal.<br>0 els trau tots del botí; una caseta de bomba encara pot usar una bomba d'electrodomèstic recuperada d'una llavadora o un llavaplats, o una bomba elèctrica feta amb un ventilador, un aspersor de gespa es pot fer amb tub, Recuperar bomba encara dona electrovàlvules d'aigua, i una vàlvula amb temporitzador feta amb una d'elles fa la feina d'un programador de reg.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "La fontaneria manté la contaminació",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Activat: una pica, banyera o vàter connectat davall d'un barril de teulada rep l'aigua del barril tal com està, contaminada si la del barril ho està, i els aparells ja connectats així canvien quan es carrega la seua zona.<br>Desactivat: la fontaneria original del joc, que servix neta l'aigua d'un barril de teulada."
+}

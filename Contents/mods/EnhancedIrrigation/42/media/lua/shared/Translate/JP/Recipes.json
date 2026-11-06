@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "タンク台",
+    "EnhancedIrrigation_PlumbToTank": "タンクに配管する",
+    "EnhancedIrrigation_RaisedBarrel": "高架雨樽",
+    "EnhancedIrrigation_RaisedBarrelTarp": "高架雨樽(タープ)",
+    "EnhancedIrrigation_BarrelFilter": "樽フィルター",
+    "EnhancedIrrigation_BrickFilter": "レンガフィルター",
+    "EnhancedIrrigation_FilterCrock": "ろ過かめ",
+    "EnhancedIrrigation_ShapeFilterCrock": "ろ過かめを成形する",
+    "EnhancedIrrigation_FireFilterCrock": "ろ過かめを焼成する",
+    "EnhancedIrrigation_BoilerStone": "ボイラー(石の火室)",
+    "EnhancedIrrigation_BoilerWelded": "ボイラー(溶接した火室)",
+    "EnhancedIrrigation_WoodenHandPump": "木の手押しポンプ",
+    "EnhancedIrrigation_IronHandPump": "鉄の手押しポンプ",
+    "EnhancedIrrigation_PumpHouseWood": "ポンプ小屋(木)",
+    "EnhancedIrrigation_PumpHouseMetal": "ポンプ小屋(鋼板)",
+    "EnhancedIrrigation_SalvagePump": "ポンプを回収する",
+    "EnhancedIrrigation_MakeUtilityPump": "汎用ポンプを作る",
+    "EnhancedIrrigation_MakePipeSprinkler": "パイプスプリンクラーを作る",
+    "EnhancedIrrigation_MakeWindUpValve": "ゼンマイ式バルブを作る",
+    "EnhancedIrrigation_MakeTimerValve": "タイマーバルブを作る"
+}

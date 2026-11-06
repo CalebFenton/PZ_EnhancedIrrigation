@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Support de réservoir",
+    "EnhancedIrrigation_PlumbToTank": "Raccorder à un réservoir",
+    "EnhancedIrrigation_RaisedBarrel": "Collecteur d'eau de pluie surélevé",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Collecteur d'eau de pluie surélevé (bâche)",
+    "EnhancedIrrigation_BarrelFilter": "Filtre en baril",
+    "EnhancedIrrigation_BrickFilter": "Filtre en briques",
+    "EnhancedIrrigation_FilterCrock": "Jarre filtrante",
+    "EnhancedIrrigation_ShapeFilterCrock": "Façonner une jarre filtrante",
+    "EnhancedIrrigation_FireFilterCrock": "Cuire une jarre filtrante",
+    "EnhancedIrrigation_BoilerStone": "Chaudière (foyer en pierre)",
+    "EnhancedIrrigation_BoilerWelded": "Chaudière (foyer soudé)",
+    "EnhancedIrrigation_WoodenHandPump": "Pompe manuelle en bois",
+    "EnhancedIrrigation_IronHandPump": "Pompe manuelle en fer",
+    "EnhancedIrrigation_PumpHouseWood": "Abri de pompe (bois)",
+    "EnhancedIrrigation_PumpHouseMetal": "Abri de pompe (tôle)",
+    "EnhancedIrrigation_SalvagePump": "Récupérer la pompe",
+    "EnhancedIrrigation_MakeUtilityPump": "Fabriquer une pompe utilitaire",
+    "EnhancedIrrigation_MakePipeSprinkler": "Fabriquer un arroseur en tuyau",
+    "EnhancedIrrigation_MakeWindUpValve": "Fabriquer une vanne à remontoir",
+    "EnhancedIrrigation_MakeTimerValve": "Fabriquer une vanne programmable"
+}

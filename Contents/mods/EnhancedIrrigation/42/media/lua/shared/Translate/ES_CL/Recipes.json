@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Torre para Tanque",
+    "EnhancedIrrigation_PlumbToTank": "Conectar a Tanque",
+    "EnhancedIrrigation_RaisedBarrel": "Barril de Lluvia Elevado",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Barril de Lluvia Elevado (Lona)",
+    "EnhancedIrrigation_BarrelFilter": "Filtro de Barril",
+    "EnhancedIrrigation_BrickFilter": "Filtro de Ladrillo",
+    "EnhancedIrrigation_FilterCrock": "Vasija Filtrante",
+    "EnhancedIrrigation_ShapeFilterCrock": "Moldear Vasija Filtrante",
+    "EnhancedIrrigation_FireFilterCrock": "Cocer Vasija Filtrante",
+    "EnhancedIrrigation_BoilerStone": "Caldera (Fogón de Piedra)",
+    "EnhancedIrrigation_BoilerWelded": "Caldera (Fogón Soldado)",
+    "EnhancedIrrigation_WoodenHandPump": "Bomba Manual de Madera",
+    "EnhancedIrrigation_IronHandPump": "Bomba Manual de Hierro",
+    "EnhancedIrrigation_PumpHouseWood": "Caseta de Bomba (Madera)",
+    "EnhancedIrrigation_PumpHouseMetal": "Caseta de Bomba (Plancha Metálica)",
+    "EnhancedIrrigation_SalvagePump": "Rescatar Bomba",
+    "EnhancedIrrigation_MakeUtilityPump": "Hacer Bomba de Uso General",
+    "EnhancedIrrigation_MakePipeSprinkler": "Hacer Aspersor de Tubo",
+    "EnhancedIrrigation_MakeWindUpValve": "Hacer Válvula a Cuerda",
+    "EnhancedIrrigation_MakeTimerValve": "Hacer Válvula con Temporizador"
+}

@@ -264,9 +264,9 @@ A Pump House is built empty. **Fit Pump** puts in an Appliance Pump or a Utility
 - **A running generator in reach**, which burns fuel for the pump at vanilla's rate, as much as a washer for an Appliance Pump and about twice that for a Utility Pump. When the generator runs dry it shuts off; the house stays switched on, says **no power**, and runs again once the generator is refuelled and started.
 - **A Renewable Energy battery bank**, if you play with that mod. It bills the pump as an appliance at the same rate; a Utility Pump alone is more than a plug-in inverter carries.
 
-**Wear.** Running with nothing to draw wears the pump ten times as fast. At 0% it burns out and switches off. **Repair Pump** (Electricity 2; a screwdriver, Scrap Electronics and a Tire Piece; 30 minutes) brings it back to 10% below its last ceiling, and is refused while the pump is better than that.
+**Wear.** Running with nothing to draw wears the pump ten times as fast. At 0% it burns out and switches off. **Repair Pump** (Electrical 2; a screwdriver, Scrap Electronics and a Tire Piece; 30 minutes) brings it back to 10% below its last ceiling, and is refused while the pump is better than that.
 
-**Getting a pump.** **Salvage Pump** on a washing machine, washer-dryer or dishwasher (Electricity 2, a screwdriver and pliers, 30 minutes) gives an Appliance Pump at 60 to 100% and a Water Valve, and leaves the appliance where it stands, never to run again, even moved. Utility Pumps are found, or made from a Blower Fan with **Make Utility Pump**, which comes out at 80%, its ceiling for good.
+**Getting a pump.** **Salvage Pump** on a washing machine, washer-dryer or dishwasher (Electrical 2, a screwdriver and pliers, 30 minutes) gives an Appliance Pump at 60 to 100% and a Water Valve, and leaves the appliance where it stands, never to run again, even moved. Utility Pumps are found, or made from a Blower Fan with **Make Utility Pump**, which comes out at 80%, its ceiling for good.
 
 ## Sprinklers
 
@@ -313,7 +313,7 @@ Every recipe but the Pump Houses is also learned by reaching a skill level, usua
 | Welding | Plumb to Tank at 3, Make Pipe Sprinkler at 4, the Iron Hand Pump and the welded boiler at 5 |
 | Masonry | The stone boiler at 4, the Brick Filter at 5 |
 | Pottery | The Filter Crock, shaping, firing and setting it up, at 5 |
-| Electricity | Salvage Pump at 2, Make Timer Valve at 4, Make Utility Pump at 6 |
+| Electrical | Salvage Pump at 2, Make Timer Valve at 4, Make Utility Pump at 6 |
 
 Researching an item teaches what it's part of, from about two thirds of the recipe's skill:
 

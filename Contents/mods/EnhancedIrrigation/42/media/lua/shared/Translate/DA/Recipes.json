@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Tankstativ",
+    "EnhancedIrrigation_PlumbToTank": "Rørforbind til tank",
+    "EnhancedIrrigation_RaisedBarrel": "Hævet regnvandstønde",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Hævet regnvandstønde (presenning)",
+    "EnhancedIrrigation_BarrelFilter": "Tøndefilter",
+    "EnhancedIrrigation_BrickFilter": "Murstensfilter",
+    "EnhancedIrrigation_FilterCrock": "Filterkrukke",
+    "EnhancedIrrigation_ShapeFilterCrock": "Form filterkrukke",
+    "EnhancedIrrigation_FireFilterCrock": "Brænd filterkrukke",
+    "EnhancedIrrigation_BoilerStone": "Kedel (ildsted af sten)",
+    "EnhancedIrrigation_BoilerWelded": "Kedel (svejset ildsted)",
+    "EnhancedIrrigation_WoodenHandPump": "Håndpumpe af træ",
+    "EnhancedIrrigation_IronHandPump": "Håndpumpe af jern",
+    "EnhancedIrrigation_PumpHouseWood": "Pumpehus (træ)",
+    "EnhancedIrrigation_PumpHouseMetal": "Pumpehus (metalplade)",
+    "EnhancedIrrigation_SalvagePump": "Tag pumpe ud af apparat",
+    "EnhancedIrrigation_MakeUtilityPump": "Lav universalpumpe",
+    "EnhancedIrrigation_MakePipeSprinkler": "Lav plænevander af rør",
+    "EnhancedIrrigation_MakeWindUpValve": "Lav optræksventil",
+    "EnhancedIrrigation_MakeTimerValve": "Lav timerventil"
+}

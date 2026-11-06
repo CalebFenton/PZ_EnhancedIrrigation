@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Menara Tangki",
+    "EnhancedIrrigation_PlumbToTank": "Sambung Pipa ke Tangki",
+    "EnhancedIrrigation_RaisedBarrel": "Tong Air Hujan Tinggi",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Tong Air Hujan Tinggi (Terpal)",
+    "EnhancedIrrigation_BarrelFilter": "Filter Tong",
+    "EnhancedIrrigation_BrickFilter": "Filter Bata",
+    "EnhancedIrrigation_FilterCrock": "Gentong Filter",
+    "EnhancedIrrigation_ShapeFilterCrock": "Bentuk Gentong Filter",
+    "EnhancedIrrigation_FireFilterCrock": "Bakar Gentong Filter",
+    "EnhancedIrrigation_BoilerStone": "Ketel (Tungku Batu)",
+    "EnhancedIrrigation_BoilerWelded": "Ketel (Tungku Las)",
+    "EnhancedIrrigation_WoodenHandPump": "Pompa Tangan Kayu",
+    "EnhancedIrrigation_IronHandPump": "Pompa Tangan Besi",
+    "EnhancedIrrigation_PumpHouseWood": "Rumah Pompa (Kayu)",
+    "EnhancedIrrigation_PumpHouseMetal": "Rumah Pompa (Lembaran Logam)",
+    "EnhancedIrrigation_SalvagePump": "Copot Pompa",
+    "EnhancedIrrigation_MakeUtilityPump": "Buat Pompa Serbaguna",
+    "EnhancedIrrigation_MakePipeSprinkler": "Buat Penyiram Pipa",
+    "EnhancedIrrigation_MakeWindUpValve": "Buat Katup Putar",
+    "EnhancedIrrigation_MakeTimerValve": "Buat Katup Timer"
+}

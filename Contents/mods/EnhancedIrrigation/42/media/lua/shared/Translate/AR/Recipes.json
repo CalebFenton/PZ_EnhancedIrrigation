@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Torre para tanque",
+    "EnhancedIrrigation_PlumbToTank": "Conectar caño al tanque",
+    "EnhancedIrrigation_RaisedBarrel": "Barril recolector de lluvia elevado",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Barril recolector de lluvia elevado (lona)",
+    "EnhancedIrrigation_BarrelFilter": "Filtro de barril",
+    "EnhancedIrrigation_BrickFilter": "Filtro de ladrillo",
+    "EnhancedIrrigation_FilterCrock": "Vasija filtrante",
+    "EnhancedIrrigation_ShapeFilterCrock": "Modelar vasija filtrante",
+    "EnhancedIrrigation_FireFilterCrock": "Cocer vasija filtrante",
+    "EnhancedIrrigation_BoilerStone": "Caldera (hogar de piedra)",
+    "EnhancedIrrigation_BoilerWelded": "Caldera (hogar soldado)",
+    "EnhancedIrrigation_WoodenHandPump": "Bomba manual de madera",
+    "EnhancedIrrigation_IronHandPump": "Bomba manual de hierro",
+    "EnhancedIrrigation_PumpHouseWood": "Caseta de bomba (madera)",
+    "EnhancedIrrigation_PumpHouseMetal": "Caseta de bomba (chapa)",
+    "EnhancedIrrigation_SalvagePump": "Recuperar bomba",
+    "EnhancedIrrigation_MakeUtilityPump": "Hacer bomba de achique",
+    "EnhancedIrrigation_MakePipeSprinkler": "Hacer aspersor de caño",
+    "EnhancedIrrigation_MakeWindUpValve": "Hacer válvula a cuerda",
+    "EnhancedIrrigation_MakeTimerValve": "Hacer válvula con temporizador"
+}

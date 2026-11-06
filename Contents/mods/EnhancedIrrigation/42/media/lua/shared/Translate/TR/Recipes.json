@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Tank Kulesi",
+    "EnhancedIrrigation_PlumbToTank": "Tanka Boru Bağla",
+    "EnhancedIrrigation_RaisedBarrel": "Yükseltilmiş Yağmur Suyu Toplama Varili",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Yükseltilmiş Yağmur Suyu Toplama Varili (Muşambalı)",
+    "EnhancedIrrigation_BarrelFilter": "Varil Filtresi",
+    "EnhancedIrrigation_BrickFilter": "Tuğla Filtre",
+    "EnhancedIrrigation_FilterCrock": "Filtre Testisi",
+    "EnhancedIrrigation_ShapeFilterCrock": "Filtre Testisi Şekillendir",
+    "EnhancedIrrigation_FireFilterCrock": "Filtre Testisini Pişir",
+    "EnhancedIrrigation_BoilerStone": "Kazan (Taş Ocaklı)",
+    "EnhancedIrrigation_BoilerWelded": "Kazan (Kaynaklı Ocaklı)",
+    "EnhancedIrrigation_WoodenHandPump": "Ahşap El Pompası",
+    "EnhancedIrrigation_IronHandPump": "Demir El Pompası",
+    "EnhancedIrrigation_PumpHouseWood": "Pompa Kulübesi (Ahşap)",
+    "EnhancedIrrigation_PumpHouseMetal": "Pompa Kulübesi (Sac)",
+    "EnhancedIrrigation_SalvagePump": "Pompa Sök",
+    "EnhancedIrrigation_MakeUtilityPump": "Çok Amaçlı Pompa Yap",
+    "EnhancedIrrigation_MakePipeSprinkler": "Boru Fıskiye Yap",
+    "EnhancedIrrigation_MakeWindUpValve": "Kurmalı Vana Yap",
+    "EnhancedIrrigation_MakeTimerValve": "Zamanlayıcılı Vana Yap"
+}

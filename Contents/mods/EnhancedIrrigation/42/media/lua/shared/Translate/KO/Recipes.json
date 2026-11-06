@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "탱크 받침대",
+    "EnhancedIrrigation_PlumbToTank": "탱크에 배관 연결하기",
+    "EnhancedIrrigation_RaisedBarrel": "높인 빗물받이 통",
+    "EnhancedIrrigation_RaisedBarrelTarp": "높인 빗물받이 통 (방수포)",
+    "EnhancedIrrigation_BarrelFilter": "통 여과기",
+    "EnhancedIrrigation_BrickFilter": "벽돌 여과기",
+    "EnhancedIrrigation_FilterCrock": "여과 항아리",
+    "EnhancedIrrigation_ShapeFilterCrock": "여과 항아리 빚기",
+    "EnhancedIrrigation_FireFilterCrock": "여과 항아리 굽기",
+    "EnhancedIrrigation_BoilerStone": "보일러 (돌 화실)",
+    "EnhancedIrrigation_BoilerWelded": "보일러 (용접 화실)",
+    "EnhancedIrrigation_WoodenHandPump": "나무 수동 펌프",
+    "EnhancedIrrigation_IronHandPump": "철 수동 펌프",
+    "EnhancedIrrigation_PumpHouseWood": "펌프실 (나무)",
+    "EnhancedIrrigation_PumpHouseMetal": "펌프실 (금속판)",
+    "EnhancedIrrigation_SalvagePump": "펌프 떼어내기",
+    "EnhancedIrrigation_MakeUtilityPump": "다용도 펌프 만들기",
+    "EnhancedIrrigation_MakePipeSprinkler": "파이프 스프링클러 만들기",
+    "EnhancedIrrigation_MakeWindUpValve": "태엽 밸브 만들기",
+    "EnhancedIrrigation_MakeTimerValve": "타이머 밸브 만들기"
+}

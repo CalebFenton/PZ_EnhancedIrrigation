@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "水箱台架",
+    "EnhancedIrrigation_PlumbToTank": "接管到水箱",
+    "EnhancedIrrigation_RaisedBarrel": "高架雨水收集桶",
+    "EnhancedIrrigation_RaisedBarrelTarp": "高架雨水收集桶 (油布)",
+    "EnhancedIrrigation_BarrelFilter": "桶式過濾器",
+    "EnhancedIrrigation_BrickFilter": "磚砌過濾器",
+    "EnhancedIrrigation_FilterCrock": "濾水陶罐",
+    "EnhancedIrrigation_ShapeFilterCrock": "塑形濾水陶罐",
+    "EnhancedIrrigation_FireFilterCrock": "燒製濾水陶罐",
+    "EnhancedIrrigation_BoilerStone": "煮水鍋爐 (石砌火箱)",
+    "EnhancedIrrigation_BoilerWelded": "煮水鍋爐 (焊接火箱)",
+    "EnhancedIrrigation_WoodenHandPump": "木製手壓幫浦",
+    "EnhancedIrrigation_IronHandPump": "鐵製手壓幫浦",
+    "EnhancedIrrigation_PumpHouseWood": "幫浦房 (木製)",
+    "EnhancedIrrigation_PumpHouseMetal": "幫浦房 (金屬片)",
+    "EnhancedIrrigation_SalvagePump": "拆取幫浦",
+    "EnhancedIrrigation_MakeUtilityPump": "製作多用途幫浦",
+    "EnhancedIrrigation_MakePipeSprinkler": "製作水管灑水器",
+    "EnhancedIrrigation_MakeWindUpValve": "製作發條水閥",
+    "EnhancedIrrigation_MakeTimerValve": "製作定時水閥"
+}

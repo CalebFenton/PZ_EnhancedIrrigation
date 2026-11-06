@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Torretta per serbatoio",
+    "EnhancedIrrigation_PlumbToTank": "Allaccia a serbatoio",
+    "EnhancedIrrigation_RaisedBarrel": "Barile per raccolta pioggia rialzato",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Barile per raccolta pioggia rialzato (telo)",
+    "EnhancedIrrigation_BarrelFilter": "Filtro a barile",
+    "EnhancedIrrigation_BrickFilter": "Filtro in mattoni",
+    "EnhancedIrrigation_FilterCrock": "Vaso filtrante",
+    "EnhancedIrrigation_ShapeFilterCrock": "Modella vaso filtrante",
+    "EnhancedIrrigation_FireFilterCrock": "Cuoci vaso filtrante",
+    "EnhancedIrrigation_BoilerStone": "Caldaia (focolare in pietra)",
+    "EnhancedIrrigation_BoilerWelded": "Caldaia (focolare saldato)",
+    "EnhancedIrrigation_WoodenHandPump": "Pompa a mano in legno",
+    "EnhancedIrrigation_IronHandPump": "Pompa a mano in ferro",
+    "EnhancedIrrigation_PumpHouseWood": "Casotto della pompa (legno)",
+    "EnhancedIrrigation_PumpHouseMetal": "Casotto della pompa (lamiera)",
+    "EnhancedIrrigation_SalvagePump": "Recupera pompa",
+    "EnhancedIrrigation_MakeUtilityPump": "Crea pompa multiuso",
+    "EnhancedIrrigation_MakePipeSprinkler": "Crea irrigatore da tubo",
+    "EnhancedIrrigation_MakeWindUpValve": "Crea valvola a carica",
+    "EnhancedIrrigation_MakeTimerValve": "Crea valvola temporizzata"
+}

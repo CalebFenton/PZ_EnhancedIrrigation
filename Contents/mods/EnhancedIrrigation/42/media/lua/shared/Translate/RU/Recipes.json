@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Вышка для бака",
+    "EnhancedIrrigation_PlumbToTank": "Соединить с баком",
+    "EnhancedIrrigation_RaisedBarrel": "Бочка для сбора дождевой воды на вышке",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Бочка для сбора дождевой воды на вышке (брезент)",
+    "EnhancedIrrigation_BarrelFilter": "Бочковой фильтр",
+    "EnhancedIrrigation_BrickFilter": "Кирпичный фильтр",
+    "EnhancedIrrigation_FilterCrock": "Фильтрующий горшок",
+    "EnhancedIrrigation_ShapeFilterCrock": "Вылепить фильтрующий горшок",
+    "EnhancedIrrigation_FireFilterCrock": "Обжечь фильтрующий горшок",
+    "EnhancedIrrigation_BoilerStone": "Котёл (каменная топка)",
+    "EnhancedIrrigation_BoilerWelded": "Котёл (сварная топка)",
+    "EnhancedIrrigation_WoodenHandPump": "Деревянный водяной насос",
+    "EnhancedIrrigation_IronHandPump": "Железный водяной насос",
+    "EnhancedIrrigation_PumpHouseWood": "Насосная будка (дерево)",
+    "EnhancedIrrigation_PumpHouseMetal": "Насосная будка (листовой металл)",
+    "EnhancedIrrigation_SalvagePump": "Извлечь насос",
+    "EnhancedIrrigation_MakeUtilityPump": "Сделать переносной электронасос",
+    "EnhancedIrrigation_MakePipeSprinkler": "Сделать разбрызгиватель из трубы",
+    "EnhancedIrrigation_MakeWindUpValve": "Сделать заводной клапан",
+    "EnhancedIrrigation_MakeTimerValve": "Сделать клапан с таймером"
+}

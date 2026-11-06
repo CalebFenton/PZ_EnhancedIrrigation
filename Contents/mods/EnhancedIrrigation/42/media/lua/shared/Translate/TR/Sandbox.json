@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Kentucky İçin Sarnıçlar ganimeti",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Kentucky İçin Sarnıçlar broşürünün çiftlik depolarında, bahçe ve hırdavat dükkânlarında, kütüphanelerde ve postanelerde ne sıklıkla çıktığı, olağan şansının katı olarak.<br>0 onu ganimetten çıkarır; Marangozluk, Taş İşçiliği ve Metal İşleme yine de diğer planlarını ve boru tesisatını öğretir, ama Pompa Kulübeleri o zaman yalnızca bir pompa parçasını araştırarak öğrenilir.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Pompa, fıskiye ve vana ganimeti",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Çok Amaçlı Pompa, Çim Fıskiyesi, Fıskiye Zamanlayıcısı ya da Su Vanasının ganimette ne sıklıkla çıktığı, olağan şansının katı olarak.<br>0 hepsini ganimetten çıkarır; bir Pompa Kulübesi yine de bir çamaşır ya da bulaşık makinesinden sökülen bir Beyaz Eşya Pompası ya da bir Üfleyici Fandan yapılan bir Çok Amaçlı Pompa alır, Çim Fıskiyesi borudan yapılabilir, Pompa Sök yine Su Vanası verir ve ondan yapılan bir Zamanlayıcılı Vana bir Fıskiye Zamanlayıcısının işini görür.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Tesisat kirliliği korur",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Açık: çatıdaki bir varilin altına borulanan lavabo, küvet ya da tuvalet varilin suyunu olduğu gibi alır, varilinki kirlenmişse kirlenmiş; zaten bu şekilde borulanmış tesisatlar bölgeleri yüklendiğinde değişir.<br>Kapalı: oyunun kendi tesisatı, çatıdaki varilin suyunu temiz verir."
+}

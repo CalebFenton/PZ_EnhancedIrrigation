@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Підставка для бака",
+    "EnhancedIrrigation_PlumbToTank": "Під'єднати до бака",
+    "EnhancedIrrigation_RaisedBarrel": "Піднята бочка для збору дощової води",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Піднята бочка для збору дощової води (брезент)",
+    "EnhancedIrrigation_BarrelFilter": "Фільтр із бочки",
+    "EnhancedIrrigation_BrickFilter": "Цегляний фільтр",
+    "EnhancedIrrigation_FilterCrock": "Фільтрувальний глечик",
+    "EnhancedIrrigation_ShapeFilterCrock": "Виліпити фільтрувальний глечик",
+    "EnhancedIrrigation_FireFilterCrock": "Обпалити фільтрувальний глечик",
+    "EnhancedIrrigation_BoilerStone": "Бойлер (кам'яна топка)",
+    "EnhancedIrrigation_BoilerWelded": "Бойлер (зварна топка)",
+    "EnhancedIrrigation_WoodenHandPump": "Дерев'яний ручний насос",
+    "EnhancedIrrigation_IronHandPump": "Залізний ручний насос",
+    "EnhancedIrrigation_PumpHouseWood": "Насосна будка (дерево)",
+    "EnhancedIrrigation_PumpHouseMetal": "Насосна будка (листовий метал)",
+    "EnhancedIrrigation_SalvagePump": "Зняти насос",
+    "EnhancedIrrigation_MakeUtilityPump": "Зробити господарський електронасос",
+    "EnhancedIrrigation_MakePipeSprinkler": "Зробити розбризкувач із труби",
+    "EnhancedIrrigation_MakeWindUpValve": "Зробити заводний клапан",
+    "EnhancedIrrigation_MakeTimerValve": "Зробити клапан із таймером"
+}

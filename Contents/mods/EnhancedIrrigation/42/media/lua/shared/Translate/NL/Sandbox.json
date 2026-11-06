@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Buit: Regenbakken voor Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Hoe vaak de folder Regenbakken voor Kentucky opduikt in boerderijopslag, tuincentra en bouwmarkten, bibliotheken en postkantoren, als veelvoud van de gewone kans.<br>0 haalt hem uit de buit; Timmerwerk, Metselwerk en Metaalbewerking leren nog steeds de andere bouwplannen en het loodgieterswerk, maar de Pomphuizen komen dan alleen nog uit het onderzoeken van een pomponderdeel.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Buit: pompen, sproeiers en kleppen",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Hoe vaak een Universele pomp, Gazonsproeier, Sproeiertimer of Waterklep opduikt in buit, als veelvoud van de gewone kans.<br>0 haalt ze allemaal uit de buit; een Pomphuis werkt nog steeds met een Apparaatpomp uit een wasmachine of afwasmachine, of een Universele pomp gemaakt van een Luchtblazer, een Gazonsproeier kan van buis worden gemaakt, Pomp slopen levert nog steeds Waterkleppen op, en een Tijdklep daarvan gemaakt doet het werk van een Sproeiertimer.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Leidingen houden besmetting",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Aan: een gootsteen, bad of toilet aangesloten onder een regenton op het dak krijgt het water van de ton zoals het is, besmet als dat van de ton het is, en installaties die al zo zijn aangesloten worden omgezet als hun gebied laadt.<br>Uit: de leidingen van het basisspel, die het water van een regenton op het dak schoon leveren."
+}

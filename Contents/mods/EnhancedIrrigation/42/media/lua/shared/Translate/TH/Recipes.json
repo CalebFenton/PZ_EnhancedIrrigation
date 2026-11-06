@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "แท่นวางถัง",
+    "EnhancedIrrigation_PlumbToTank": "ต่อท่อเข้าถัง",
+    "EnhancedIrrigation_RaisedBarrel": "ถังเก็บน้ำฝนยกสูง",
+    "EnhancedIrrigation_RaisedBarrelTarp": "ถังเก็บน้ำฝนยกสูง (ผ้าใบ)",
+    "EnhancedIrrigation_BarrelFilter": "ถังกรองทราย",
+    "EnhancedIrrigation_BrickFilter": "บ่อกรองอิฐ",
+    "EnhancedIrrigation_FilterCrock": "หม้อกรองดินเผา",
+    "EnhancedIrrigation_ShapeFilterCrock": "ปั้นหม้อกรองดินเผา",
+    "EnhancedIrrigation_FireFilterCrock": "เผาหม้อกรองดินเผา",
+    "EnhancedIrrigation_BoilerStone": "หม้อต้มน้ำ (เตาหิน)",
+    "EnhancedIrrigation_BoilerWelded": "หม้อต้มน้ำ (เตาเหล็กเชื่อม)",
+    "EnhancedIrrigation_WoodenHandPump": "เครื่องสูบน้ำมือโยกไม้",
+    "EnhancedIrrigation_IronHandPump": "เครื่องสูบน้ำมือโยกเหล็ก",
+    "EnhancedIrrigation_PumpHouseWood": "โรงปั๊มน้ำ (ไม้)",
+    "EnhancedIrrigation_PumpHouseMetal": "โรงปั๊มน้ำ (แผ่นโลหะ)",
+    "EnhancedIrrigation_SalvagePump": "ถอดชิ้นส่วนปั๊ม",
+    "EnhancedIrrigation_MakeUtilityPump": "ทำปั๊มน้ำอเนกประสงค์",
+    "EnhancedIrrigation_MakePipeSprinkler": "ทำสปริงเกลอร์จากท่อ",
+    "EnhancedIrrigation_MakeWindUpValve": "ทำวาล์วแบบไขลาน",
+    "EnhancedIrrigation_MakeTimerValve": "ทำวาล์วตั้งเวลา"
+}

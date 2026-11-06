@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Tankgestell",
+    "EnhancedIrrigation_PlumbToTank": "Rohr zum Tank verlegen",
+    "EnhancedIrrigation_RaisedBarrel": "Erhöhte Regentonne",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Erhöhte Regentonne (Plane)",
+    "EnhancedIrrigation_BarrelFilter": "Fassfilter",
+    "EnhancedIrrigation_BrickFilter": "Ziegelfilter",
+    "EnhancedIrrigation_FilterCrock": "Filtertopf",
+    "EnhancedIrrigation_ShapeFilterCrock": "Filtertopf formen",
+    "EnhancedIrrigation_FireFilterCrock": "Filtertopf brennen",
+    "EnhancedIrrigation_BoilerStone": "Kessel (Feuerkasten aus Stein)",
+    "EnhancedIrrigation_BoilerWelded": "Kessel (geschweißter Feuerkasten)",
+    "EnhancedIrrigation_WoodenHandPump": "Holz-Handpumpe",
+    "EnhancedIrrigation_IronHandPump": "Eisen-Handpumpe",
+    "EnhancedIrrigation_PumpHouseWood": "Pumpenhaus (Holz)",
+    "EnhancedIrrigation_PumpHouseMetal": "Pumpenhaus (Blech)",
+    "EnhancedIrrigation_SalvagePump": "Pumpe ausschlachten",
+    "EnhancedIrrigation_MakeUtilityPump": "Universalpumpe herstellen",
+    "EnhancedIrrigation_MakePipeSprinkler": "Rohr-Rasensprenger herstellen",
+    "EnhancedIrrigation_MakeWindUpValve": "Aufzieh-Ventil herstellen",
+    "EnhancedIrrigation_MakeTimerValve": "Zeitschaltventil herstellen"
+}

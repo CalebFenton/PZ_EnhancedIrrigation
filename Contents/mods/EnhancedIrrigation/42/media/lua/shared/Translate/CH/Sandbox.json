@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "肯塔基蓄水手冊物資",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "肯塔基蓄水手冊出現在農場倉庫, 園藝和五金行, 圖書館及郵局的頻率, 以一般機率的倍數表示.<br>0 讓它不出現在物資中; 木工, 石工和金工仍會教它的其他圖紙和接管, 但幫浦房就只能透過研究幫浦零件取得.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "幫浦, 灑水器和水閥物資",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "多用途幫浦, 草坪灑水器, 灑水定時器或水閥出現在物資中的頻率, 以一般機率的倍數表示.<br>0 讓它們全都不出現在物資中; 幫浦房仍可使用從洗衣機或洗碗機拆下的家電幫浦, 或用鼓風機製作的多用途幫浦, 草坪灑水器可用水管製作, 拆取幫浦仍會得到水閥, 用水閥做成的定時水閥可代替灑水定時器.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "接管保留骯髒",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "開啟: 接在屋頂雨水桶下方的水槽, 浴缸或馬桶會得到桶中原樣的水, 桶裡的水骯髒就是骯髒的, 已經這樣接管的設備會在所在區域載入時轉換.<br>關閉: 使用原版的接管方式, 屋頂雨水桶的水會變成乾淨的."
+}

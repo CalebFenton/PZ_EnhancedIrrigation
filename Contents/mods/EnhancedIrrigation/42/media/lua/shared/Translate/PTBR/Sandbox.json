@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Itens: Cisternas para o Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Com que frequência o folheto Cisternas para o Kentucky aparece em depósitos de fazenda, lojas de jardinagem e de ferragens, bibliotecas e agências dos correios, como múltiplo da chance normal.<br>0 o remove dos itens; Carpintaria, Alvenaria e Soldagem ainda ensinam seus outros projetos e o encanamento, mas as Casas de Bomba passam a vir só de pesquisar uma peça de bomba.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Itens: bombas, aspersores e válvulas",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Com que frequência uma Bomba Utilitária, Aspersor de Gramado, Temporizador de Aspersor ou Válvula de Água aparece nos itens, como múltiplo da chance normal.<br>0 remove todos dos itens; uma Casa de Bomba ainda aceita uma Bomba de Eletrodoméstico recuperada de uma lavadora ou lava-louças, ou uma Bomba Utilitária feita de um Ventilador Soprador, um Aspersor de Gramado pode ser feito com cano, Recuperar Bomba ainda rende Válvulas de Água, e uma Válvula com Temporizador feita com uma delas faz o trabalho de um Temporizador de Aspersor.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Encanamento mantém contaminação",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Ativado: uma pia, banheira ou vaso sanitário encanado sob um barril no telhado recebe a água do barril como ela está, contaminada se a do barril estiver, e as peças já encanadas assim mudam quando a área delas carrega.<br>Desativado: o encanamento do jogo base, que serve a água de um barril no telhado limpa."
+}

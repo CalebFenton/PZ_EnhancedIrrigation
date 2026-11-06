@@ -19,6 +19,7 @@ description=[*][b]Why is my rooftop barrel's water tainted now?[/b] Vanilla's pl
 description=[*][b]Can I make it easier, or harder?[/b] Yes, on the [b]Enhanced Irrigation[/b] sandbox page: how often the pamphlet and the parts turn up, and whether plumbing keeps taint.
 description=[*][b]Does it change vanilla farming?[/b] No. Rain and watering cans work as before; only water you run through a line or a sprinkler can drown a bed.
 description=[*][b]Do I need Renewable Energy?[/b] No. With it, a battery bank powers your Pump Houses and timers, and bills the pumps like any appliance.
+description=[*][b]Does it work in my language?[/b] Every text the mod shows is translated into each language the game offers, in the game's own words for items and skills. The player's guide stays in English.
 description=[/list]
 description=
 description=[h2]How it plays[/h2]
@@ -65,7 +66,7 @@ description=
 description=[img]https://raw.githubusercontent.com/CalebFenton/PZ_EnhancedIrrigation/master/art/promo/images/sprinklers.png[/img]
 description=
 description=[h2]Crafting[/h2]
-description=Learn the recipes from [i]Cisterns for Kentucky[/i], by levelling Carpentry, Welding, Masonry, Pottery or Electricity, or by researching a part you found. Builds and crafts need light to see by, and the valves and the Utility Pump a table. Laying pipe, drilling, fitting taps and watering take no learning at all. Every recipe is on [url=https://raw.githubusercontent.com/CalebFenton/PZ_EnhancedIrrigation/master/art/promo/images/recipes.png]one sheet[/url].
+description=Learn the recipes from [i]Cisterns for Kentucky[/i], by levelling Carpentry, Welding, Masonry, Pottery or Electrical, or by researching a part you found. Builds and crafts need light to see by, and the valves and the Utility Pump a table. Laying pipe, drilling, fitting taps and watering take no learning at all. Every recipe is on [url=https://raw.githubusercontent.com/CalebFenton/PZ_EnhancedIrrigation/master/art/promo/images/recipes.png]one sheet[/url].
 description=
 description=[h2]Where to look[/h2]
 description=Think about who kept water moving in 1993: farmers and gardeners, plumbers and the hardware store. Pipe is in warehouses and on building sites, the pamphlet on a garden centre's shelves, and the good pumps and timers in town, where the dead are. Every washing machine and dishwasher hides a pump and a valve, if you don't mind the laundry.

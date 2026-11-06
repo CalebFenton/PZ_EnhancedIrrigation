@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Podest pod zbiornik",
+    "EnhancedIrrigation_PlumbToTank": "Połącz rurą ze zbiornikiem",
+    "EnhancedIrrigation_RaisedBarrel": "Podniesiona beczka na deszczówkę",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Podniesiona beczka na deszczówkę z plandeką",
+    "EnhancedIrrigation_BarrelFilter": "Filtr w beczce",
+    "EnhancedIrrigation_BrickFilter": "Filtr z cegły",
+    "EnhancedIrrigation_FilterCrock": "Dzban filtrujący",
+    "EnhancedIrrigation_ShapeFilterCrock": "Uformuj dzban filtrujący",
+    "EnhancedIrrigation_FireFilterCrock": "Wypal dzban filtrujący",
+    "EnhancedIrrigation_BoilerStone": "Kocioł z paleniskiem z kamienia",
+    "EnhancedIrrigation_BoilerWelded": "Kocioł z paleniskiem spawanym",
+    "EnhancedIrrigation_WoodenHandPump": "Pompa ręczna z drewna",
+    "EnhancedIrrigation_IronHandPump": "Pompa ręczna z żelaza",
+    "EnhancedIrrigation_PumpHouseWood": "Pompownia z drewna",
+    "EnhancedIrrigation_PumpHouseMetal": "Pompownia z blachy",
+    "EnhancedIrrigation_SalvagePump": "Odzyskaj pompę",
+    "EnhancedIrrigation_MakeUtilityPump": "Zrób pompę użytkową",
+    "EnhancedIrrigation_MakePipeSprinkler": "Zrób zraszacz z rury",
+    "EnhancedIrrigation_MakeWindUpValve": "Zrób zawór nakręcany",
+    "EnhancedIrrigation_MakeTimerValve": "Zrób zawór z budzikiem"
+}

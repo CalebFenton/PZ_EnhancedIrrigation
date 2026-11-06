@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Torre de dipòsit",
+    "EnhancedIrrigation_PlumbToTank": "Connectar a dipòsit",
+    "EnhancedIrrigation_RaisedBarrel": "Barril de pluja elevat",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Barril de pluja elevat (lona)",
+    "EnhancedIrrigation_BarrelFilter": "Filtre de barril",
+    "EnhancedIrrigation_BrickFilter": "Filtre de rajola",
+    "EnhancedIrrigation_FilterCrock": "Gerra filtrant",
+    "EnhancedIrrigation_ShapeFilterCrock": "Modelar gerra filtrant",
+    "EnhancedIrrigation_FireFilterCrock": "Coure gerra filtrant",
+    "EnhancedIrrigation_BoilerStone": "Caldera (fogar de pedra)",
+    "EnhancedIrrigation_BoilerWelded": "Caldera (fogar soldat)",
+    "EnhancedIrrigation_WoodenHandPump": "Bomba manual de fusta",
+    "EnhancedIrrigation_IronHandPump": "Bomba manual de ferro",
+    "EnhancedIrrigation_PumpHouseWood": "Caseta de bomba (fusta)",
+    "EnhancedIrrigation_PumpHouseMetal": "Caseta de bomba (xapa)",
+    "EnhancedIrrigation_SalvagePump": "Recuperar bomba",
+    "EnhancedIrrigation_MakeUtilityPump": "Fer bomba elèctrica",
+    "EnhancedIrrigation_MakePipeSprinkler": "Fer aspersor de tub",
+    "EnhancedIrrigation_MakeWindUpValve": "Fer vàlvula de corda",
+    "EnhancedIrrigation_MakeTimerValve": "Fer vàlvula amb temporitzador"
+}

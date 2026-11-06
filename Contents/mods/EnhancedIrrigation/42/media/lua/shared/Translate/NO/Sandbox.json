@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Bytte: Sisterner for Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Hvor ofte brosjyren «Sisterner for Kentucky» dukker opp i gårdslagre, hagesentre og jernvarehandler, biblioteker og postkontorer, som et multiplum av den vanlige sjansen.<br>0 holder den utenfor bytte; Snekker, Murverk og Metallbearbeiding lærer deg fortsatt de andre tegningene og rørleggingen, men pumpehusene får du da bare ved å undersøke en pumpedel.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Bytte: pumper, sprinklere og ventiler",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Hvor ofte en universalpumpe, plensprinkler, sprinklertimer eller vannventil dukker opp som bytte, som et multiplum av den vanlige sjansen.<br>0 holder dem alle utenfor bytte; et pumpehus tar fortsatt en hvitevarepumpe hentet fra en vaskemaskin eller oppvaskmaskin, eller en universalpumpe laget av en blåsevifte, en plensprinkler kan lages av rør, «Hent ut pumpe» gir fortsatt vannventiler, og en tidsventil laget av en av dem gjør samme jobb som en sprinklertimer.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Rørlegging beholder forurensning",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "På: en vask, et badekar eller et toalett koblet under en regntønne på taket får tønnas vann som det er, forurenset hvis tønnas vann er det, og innretninger som allerede er koblet slik, endres når området deres lastes.<br>Av: spillets vanlige rørlegging, som gir rent vann fra en regntønne på taket."
+}

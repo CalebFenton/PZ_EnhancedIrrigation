@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Ciszternák Kentuckynak – zsákmány",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Milyen gyakran bukkan fel a Ciszternák Kentuckynak füzet farmok raktáraiban, kertészeti és vasboltokban, könyvtárakban és postákon, a szokásos esélyének szorzójaként.<br>A 0 kiveszi a zsákmányból; a Famegmunkálás, a Kőművesség és a Lakatosság továbbra is megtanítja a többi tervét és a csövezést, de a Szivattyúházak ekkor csak egy szivattyúalkatrész kutatásából jönnek.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Szivattyú, öntöző és szelep zsákmány",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Milyen gyakran bukkan fel zsákmányként Univerzális szivattyú, Gyepöntöző, Öntözésidőzítő vagy Vízszelep, a szokásos esélyük szorzójaként.<br>A 0 mindet kiveszi a zsákmányból; a Szivattyúházba ekkor is tehető mosógépből vagy mosogatógépből kiszerelt Háztartásigép-szivattyú, vagy Fújtató ventilátorból készült Univerzális szivattyú, a Gyepöntöző csőből is elkészíthető, a Szivattyú kibontása továbbra is ad Vízszelepet, és az abból készült Időzítős szelep elvégzi az Öntözésidőzítő munkáját.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "A csövezés megtartja a szennyezést",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Be: a tetőn lévő hordó alá bekötött mosdó, kád vagy WC a hordó vizét úgy kapja, ahogy van, szennyezetten, ha a hordóé az, és a már így bekötött berendezések átállnak, amikor a környékük betöltődik.<br>Ki: a vanilla csövezés, amely a tetőn lévő hordó vizét tisztán adja."
+}

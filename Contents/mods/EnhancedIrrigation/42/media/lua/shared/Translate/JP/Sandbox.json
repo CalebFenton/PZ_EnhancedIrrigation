@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "「ケンタッキーの貯水槽」の戦利品",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "冊子「ケンタッキーの貯水槽」が農場の倉庫、園芸店、金物店、図書館、郵便局で見つかる頻度で、通常の確率に対する倍率です。<br>0で戦利品から除外されます。大工仕事、石工、溶接加工で他の設計と配管は引き続き習得できますが、ポンプ小屋はポンプ部品の研究でしか習得できなくなります。",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "ポンプ、スプリンクラー、バルブの戦利品",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "汎用ポンプ、芝生用スプリンクラー、スプリンクラータイマー、給水弁が戦利品で見つかる頻度で、通常の確率に対する倍率です。<br>0ですべて戦利品から除外されます。ポンプ小屋には洗濯機や食洗機から回収した家電用ポンプか、送風機から作った汎用ポンプを使えます。芝生用スプリンクラーはパイプから作れ、「ポンプを回収する」で給水弁も手に入り、それから作ったタイマーバルブがスプリンクラータイマーの代わりになります。",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "配管で汚染を維持",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "オン: 屋上の雨樽の下に配管したシンク、バスタブ、トイレは雨樽の水をそのまま受け取り、雨樽の水が汚染されていれば汚染されます。すでにそのように配管された設備は、その区域の読み込み時に切り替わります。<br>オフ: バニラの配管で、屋上の雨樽の水がきれいな状態で供給されます。"
+}

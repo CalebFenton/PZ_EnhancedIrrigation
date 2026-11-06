@@ -16,6 +16,7 @@ Get running water back after the taps run dry, with what a Kentucky farm had in 
 - **Can I make it easier, or harder?** Yes, on the **Enhanced Irrigation** sandbox page: how often the pamphlet and the parts turn up, and whether plumbing keeps taint.
 - **Does it change vanilla farming?** No. Rain and watering cans work as before; only water you run through a line or a sprinkler can drown a bed.
 - **Do I need Renewable Energy?** No. With it, a battery bank powers your Pump Houses and timers, and bills the pumps like any appliance.
+- **Does it work in my language?** Every text the mod shows is translated into each language the game offers, in the game's own words for items and skills. The player's guide stays in English.
 
 ## How it plays
 
@@ -68,7 +69,7 @@ A hand pump on a well gives clean water forever, at about 60% of your endurance 
 
 ## Crafting
 
-Learn the recipes from *Cisterns for Kentucky*, by levelling Carpentry, Welding, Masonry, Pottery or Electricity, or by researching a part you found. Builds and crafts need light to see by, and the valves and the Utility Pump a table. Laying pipe, drilling, fitting taps and watering take no learning at all. Every recipe is on [one sheet](art/promo/images/recipes.png).
+Learn the recipes from *Cisterns for Kentucky*, by levelling Carpentry, Welding, Masonry, Pottery or Electrical, or by researching a part you found. Builds and crafts need light to see by, and the valves and the Utility Pump a table. Laying pipe, drilling, fitting taps and watering take no learning at all. Every recipe is on [one sheet](art/promo/images/recipes.png).
 
 ## Where to look
 

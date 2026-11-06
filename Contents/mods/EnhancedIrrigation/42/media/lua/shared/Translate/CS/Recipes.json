@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Podstavec pro nádrž",
+    "EnhancedIrrigation_PlumbToTank": "Napojit na nádrž",
+    "EnhancedIrrigation_RaisedBarrel": "Vyvýšený sud na dešťovou vodu",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Vyvýšený sud na dešťovou vodu (plachta)",
+    "EnhancedIrrigation_BarrelFilter": "Sudový filtr",
+    "EnhancedIrrigation_BrickFilter": "Cihlový filtr",
+    "EnhancedIrrigation_FilterCrock": "Filtrační hrnec",
+    "EnhancedIrrigation_ShapeFilterCrock": "Vytvarovat filtrační hrnec",
+    "EnhancedIrrigation_FireFilterCrock": "Vypálit filtrační hrnec",
+    "EnhancedIrrigation_BoilerStone": "Kotel (kamenné topeniště)",
+    "EnhancedIrrigation_BoilerWelded": "Kotel (svařované topeniště)",
+    "EnhancedIrrigation_WoodenHandPump": "Dřevěná ruční pumpa",
+    "EnhancedIrrigation_IronHandPump": "Železná ruční pumpa",
+    "EnhancedIrrigation_PumpHouseWood": "Čerpací domek (dřevo)",
+    "EnhancedIrrigation_PumpHouseMetal": "Čerpací domek (plech)",
+    "EnhancedIrrigation_SalvagePump": "Vymontovat čerpadlo",
+    "EnhancedIrrigation_MakeUtilityPump": "Vyrobit univerzální čerpadlo",
+    "EnhancedIrrigation_MakePipeSprinkler": "Vyrobit zavlažovač z trubky",
+    "EnhancedIrrigation_MakeWindUpValve": "Vyrobit natahovací ventil",
+    "EnhancedIrrigation_MakeTimerValve": "Vyrobit ventil s časovačem"
+}

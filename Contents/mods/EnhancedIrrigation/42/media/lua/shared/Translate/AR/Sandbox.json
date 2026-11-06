@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Loot de Cisternas para Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Qué tan seguido aparece el folleto Cisternas para Kentucky en depósitos de granjas, viveros y ferreterías, bibliotecas y oficinas de correo, como múltiplo de su probabilidad habitual.<br>0 lo saca del loot; Trabajo con madera, Albañilería y Soldadura de metales siguen enseñando sus otros planos y la plomería, pero las Casetas de bomba entonces solo se obtienen investigando una pieza de bomba.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Loot de bombas, aspersores y válvulas",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Qué tan seguido aparece como loot una Bomba de achique, un Aspersor de jardín, un Temporizador de riego o una Válvula de agua, como múltiplo de su probabilidad habitual.<br>0 los saca a todos del loot; una Caseta de bomba sigue aceptando una Bomba de electrodoméstico recuperada de un lavarropas o lavavajillas, o una Bomba de achique hecha con un Extractor, un Aspersor de jardín se puede hacer con caño, Recuperar bomba sigue dando Válvulas de agua, y una Válvula con temporizador hecha con una de ellas hace el trabajo de un Temporizador de riego.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "La plomería conserva la contaminación",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Activado: una pileta, bañadera o inodoro conectado bajo un barril en el techo recibe el agua del barril tal cual, contaminada si la del barril lo está, y los artefactos ya conectados así cambian cuando se carga su zona.<br>Desactivado: la plomería del juego base, que da limpia el agua de un barril en el techo."
+}

@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Loot Tandon untuk Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Seberapa sering pamflet Tandon untuk Kentucky muncul di gudang peternakan, toko kebun dan toko perkakas, perpustakaan, dan kantor pos, sebagai kelipatan peluang biasanya.<br>0 menghapusnya dari loot; Pertukangan, Pertukangan Batu, dan Pengelasan tetap mengajarkan rancangan lainnya dan pemipaannya, tetapi Rumah Pompa hanya bisa didapat dengan meneliti komponen pompa.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Loot pompa, penyiram, dan katup",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Seberapa sering Pompa Serbaguna, Penyiram Rumput, Timer Penyiram, atau Katup Air muncul di loot, sebagai kelipatan peluang biasanya.<br>0 menghapus semuanya dari loot; Rumah Pompa tetap bisa memakai Pompa Peralatan yang dicopot dari mesin cuci atau mesin cuci piring, atau Pompa Serbaguna yang dibuat dari Kipas Blower, Penyiram Rumput bisa dibuat dari pipa, Copot Pompa tetap menghasilkan Katup Air, dan Katup Timer yang dibuat darinya menggantikan tugas Timer Penyiram.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Pemipaan menjaga cemaran",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Aktif: wastafel, bak mandi, atau toilet yang disambung pipa di bawah tong atap mendapat air tong apa adanya, tercemar jika air tongnya tercemar, dan perlengkapan yang sudah disambung dengan cara itu ikut berubah saat areanya dimuat.<br>Mati: pemipaan vanilla, yang menyalurkan air tong atap dalam keadaan bersih."
+}

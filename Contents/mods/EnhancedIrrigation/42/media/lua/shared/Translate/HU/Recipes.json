@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Tartályállvány",
+    "EnhancedIrrigation_PlumbToTank": "Bekötés tartályba",
+    "EnhancedIrrigation_RaisedBarrel": "Megemelt esővízgyűjtő hordó",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Megemelt esővízgyűjtő hordó (Ponyva)",
+    "EnhancedIrrigation_BarrelFilter": "Hordós szűrő",
+    "EnhancedIrrigation_BrickFilter": "Téglaszűrő",
+    "EnhancedIrrigation_FilterCrock": "Szűrőfazék",
+    "EnhancedIrrigation_ShapeFilterCrock": "Szűrőfazék formázása",
+    "EnhancedIrrigation_FireFilterCrock": "Szűrőfazék kiégetése",
+    "EnhancedIrrigation_BoilerStone": "Kazán (Kő tűztér)",
+    "EnhancedIrrigation_BoilerWelded": "Kazán (Hegesztett tűztér)",
+    "EnhancedIrrigation_WoodenHandPump": "Fa kézipumpa",
+    "EnhancedIrrigation_IronHandPump": "Vas kézipumpa",
+    "EnhancedIrrigation_PumpHouseWood": "Szivattyúház (Fa)",
+    "EnhancedIrrigation_PumpHouseMetal": "Szivattyúház (Fémlemez)",
+    "EnhancedIrrigation_SalvagePump": "Szivattyú kibontása",
+    "EnhancedIrrigation_MakeUtilityPump": "Univerzális szivattyú készítése",
+    "EnhancedIrrigation_MakePipeSprinkler": "Csőöntöző készítése",
+    "EnhancedIrrigation_MakeWindUpValve": "Felhúzós szelep készítése",
+    "EnhancedIrrigation_MakeTimerValve": "Időzítős szelep készítése"
+}

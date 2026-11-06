@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Pradă: Cisterne pentru Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Cât de des apare broșura Cisterne pentru Kentucky în depozitele fermelor, magazinele de grădinărit și de bricolaj, biblioteci și oficii poștale, ca multiplu al șansei obișnuite.<br>0 o scoate din pradă; Tâmplăria, Zidăria și Sudura tot îi învață celelalte planuri și racordurile, dar Stațiile de Pompare se obțin atunci doar prin cercetarea unei piese de pompă.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Pradă: pompe, aspersoare și valve",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Cât de des apare ca pradă o Pompă de Uz General, un Aspersor de Gazon, un Programator pentru Aspersor sau o Valvă de Apă, ca multiplu al șansei obișnuite.<br>0 le scoate pe toate din pradă; o Stație de Pompare tot primește o Pompă de Electrocasnic recuperată dintr-o mașină de spălat haine sau de vase, ori o Pompă de Uz General făcută dintr-un Ventilator Suflantă, un Aspersor de Gazon se poate face din țeavă, Recuperează Pompa tot dă Valve de Apă, iar o Valvă cu Ceas făcută dintr-una face treaba unui Programator pentru Aspersor.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Racordurile păstrează contaminarea",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Activat: o chiuvetă, cadă sau toaletă racordată sub un butoi de pe acoperiș primește apa butoiului așa cum e, contaminată dacă a butoiului e contaminată, iar instalațiile deja racordate așa se schimbă când li se încarcă zona.<br>Dezactivat: racordurile din jocul de bază, care dau apa butoiului de pe acoperiș curată."
+}

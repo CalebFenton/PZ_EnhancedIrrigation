@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Beute: Zisternen für Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Wie oft die Broschüre Zisternen für Kentucky in Farmlagern, Garten- und Baumärkten, Bibliotheken und Postämtern auftaucht, als Vielfaches ihrer üblichen Chance.<br>0 nimmt sie aus der Beute; Tischlerei, Maurern und Metallbearbeitung lehren weiterhin ihre anderen Pläne und die Verrohrung, aber die Pumpenhäuser gibt es dann nur noch durch Erforschen eines Pumpenteils.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Beute: Pumpen, Rasensprenger und Ventile",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Wie oft eine Universalpumpe, ein Rasensprenger, eine Bewässerungsuhr oder ein Wasserventil als Beute auftaucht, als Vielfaches der üblichen Chance.<br>0 nimmt sie alle aus der Beute; ein Pumpenhaus nimmt weiterhin eine Gerätepumpe aus einer Waschmaschine oder Spülmaschine oder eine aus einem Gebläse hergestellte Universalpumpe, ein Rasensprenger lässt sich aus Rohr herstellen, Pumpe ausschlachten liefert weiterhin Wasserventile, und ein daraus hergestelltes Zeitschaltventil erledigt die Arbeit einer Bewässerungsuhr.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Verrohrung behält Verunreinigung",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "An: Ein Waschbecken, eine Badewanne oder Toilette, die unter einer Regentonne auf dem Dach verrohrt ist, bekommt das Wasser der Tonne so, wie es ist, verunreinigt, wenn das der Tonne es ist, und bereits so verrohrte Einrichtungen werden umgestellt, wenn ihr Bereich geladen wird.<br>Aus: die Verrohrung des Hauptspiels, die das Wasser einer Regentonne auf dem Dach sauber liefert."
+}

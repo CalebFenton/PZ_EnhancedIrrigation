@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Bottino: Cisterne per il Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Quanto spesso l'opuscolo Cisterne per il Kentucky compare nei magazzini delle fattorie, nei negozi di giardinaggio e ferramenta, nelle biblioteche e negli uffici postali, come multiplo della sua probabilità abituale.<br>0 lo toglie dal bottino; Carpenteria, Muratura e Saldatura insegnano comunque gli altri progetti e gli allacciamenti, ma i casotti della pompa si ottengono solo studiando un componente di pompa.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Bottino: pompe, irrigatori e valvole",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Quanto spesso una pompa multiuso, un irrigatore da prato, un timer per irrigatore o una valvola dell'acqua compaiono nel bottino, come multiplo della loro probabilità abituale.<br>0 li toglie tutti dal bottino; un casotto della pompa accetta comunque una pompa da elettrodomestico recuperata da una lavatrice o lavastoviglie, o una pompa multiuso creata da un ventilatore soffiante, un irrigatore da prato si può creare da un tubo, Recupera pompa dà ancora valvole dell'acqua, e una valvola temporizzata creata da una di esse fa il lavoro di un timer per irrigatore.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "L'impianto mantiene la contaminazione",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Attivo: un lavandino, una vasca o un WC allacciato sotto un barile sul tetto riceve l'acqua del barile così com'è, contaminata se lo è quella del barile, e gli impianti già allacciati in quel modo si aggiornano quando la loro area si carica.<br>Disattivo: l'impianto vanilla, che fornisce pulita l'acqua di un barile sul tetto."
+}

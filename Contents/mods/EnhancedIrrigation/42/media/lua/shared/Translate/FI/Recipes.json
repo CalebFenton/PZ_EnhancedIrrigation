@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Säiliöteline",
+    "EnhancedIrrigation_PlumbToTank": "Putkita säiliöön",
+    "EnhancedIrrigation_RaisedBarrel": "Korotettu sadevesitynnyri",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Korotettu sadevesitynnyri (pressu)",
+    "EnhancedIrrigation_BarrelFilter": "Tynnyrisuodatin",
+    "EnhancedIrrigation_BrickFilter": "Tiilisuodatin",
+    "EnhancedIrrigation_FilterCrock": "Suodatinruukku",
+    "EnhancedIrrigation_ShapeFilterCrock": "Muotoile suodatinruukku",
+    "EnhancedIrrigation_FireFilterCrock": "Polta suodatinruukku",
+    "EnhancedIrrigation_BoilerStone": "Keitin (kivinen tulipesä)",
+    "EnhancedIrrigation_BoilerWelded": "Keitin (hitsattu tulipesä)",
+    "EnhancedIrrigation_WoodenHandPump": "Puinen käsipumppu",
+    "EnhancedIrrigation_IronHandPump": "Rautainen käsipumppu",
+    "EnhancedIrrigation_PumpHouseWood": "Pumppuhuone (puu)",
+    "EnhancedIrrigation_PumpHouseMetal": "Pumppuhuone (pelti)",
+    "EnhancedIrrigation_SalvagePump": "Ota pumppu talteen",
+    "EnhancedIrrigation_MakeUtilityPump": "Valmista yleispumppu",
+    "EnhancedIrrigation_MakePipeSprinkler": "Valmista putkisadetin",
+    "EnhancedIrrigation_MakeWindUpValve": "Valmista vedettävä venttiili",
+    "EnhancedIrrigation_MakeTimerValve": "Valmista ajastinventtiili"
+}

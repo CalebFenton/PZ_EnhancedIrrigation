@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Saque de Cisternas para o Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "A frequência com que o folheto Cisternas para o Kentucky aparece em arrecadações de quintas, lojas de jardinagem e de ferragens, bibliotecas e estações de correios, como múltiplo da sua probabilidade habitual.<br>0 retira-o do saque; Carpintaria, Alvenaria e Soldadura continuam a ensinar os seus outros planos e a canalização, mas as Casas da Bomba passam a vir apenas de pesquisar uma peça de bomba.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Saque de bombas, aspersores e válvulas",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "A frequência com que uma Bomba Utilitária, Aspersor de Relva, Temporizador de Rega ou Válvula de Água aparece no saque, como múltiplo da sua probabilidade habitual.<br>0 retira-os todos do saque; uma Casa da Bomba continua a aceitar uma Bomba de Eletrodoméstico recuperada de uma máquina de lavar roupa ou loiça, ou uma Bomba Utilitária feita com um Soprador, um Aspersor de Relva pode ser feito com tubo, Recuperar Bomba continua a dar Válvulas de Água, e uma Válvula com Temporizador feita com uma delas faz o trabalho de um Temporizador de Rega.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "A canalização mantém a contaminação",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Ativado: um lavatório, banheira ou sanita canalizado por baixo de um barril no telhado recebe a água do barril tal como está, contaminada se a do barril o estiver, e os equipamentos já canalizados assim mudam quando a sua área carrega.<br>Desativado: a canalização do jogo base, que serve limpa a água de um barril no telhado."
+}

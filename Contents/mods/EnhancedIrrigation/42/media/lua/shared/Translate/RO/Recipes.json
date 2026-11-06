@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Suport pentru Rezervor",
+    "EnhancedIrrigation_PlumbToTank": "Racordează la Rezervor",
+    "EnhancedIrrigation_RaisedBarrel": "Butoi de Colectare Înălțat",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Butoi de Colectare Înălțat (Prelată)",
+    "EnhancedIrrigation_BarrelFilter": "Filtru în Butoi",
+    "EnhancedIrrigation_BrickFilter": "Filtru din Cărămidă",
+    "EnhancedIrrigation_FilterCrock": "Vas Filtrant",
+    "EnhancedIrrigation_ShapeFilterCrock": "Modelează Vas Filtrant",
+    "EnhancedIrrigation_FireFilterCrock": "Arde Vasul Filtrant",
+    "EnhancedIrrigation_BoilerStone": "Cazan (Focar din Piatră)",
+    "EnhancedIrrigation_BoilerWelded": "Cazan (Focar Sudat)",
+    "EnhancedIrrigation_WoodenHandPump": "Pompă Manuală din Lemn",
+    "EnhancedIrrigation_IronHandPump": "Pompă Manuală din Fier",
+    "EnhancedIrrigation_PumpHouseWood": "Stație de Pompare (Lemn)",
+    "EnhancedIrrigation_PumpHouseMetal": "Stație de Pompare (Tablă)",
+    "EnhancedIrrigation_SalvagePump": "Recuperează Pompa",
+    "EnhancedIrrigation_MakeUtilityPump": "Creează Pompă de Uz General",
+    "EnhancedIrrigation_MakePipeSprinkler": "Creează Aspersor din Țeavă",
+    "EnhancedIrrigation_MakeWindUpValve": "Creează Valvă cu Arc",
+    "EnhancedIrrigation_MakeTimerValve": "Creează Valvă cu Ceas"
+}

@@ -1,0 +1,9 @@
+{
+    "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Botín de Cisternas para Kentucky",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Con qué frecuencia aparece el folleto Cisternas para Kentucky en almacenes de granja, tiendas de jardinería y ferreterías, bibliotecas y oficinas de correos, como múltiplo de su probabilidad habitual.<br>0 lo saca del botín; Carpintería, Albañilería y Metalistería siguen enseñando sus demás planos y la fontanería, pero entonces las casetas de bomba solo se obtienen investigando una pieza de bomba.",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Botín de bombas, aspersores y válvulas",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Con qué frecuencia aparece como botín una bomba de uso general, un aspersor de césped, un temporizador de riego o una válvula de agua, como múltiplo de su probabilidad habitual.<br>0 los saca todos del botín; una caseta de bomba sigue admitiendo una bomba de electrodoméstico recuperada de una lavadora o un lavavajillas, o una bomba de uso general hecha con un ventilador; un aspersor de césped se puede hacer con tubo; Recuperar bomba sigue dando válvulas de agua, y una válvula con temporizador hecha con una de ellas hace el trabajo de un temporizador de riego.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "La fontanería conserva la contaminación",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Activado: un fregadero, bañera o inodoro conectado bajo un barril de tejado recibe el agua del barril tal cual, contaminada si la del barril lo está, y los aparatos ya conectados así cambian cuando se carga su zona.<br>Desactivado: la fontanería del juego base, que sirve limpia el agua de un barril de tejado."
+}

@@ -1,0 +1,22 @@
+{
+    "EnhancedIrrigation_TankStand": "Tankstellage",
+    "EnhancedIrrigation_PlumbToTank": "Aansluiten op tank",
+    "EnhancedIrrigation_RaisedBarrel": "Verhoogde regenton",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Verhoogde regenton (Zeil)",
+    "EnhancedIrrigation_BarrelFilter": "Vatfilter",
+    "EnhancedIrrigation_BrickFilter": "Bakstenen filter",
+    "EnhancedIrrigation_FilterCrock": "Filterpot",
+    "EnhancedIrrigation_ShapeFilterCrock": "Filterpot vormen",
+    "EnhancedIrrigation_FireFilterCrock": "Filterpot bakken",
+    "EnhancedIrrigation_BoilerStone": "Ketel (stenen vuurhaard)",
+    "EnhancedIrrigation_BoilerWelded": "Ketel (gelaste vuurhaard)",
+    "EnhancedIrrigation_WoodenHandPump": "Houten handpomp",
+    "EnhancedIrrigation_IronHandPump": "IJzeren handpomp",
+    "EnhancedIrrigation_PumpHouseWood": "Pomphuis (hout)",
+    "EnhancedIrrigation_PumpHouseMetal": "Pomphuis (plaatstaal)",
+    "EnhancedIrrigation_SalvagePump": "Pomp slopen",
+    "EnhancedIrrigation_MakeUtilityPump": "Universele pomp maken",
+    "EnhancedIrrigation_MakePipeSprinkler": "Buissproeier maken",
+    "EnhancedIrrigation_MakeWindUpValve": "Opwindklep maken",
+    "EnhancedIrrigation_MakeTimerValve": "Tijdklep maken"
+}
