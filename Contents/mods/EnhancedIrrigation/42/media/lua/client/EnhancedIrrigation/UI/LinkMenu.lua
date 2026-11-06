@@ -30,8 +30,9 @@ local Treatment, Pumps, Lines = EnhancedIrrigation.Treatment, EnhancedIrrigation
 -- Compass points counter-clockwise from east, as an angle with north up (y grows southward).
 local DIRECTIONS = { "E", "NE", "N", "NW", "W", "SW", "S", "SE" }
 
---- Which way the square `there` lies from `here`, in words: a compass point, or above or below.
-function LinkMenu.direction(here, there)
+--- Where the square `there` lies from `here`, in words: "6 tiles northeast", "1 tile north", or
+--- straight above or below, where the tiles of pipe would only count the storeys.
+function LinkMenu.away(here, there)
     local dx, dy = there.x - here.x, there.y - here.y
     if dx == 0 and dy == 0 then
         return getText(there.z > here.z and "IGUI_EnhancedIrrigation_Above" or "IGUI_EnhancedIrrigation_Below")
@@ -39,24 +40,26 @@ function LinkMenu.direction(here, there)
     -- Shifted a turn first: the game's Lua keeps the dividend's sign in %, so a square to the south
     -- would give a negative sector.
     local sector = (math.floor((math.atan2(-dy, dx) + math.pi / 8) / (math.pi / 4)) + 8) % 8
-    return getText("IGUI_EnhancedIrrigation_Direction_" .. DIRECTIONS[sector + 1])
+    local tiles = Links.distance(here, there)
+    return getText(tiles == 1 and "IGUI_EnhancedIrrigation_AwayOne" or "IGUI_EnhancedIrrigation_Away", tiles,
+        getText("IGUI_EnhancedIrrigation_Direction_" .. DIRECTIONS[sector + 1]))
 end
 
 --- How the menu names the tank on the square `there`, seen from the square `here`: what it is,
---- how far and which way, and its level; just how far and which way when it isn't loaded here.
+--- where it is, and its level; just where it is when it isn't loaded here.
 function LinkMenu.tankLabel(here, there)
     local tank = Tanks.tankAt(there.x, there.y, there.z)
-    local distance, direction = Links.distance(here, there), LinkMenu.direction(here, there)
+    local away = LinkMenu.away(here, there)
     if not tank then
-        return getText("ContextMenu_EnhancedIrrigation_TankOutOfSight", distance, direction)
+        return getText("ContextMenu_EnhancedIrrigation_TankOutOfSight", away)
     end
     return getText("ContextMenu_EnhancedIrrigation_TankThere", tank:getFluidContainer():getTranslatedContainerName(),
-        distance, direction, Tanks.levelOf(tank))
+        away, Tanks.levelOf(tank))
 end
 
 --- How the menu names the garden line whose tile is on the square `there`, seen from `here`.
 function LinkMenu.lineLabel(here, there)
-    return getText("ContextMenu_EnhancedIrrigation_LineThere", Links.distance(here, there), LinkMenu.direction(here, there))
+    return getText("ContextMenu_EnhancedIrrigation_LineThere", LinkMenu.away(here, there))
 end
 
 --- The name the game gives `object` ("Sink", "Bath", "Barrel Filter"), a fixture, a unit or a
@@ -74,14 +77,13 @@ function LinkMenu.linkLabel(here, there)
     local object = Fixtures.fixtureOn(square) or Treatment.unitOn(square) or Pumps.pumpOn(square)
     if object then
         return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", getText("ContextMenu_EnhancedIrrigation_ObjectThere",
-            LinkMenu.objectName(object), Links.distance(here, there), LinkMenu.direction(here, there)))
+            LinkMenu.objectName(object), LinkMenu.away(here, there)))
     end
     if Lines.lineOn(square) then
         return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", LinkMenu.lineLabel(here, there))
     end
     if square and not Tanks.tankOn(square) then
-        return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", Links.distance(here, there),
-            LinkMenu.direction(here, there))
+        return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", LinkMenu.away(here, there))
     end
     return getText("ContextMenu_EnhancedIrrigation_PlumbedTo", LinkMenu.tankLabel(here, there))
 end

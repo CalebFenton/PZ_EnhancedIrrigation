@@ -166,6 +166,7 @@ T.test("irrigation_treatment_crock_cracks_frozen_full_and_gives_back_only_its_bu
         expect(wet.steps[1].record.cracked, "the frost didn't crack the crock holding water")
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Head", 0, self.wet.spec.head))
         expectNear("the cracked crock's basin", wet.steps[1].basin.litres, wet.before.basin.litres, T.LITRES)
+        expect(not self.reads.dry.steps[1].record.cracked, "the frost cracked the empty crock")
         T.expectWord(self, "dry", getText("IGUI_EnhancedIrrigation_Cracked"), false)
         expectLine(self, "cracked", getText("IGUI_EnhancedIrrigation_Cracked"))
         T.expectOptionRefused(self, "pour", "Tooltip_EnhancedIrrigation_CrockCracked")

@@ -47,7 +47,8 @@ function LineMenu.describe(state)
     if state.running or state.valveOpen then
         table.insert(parts, getText("IGUI_EnhancedIrrigation_LineRunning"))
     end
-    return getText("IGUI_EnhancedIrrigation_Pipe_" .. state.material) .. ": " .. table.concat(parts, ", ")
+    return getText("IGUI_EnhancedIrrigation_LabelValue", getText("IGUI_EnhancedIrrigation_Pipe_" .. state.material),
+        table.concat(parts, ", "))
 end
 
 -- Options -------------------------------------------------------------------------------------------

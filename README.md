@@ -6,7 +6,9 @@ Get running water back after the taps run dry, with what a Kentucky farm had in 
 
 **Build 42.21 or newer.** Single player and multiplayer. Fine to add to a save in progress. Requires **cf_commonlib**.
 
-**[The player's guide](docs/player-guide.md)** explains every system: how high a tank has to stand, sizing a line, keeping a filter alive, what a pump lifts, and where to look.
+**Languages:** English, Català, Čeština, Dansk, Deutsch, Español (España, México, Chile, Argentina), Suomi, Français, Magyar, Bahasa Indonesia, Italiano, 日本語, 한국어, Nederlands, Norsk, Polski, Português (Portugal, Brasil), Română, Русский, ไทย, Türkçe, Українська, 简体中文, 繁體中文.
+
+**[The player's guide](docs/player-guide.md)** (in English) explains every system, from how high a tank has to stand to what a pump lifts.
 
 ## Questions
 
@@ -16,7 +18,6 @@ Get running water back after the taps run dry, with what a Kentucky farm had in 
 - **Can I make it easier, or harder?** Yes, on the **Enhanced Irrigation** sandbox page: how often the pamphlet and the parts turn up, and whether plumbing keeps taint.
 - **Does it change vanilla farming?** No. Rain and watering cans work as before; only water you run through a line or a sprinkler can drown a bed.
 - **Do I need Renewable Energy?** No. With it, a battery bank powers your Pump Houses and timers, and bills the pumps like any appliance.
-- **Does it work in my language?** Every text the mod shows is translated into each language the game offers, in the game's own words for items and skills. The player's guide stays in English.
 
 ## How it plays
 

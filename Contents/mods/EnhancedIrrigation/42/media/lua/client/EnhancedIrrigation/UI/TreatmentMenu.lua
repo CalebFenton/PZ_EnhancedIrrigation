@@ -30,11 +30,14 @@ local KIND_WORDS = {
         if summary.ripeHours >= Treatment.RIPE_HOURS then
             table.insert(words, getText("IGUI_EnhancedIrrigation_Ripe"))
         else
-            table.insert(words, getText("IGUI_EnhancedIrrigation_Ripening",
-                math.ceil(Treatment.RIPE_HOURS - summary.ripeHours)))
+            local hours = math.ceil(Treatment.RIPE_HOURS - summary.ripeHours)
+            local key = hours == 1 and "IGUI_EnhancedIrrigation_RipeningOne" or "IGUI_EnhancedIrrigation_Ripening"
+            table.insert(words, getText(key, hours))
         end
         if summary.head <= 0 and summary.dryHours >= 1 then
-            table.insert(words, getText("IGUI_EnhancedIrrigation_DryFor", math.floor(summary.dryHours)))
+            local hours = math.floor(summary.dryHours)
+            local key = hours == 1 and "IGUI_EnhancedIrrigation_DryForOne" or "IGUI_EnhancedIrrigation_DryFor"
+            table.insert(words, getText(key, hours))
         end
         return words
     end,

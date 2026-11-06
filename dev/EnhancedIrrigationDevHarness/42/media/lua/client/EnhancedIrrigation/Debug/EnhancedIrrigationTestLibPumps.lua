@@ -130,9 +130,10 @@ function T.updatePumpHouse(self, house, label, extra)
     T.read(self, "pumps.update", T.pumpAt(house, extra), label)
 end
 
---- The litres `part` lifts in `hours`.
+--- The litres `part` lifts in `hours`: its rate is litres a game minute. Worked out here rather
+--- than by Pumps.perHour, the formula the tests check.
 function T.pumpLifts(part, hours)
-    return Pumps.perHour(Pumps.PARTS[part]) * hours
+    return Pumps.PARTS[part].rate * 60 * hours
 end
 
 return T

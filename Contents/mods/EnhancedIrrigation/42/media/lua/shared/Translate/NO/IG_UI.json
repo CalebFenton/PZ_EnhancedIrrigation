@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "Sement",
     "IGUI_EnhancedIrrigation_GlueOrTape": "Lim, epoksy eller gaffatape",
-    "IGUI_EnhancedIrrigation_Above": "over",
-    "IGUI_EnhancedIrrigation_Below": "under",
+    "IGUI_EnhancedIrrigation_Above": "rett over",
+    "IGUI_EnhancedIrrigation_Below": "rett under",
+    "IGUI_EnhancedIrrigation_Away": "%1 ruter %2",
     "IGUI_EnhancedIrrigation_Direction_N": "nord",
     "IGUI_EnhancedIrrigation_Direction_NE": "nordøst",
     "IGUI_EnhancedIrrigation_Direction_E": "øst",
@@ -15,6 +16,7 @@
     "IGUI_EnhancedIrrigation_Pipe_iron": "Jernrør",
     "IGUI_EnhancedIrrigation_Pipe_lead": "Blyrør",
     "IGUI_EnhancedIrrigation_Pipe_clay": "Leirrør",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "ingen hull",
     "IGUI_EnhancedIrrigation_Holed": "med hull",
     "IGUI_EnhancedIrrigation_Cracked": "sprukket",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "%1 av %2 L venter",
     "IGUI_EnhancedIrrigation_Ripe": "moden",
     "IGUI_EnhancedIrrigation_Ripening": "modnes, %1 timer igjen",
-    "IGUI_EnhancedIrrigation_Clogged": "Tilstoppet",
+    "IGUI_EnhancedIrrigation_RipeningOne": "modnes, %1 time igjen",
+    "IGUI_EnhancedIrrigation_Clogged": "tilstoppet",
     "IGUI_EnhancedIrrigation_DryFor": "tørr i %1 timer",
+    "IGUI_EnhancedIrrigation_DryForOne": "tørr i %1 time",
     "IGUI_EnhancedIrrigation_Cold": "kald",
     "IGUI_EnhancedIrrigation_Heating": "varmes opp",
     "IGUI_EnhancedIrrigation_Hot": "varm",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: daglig kl. %2 i %3 min",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: ikke stilt",
     "IGUI_EnhancedIrrigation_StartsAt": "Starter kl.",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Pumpehus"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Pumpehus",
+    "IGUI_EnhancedIrrigation_AwayOne": "%1 rute %2"
 }

@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "Cimento",
     "IGUI_EnhancedIrrigation_GlueOrTape": "Cola, epóxi ou fita-cola forte",
-    "IGUI_EnhancedIrrigation_Above": "acima",
-    "IGUI_EnhancedIrrigation_Below": "abaixo",
+    "IGUI_EnhancedIrrigation_Above": "mesmo por cima",
+    "IGUI_EnhancedIrrigation_Below": "mesmo por baixo",
+    "IGUI_EnhancedIrrigation_Away": "a %1 mosaicos a %2",
     "IGUI_EnhancedIrrigation_Direction_N": "norte",
     "IGUI_EnhancedIrrigation_Direction_NE": "nordeste",
     "IGUI_EnhancedIrrigation_Direction_E": "este",
@@ -15,6 +16,7 @@
     "IGUI_EnhancedIrrigation_Pipe_iron": "Tubo de ferro",
     "IGUI_EnhancedIrrigation_Pipe_lead": "Tubo de chumbo",
     "IGUI_EnhancedIrrigation_Pipe_clay": "Tubo de barro",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "sem furos",
     "IGUI_EnhancedIrrigation_Holed": "furado",
     "IGUI_EnhancedIrrigation_Cracked": "rachado",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "%1 de %2 L à espera",
     "IGUI_EnhancedIrrigation_Ripe": "maturado",
     "IGUI_EnhancedIrrigation_Ripening": "a maturar, faltam %1 horas",
-    "IGUI_EnhancedIrrigation_Clogged": "Entupido",
+    "IGUI_EnhancedIrrigation_RipeningOne": "a maturar, falta %1 hora",
+    "IGUI_EnhancedIrrigation_Clogged": "entupido",
     "IGUI_EnhancedIrrigation_DryFor": "seco há %1 horas",
+    "IGUI_EnhancedIrrigation_DryForOne": "seco há %1 hora",
     "IGUI_EnhancedIrrigation_Cold": "frio",
     "IGUI_EnhancedIrrigation_Heating": "a aquecer",
     "IGUI_EnhancedIrrigation_Hot": "quente",
@@ -48,7 +52,7 @@
     "IGUI_EnhancedIrrigation_SealWornOut": "vedante gasto",
     "IGUI_EnhancedIrrigation_PumpCondition": "bomba %1%%",
     "IGUI_EnhancedIrrigation_PumpWornOut": "bomba gasta",
-    "IGUI_EnhancedIrrigation_OutletTo": "enche %1",
+    "IGUI_EnhancedIrrigation_OutletTo": "enche: %1",
     "IGUI_EnhancedIrrigation_NoOutlet": "sem saída",
     "IGUI_EnhancedIrrigation_NoPumpFitted": "sem bomba colocada",
     "IGUI_EnhancedIrrigation_PartCondition": "%1 %2%%",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: diariamente às %2 durante %3 min",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: não definido",
     "IGUI_EnhancedIrrigation_StartsAt": "Começa às",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Casa da Bomba"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Casa da Bomba",
+    "IGUI_EnhancedIrrigation_AwayOne": "a %1 mosaico a %2"
 }

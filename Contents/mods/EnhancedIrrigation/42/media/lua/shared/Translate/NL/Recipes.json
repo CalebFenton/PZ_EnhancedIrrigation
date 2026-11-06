@@ -2,7 +2,7 @@
     "EnhancedIrrigation_TankStand": "Tankstellage",
     "EnhancedIrrigation_PlumbToTank": "Aansluiten op tank",
     "EnhancedIrrigation_RaisedBarrel": "Verhoogde regenton",
-    "EnhancedIrrigation_RaisedBarrelTarp": "Verhoogde regenton (Zeil)",
+    "EnhancedIrrigation_RaisedBarrelTarp": "Verhoogde regenton (zeil)",
     "EnhancedIrrigation_BarrelFilter": "Vatfilter",
     "EnhancedIrrigation_BrickFilter": "Bakstenen filter",
     "EnhancedIrrigation_FilterCrock": "Filterpot",
@@ -16,7 +16,7 @@
     "EnhancedIrrigation_PumpHouseMetal": "Pomphuis (plaatstaal)",
     "EnhancedIrrigation_SalvagePump": "Pomp slopen",
     "EnhancedIrrigation_MakeUtilityPump": "Universele pomp maken",
-    "EnhancedIrrigation_MakePipeSprinkler": "Buissproeier maken",
+    "EnhancedIrrigation_MakePipeSprinkler": "Pijpsproeier maken",
     "EnhancedIrrigation_MakeWindUpValve": "Opwindklep maken",
     "EnhancedIrrigation_MakeTimerValve": "Tijdklep maken"
 }

@@ -1,9 +1,9 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
-    "Sandbox_EnhancedIrrigation_PamphletLoot": "肯塔基蓄水池指南物资",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "物资倍率 - 肯塔基蓄水池指南",
     "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "肯塔基蓄水池指南小册子出现在农场储藏处, 园艺店, 五金店, 图书馆和邮局的频率, 以其正常几率的倍数表示.<br>0 则不会作为物资出现; 木工, 石工和金工仍会教会其中的其他图纸和管道连接, 但泵房只能通过研究水泵零件获得.",
-    "Sandbox_EnhancedIrrigation_PartsLoot": "水泵, 洒水器和阀门物资",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "物资倍率 - 水泵, 洒水器和阀门",
     "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "多用途水泵, 草坪洒水器, 洒水定时器或水阀作为物资出现的频率, 以其正常几率的倍数表示.<br>0 则全都不会作为物资出现; 泵房仍可使用从洗衣机或洗碗机拆取的家电水泵, 或用鼓风机制作的多用途水泵, 草坪洒水器可以用管子制作, 拆取水泵仍会得到水阀, 用水阀制作的定时阀可以代替洒水定时器.",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "管道保留污染",
-    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "开启: 接在屋顶水桶下的水槽, 浴缸或马桶会得到桶里原样的水, 桶里的水被污染则同样被污染, 已经这样接好的设施会在其区域加载时改变.<br>关闭: 使用原版的管道连接, 提供的屋顶水桶的水是干净的."
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "开启: 接在屋顶水桶下的水槽, 浴缸或马桶会得到桶里原样的水, 桶里的水被污染则同样被污染; 已经这样接好的设施会在所在区域加载时切换.<br>关闭: 使用原版的管道连接, 屋顶水桶供出的水是干净的."
 }

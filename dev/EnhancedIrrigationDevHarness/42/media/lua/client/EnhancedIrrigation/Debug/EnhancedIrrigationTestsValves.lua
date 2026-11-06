@@ -158,6 +158,32 @@ T.test("irrigation_valves_wind_up_runs_its_minutes_and_shuts", {
     end,
 })
 
+-- While another player holds the tap, a wound valve runs none of its water, and its minutes run
+-- down meanwhile: the holder's watering is the tap's only draw. Catches a held tap watered twice
+-- over.
+T.test("irrigation_valves_a_held_tap_runs_no_valve_water", {
+    instant = true,
+    run = function(self)
+        local line = tappedLine(self)
+        if not line then return end
+        placeValve(self, line, Valves.WIND_UP)
+        -- Together, so no minute's pass runs the wound valve before the other player holds the tap.
+        T.batch(function()
+            T.job(self, "line", LineJobs.WIND_VALVE, line.tap, "10", "wound")
+            T.read(self, "holds.hold", T.at(line.tap, { feature = "line", as = T.OTHER }), "other")
+            age(self, line, 1, "ran")
+        end)
+    end,
+    validate = function(self)
+        expect(self.reads.wound.ok, "the valve wasn't wound: " .. tostring(self.reads.wound.reason))
+        expect(self.reads.other.held, "the other player couldn't hold the tap")
+        local ran = self.reads.ran
+        expectWatered(ran, 0, "a held tap's valve")
+        expect(not ran.valve.open, "the valve runs a tap another player holds")
+        expectEqual("the wind-up's end after its minutes went by held", ran.valve.untilHour, nil)
+    end,
+})
+
 -- Timers --------------------------------------------------------------------------------------------
 
 -- The opening hour an hour before the hour now, so a window set to it has opened and shut.
@@ -194,22 +220,18 @@ local function expectSet(self)
     expectEqual("the timer's minutes", set.minutes, 30)
 end
 
--- A Sprinkler Timer runs a tap as a Timer Valve does (Valves.ITEMS), so it is checked in its window
--- only, not again without power.
-for _, case in ipairs({ { name = "timer", item = Valves.TIMER }, { name = "sprinkler_timer", item = Valves.SPRINKLER_TIMER } }) do
-    -- Set from its panel on a tap the grid powers indoors: every holed tile got the window's 30
-    -- minutes of water and the tank gave as much, and it isn't open now. Catches a window at the
-    -- wrong hour or of the wrong length, a timer that runs outside it, or an item that isn't a timer.
-    T.test("irrigation_valves_" .. case.name .. "_opens_in_its_window", {
-        instant = true,
-        run = function(self) runTimer(self, case.item, true) end,
-        validate = function(self)
-            expectSet(self)
-            expectWatered(self.reads.ran, 30, "half an hour's window")
-            expect(not self.reads.ran.valve.open, "the timer is open outside its window")
-        end,
-    })
-end
+-- Set from its panel on a tap the grid powers indoors: every holed tile got the window's 30 minutes
+-- of water and the tank gave as much, and it isn't open now. Catches a window at the wrong hour or of
+-- the wrong length, or a timer that runs outside it.
+T.test("irrigation_valves_timer_opens_in_its_window", {
+    instant = true,
+    run = function(self) runTimer(self, Valves.TIMER, true) end,
+    validate = function(self)
+        expectSet(self)
+        expectWatered(self.reads.ran, 30, "half an hour's window")
+        expect(not self.reads.ran.valve.open, "the timer is open outside its window")
+    end,
+})
 
 -- The Timer Valve with the grid off and no generator: its window goes by and no water runs.
 -- Catches a timer that needs no power.

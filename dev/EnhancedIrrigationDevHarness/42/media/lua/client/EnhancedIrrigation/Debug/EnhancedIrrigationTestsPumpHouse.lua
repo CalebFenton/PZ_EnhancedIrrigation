@@ -214,6 +214,37 @@ T.test("irrigation_pump_house_fills_its_tank_before_burning_out", {
     end,
 })
 
+-- How long the Utility Pump runs into the raised barrel: a share of the barrel, so it can't fill.
+local QUARTER_HOUR = 0.25
+
+-- A Pump House on a generator plumbed to a raised barrel on the storey above, two storeys up, as a
+-- Utility Pump lifts and an Appliance Pump doesn't: with the Appliance Pump fitted an hour lifts
+-- nothing into it; with the Utility Pump in its place a quarter-hour lifts that part's rate. The
+-- outlet is plumbed by the server, as one plumbed while a Utility Pump was in. Catches a house that
+-- lifts past its part's reach, as by the house's or the last part's, or one that never lifts that
+-- high.
+T.test("irrigation_pump_house_lifts_only_as_high_as_its_part", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, false)
+        local spots = T.layout(self, { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 3, 0 } }, { bare = true })
+        if not spots then return end
+        T.server(self, "pumpHouse.generator", T.at(spots[4], { fuel = 5 }))
+        self.house, self.tank = T.plumbedPump(self, spots, T.WOOD, fitted(APPLIANCE, { on = true }),
+            { tank = "raisedAbove" })
+        update(self, self.house, "appliance", { hoursAgo = 1, tank = self.tank })
+        -- The Appliance Pump's condition carries over, far more than the quarter-hour wears.
+        update(self, self.house, "utility", { hoursAgo = QUARTER_HOUR, tank = self.tank, fields = { part = UTILITY } })
+    end,
+    validate = function(self)
+        local appliance, utility = self.reads.appliance, self.reads.utility
+        expectNear("the barrel two storeys up after an hour of the Appliance Pump",
+            appliance.after.tank.litres - appliance.before.tank.litres, 0, T.LITRES)
+        expectNear("the barrel two storeys up after a quarter-hour of the Utility Pump",
+            utility.after.tank.litres - utility.before.tank.litres, lifts(UTILITY, QUARTER_HOUR), T.LITRES)
+    end,
+})
+
 -- Timer ---------------------------------------------------------------------------------------------------
 
 -- Indoors on the grid, switched off: Fit Timer from the menu fits the Timer Valve carried, which
@@ -369,6 +400,39 @@ T.test("irrigation_pump_house_budgets_after_line_freeze", {
             self.litres * Lines.HOLE_RATE / (Lines.HOLE_RATE + Lines.CRACK_RATE) * Lines.POINTS_PER_LITRE, 0.05)
         expectNear("wear from equal wet and dry running", frozen.before.record.partCondition - frozen.after.record.partCondition,
             Pumps.PARTS[UTILITY].wearPerHour * T.HALF_HOUR / 2 * (1 + Pumps.DRY_WEAR), 0.001)
+    end,
+})
+
+-- A running Pump House driving a line, smashed with a sledgehammer through vanilla's Destroy cursor
+-- and action, takes its record with it and stops the line on both sides: this client's Drain Line
+-- is offered and the server drains it. Catches a line left running by a pump that is gone, which
+-- nothing could then stop or drain.
+T.test("irrigation_pump_house_smashed_stops_its_line", {
+    instant = true,
+    run = function(self)
+        T.setGrid(self, true)
+        local spots = T.layout(self, LINE_SPOTS, { bare = true, indoors = true, joined = true })
+        if not spots then return end
+        local _
+        self.house, _, self.tiles = houseLine(self, spots, T.METAL, UTILITY)
+        T.job(self, "pump", PumpJobs.TURN_ON, self.house, nil, "on")
+        -- Run long enough to fill the line, so Drain Line has water to take.
+        update(self, self.house, "ran", { hoursAgo = T.HALF_HOUR })
+        T.waitForLines(self, self.tiles, "this client's copy of the running line", function(summary) return summary.running end)
+        T.smash(self, self.house, Pumps.isPump, "Pump House")
+        T.readPump(self, self.house, "smashed")
+        T.waitForLines(self, self.tiles, "this client's copy of the stopped line", function(summary)
+            return not summary.running
+        end)
+        T.useLineJob(self, self.tiles[2], LineJobs.DRAIN, "drain", false)
+        T.job(self, "line", LineJobs.DRAIN, self.tiles[2], nil, "drained")
+    end,
+    validate = function(self)
+        T.expectOk(self.reads.on, "Turn On")
+        local smashed = self.reads.smashed
+        expect(not smashed.found and smashed.record == nil, "the smashed house or its record is still there")
+        T.expectOffered(self, "drain")
+        T.expectOk(self.reads.drained, "the server's Drain Line once the house was smashed")
     end,
 })
 

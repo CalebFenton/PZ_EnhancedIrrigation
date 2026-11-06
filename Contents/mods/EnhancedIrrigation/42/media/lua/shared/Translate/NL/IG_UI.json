@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "Cement",
     "IGUI_EnhancedIrrigation_GlueOrTape": "Lijm, epoxy of duct tape",
-    "IGUI_EnhancedIrrigation_Above": "erboven",
-    "IGUI_EnhancedIrrigation_Below": "eronder",
+    "IGUI_EnhancedIrrigation_Above": "recht erboven",
+    "IGUI_EnhancedIrrigation_Below": "recht eronder",
+    "IGUI_EnhancedIrrigation_Away": "%1 vakjes %2",
     "IGUI_EnhancedIrrigation_Direction_N": "naar het noorden",
     "IGUI_EnhancedIrrigation_Direction_NE": "naar het noordoosten",
     "IGUI_EnhancedIrrigation_Direction_E": "naar het oosten",
@@ -12,9 +13,10 @@
     "IGUI_EnhancedIrrigation_Direction_W": "naar het westen",
     "IGUI_EnhancedIrrigation_Direction_NW": "naar het noordwesten",
     "IGUI_EnhancedIrrigation_Pipe_plastic": "Plastic pijp",
-    "IGUI_EnhancedIrrigation_Pipe_iron": "Metalen buis",
+    "IGUI_EnhancedIrrigation_Pipe_iron": "IJzeren pijp",
     "IGUI_EnhancedIrrigation_Pipe_lead": "Loden pijp",
     "IGUI_EnhancedIrrigation_Pipe_clay": "Kleipijp",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "geen gaten",
     "IGUI_EnhancedIrrigation_Holed": "met gaten",
     "IGUI_EnhancedIrrigation_Cracked": "gebarsten",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "%1 van %2 L wacht",
     "IGUI_EnhancedIrrigation_Ripe": "rijp",
     "IGUI_EnhancedIrrigation_Ripening": "rijpt, nog %1 uur",
-    "IGUI_EnhancedIrrigation_Clogged": "Verstopt",
+    "IGUI_EnhancedIrrigation_RipeningOne": "rijpt, nog %1 uur",
+    "IGUI_EnhancedIrrigation_Clogged": "verstopt",
     "IGUI_EnhancedIrrigation_DryFor": "%1 uur droog",
+    "IGUI_EnhancedIrrigation_DryForOne": "%1 uur droog",
     "IGUI_EnhancedIrrigation_Cold": "koud",
     "IGUI_EnhancedIrrigation_Heating": "warmt op",
     "IGUI_EnhancedIrrigation_Hot": "heet",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: dagelijks om %2 voor %3 min",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: niet ingesteld",
     "IGUI_EnhancedIrrigation_StartsAt": "Start om",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Pomphuis"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Pomphuis",
+    "IGUI_EnhancedIrrigation_AwayOne": "%1 vakje %2"
 }

@@ -95,7 +95,8 @@ T.test("irrigation_water_from_a_raised_tank", {
 })
 
 -- The authority lets go of the tap once the character walks off it, though their client says they
--- are still there: the line stops, and the tank keeps the rest. Catches a tap left running.
+-- are still there: the line stops, the tap is free, and the tank keeps the rest. Catches a tap left
+-- running, or one left held.
 T.test("irrigation_water_stops_when_the_character_walks_off", {
     instant = true,
     timeoutSeconds = 60,
@@ -112,12 +113,22 @@ T.test("irrigation_water_stops_when_the_character_walks_off", {
         walkOffOnceWaterRuns(self, self.tank, away[1][1])
         -- An open tap the authority never closes holds the queue until the test runs out of time.
         T.queueUnchecked(self, EnhancedIrrigationWaterAction, function() return T.lineObject(tile) end, "the tap tile")
-        T.read(self, "tanks.read", T.at(self.tank), "tank")
+        T.batch(function()
+            T.read(self, "tanks.read", T.at(self.tank), "tank")
+            T.readLines(self, { tile }, "let go")
+        end)
     end,
     validate = function(self)
         expect(self.walkedOff, "the water never ran")
-        expect(self.reads.tank.litres > T.TANK_LITRES / 2, "the line ran on after the character walked off: "
-            .. self.reads.tank.litres .. " litres left")
+        -- What leaked before the authority saw the character gone: at the raised speed a couple of
+        -- the crack's hours go by in a few seconds, where a tap left running drains the tank.
+        local least = T.TANK_LITRES - 2 * Lines.CRACK_RATE
+        expect(self.reads.tank.litres >= least, "the line ran on after the character walked off: "
+            .. self.reads.tank.litres .. " litres left, under " .. least)
+        local record = self.reads["let go"].tiles[1].record
+        if expect(record, "the tap's record is gone after the character walked off") then
+            T.expectEqual("the tap's holder after the character walked off", record.heldBy, nil)
+        end
     end,
 })
 
@@ -290,6 +301,46 @@ T.test("irrigation_water_points_per_litre", {
         expectNear("the full crop's water", full.plant.water, Lines.PLANT_FULL, T.CROP_POINTS)
         expectNear("the soak under the full crop", full.record.soak, each * Lines.POINTS_PER_LITRE, T.CROP_POINTS)
         expect(thirsty.record.full and full.record.full, "the line isn't full")
+    end,
+})
+
+-- A tank holding less than an hour's ask gives each outlet the same fraction of what it asked: the
+-- hole's crop gets the hole's share of the tank, the crack's crop none, and the water stops on the
+-- dry tank, which the menu then says. Catches the first outlet taking it all, each outlet given its
+-- whole ask from a tank that hasn't it, or a dry tank still offered.
+T.test("irrigation_water_a_short_tank_shares_what_it_holds", {
+    instant = true,
+    run = function(self)
+        local rows = T.row(self, 2, { indoors = true })
+        if not rows then return end
+        local holed, cracked = rows[1][1], rows[1][2]
+        -- As much as the hole alone asks in an hour, so the two outlets ask more than it holds.
+        self.litres = Lines.HOLE_RATE
+        self.tank = T.placeTank(self, holed, "above", self.litres)
+        holed.fields = T.tapped({ holed = true })
+        cracked.fields = { cracked = true }
+        T.placeLine(self, { holed, cracked }, "iron")
+        T.plant(self, { holed, cracked }, 0)
+        T.flow(self, holed, 1, { holed, cracked }, "hour")
+        T.waitFor(self, function()
+            local copy = Tanks.tankAt(self.tank.x, self.tank.y, self.tank.z)
+            return copy ~= nil and Tanks.litres(copy) < T.FINE_LITRES
+        end, "this client's copy of the tank, drawn dry")
+        T.goNextTo(self, holed.square)
+        T.useWater(self, holed, "dry", false)
+    end,
+    validate = function(self)
+        local hour = self.reads.hour
+        if not expect(hour.drawn, "the line didn't run: " .. tostring(hour.stopped)) then return end
+        expectNear("litres drawn", hour.drawn, self.litres, T.FINE_LITRES)
+        T.expectEqual("why the water stopped", hour.stopped, "Tooltip_EnhancedIrrigation_TankEmpty")
+        -- Both outlets push alike under one head, so the hole's share is its rate over both rates.
+        local share = Lines.HOLE_RATE / (Lines.HOLE_RATE + Lines.CRACK_RATE)
+        local holed, cracked = hour.tiles[1], hour.tiles[2]
+        expectNear("the hole's crop's water", holed.plant.water, self.litres * share * Lines.POINTS_PER_LITRE, T.CROP_POINTS)
+        expectNear("the soak under the hole", holed.record.soak, 0, T.POINTS)
+        expectNear("the crack's crop's water", cracked.plant.water, 0, T.CROP_POINTS)
+        expectOptionRefused(self, "dry", "Tooltip_EnhancedIrrigation_TankEmpty")
     end,
 })
 

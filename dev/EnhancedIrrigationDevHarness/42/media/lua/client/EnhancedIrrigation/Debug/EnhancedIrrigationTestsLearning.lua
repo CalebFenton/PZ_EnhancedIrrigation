@@ -67,24 +67,11 @@ local function readPamphlet(self)
     T.waitForKnown(self, RECIPES, marked(PAMPHLET_RECIPES))
 end
 
--- This is how the game works, and the pamphlet relies on it: reading literature through vanilla's
--- action teaches its LearnedRecipes, build recipes as well as craftRecipes, on the authority too,
--- whose copy the builds and the plumbing ask, and nothing else. A build recipe's AutoLearn, by
--- contrast, does nothing (RecipeLearning stands in for it), so this isn't to be taken on trust.
-test("irrigation_learning_reading_the_pamphlet_teaches_its_recipes", {
-    instant = true,
-    run = function(self)
-        if not T.need(self, #PAMPHLET_RECIPES > 0, "the LearnedRecipes of " .. PAMPHLET) then return end
-        readPamphlet(self)
-    end,
-    validate = function(self)
-        T.expectKnown(self, RECIPES, "reading Cisterns for Kentucky", marked(PAMPHLET_RECIPES))
-    end,
-})
-
--- Reading a title again teaches nothing (ISReadABook:complete), so a recipe a mod adds to literature
--- after a character read it comes from RecipeLearning's catch-up as the character enters the world:
--- on both sides, the pamphlet's first recipe, forgotten after the read as if added to its list since.
+-- Reading the pamphlet through vanilla's action teaches its LearnedRecipes on both sides, the
+-- builds as well (readPamphlet waits for them). Reading a title again teaches nothing
+-- (ISReadABook:complete), so a recipe a mod adds to literature after a character read it comes
+-- from RecipeLearning's catch-up as the character enters the world: on both sides, the pamphlet's
+-- first recipe, forgotten after the read as if added to its list since.
 test("irrigation_learning_catch_up_teaches_what_a_read_pamphlet_lists_now", {
     instant = true,
     run = function(self)

@@ -9,7 +9,9 @@ description=Get running water back after the taps run dry, with what a Kentucky 
 description=
 description=[b]Build 42.21 or newer.[/b] Single player and multiplayer. Fine to add to a save in progress. Requires [b]cf_commonlib[/b].
 description=
-description=[b][url=https://github.com/CalebFenton/PZ_EnhancedIrrigation/blob/master/docs/player-guide.md]The player's guide[/url][/b] explains every system: how high a tank has to stand, sizing a line, keeping a filter alive, what a pump lifts, and where to look.
+description=[b]Languages:[/b] English, Català, Čeština, Dansk, Deutsch, Español (España, México, Chile, Argentina), Suomi, Français, Magyar, Bahasa Indonesia, Italiano, 日本語, 한국어, Nederlands, Norsk, Polski, Português (Portugal, Brasil), Română, Русский, ไทย, Türkçe, Українська, 简体中文, 繁體中文.
+description=
+description=[b][url=https://github.com/CalebFenton/PZ_EnhancedIrrigation/blob/master/docs/player-guide.md]The player's guide[/url][/b] (in English) explains every system, from how high a tank has to stand to what a pump lifts.
 description=
 description=[h2]Questions[/h2]
 description=[list]
@@ -19,7 +21,6 @@ description=[*][b]Why is my rooftop barrel's water tainted now?[/b] Vanilla's pl
 description=[*][b]Can I make it easier, or harder?[/b] Yes, on the [b]Enhanced Irrigation[/b] sandbox page: how often the pamphlet and the parts turn up, and whether plumbing keeps taint.
 description=[*][b]Does it change vanilla farming?[/b] No. Rain and watering cans work as before; only water you run through a line or a sprinkler can drown a bed.
 description=[*][b]Do I need Renewable Energy?[/b] No. With it, a battery bank powers your Pump Houses and timers, and bills the pumps like any appliance.
-description=[*][b]Does it work in my language?[/b] Every text the mod shows is translated into each language the game offers, in the game's own words for items and skills. The player's guide stays in English.
 description=[/list]
 description=
 description=[h2]How it plays[/h2]

@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "セメント",
     "IGUI_EnhancedIrrigation_GlueOrTape": "接着剤、エポキシ樹脂、またはダクトテープ",
-    "IGUI_EnhancedIrrigation_Above": "上",
-    "IGUI_EnhancedIrrigation_Below": "下",
+    "IGUI_EnhancedIrrigation_Above": "真上",
+    "IGUI_EnhancedIrrigation_Below": "真下",
+    "IGUI_EnhancedIrrigation_Away": "%2に%1タイル",
     "IGUI_EnhancedIrrigation_Direction_N": "北",
     "IGUI_EnhancedIrrigation_Direction_NE": "北東",
     "IGUI_EnhancedIrrigation_Direction_E": "東",
@@ -13,8 +14,9 @@
     "IGUI_EnhancedIrrigation_Direction_NW": "北西",
     "IGUI_EnhancedIrrigation_Pipe_plastic": "プラスチックのパイプ",
     "IGUI_EnhancedIrrigation_Pipe_iron": "鉄パイプ",
-    "IGUI_EnhancedIrrigation_Pipe_lead": "リードパイプ",
+    "IGUI_EnhancedIrrigation_Pipe_lead": "鉛パイプ",
     "IGUI_EnhancedIrrigation_Pipe_clay": "粘土のパイプ",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "穴なし",
     "IGUI_EnhancedIrrigation_Holed": "穴あり",
     "IGUI_EnhancedIrrigation_Cracked": "ひび割れ",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "待機中 %1 / %2 L",
     "IGUI_EnhancedIrrigation_Ripe": "熟成済み",
     "IGUI_EnhancedIrrigation_Ripening": "熟成中、残り%1時間",
+    "IGUI_EnhancedIrrigation_RipeningOne": "熟成中、残り%1時間",
     "IGUI_EnhancedIrrigation_Clogged": "目詰まり",
     "IGUI_EnhancedIrrigation_DryFor": "%1時間乾いている",
+    "IGUI_EnhancedIrrigation_DryForOne": "%1時間乾いている",
     "IGUI_EnhancedIrrigation_Cold": "冷えている",
     "IGUI_EnhancedIrrigation_Heating": "加熱中",
     "IGUI_EnhancedIrrigation_Hot": "高温",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: 毎日%2から%3分",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: 未設定",
     "IGUI_EnhancedIrrigation_StartsAt": "開始時刻",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "ポンプ小屋"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "ポンプ小屋",
+    "IGUI_EnhancedIrrigation_AwayOne": "%2に%1タイル"
 }

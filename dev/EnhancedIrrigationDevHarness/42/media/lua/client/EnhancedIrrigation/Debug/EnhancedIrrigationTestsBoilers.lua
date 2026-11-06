@@ -289,5 +289,44 @@ T.test("irrigation_treatment_boiler_scorches_dry_and_is_patched", {
     end,
 })
 
+-- Hours of fuel the fire was noted with at the boiler's last pass, and the gap it is caught up
+-- over: longer, so the fire goes out partway.
+local NOTED_FUEL_HOURS, GAP_HOURS = 2, 3
+
+-- A boiler caught up over a gap, as after its chunk loads again, its fire noted lit at its last pass
+-- with two hours of fuel and out by now, as vanilla put it out meanwhile: the fire burned from the
+-- gap's start for its fuel's two hours and no more. The first hour heats the cold drum and passes
+-- nothing, the second passes the boiler's rate, the third, unlit, passes what the banked heat
+-- holds hot as it cools; the drum wears an hour's wet wear for each hour burned, and the record
+-- notes the fire out, so the next hour neither burns nor passes. Catches a catch-up that reads only
+-- the fire as it is now, burns the whole gap, takes the fuel's minutes for hours, or burns the
+-- noted fuel twice.
+T.test("irrigation_treatment_boiler_catch_up_burns_only_its_noted_fuel", {
+    instant = true,
+    run = function(self)
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        if not spots then return end
+        self.unit = placeUnit(self, spots[1], WELDED)
+        run(self, self.unit, "gap", { GAP_HOURS, 1 }, { head = self.unit.spec.head, headTainted = true, hotHours = 0,
+            fireLit = true, fuel = NOTED_FUEL_HOURS * 60 })
+    end,
+    validate = function(self)
+        local rate = self.unit.spec.rate
+        local gap = self.reads.gap
+        local after, later = gap.steps[1], gap.steps[2]
+        expect(not gap.before.lit, "the boiler's fire is lit now, so the gap can't tell")
+        -- Hours hot: none in hour one, which heats the drum to HOT_HOURS; all of hour two, which
+        -- banks HEAT_MAX_HOURS; and in hour three, unlit, the heat above HOT_HOURS over COOLING.
+        local hot = 0 + 1 + (Treatment.HEAT_MAX_HOURS - Treatment.HOT_HOURS) / Treatment.COOLING
+        expectBasin("the boiler after the gap", after, gap.before.basin.litres + rate * hot, false)
+        expectNear("the head after the gap", after.record.head, self.unit.spec.head - rate * hot, T.LITRES)
+        expectNear("the drum after the gap", after.record.condition,
+            Treatment.DRUM_CONDITION - Treatment.WEAR_WET * NOTED_FUEL_HOURS, 0.0001)
+        expect(not after.record.fireLit and after.record.fuel == 0, "the record noted the fire as "
+            .. tostring(after.record.fireLit) .. " with " .. tostring(after.record.fuel) .. " minutes")
+        expectNear("the hour after the gap", later.basin.litres, after.basin.litres, T.LITRES)
+    end,
+})
+
 T.vanillaBasinTest({ name = "irrigation_treatment_boiler_vanilla_fill_draws_the_basin",
     entity = STONE, litres = 20, tainted = false, inBucket = 0 })

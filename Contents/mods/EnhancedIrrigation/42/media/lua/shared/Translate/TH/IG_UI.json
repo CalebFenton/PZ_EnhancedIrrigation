@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "ปูนซีเมนต์",
     "IGUI_EnhancedIrrigation_GlueOrTape": "กาว กาวอีพอกซี หรือเทปกาว",
-    "IGUI_EnhancedIrrigation_Above": "ด้านบน",
-    "IGUI_EnhancedIrrigation_Below": "ด้านล่าง",
+    "IGUI_EnhancedIrrigation_Above": "ตรงด้านบน",
+    "IGUI_EnhancedIrrigation_Below": "ตรงด้านล่าง",
+    "IGUI_EnhancedIrrigation_Away": "%1 ช่องไปทาง%2",
     "IGUI_EnhancedIrrigation_Direction_N": "เหนือ",
     "IGUI_EnhancedIrrigation_Direction_NE": "ตะวันออกเฉียงเหนือ",
     "IGUI_EnhancedIrrigation_Direction_E": "ตะวันออก",
@@ -15,6 +16,7 @@
     "IGUI_EnhancedIrrigation_Pipe_iron": "ท่อเหล็ก",
     "IGUI_EnhancedIrrigation_Pipe_lead": "ท่อตะกั่ว",
     "IGUI_EnhancedIrrigation_Pipe_clay": "ท่อดินเผา",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "ไม่มีรู",
     "IGUI_EnhancedIrrigation_Holed": "เจาะรูแล้ว",
     "IGUI_EnhancedIrrigation_Cracked": "ร้าว",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "รอกรอง %1 จาก %2 ลิตร",
     "IGUI_EnhancedIrrigation_Ripe": "พร้อมใช้",
     "IGUI_EnhancedIrrigation_Ripening": "กำลังบ่ม อีก %1 ชั่วโมง",
+    "IGUI_EnhancedIrrigation_RipeningOne": "กำลังบ่ม อีก %1 ชั่วโมง",
     "IGUI_EnhancedIrrigation_Clogged": "อุดตัน",
     "IGUI_EnhancedIrrigation_DryFor": "แห้งมา %1 ชั่วโมง",
+    "IGUI_EnhancedIrrigation_DryForOne": "แห้งมา %1 ชั่วโมง",
     "IGUI_EnhancedIrrigation_Cold": "เย็น",
     "IGUI_EnhancedIrrigation_Heating": "กำลังร้อนขึ้น",
     "IGUI_EnhancedIrrigation_Hot": "ร้อน",
@@ -48,7 +52,7 @@
     "IGUI_EnhancedIrrigation_SealWornOut": "ซีลเสื่อมสภาพ",
     "IGUI_EnhancedIrrigation_PumpCondition": "ปั๊ม %1%%",
     "IGUI_EnhancedIrrigation_PumpWornOut": "ปั๊มเสื่อมสภาพ",
-    "IGUI_EnhancedIrrigation_OutletTo": "เติม%1",
+    "IGUI_EnhancedIrrigation_OutletTo": "เติมน้ำเข้า%1",
     "IGUI_EnhancedIrrigation_NoOutlet": "ไม่มีท่อน้ำออก",
     "IGUI_EnhancedIrrigation_NoPumpFitted": "ไม่ได้ติดปั๊ม",
     "IGUI_EnhancedIrrigation_PartCondition": "%1 %2%%",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: ทุกวันเวลา %2 นาน %3 นาที",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: ยังไม่ได้ตั้ง",
     "IGUI_EnhancedIrrigation_StartsAt": "เริ่มเวลา",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "โรงปั๊มน้ำ"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "โรงปั๊มน้ำ",
+    "IGUI_EnhancedIrrigation_AwayOne": "%1 ช่องไปทาง%2"
 }

@@ -237,9 +237,11 @@ T.test("irrigation_pumps_one_worker_per_pump", {
 local SOURCE_LITRES = 50
 
 -- The iron pump beside a barrel of tainted water, its menu naming the barrel as its source, lifts a
--- minute's rate of it into a lidded tank, taint and all, the barrel down by as much; an hour more
--- lifts the rest and stops with nothing to draw, and this client sees the barrel emptied. Catches
--- the taint dropped, water made, a dry barrel still pumped, or a draw the clients never hear of.
+-- minute's rate of it into a lidded tank, taint and all, the barrel down by as much, and the minute
+-- costs the character a minute of the work's endurance, read in the same call so no rest comes
+-- between; an hour more lifts the rest and stops with nothing to draw, and this client sees the
+-- barrel emptied. Catches the taint dropped, water made, a dry barrel still pumped, work that costs
+-- the wrong endurance, or a draw the clients never hear of.
 T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
     instant = true,
     run = function(self)
@@ -248,6 +250,8 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         self.pump = T.placePump(self, spots[1], T.IRON, SEALED)
         self.source = T.placeTank(self, spots[2], "ground", SOURCE_LITRES, true)
         self.tank = T.placeTank(self, spots[3], "lidded")
+        -- Rested, so the minute's cost isn't cut short at none.
+        T.setStat(self, "ENDURANCE", 1)
         T.linkPump(self, self.pump, self.tank)
         T.goNextTo(self, self.pump.square)
         T.readMenu(self, function() return T.copyOf(self.pump) end, "source")
@@ -268,6 +272,9 @@ T.test("irrigation_pumps_tainted_barrel_carries_its_taint", {
         expectNear("the tank after a minute", minute.tank.litres, rate, T.LITRES)
         expect(minute.tank.tainted, "the barrel's tainted water came out clean")
         expectNear("the barrel after a minute", minute.source.litres, SOURCE_LITRES - rate, T.LITRES)
+        -- An hour's endurance times a sixtieth of an hour.
+        expectNear("the endurance a minute's work cost", ran.before.endurance - minute.endurance,
+            Pumps.ENDURANCE_PER_HOUR * T.MINUTE, 0.0001)
         expectNear("the tank after the barrel ran dry", hour.tank.litres, SOURCE_LITRES, T.LITRES)
         expect(hour.source and hour.source.dry, "the emptied barrel isn't the pump's dry source")
         expectEqual("why the pump stopped", hour.stopped, "Tooltip_EnhancedIrrigation_NoWaterToDraw")

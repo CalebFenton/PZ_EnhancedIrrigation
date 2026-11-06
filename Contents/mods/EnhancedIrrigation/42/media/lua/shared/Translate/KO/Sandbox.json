@@ -1,9 +1,9 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
-    "Sandbox_EnhancedIrrigation_PamphletLoot": "켄터키의 저수조 전리품",
-    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "켄터키의 저수조 소책자가 농장 창고, 원예점과 철물점, 도서관, 우체국에서 나오는 빈도로, 평소 확률에 곱합니다.<br>0이면 전리품에서 빠집니다. 목공예, 석공, 금속용접으로 나머지 설계도와 배관은 여전히 배우지만, 펌프실은 펌프 부품을 연구해야만 배울 수 있습니다.",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "켄터키를 위한 저수조 전리품",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "켄터키를 위한 저수조 소책자가 농장 창고, 원예점과 철물점, 도서관, 우체국에서 나오는 빈도로, 평소 확률에 곱합니다.<br>0이면 전리품에서 빠집니다. 목공예, 석공, 금속용접 기술로 나머지 설계도와 배관법은 여전히 배울 수 있지만, 펌프실은 펌프 부품을 연구해야만 배울 수 있습니다.",
     "Sandbox_EnhancedIrrigation_PartsLoot": "펌프, 스프링클러, 밸브 전리품",
-    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "다용도 펌프, 잔디 스프링클러, 스프링클러 타이머, 급수 밸브가 전리품으로 나오는 빈도로, 평소 확률에 곱합니다.<br>0이면 모두 전리품에서 빠집니다. 펌프실에는 세탁기나 식기세척기에서 떼어낸 가전용 펌프, 또는 풍로로 만든 다용도 펌프를 쓸 수 있고, 잔디 스프링클러는 파이프로 만들 수 있으며, 펌프 떼어내기로 급수 밸브를 얻고, 그것으로 만든 타이머 밸브가 스프링클러 타이머 역할을 합니다.",
-    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "배관이 오염을 유지함",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "다용도 펌프, 잔디 스프링클러, 스프링클러 타이머, 급수 밸브가 전리품으로 나오는 빈도로, 평소 확률에 곱합니다.<br>0이면 모두 전리품에서 빠집니다. 펌프실에는 세탁기나 식기세척기에서 떼어낸 가전용 펌프, 또는 풍로로 만든 다용도 펌프를 쓸 수 있고, 잔디 스프링클러는 파이프로 만들 수 있으며, \"펌프 떼어내기\"로 급수 밸브를 얻고, 그것으로 만든 타이머 밸브가 스프링클러 타이머 역할을 합니다.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "배관 물 오염 유지",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "켜기: 지붕 빗물받이 통 아래에 배관 연결된 싱크대, 욕조, 변기는 통의 물을 그대로 받으며, 통의 물이 오염되었으면 오염된 물이 나옵니다. 이미 그렇게 연결된 설비는 그 지역이 불러와질 때 바뀝니다.<br>끄기: 지붕 빗물받이 통의 물을 깨끗하게 공급하는 기본 게임 배관입니다."
 }

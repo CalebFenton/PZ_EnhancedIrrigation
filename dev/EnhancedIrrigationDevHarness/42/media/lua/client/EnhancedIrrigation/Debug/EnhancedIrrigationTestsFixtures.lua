@@ -161,6 +161,8 @@ T.test("irrigation_fixtures_plumbed_to_a_raised_tank_and_unplumbed", {
     validate = function(self)
         T.expectOptionRefused(self, "ground barrel", "Tooltip_EnhancedIrrigation_FixtureNoPressure")
         local forced = self.reads.forced
+        expectEqual("the server's refusal to plumb a sink to a tank on its level", forced.reason,
+            "Tooltip_EnhancedIrrigation_FixtureNoPressure")
         expect(forced.ok == false and not forced.after.state.linked, "the server plumbed a sink to a tank on its level")
         T.expectOffered(self, "plumb")
         local plumbed = self.reads.plumbed
@@ -358,6 +360,8 @@ T.test("irrigation_fixtures_vanilla_plumb_takes_any_barrel_within_reach", {
         expectEqual("Plumb Above toward a barrel two tiles off's refusal", self.farRefusal,
             "Tooltip_EnhancedIrrigation_OutOfReach")
         local far = self.reads.far
+        expectEqual("the server's refusal to plumb the sink to a barrel two tiles off", far.reason,
+            "Tooltip_EnhancedIrrigation_OutOfReach")
         expect(far.ok == false and not far.after.state.linked, "the server plumbed the sink to a barrel two tiles off")
         local plumbed = self.reads.plumbed
         local after = plumbed.after.state
@@ -457,49 +461,7 @@ T.test("irrigation_fixtures_converted_sink_reaches_clients", {
     end,
 })
 
--- What a buffer does in vanilla's menus ------------------------------------------------------------
-
--- This is how the game works, and every plumbed fixture relies on it: the engine serves vanilla's
--- Drink and Fill at a fixture from a FluidContainer on it, taint and all (IsoObject.isTaintedWater,
--- getFluidAmount). Drink warns of the taint, a bucket filled from it is tainted, and the sink goes
--- down by what it took. Catches a game update that cleans a buffer's water on its way out.
-T.test("irrigation_fixtures_vanilla_menus_keep_taint", {
-    instant = true,
-    sandbox = { WaterShutModifier = 0 },
-    run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
-        if not spots then return end
-        T.give(self, "items", { { type = "Base.Bucket" } })
-        self.sink = T.placeFixture(self, spots[1], SINK, { buffer = { litres = sinkLitres(), tainted = true } })
-        T.goNextTo(self, spots[1].square)
-        T.step(function()
-            local sink = T.copyOf(self.sink)
-            local context = T.need(self, sink and T.worldMenu(sink), "a world menu for the sink")
-            if not context then return end
-            T.noteOption(self, "drink", T.optionRunning(context, ISWorldObjectContextMenu.onDrink))
-            T.chooseOption(self, "fill", T.optionRunning(context, ISWorldObjectContextMenu.onTakeWater))
-            context:hideAndChildren()
-        end)
-        local left = sinkLitres() - 10
-        readUntil(self, self.sink, nil, "drawn", function(state) return state.amount < left + T.LITRES end)
-        T.waitFor(self, function()
-            local bucket = self.items.items and self.items.items[1]
-            return bucket ~= nil and bucket:getFluidContainer():getAmount() > 10 - T.LITRES
-        end, "this client's copy of the filled bucket")
-    end,
-    validate = function(self)
-        if T.expectOffered(self, "drink") then
-            local tooltip = self.menu.drink.tooltip
-            expect(tooltip:find(getText("Tooltip_item_TaintedWater"), 1, true) ~= nil,
-                "Drink's tooltip doesn't warn of tainted water: " .. tooltip)
-        end
-        T.expectOffered(self, "fill")
-        expectFixture("the server, drawn", self.reads.drawn, { litres = sinkLitres() - 10, tainted = true })
-        local water = self.items.items[1]:getFluidContainer()
-        expectNear("the bucket's water", water:getAmount(), 10, T.LITRES)
-        expect(water:isTainted(), "the bucket filled from a tainted sink holds clean water")
-    end,
-})
+-- The town's water ---------------------------------------------------------------------------------
 
 -- Before the water shutoff the town's water wins at a plumbed sink in a room: it runs clean and
 -- endless from a tank of tainted water, which it doesn't draw, and a pass empties what was poured

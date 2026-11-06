@@ -35,7 +35,9 @@ end
 
 -- How Unplumb names buried pipe to an empty spot `tiles` tiles east.
 local function buriedPipeEast(tiles)
-    return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", tiles, getText("IGUI_EnhancedIrrigation_Direction_E"))
+    local away = getText(tiles == 1 and "IGUI_EnhancedIrrigation_AwayOne" or "IGUI_EnhancedIrrigation_Away", tiles,
+        getText("IGUI_EnhancedIrrigation_Direction_E"))
+    return getText("ContextMenu_EnhancedIrrigation_BuriedPipeToEmpty", away)
 end
 
 -- The conditions of the iron pipe this client's character carries, lowest first.
@@ -78,6 +80,8 @@ T.test("irrigation_links_plumb_refused_without_the_knowledge", {
         T.expectOptionRefused(self, "plumb")
         expect(not (self.menu.plumb and self.menu.plumb.submenu), "Plumb to Tank lists tanks to a character who doesn't know how")
         local forced = self.reads.forced
+        expectEqual("the server's refusal to plumb for a character who doesn't know how", forced.reason,
+            "Tooltip_EnhancedIrrigation_Short")
         expect(forced.ok == false, "the server plumbed for a character who doesn't know how")
         expectEqual("links the refused plumbing left", forced.after.state.links, 0)
         expectEqual("iron pipe left after the refused plumbing", T.counted(self, "Base.MetalPipe"), self.pipes)
@@ -106,26 +110,38 @@ T.test("irrigation_links_plumb_lists_no_well", {
 })
 
 -- Plumb to Tank reaches a tank Links.MAX_TILES away, taking the lengths that run needs, and no
--- farther: one tile past it is neither listed nor plumbed by the server. Plumbed, the tank moves
--- from Plumb to Tank's list to Unplumb's. Catches the reach off by one, or the wrong pipe taken.
+-- farther: one tile past it is neither listed nor plumbed by the server. A storey counts as
+-- Links.TILES_PER_STOREY tiles of the run, so a tank a storey up is listed that much nearer, and
+-- not a tile past that. Plumbed, the tank moves from Plumb to Tank's list to Unplumb's. Catches the
+-- reach off by one, a storey's pipe left out of it, or the wrong pipe taken.
 T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
     instant = true,
     run = function(self)
         local reach = Links.MAX_TILES
         local spots = T.layout(self, { { 0, 0 }, { reach, 0 }, { reach + 1, 0 } }, { bare = true })
         if not spots then return end
+        local across = reach - Links.TILES_PER_STOREY
+        local function upstairs(dx)
+            return { x = spots[1].x + dx, y = spots[1].y, z = spots[1].z }
+        end
         T.batch(function()
             self.low = T.placeTank(self, spots[1], "lidded")
             self.high = T.placeTank(self, spots[2], "raisedLidded")
             self.far = T.placeTank(self, spots[3], "lidded")
+            self.upper = T.placeTank(self, upstairs(across), "above")
+            self.upperFar = T.placeTank(self, upstairs(across + 1), "above")
         end)
         self.lengths = lengthsFor(reach)
         -- Iron needs no joint.
         T.givePlumbing(self, self.lengths * Pipes.MATERIALS.iron.perLength)
         local with, past = Links.encode(T.at(self.high), "iron"), Links.encode(T.at(self.far), "iron")
         T.useMenu(self, self.low, "one tile past", T.findJob("link", LinkJobs.PLUMB, past), false)
-        T.job(self, "link", LinkJobs.PLUMB, self.low, past, "forced", { reads = T.stateReads("tanks.read", self.low) })
         local low = function() return T.copyOf(self.low) end
+        T.useOption(self, low, "a storey up at the limit", T.findJob("link", LinkJobs.PLUMB,
+            Links.encode(T.at(self.upper), "iron")), false)
+        T.useOption(self, low, "a storey up one tile past", T.findJob("link", LinkJobs.PLUMB,
+            Links.encode(T.at(self.upperFar), "iron")), false)
+        T.job(self, "link", LinkJobs.PLUMB, self.low, past, "forced", { reads = T.stateReads("tanks.read", self.low) })
         T.useOption(self, low, "at the limit", T.findJob("link", LinkJobs.PLUMB, with), true)
         T.readUntil(self, "links.read", T.at(self.low), "links", function(reply) return #reply.links > 0 end)
         T.count(self, "left", { "Base.MetalPipe", "Base.PipeWrench" })
@@ -136,7 +152,10 @@ T.test("irrigation_links_plumb_to_tank_up_to_max_tiles", {
     end,
     validate = function(self)
         expect(not self.menu["one tile past"].found, "Plumb to Tank lists a tank " .. (Links.MAX_TILES + 1) .. " tiles away")
+        T.expectOffered(self, "a storey up at the limit")
+        expect(not self.menu["a storey up one tile past"].found, "Plumb to Tank lists a tank a storey up one tile past its reach")
         local forced = self.reads.forced
+        expectEqual("the server's refusal to plumb to a tank out of reach", forced.reason, "Tooltip_EnhancedIrrigation_OutOfReach")
         expect(forced.ok == false, "the server plumbed to a tank out of reach")
         expectEqual("links the refused plumbing left", forced.after.state.links, 0)
         T.expectOffered(self, "at the limit")
@@ -370,6 +389,8 @@ T.test("irrigation_links_buried_pipe_stays_and_reconnects", {
         expectEqual("the name Unplumb gives the bare end", named, want)
         expect(not self.menu["plumb again"].found, "Plumb to Tank lists the tank set back on the plumbed square")
         local forced = self.reads.forced
+        expectEqual("the server's refusal of a second pipe between the same squares", forced.reason,
+            "Tooltip_EnhancedIrrigation_AlreadyPlumbed")
         expect(forced.ok == false, "the server laid a second pipe between the same squares")
         expectEqual("links between the same squares", forced.after.state.links, 1)
         local joined, moved = self.reads.joined, math.min(PASS_LITRES, self.start / 2)
@@ -449,6 +470,6 @@ T.test("irrigation_links_keep_the_newest_list", {
     end,
     validate = function(self)
         expect(self.reads.linked.links == 1, "the link wasn't made")
-        expect(self.kept == 1, "this client took a list of links older than the one it had")
+        expectEqual("links at the tank after a stale list landed", self.kept, 1)
     end,
 })

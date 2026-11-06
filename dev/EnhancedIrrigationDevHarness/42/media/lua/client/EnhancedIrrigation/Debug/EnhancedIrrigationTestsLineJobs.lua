@@ -124,7 +124,7 @@ T.test("irrigation_lines_hammer_and_nail_can_crack_plastic", {
         expect(tooltip:find(getText("Tooltip_EnhancedIrrigation_MayCrack"), 1, true) ~= nil,
             "the tooltip doesn't warn the nail may split plastic: " .. tooltip)
         expectEqual("nails drilling left", T.counted(self, "Base.Nails"), self.nails - self.need)
-        expect(T.counted(self, "Base.Hammer") == 1, "drilling took the hammer")
+        expectEqual("hammers drilling left", T.counted(self, "Base.Hammer"), 1)
     end,
 })
 
@@ -164,9 +164,9 @@ T.test("irrigation_lines_fit_tap_needs_a_tank_a_storey_up", {
         expectEqual("the fitted tap's pipe", record.tapMaterial, "lead")
         expect(T.hasOverlay(self.reads.tapped.tiles[1].overlays, Sprites.TAP), "the server shows no riser")
         local iron, lead = Pipes.MATERIALS.iron.item, Pipes.MATERIALS.lead.item
-        expect(T.counted(self, lead) == 0, "the tap took no lead pipe")
-        expect(T.counted(self, iron) == 1, "the tap on lead pipe took iron pipe")
-        expect(T.counted(self, "Base.PipeWrench") == 1, "the tap took the pipe wrench")
+        expectEqual("lead pipe the tap left", T.counted(self, lead), 0)
+        expectEqual("iron pipe the tap on lead pipe left", T.counted(self, iron), 1)
+        expectEqual("pipe wrenches the tap left", T.counted(self, "Base.PipeWrench"), 1)
     end,
 })
 

@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "Cement",
     "IGUI_EnhancedIrrigation_GlueOrTape": "Lepidlo, epoxid nebo lepicí páska",
-    "IGUI_EnhancedIrrigation_Above": "nahoře",
-    "IGUI_EnhancedIrrigation_Below": "dole",
+    "IGUI_EnhancedIrrigation_Above": "přímo nahoře",
+    "IGUI_EnhancedIrrigation_Below": "přímo dole",
+    "IGUI_EnhancedIrrigation_Away": "na %2 (polí: %1)",
     "IGUI_EnhancedIrrigation_Direction_N": "sever",
     "IGUI_EnhancedIrrigation_Direction_NE": "severovýchod",
     "IGUI_EnhancedIrrigation_Direction_E": "východ",
@@ -15,6 +16,7 @@
     "IGUI_EnhancedIrrigation_Pipe_iron": "Železná trubka",
     "IGUI_EnhancedIrrigation_Pipe_lead": "Olověná trubka",
     "IGUI_EnhancedIrrigation_Pipe_clay": "Hliněná trubka",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "bez otvorů",
     "IGUI_EnhancedIrrigation_Holed": "s otvory",
     "IGUI_EnhancedIrrigation_Cracked": "prasklá",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "čeká %1 z %2 l",
     "IGUI_EnhancedIrrigation_Ripe": "uzrálý",
     "IGUI_EnhancedIrrigation_Ripening": "zraje, zbývá %1 h",
-    "IGUI_EnhancedIrrigation_Clogged": "Ucpaný",
+    "IGUI_EnhancedIrrigation_RipeningOne": "zraje, zbývá %1 h",
+    "IGUI_EnhancedIrrigation_Clogged": "ucpaný",
     "IGUI_EnhancedIrrigation_DryFor": "suchý %1 h",
+    "IGUI_EnhancedIrrigation_DryForOne": "suchý %1 h",
     "IGUI_EnhancedIrrigation_Cold": "studený",
     "IGUI_EnhancedIrrigation_Heating": "ohřívá se",
     "IGUI_EnhancedIrrigation_Hot": "horký",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: denně v %2 na %3 min",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: nenastaveno",
     "IGUI_EnhancedIrrigation_StartsAt": "Začíná v",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Čerpací domek"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Čerpací domek",
+    "IGUI_EnhancedIrrigation_AwayOne": "%1 pole na %2"
 }

@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "Цемент",
     "IGUI_EnhancedIrrigation_GlueOrTape": "Клей, эпоксидная смола или изолента",
-    "IGUI_EnhancedIrrigation_Above": "выше",
-    "IGUI_EnhancedIrrigation_Below": "ниже",
+    "IGUI_EnhancedIrrigation_Above": "прямо сверху",
+    "IGUI_EnhancedIrrigation_Below": "прямо снизу",
+    "IGUI_EnhancedIrrigation_Away": "%1 кл. %2",
     "IGUI_EnhancedIrrigation_Direction_N": "к северу",
     "IGUI_EnhancedIrrigation_Direction_NE": "к северо-востоку",
     "IGUI_EnhancedIrrigation_Direction_E": "к востоку",
@@ -15,6 +16,7 @@
     "IGUI_EnhancedIrrigation_Pipe_iron": "Металлическая труба",
     "IGUI_EnhancedIrrigation_Pipe_lead": "Свинцовая труба",
     "IGUI_EnhancedIrrigation_Pipe_clay": "Керамическая труба",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "без отверстий",
     "IGUI_EnhancedIrrigation_Holed": "с отверстиями",
     "IGUI_EnhancedIrrigation_Cracked": "трещина",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "ждут: %1 из %2 л",
     "IGUI_EnhancedIrrigation_Ripe": "созрел",
     "IGUI_EnhancedIrrigation_Ripening": "созревает, ещё %1 ч",
-    "IGUI_EnhancedIrrigation_Clogged": "Засорён",
+    "IGUI_EnhancedIrrigation_RipeningOne": "созревает, ещё %1 ч",
+    "IGUI_EnhancedIrrigation_Clogged": "засорён",
     "IGUI_EnhancedIrrigation_DryFor": "сухой уже %1 ч",
+    "IGUI_EnhancedIrrigation_DryForOne": "сухой уже %1 ч",
     "IGUI_EnhancedIrrigation_Cold": "холодный",
     "IGUI_EnhancedIrrigation_Heating": "нагревается",
     "IGUI_EnhancedIrrigation_Hot": "горячий",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: ежедневно в %2 на %3 мин",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: не настроен",
     "IGUI_EnhancedIrrigation_StartsAt": "Начало в",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Насосная будка"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "Насосная будка",
+    "IGUI_EnhancedIrrigation_AwayOne": "%1 клетка %2"
 }

@@ -112,17 +112,20 @@ T.test("irrigation_stands_set_barrel_refused_without_an_empty_barrel", {
         T.expectOptionRefused(self, "no barrel", "Tooltip_EnhancedIrrigation_NoBarrel")
         T.expectOptionRefused(self, "full barrel", "Tooltip_EnhancedIrrigation_BarrelNotEmpty")
         local forced = self.reads.forced
+        expectEqual("the server's refusal to set a barrel holding water on the stand", forced.reason,
+            "Tooltip_EnhancedIrrigation_BarrelNotEmpty")
         expect(forced.ok == false, "the server set a barrel holding water on the stand")
         expect(forced.after.state.isStand, "the stand is gone after a refused Set Barrel on Stand")
     end,
 })
 
 -- Vanilla's Open Lid swaps the raised barrel's object, and it stays a raised tank with its water.
--- Catches the lid turning it into vanilla's ground barrel.
+-- Indoors, where no rain falls into it once open. Catches the lid turning it into vanilla's ground
+-- barrel, or its water lost in the swap.
 T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
     instant = true,
     run = function(self)
-        local spots = T.layout(self, { { 0, 0 } }, { bare = true })
+        local spots = T.layout(self, { { 0, 0 } }, { bare = true, indoors = true })
         if not spots then return end
         self.litres = 30
         self.tank = T.placeTank(self, spots[1], "raisedLidded", self.litres)
@@ -143,8 +146,7 @@ T.test("irrigation_stands_raised_barrel_stays_a_raised_tank_through_the_lid", {
         expect(opened.isRaised and opened.isTank, "opening the lid made " .. tostring(opened.entity)
             .. ", not a raised tank")
         expectEqual("the opened barrel's level", opened.level, z + 1)
-        -- Open, it may catch a little rain meanwhile.
-        expectNear("the opened barrel's water", opened.litres, self.litres, 1)
+        expectNear("the opened barrel's water", opened.litres, self.litres, T.LITRES)
         expectEqual("the opened barrel's level on this client", self.levelAfter, z + 1)
     end,
 })
@@ -167,6 +169,8 @@ T.test("irrigation_stands_take_down_refused_while_holding_water", {
     validate = function(self)
         T.expectOptionRefused(self, "take down", "Tooltip_EnhancedIrrigation_EmptyBarrelFirst")
         local forced = self.reads.forced
+        expectEqual("the server's refusal to take down a barrel holding water", forced.reason,
+            "Tooltip_EnhancedIrrigation_EmptyBarrelFirst")
         expect(forced.ok == false, "the server took down a barrel holding water")
         expect(forced.after.state.isRaised, "the raised barrel is gone after a refused Take Barrel Down")
         expectNear("the refused barrel's water", forced.after.state.litres, self.litres, T.LITRES)

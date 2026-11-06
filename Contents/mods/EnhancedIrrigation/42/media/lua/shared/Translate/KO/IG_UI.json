@@ -1,8 +1,9 @@
 {
     "IGUI_EnhancedIrrigation_Cement": "시멘트",
     "IGUI_EnhancedIrrigation_GlueOrTape": "접착제, 에폭시 또는 강력 접착 테이프",
-    "IGUI_EnhancedIrrigation_Above": "위",
-    "IGUI_EnhancedIrrigation_Below": "아래",
+    "IGUI_EnhancedIrrigation_Above": "바로 위",
+    "IGUI_EnhancedIrrigation_Below": "바로 아래",
+    "IGUI_EnhancedIrrigation_Away": "%2쪽 %1칸",
     "IGUI_EnhancedIrrigation_Direction_N": "북",
     "IGUI_EnhancedIrrigation_Direction_NE": "북동",
     "IGUI_EnhancedIrrigation_Direction_E": "동",
@@ -15,9 +16,10 @@
     "IGUI_EnhancedIrrigation_Pipe_iron": "금속 파이프",
     "IGUI_EnhancedIrrigation_Pipe_lead": "납 파이프",
     "IGUI_EnhancedIrrigation_Pipe_clay": "찰흙 관",
+    "IGUI_EnhancedIrrigation_LabelValue": "%1: %2",
     "IGUI_EnhancedIrrigation_NoHoles": "구멍 없음",
     "IGUI_EnhancedIrrigation_Holed": "구멍 뚫림",
-    "IGUI_EnhancedIrrigation_Cracked": "금 감",
+    "IGUI_EnhancedIrrigation_Cracked": "금 갔음",
     "IGUI_EnhancedIrrigation_Full": "물 가득",
     "IGUI_EnhancedIrrigation_Tapped": "수도꼭지 있음",
     "IGUI_EnhancedIrrigation_WithSprinkler": "스프링클러",
@@ -30,8 +32,10 @@
     "IGUI_EnhancedIrrigation_Head": "%1 / %2 L 대기 중",
     "IGUI_EnhancedIrrigation_Ripe": "숙성됨",
     "IGUI_EnhancedIrrigation_Ripening": "숙성 중, %1시간 남음",
+    "IGUI_EnhancedIrrigation_RipeningOne": "숙성 중, %1시간 남음",
     "IGUI_EnhancedIrrigation_Clogged": "막힘",
     "IGUI_EnhancedIrrigation_DryFor": "%1시간째 마름",
+    "IGUI_EnhancedIrrigation_DryForOne": "%1시간째 마름",
     "IGUI_EnhancedIrrigation_Cold": "차가움",
     "IGUI_EnhancedIrrigation_Heating": "데우는 중",
     "IGUI_EnhancedIrrigation_Hot": "뜨거움",
@@ -61,5 +65,6 @@
     "IGUI_EnhancedIrrigation_TimerSet": "%1: 매일 %2에 %3분",
     "IGUI_EnhancedIrrigation_TimerNotSet": "%1: 설정 안 됨",
     "IGUI_EnhancedIrrigation_StartsAt": "시작 시각",
-    "IGUI_EnhancedIrrigation_PumpHouseLoad": "펌프실"
+    "IGUI_EnhancedIrrigation_PumpHouseLoad": "펌프실",
+    "IGUI_EnhancedIrrigation_AwayOne": "%2쪽 %1칸"
 }

@@ -1,9 +1,9 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
     "Sandbox_EnhancedIrrigation_PamphletLoot": "Bytte: Cisterner til Kentucky",
-    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Hvor ofte pjecen Cisterner til Kentucky dukker op i gårdes lagerrum, havecentre, byggemarkeder, biblioteker og posthuse, som et multiplum af dens normale chance.<br>0 holder den ude af bytte; Tømrerarbejde, Murværk og Svejser lærer dig stadig dens andre tegninger og rørarbejdet, men pumpehusene kommer så kun ved at undersøge en pumpedel.",
+    "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Hvor ofte pjecen Cisterner til Kentucky dukker op i gårdes lagerrum, havecentre, byggemarkeder, biblioteker og posthuse, som et multiplum af dens normale chance.<br>0 holder den ude af bytte; Tømrerarbejde, Murværk og Svejsning lærer dig stadig dens andre tegninger og rørarbejdet, men pumpehusene kommer så kun ved at undersøge en pumpedel.",
     "Sandbox_EnhancedIrrigation_PartsLoot": "Bytte: Pumper, plænevandere og ventiler",
     "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Hvor ofte en universalpumpe, plænevander, vandingsur eller vandventil dukker op som bytte, som et multiplum af den normale chance.<br>0 holder dem alle ude af bytte; et pumpehus kan stadig bruge en hvidevarepumpe taget fra en vaskemaskine eller opvaskemaskine, eller en universalpumpe lavet af en blæser, en plænevander kan laves af rør, Tag pumpe ud af apparat giver stadig vandventiler, og en timerventil lavet af en af dem gør et vandingsurs arbejde.",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Rør bevarer beskidt vand",
-    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Til: en vask, et badekar eller et toilet rørforbundet under en tagtønde får tøndens vand, som det er, beskidt, hvis tøndens er, og installationer, der allerede er forbundet sådan, skifter, når deres område indlæses.<br>Fra: vanillas rørføring, som leverer en tagtøndes vand rent."
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Til: en vask, et badekar eller et toilet rørforbundet under en tagtønde får tøndens vand, som det er, beskidt, hvis tøndens er, og installationer, der allerede er forbundet sådan, skifter, når deres område indlæses.<br>Fra: standardspillets rørføring, som leverer en tagtøndes vand rent."
 }

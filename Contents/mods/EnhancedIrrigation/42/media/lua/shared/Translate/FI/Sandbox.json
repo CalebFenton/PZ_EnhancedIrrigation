@@ -1,9 +1,9 @@
 {
     "Sandbox_EnhancedIrrigation": "Enhanced Irrigation",
-    "Sandbox_EnhancedIrrigation_PamphletLoot": "Vesisäiliöitä Kentuckyyn -tavarat",
+    "Sandbox_EnhancedIrrigation_PamphletLoot": "Tavara: Vesisäiliöitä Kentuckyyn",
     "Sandbox_EnhancedIrrigation_PamphletLoot_tooltip": "Kuinka usein Vesisäiliöitä Kentuckyyn -esite löytyy maatilojen varastoista, puutarha- ja rautakaupoista, kirjastoista ja postitoimistoista, kerrannaisena tavallisesta todennäköisyydestään.<br>0 jättää sen pois tavaroista; Puutyöt, Muuraus ja Metallityö opettavat silti sen muut suunnitelmat ja putkityöt, mutta pumppuhuoneet saa silloin vain tutkimalla pumpun osaa.",
-    "Sandbox_EnhancedIrrigation_PartsLoot": "Pumppu-, sadetin- ja venttiilitavarat",
-    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Kuinka usein yleispumppu, nurmikon sadetin, sadettimen ajastin tai vesiventtiili löytyy tavaroista, kerrannaisena tavallisesta todennäköisyydestään.<br>0 jättää ne kaikki pois tavaroista; pumppuhuoneeseen käy silti pesukoneesta tai astianpesukoneesta talteen otettu kodinkonepumppu tai puhaltimesta valmistettu yleispumppu, nurmikon sadettimen voi valmistaa putkesta, Ota pumppu talteen antaa yhä vesiventtiileitä, ja sellaisesta valmistettu ajastinventtiili tekee sadettimen ajastimen työn.",
-    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Putkisto säilyttää saastumisen",
+    "Sandbox_EnhancedIrrigation_PartsLoot": "Tavara: pumput, sadettimet ja venttiilit",
+    "Sandbox_EnhancedIrrigation_PartsLoot_tooltip": "Kuinka usein yleispumppu, nurmikon sadetin, sadettimen ajastin tai vesiventtiili löytyy tavaroista, kerrannaisena tavallisesta todennäköisyydestään.<br>0 jättää ne kaikki pois tavaroista; pumppuhuoneeseen käy silti pesukoneesta tai astianpesukoneesta talteen otettu kodinkonepumppu tai puhaltimesta valmistettu yleispumppu, nurmikon sadettimen voi valmistaa putkesta, toiminto Ota pumppu talteen antaa yhä vesiventtiileitä, ja sellaisesta valmistettu ajastinventtiili tekee sadettimen ajastimen työn.",
+    "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint": "Putkisto pitää veden saastuneena",
     "Sandbox_EnhancedIrrigation_PlumbingKeepsTaint_tooltip": "Päällä: katon sadevesitynnyrin alle putkitettu pesuallas, kylpyamme tai WC saa tynnyrin veden sellaisenaan, saastuneena jos tynnyrin vesi on saastunutta, ja jo näin putkitetut kalusteet muuttuvat, kun niiden alue latautuu.<br>Pois: alkuperäisen pelin putkisto, joka antaa katon tynnyrin veden puhtaana."
 }
